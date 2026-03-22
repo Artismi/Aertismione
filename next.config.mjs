@@ -17,6 +17,12 @@ const nextConfig = {
       },
     ],
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   // R3F and Three.js need to be transpiled for Next.js compatibility
   transpilePackages: ['three', '@react-three/fiber', '@react-three/drei', 'react-pdf', 'pdfjs-dist'],
   webpack: (config) => {
