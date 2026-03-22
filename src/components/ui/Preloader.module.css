@@ -38,25 +38,24 @@
 }
 
 .jellyContainer {
-  display: flex;
-  gap: 4px;
-  height: 80px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: 140px;
+  height: 140px;
   align-items: center;
   justify-content: center;
   perspective: 1000px;
 }
 
 .jellyBlock {
-  width: 40px;
-  height: 40px;
-  background: rgba(255, 182, 193, 0.4); /* Pink Jelly */
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 8px;
-  box-shadow: 
-    0 8px 32px rgba(255, 105, 180, 0.2),
-    inset 0 0 10px rgba(255, 255, 255, 0.5);
+  width: 100%;
+  aspect-ratio: 1;
+  background: rgba(255, 182, 193, 0.35); /* Pink Jelly */
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
 }
 
 .progressCounter {

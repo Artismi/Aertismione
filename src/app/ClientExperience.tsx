@@ -90,6 +90,28 @@ function ScrollSync() {
 }
 
 /**
+ * LoadingSync — listens to Three.js DefaultLoadingManager via useProgress
+ * and syncs it to the global store for the Preloader.
+ */
+function LoadingSync() {
+  const { progress } = useProgress()
+  const setIsLoaded = useStore((s) => s.setIsLoaded)
+  const setLoadingProgress = useStore((s) => s.setLoadingProgress)
+
+  useEffect(() => {
+    setLoadingProgress(progress)
+    if (progress === 100) {
+      // Small delay to ensure everything is actually rendered
+      const timer = setTimeout(() => setIsLoaded(true), 200)
+      return () => clearTimeout(timer)
+    }
+  }, [progress, setIsLoaded, setLoadingProgress])
+
+  return null
+}
+
+
+/**
  * CameraRig — smooth lerp of the camera following scrollY.
  * scrollY 0 → camera at y=2 (looking at logo)
  * scrollY increases → camera descends
@@ -162,6 +184,7 @@ function Scene({ isHome }: { isHome: boolean }) {
 
   return (
     <>
+      <LoadingSync />
       <ScrollSync />
       <CameraRig />
       {/* Turn off heavy physics/updates when not home */}

@@ -15,6 +15,10 @@ interface AppState {
     setAboutSectionTop: (top: number) => void
     contactSectionTop: number
     setContactSectionTop: (top: number) => void
+    isLoaded: boolean
+    setIsLoaded: (isLoaded: boolean) => void
+    loadingProgress: number
+    setLoadingProgress: (progress: number) => void
 
     // HUD & Game State
     score: number
@@ -71,6 +75,10 @@ export const useStore = create<AppState>((set) => ({
     setAboutSectionTop: (top) => set({ aboutSectionTop: top }),
     contactSectionTop: 0,
     setContactSectionTop: (top) => set({ contactSectionTop: top }),
+    isLoaded: false,
+    setIsLoaded: (isLoaded) => set({ isLoaded }),
+    loadingProgress: 0,
+    setLoadingProgress: (loadingProgress) => set({ loadingProgress }),
 
     // HUD & Game State Defaults
     score: 0,

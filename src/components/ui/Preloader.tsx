@@ -1,64 +1,68 @@
-'use client'
-
 import { motion, AnimatePresence } from 'framer-motion'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import styles from './Preloader.module.css'
+import { useStore } from '@/stores/useStore'
+
+function MatrixJelly() {
+  // Configurazione dei 6 blocchetti "Matrix"
+  const blocks = Array.from({ length: 9 })
+  
+  return (
+    <div className={styles.jellyContainer}>
+      {blocks.map((_, i) => (
+        <motion.div
+          key={i}
+          className={styles.jellyBlock}
+          initial={{ opacity: 0.1, scale: 0.8 }}
+          animate={{ 
+            opacity: [0.1, 0.8, 0.1], 
+            scale: [0.8, 1.1, 0.8],
+            y: [0, -10, 0]
+          }}
+          transition={{
+            duration: 0.6 + Math.random() * 0.8,
+            repeat: Infinity,
+            delay: Math.random() * 2,
+            ease: "easeInOut"
+          }}
+        />
+      ))}
+    </div>
+  )
+}
 
 export function Preloader() {
-  const [done, setDone] = useState(false)
-  const progressRef = useRef<HTMLSpanElement>(null)
+  const isLoaded = useStore((s) => s.isLoaded)
+  const loadingProgress = useStore((s) => s.loadingProgress)
+  const [show, setShow] = useState(true)
 
+  // Disattiva il preloader solo quando isLoaded === true
   useEffect(() => {
-    // Safety: dismiss after 3.5s no matter what
-    const safetyTimer = setTimeout(() => setDone(true), 3500)
-
-    const el = progressRef.current
-    if (!el) {
-      const fallback = setTimeout(() => setDone(true), 1800)
-      return () => { clearTimeout(safetyTimer); clearTimeout(fallback) }
+    if (isLoaded) {
+      // Piccolo buffer per l'utente, poi sparisce
+      const timer = setTimeout(() => setShow(false), 500)
+      return () => clearTimeout(timer)
     }
-
-    let rafId: number
-    let start: number | null = null
-    const duration = 1400
-
-    const tick = (ts: number) => {
-      if (!start) start = ts
-      const t = Math.min((ts - start) / duration, 1)
-      const eased = 1 - Math.pow(1 - t, 3)
-      el.textContent = String(Math.round(eased * 100))
-      if (t < 1) {
-        rafId = requestAnimationFrame(tick)
-      } else {
-        clearTimeout(safetyTimer)
-        setTimeout(() => setDone(true), 300)
-      }
-    }
-
-    rafId = requestAnimationFrame(tick)
-    return () => { cancelAnimationFrame(rafId); clearTimeout(safetyTimer) }
-  }, [])
+  }, [isLoaded])
 
   return (
     <AnimatePresence>
-      {!done && (
+      {show && (
         <motion.div
           className={styles.overlay}
-          exit={{ opacity: 0 }}
+          exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
         >
           <div className={styles.content}>
             <div className={styles.brand}>
               <span className={styles.studio}>Artismi Design Studio</span>
+              <span className={styles.location}>Loading Terminal — v1.0.2</span>
             </div>
 
-            <div className={styles.jellyContainer}>
-              <div className={styles.jellyBlock} />
-              <div className={styles.jellyBlock} />
-            </div>
+            <MatrixJelly />
 
             <div className={styles.progressCounter}>
-              <span ref={progressRef}>0</span>
+              <span>{Math.round(loadingProgress)}</span>
               <span className={styles.percent}>%</span>
             </div>
           </div>
