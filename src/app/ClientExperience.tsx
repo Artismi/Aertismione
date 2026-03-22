@@ -94,18 +94,18 @@ function ScrollSync() {
  * and syncs it to the global store for the Preloader.
  */
 function LoadingSync() {
-  const { progress } = useProgress()
+  const { progress, active } = useProgress()
   const setIsLoaded = useStore((s) => s.setIsLoaded)
   const setLoadingProgress = useStore((s) => s.setLoadingProgress)
 
   useEffect(() => {
     setLoadingProgress(progress)
-    if (progress === 100) {
-      // Small delay to ensure everything is actually rendered
-      const timer = setTimeout(() => setIsLoaded(true), 200)
+    // Consider it loaded only if it's no longer active and progress is 100
+    if (!active && progress === 100) {
+      const timer = setTimeout(() => setIsLoaded(true), 600)
       return () => clearTimeout(timer)
     }
-  }, [progress, setIsLoaded, setLoadingProgress])
+  }, [progress, active, setIsLoaded, setLoadingProgress])
 
   return null
 }
