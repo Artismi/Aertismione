@@ -1,0 +1,214 @@
+/* ============================================
+   ARTISMI DESIGN STUDIO — Global Styles
+   Design System: Artigianato Digitale
+   ============================================ */
+
+:root {
+  /* --- Palette: Vetro & Carta --- */
+  /* Ispirata ai materiali 3D della scena: vetro ghiacciato, blush, carta */
+  --color-bg: rgba(245, 240, 232, 0.92);
+  /* Carta invecchiata — semi-trasparente per mostrare 3D */
+  --color-bg-alt: rgba(237, 232, 223, 0.93);
+  /* Sezioni alternate */
+  --color-bg-solid: #F5F0E8;
+  /* Opacità piena (pulsanti, form) */
+  --color-text: #1A1A1A;
+  /* Inchiostro primario */
+  --color-body: #3A3530;
+  /* Corpo testo — leggermente caldo */
+  --color-accent: #9DD4EE;
+  /* Ghiaccio vetro — dal materiale avatar (#77ccff desaturato) */
+  --color-warm: #E8A8BF;
+  /* Blush vetro — dal materiale background (#ffb5d8 ammorbidito) */
+  --color-muted: #9090A0;
+  /* Grigio-blu secondario — coerente con la scena glass */
+
+  /* --- Layer 3D (intoccabili dal CSS principale) --- */
+  --color-3d-cyan: #00ffff;
+  --color-3d-magenta: #ff0088;
+
+  /* --- Tipografia: sistema semplice a 2 famiglie ---
+     DISPLAY: Bebas Neue — titoli, numeri, label uppercase. Impatto visivo forte.
+     BODY:    Space Grotesk — sottotitoli, corpo testo, tutto il resto.
+     MONO:    JetBrains Mono — metadata, prezzi, codici. Solo quando serve davvero.
+  */
+  --font-display:   var(--font-display-var, 'Bebas Neue', sans-serif);
+  --font-condensed: var(--font-display-var, 'Bebas Neue', sans-serif);
+  --font-body:      var(--font-serif-var, 'Space Grotesk', sans-serif);
+  --font-mono:      var(--font-mono-var, 'JetBrains Mono', monospace);
+
+  /* --- Spaziature --- */
+  --section-py: clamp(80px, 10vw, 120px);
+  --content-max: 1280px;
+
+  /* --- Border Radius: raw, artigianale --- */
+  --radius-card: 1px;
+  --radius-btn: 0px;
+
+  /* --- Scala tipografica editoriale --- */
+  --type-display:   clamp(4.5rem, 9.5vw, 9.5rem);  /* H1 hero — massivo */
+  --type-title:     clamp(3rem, 5.5vw, 5.5rem);    /* H2 sezioni */
+  --type-heading:   clamp(2rem, 3.5vw, 3.75rem);   /* H3 */
+  --type-label:     0.68rem;
+  --type-body:      clamp(0.88rem, 1.2vw, 1rem);
+  --type-small:     0.72rem;
+
+  /* --- Easing curve top-tier --- */
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-expo: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+/* --- Reset & Base --- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-snap-type: y proximity;
+  /* Magnetismo dolce, meno invasivo */
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: #F5F0E8;
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  /* Cursore nascosto su desktop per custom cursor */
+  cursor: none;
+}
+
+/* Ripristina cursore su touch device */
+@media (pointer: coarse) {
+  body { cursor: auto; }
+  a, button { cursor: pointer; }
+}
+
+a, button { cursor: none; }
+
+h1 {
+  font-family: var(--font-display);
+  font-weight: 400; /* Bebas Neue è sempre 400 */
+  letter-spacing: 0.02em;
+  line-height: 0.9;
+}
+
+h2, h3, h4 {
+  font-family: var(--font-body);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 0.95;
+}
+
+/* --- Grain Texture Overlay
+   Grana sottilissima — appena percettibile, rinforza la carta.
+   Opacity ridotta a 0.045: research dice 0.04-0.06 per non risultare sporco.
+   ------------------------------------------------------------------- */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' /%3E%3C/svg%3E");
+  background-size: 256px 256px;
+  mix-blend-mode: multiply;
+}
+
+/* --- Scrollbar --- */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-alt);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-warm);
+  border-radius: 3px;
+}
+
+/* --- Utility --- */
+.container {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 0 clamp(20px, 5vw, 60px);
+}
+
+.section {
+  padding: var(--section-py) 0;
+  scroll-snap-align: start;
+  scroll-snap-stop: normal;
+  /* Torna a navigazione libera */
+}
+
+/* --- Stella a 4 punte — elemento decorativo del poster --- */
+.star-4 {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  background: currentColor;
+  clip-path: polygon(
+    50% 0%, 60% 40%, 100% 50%,
+    60% 60%, 50% 100%, 40% 60%,
+    0% 50%, 40% 40%
+  );
+  flex-shrink: 0;
+}
+
+/* --- Stripe nera orizzontale — separatore editoriale --- */
+.black-stripe {
+  display: block;
+  width: 100%;
+  height: 4px;
+  background: var(--color-text);
+}
+
+/* --- Label condensata tipo "DATA BANK" --- */
+.data-label {
+  font-family: var(--font-condensed);
+  font-size: 0.65rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  border: 1px solid currentColor;
+  padding: 2px 8px;
+  display: inline-block;
+}
+
+/* --- Body micro — colonna di testo stretto uppercase justified (poster) --- */
+.body-micro {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  line-height: 1.6;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: justify;
+  color: var(--color-body);
+}
+
+/* --- Accent bar separator: leggermente inclinata, spessa, raw --- */
+.accent-bar {
+  display: block;
+  width: 52px;
+  height: 4px;
+  background: var(--color-accent);
+  margin-bottom: 24px;
+  transform: rotate(-1.5deg) skewX(-6deg);
+  transform-origin: left center;
+}
+
+/* --- Text selection --- */
+::selection {
+  background: var(--color-accent);
+  color: var(--color-text);
+}

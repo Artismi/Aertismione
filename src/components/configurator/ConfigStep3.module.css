@@ -1,0 +1,179 @@
+.step {
+  width: 100%;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 3.5vw, 2.8rem);
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  color: var(--color-muted);
+  margin-bottom: 40px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+}
+
+.blockTitle {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--color-muted);
+  margin-bottom: 24px;
+}
+
+.itemsList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(26,26,26,0.04);
+}
+
+.itemInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.itemLabel {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  text-transform: uppercase;
+}
+
+.itemCategory {
+  font-size: 0.65rem;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.itemRange {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--color-accent);
+}
+
+.footerInfo {
+  font-size: 0.7rem;
+  color: var(--color-muted);
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.form {
+  background: white;
+  padding: 32px;
+  border: 1px solid rgba(26,26,26,0.06);
+}
+
+.formIntro {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 24px;
+  color: var(--color-muted);
+}
+
+.field {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.field input, .field select, .field textarea {
+  padding: 12px;
+  border: 1px solid rgba(26,26,26,0.1);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.field textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.field input:focus, .field select:focus, .field textarea:focus {
+  border-color: var(--color-accent);
+}
+
+.submitBtn {
+  width: 100%;
+  padding: 18px;
+  background: var(--color-text);
+  color: white;
+  border: none;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 12px;
+}
+
+.submitBtn:hover {
+  background: var(--color-accent);
+}
+
+.privacy {
+  font-size: 0.65rem;
+  color: var(--color-muted);
+  margin-top: 16px;
+  text-align: center;
+}
+
+.done {
+  text-align: center;
+  padding: 80px 20px;
+}
+
+.doneIcon {
+  font-size: 3rem;
+  color: #4caf50;
+  margin-bottom: 24px;
+}
+
+.doneTitle {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  margin-bottom: 12px;
+}
+
+.resetBtn {
+  margin-top: 32px;
+  background: transparent;
+  border: 1px solid var(--color-text);
+  padding: 12px 24px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .layout {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+}

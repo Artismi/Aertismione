@@ -1,0 +1,154 @@
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.nav.scrolled {
+  background: rgba(245, 240, 232, 0.92);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.08);
+}
+
+/* Brand e link scompaiono al top — il logo 3D ha la scena per sé */
+.brand,
+.links {
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+}
+
+.nav.scrolled .brand,
+.nav.scrolled .links {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 clamp(20px, 5vw, 60px);
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text);
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.brandLogo {
+  height: 54px;
+  width: auto;
+  display: block;
+  object-fit: contain;
+}
+
+.links {
+  display: flex;
+  list-style: none;
+  gap: 2rem;
+  margin-left: auto;
+}
+
+.link,
+.linkBtn {
+  font-family: var(--font-condensed);
+  font-size: 0.65rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--color-muted);
+  text-decoration: none;
+  transition: color 0.2s;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.link:hover,
+.linkBtn:hover {
+  color: var(--color-text);
+}
+
+.cta {
+  font-family: var(--font-condensed);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #1A1A1A;
+  background: var(--color-accent);
+  border: 2.5px solid #1A1A1A;
+  outline: 1.5px solid #1A1A1A;
+  outline-offset: 2px;
+  padding: 8px 18px;
+  text-decoration: none;
+  border-radius: 0;
+  flex-shrink: 0;
+  transition: all 0.18s ease;
+}
+
+.cta:hover {
+  background: #1A1A1A;
+  color: var(--color-accent);
+  transform: rotate(-0.6deg);
+  box-shadow: 3px 3px 0 var(--color-accent);
+}
+
+/* Hamburger */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  margin-left: auto;
+}
+
+.hamburger span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: var(--color-text);
+  transition: transform 0.2s;
+}
+
+/* Mobile drawer */
+.drawer {
+  background: rgba(245, 240, 232, 0.97);
+  backdrop-filter: blur(16px);
+  padding: 24px clamp(20px, 5vw, 60px);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.drawerLink {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  text-transform: uppercase;
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .links { display: none; }
+  .cta { display: none; }
+  .hamburger { display: flex; }
+}

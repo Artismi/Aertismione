@@ -1,0 +1,244 @@
+.hero {
+  position: relative;
+  /* no z-index — hero must NOT create a stacking context so title
+     layers can reach the root context and sandwich the fixed canvas */
+  width: 100%;
+  height: 200vh;
+}
+
+.firstViewport {
+  height: 100vh;
+  width: 100%;
+}
+
+.secondViewport {
+  height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0 0 clamp(40px, 6vh, 64px) 0;
+  position: relative;
+  /* No background here — moved to ::before so it can live at z-index: -1
+     alongside the dark title lines, both behind the canvas */
+}
+
+/* Gradient backdrop — behind the canvas (z-index: -1 in root context).
+   Lives before the title text in DOM order so text renders on top of it. */
+.secondViewport::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    rgba(245, 240, 232, 0.0) 0%,
+    rgba(245, 240, 232, 0.5) 25%,
+    rgba(245, 240, 232, 0.88) 55%,
+    rgba(245, 240, 232, 1.0) 100%
+  );
+}
+
+/* ── Eyebrow row: studio label + disponibilità ── */
+
+.eyebrowRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 clamp(24px, 5.5vw, 72px);
+  margin-bottom: clamp(8px, 1.5vh, 16px);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-condensed);
+  font-size: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: var(--color-muted);
+}
+
+.eyebrowLine {
+  display: inline-block;
+  width: 20px;
+  height: 1.5px;
+  background: var(--color-accent);
+  flex-shrink: 0;
+}
+
+/* Badge disponibilità */
+.available {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-condensed);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: #4caf6a;
+  border: 1px solid rgba(76, 175, 106, 0.35);
+  padding: 3px 10px 3px 8px;
+  border-radius: 0;
+}
+
+.availableDot {
+  width: 6px;
+  height: 6px;
+  background: #4caf6a;
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.75); }
+}
+
+/* ── Titolo — mask reveal dal basso ── */
+
+/* Dark lines: z-index: -1 → behind the fixed canvas.
+   The 3D logo renders on top, creating the "logo passes through text" sandwich. */
+.titleDark {
+  position: relative;
+  z-index: -1;
+  padding: 0 clamp(20px, 5.5vw, 72px);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Accent / pink line: z-index: 1 → in front of the fixed canvas.
+   The 3D logo renders behind this line. */
+.titleAccent {
+  position: relative;
+  z-index: 1;
+  padding: 0 clamp(20px, 5.5vw, 72px);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: clamp(16px, 2.5vh, 28px);
+}
+
+/* Contenitore clip — il testo emerge dal basso */
+.maskWrap {
+  display: block;
+  overflow: hidden;
+  /* Piccolo padding bottom per non tagliare discendenti */
+  padding-bottom: 0.04em;
+}
+
+.line,
+.lineAccent {
+  display: block;
+  font-family: var(--font-display);
+  font-size: var(--type-display);
+  font-weight: 400; /* Bebas Neue è sempre 400 */
+  line-height: 0.9;
+  letter-spacing: 0.03em; /* Bebas vuole tracking positivo */
+  color: var(--color-text);
+  text-transform: uppercase;
+  will-change: transform;
+}
+
+/* La riga accent — blush/warm */
+.lineAccent {
+  color: var(--color-warm);
+  font-style: normal;
+}
+
+/* ── Bottom: subtitle + CTA ── */
+
+.bottom {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: clamp(20px, 4vw, 48px);
+  padding: 0 clamp(24px, 5.5vw, 72px);
+  flex-wrap: wrap;
+}
+
+.subtitleBlock {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  max-width: 440px;
+}
+
+.subtitleBar {
+  width: 2px;
+  min-height: 52px;
+  background: var(--color-accent);
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.subtitle {
+  font-family: var(--font-body);
+  font-size: var(--type-body);
+  color: var(--color-body);
+  line-height: 1.7;
+  margin: 0;
+}
+
+.ctas {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* ── Scroll indicator ── */
+
+.scrollHint {
+  position: absolute;
+  bottom: clamp(16px, 3vh, 28px);
+  right: clamp(24px, 5vw, 60px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.scrollText {
+  font-family: var(--font-condensed);
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: var(--color-muted);
+  writing-mode: vertical-rl;
+}
+
+.scrollLine {
+  width: 1px;
+  height: 48px;
+  background: linear-gradient(to bottom, var(--color-muted), transparent);
+  animation: scrollPulse 2.2s ease-in-out infinite;
+}
+
+@keyframes scrollPulse {
+  0%, 100% { opacity: 0.25; transform: scaleY(1); }
+  50%       { opacity: 0.7;  transform: scaleY(1.18); }
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 640px) {
+  .title {
+    font-size: clamp(3rem, 12vw, 4.5rem);
+  }
+  .line, .lineAccent {
+    font-size: clamp(3rem, 12vw, 4.5rem);
+  }
+  .bottom { flex-direction: column; gap: 16px; }
+  .ctas   { width: 100%; }
+  .scrollHint { display: none; }
+  .eyebrowRow { justify-content: flex-start; }
+  .available  { display: none; } /* troppo affollato su mobile */
+}

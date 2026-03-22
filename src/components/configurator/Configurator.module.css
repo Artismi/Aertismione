@@ -1,0 +1,212 @@
+.step {
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+  line-height: 1.1;
+  margin-bottom: 12px;
+}
+
+.subtitle {
+  font-family: var(--font-body);
+  font-size: 1.1rem;
+  color: var(--color-muted);
+  margin-bottom: 24px;
+}
+
+.explanation {
+  background: rgba(26,26,26,0.03);
+  padding: 20px;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  border-left: 3px solid var(--color-accent);
+  margin-bottom: 40px;
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.card {
+  background: white;
+  border: 1px solid rgba(26,26,26,0.08);
+  padding: 32px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.card:hover {
+  border-color: var(--color-accent);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.04);
+}
+
+.card.active {
+  background: var(--color-accent);
+  color: white;
+  border-color: var(--color-accent);
+}
+
+.cardIcon {
+  font-size: 1.5rem;
+  opacity: 0.6;
+}
+
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cardTitle {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  text-transform: uppercase;
+}
+
+.cardSub {
+  font-size: 0.85rem;
+  opacity: 0.8;
+  line-height: 1.4;
+}
+
+.footerNote {
+  margin-top: 40px;
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  font-style: italic;
+}
+
+/* Step 2 Styles */
+.categoryBlock {
+  margin-top: 40px;
+}
+
+.categoryHeader {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--color-muted);
+  margin-bottom: 20px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(26,26,26,0.05);
+}
+
+.servicesGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.serviceItem {
+  background: white;
+  border: 1px solid rgba(26,26,26,0.06);
+  padding: 20px;
+  display: flex;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  align-items: flex-start;
+}
+
+.serviceItem:hover {
+  border-color: rgba(26,26,26,0.2);
+}
+
+.serviceActive {
+  border-color: var(--color-accent);
+  background: rgba(var(--color-accent-rgb), 0.02);
+}
+
+.serviceLocked {
+  cursor: default;
+  background: rgba(26,26,26,0.03);
+}
+
+.checkbox {
+  width: 20px;
+  height: 20px;
+  border: 1px solid rgba(26,26,26,0.15);
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.checkFill {
+  width: 10px;
+  height: 10px;
+  background: var(--color-accent);
+}
+
+.serviceBody {
+  flex: 1;
+}
+
+.serviceHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.serviceLabel {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  text-transform: uppercase;
+  color: var(--color-text);
+}
+
+.servicePrice {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--color-accent);
+}
+
+.serviceDesc {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  margin: 4px 0 0 0;
+}
+
+.serviceNote {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-warm);
+  margin-top: 8px;
+  font-style: italic;
+}
+
+.subOptions {
+  margin-top: 16px;
+  padding: 12px;
+  background: rgba(26,26,26,0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.subOption {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  .cardGrid {
+    grid-template-columns: 1fr;
+  }
+}

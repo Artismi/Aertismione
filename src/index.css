@@ -1,0 +1,115 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;900&display=swap');
+
+:root {
+  font-family: 'JetBrains Mono', monospace;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #000000;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  --color-accent: #E2FF00; /* Acid Yellow */
+  --color-accent-rgb: 226, 255, 0;
+  --color-warm: #FF4D00; /* Vibrant Orange/Warm accent */
+  --color-body: #2A2A28;
+  --color-muted: #888880;
+  
+  /* Paper-White base */
+  --color-bg: #FAF7F2; 
+  --color-bg-solid: #FAF7F2;
+  --color-text: #0E0E0D;
+
+  /* Global Section Padding */
+  --section-py: clamp(80px, 12vh, 160px);
+
+  /* Smooth scrolling */
+  scroll-behavior: smooth;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: #000000;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(226, 255, 0, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(226, 255, 0, 0.5);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(226, 255, 0, 0.3) rgba(0, 0, 0, 0.3);
+}
+
+/* Selection styling */
+::selection {
+  background: rgba(226, 255, 0, 0.3);
+  color: #E2FF00;
+}
+
+::-moz-selection {
+  background: rgba(226, 255, 0, 0.3);
+  color: #E2FF00;
+}
+
+/* Responsive Typography */
+@media (max-width: 768px) {
+  :root {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    font-size: 12px;
+  }
+}
+
+/* Utility classes */
+.z-ui {
+  z-index: 100;
+}
+
+/* Smooth transitions for all interactive elements */
+button,
+a {
+  transition: all 0.3s ease;
+}
+
+/* Focus styles for accessibility */
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid #E2FF00;
+  outline-offset: 2px;
+}

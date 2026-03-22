@@ -1,0 +1,304 @@
+/* ============================================================
+   ServicesNewSection — Griglia editoriale tipo ratecard
+   ============================================================ */
+
+.section {
+  padding: var(--section-py) 0;
+  background: rgba(245, 240, 232, 0.97);
+  overflow: hidden;
+}
+
+/* ── Header sezione ──────────────────────────────────────── */
+
+.sectionHeader {
+  padding: 0 clamp(24px, 6vw, 80px);
+  margin-bottom: clamp(32px, 5vw, 56px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.sectionLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-condensed);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: var(--color-muted);
+}
+
+.sectionLabel::before {
+  content: '';
+  display: inline-block;
+  width: 18px;
+  height: 1.5px;
+  background: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.heading {
+  font-family: var(--font-display);
+  font-size: clamp(2.6rem, 4.8vw, 5.2rem);
+  font-weight: 400;
+  font-style: normal;
+  color: var(--color-text);
+  line-height: 0.9;
+  margin: 0;
+  letter-spacing: 0.04em;
+}
+
+.headingAccent {
+  color: var(--color-warm);
+}
+
+.intro {
+  font-family: var(--font-body);
+  font-size: clamp(0.82rem, 1.2vw, 0.9rem);
+  line-height: 1.7;
+  color: var(--color-body);
+  max-width: 380px;
+  text-align: right;
+}
+
+/* ── Griglia blocchi ─────────────────────────────────────── */
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr 1fr;
+  /* Nessun gap — i bordi dei blocchi sono i separatori */
+  gap: 0;
+  border-top: 1.5px solid rgba(26,26,26,0.12);
+}
+
+/* ── Blocco singolo ──────────────────────────────────────── */
+
+.block {
+  border-right: 1.5px solid rgba(26,26,26,0.12);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.block:last-child {
+  border-right: none;
+}
+
+/* Blocco featured — invertito in nero */
+.block.featured {
+  background: var(--color-text);
+  color: var(--color-bg-solid);
+}
+
+/* ── Header blocco: tipo, titolo, numero indice ──────────── */
+
+.blockHead {
+  padding: clamp(20px, 2.5vw, 28px) clamp(20px, 2.5vw, 28px) clamp(16px, 2vw, 20px);
+  border-bottom: 1.5px solid rgba(26,26,26,0.12);
+  position: relative;
+}
+
+.featured .blockHead {
+  border-bottom-color: rgba(245,240,232,0.12);
+}
+
+/* Numero indice angolo top-right */
+.blockIdx {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  font-family: var(--font-condensed);
+  font-size: 0.55rem;
+  letter-spacing: 0.18em;
+  color: rgba(26,26,26,0.2);
+}
+
+.featured .blockIdx {
+  color: rgba(245,240,232,0.2);
+}
+
+.blockType {
+  display: block;
+  font-family: var(--font-condensed);
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  margin-bottom: 6px;
+}
+
+.featured .blockType {
+  color: rgba(245,240,232,0.45);
+}
+
+.blockTitle {
+  font-family: var(--font-condensed);
+  font-size: clamp(1.4rem, 2.2vw, 1.8rem);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-text);
+  line-height: 1;
+}
+
+.featured .blockTitle {
+  color: var(--color-bg-solid);
+}
+
+/* Badge "Più richiesto" — strisce inclinata sopra il titolo */
+.badge {
+  display: inline-block;
+  font-family: var(--font-condensed);
+  font-size: 0.58rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  background: var(--color-accent);
+  color: var(--color-text);
+  padding: 2px 8px;
+  margin-bottom: 8px;
+  transform: rotate(-0.8deg);
+  transform-origin: left center;
+}
+
+/* ── Lista voci ──────────────────────────────────────────── */
+
+.list {
+  list-style: none;
+  flex: 1;
+  /* Righe separate da bordi sottili — effetto ledger/tabella */
+}
+
+.item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: clamp(10px, 1.5vw, 14px) clamp(20px, 2.5vw, 28px);
+  border-bottom: 1px solid rgba(26,26,26,0.07);
+}
+
+.featured .item {
+  border-bottom-color: rgba(245,240,232,0.08);
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+.itemName {
+  font-family: var(--font-body);
+  font-size: clamp(0.8rem, 1.1vw, 0.88rem);
+  color: var(--color-body);
+}
+
+.featured .itemName {
+  color: rgba(245,240,232,0.75);
+}
+
+.itemPrice {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--color-warm);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.featured .itemPrice {
+  color: var(--color-accent);
+}
+
+/* ── Note e CTA ──────────────────────────────────────────── */
+
+.blockNote {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  line-height: 1.65;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(245,240,232,0.45);
+  padding: clamp(12px, 1.5vw, 16px) clamp(20px, 2.5vw, 28px);
+  border-top: 1px solid rgba(245,240,232,0.08);
+}
+
+.blockCta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-condensed);
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  padding: clamp(14px, 2vw, 18px) clamp(20px, 2.5vw, 28px);
+  border-top: 1.5px solid rgba(26,26,26,0.1);
+  color: var(--color-text);
+  transition: color 0.18s, background 0.18s;
+  margin-top: auto;
+}
+
+.featured .blockCta {
+  border-top-color: rgba(245,240,232,0.12);
+  color: var(--color-accent);
+}
+
+.blockCta::after {
+  content: '→';
+  transition: transform 0.18s;
+}
+
+.blockCta:hover::after {
+  transform: translateX(4px);
+}
+
+.blockCta:hover {
+  color: var(--color-warm);
+}
+
+.featured .blockCta:hover {
+  color: #fff;
+}
+
+/* ── Riga decorativa sotto la griglia ────────────────────── */
+
+.gridFooter {
+  border-top: 1.5px solid rgba(26,26,26,0.12);
+  padding: clamp(14px, 2vw, 20px) clamp(24px, 6vw, 80px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.gridFooterNote {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.gridFooterStar {
+  font-size: 0.6rem;
+  color: var(--color-accent);
+  font-family: sans-serif;
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+    border-top: none;
+  }
+  .block {
+    border-right: none;
+    border-top: 1.5px solid rgba(26,26,26,0.12);
+  }
+  .sectionHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .intro { text-align: left; max-width: 100%; }
+}

@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__claude_ai_Figma__whoami",
+      "mcp__claude_ai_Canva__request-outline-review",
+      "Bash(cd:*)",
+      "WebSearch",
+      "Bash(curl:*)",
+      "Bash(taskkill:*)",
+      "Bash(iconv:*)",
+      "Bash(netstat -ano)",
+      "Bash(xargs -I{} powershell -Command 'Stop-Process -Id {} -Force')",
+      "Bash(rm -rf .next)",
+      "Bash(npm run:*)",
+      "Bash(powershell -Command \"Get-ChildItem -Path 'C:\\\\Users\\\\Acer\\\\Downloads\\\\aRTISMI\\\\File portfolio' -Recurse | Select-Object FullName, Length | Format-Table -AutoSize\")",
+      "Bash(npx tsc:*)",
+      "Bash(npm install:*)",
+      "WebFetch(domain:glslsandbox.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.shadertoy.com)",
+      "WebFetch(domain:twigl.app)"
+    ]
+  }
+}

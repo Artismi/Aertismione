@@ -1,0 +1,229 @@
+/* ============================================
+   AboutSection — Card sinistra + avatar libero
+   ============================================ */
+
+.section {
+  position: relative;
+  min-height: 100vh;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(60px, 8vw, 100px) clamp(24px, 5.5vw, 72px);
+  /* Fade ai bordi per integrarsi con la scena 3D - Rimosso fade in basso per visibilità ticker */
+  -webkit-mask-image:
+    linear-gradient(to bottom, transparent 0%, black 10%, black 100%),
+    linear-gradient(to right, transparent 0%, black 2%, black 98%, transparent 100%);
+  mask-image:
+    linear-gradient(to bottom, transparent 0%, black 10%, black 100%),
+    linear-gradient(to right, transparent 0%, black 2%, black 98%, transparent 100%);
+  -webkit-mask-composite: destination-in;
+  mask-composite: intersect;
+}
+
+/* ── Card bio — max 420px, ancorata a sinistra ──────────── */
+
+.card {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  max-width: 420px;
+
+  /* Vetro satinato: sfondo traslucido + blur forte */
+  background: linear-gradient(
+    148deg,
+    rgba(252, 246, 240, 0.30) 0%,
+    rgba(238, 220, 230, 0.20) 100%
+  );
+  backdrop-filter: blur(28px) saturate(200%) brightness(1.06);
+  -webkit-backdrop-filter: blur(28px) saturate(200%) brightness(1.06);
+
+  /* Bordi: luce in alto-sinistra come su vetro spesso illuminato dall'alto */
+  border-top:    1.5px solid rgba(255, 255, 255, 0.72);
+  border-left:   1.5px solid rgba(255, 255, 255, 0.50);
+  border-right:  1.5px solid rgba(255, 255, 255, 0.18);
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.12);
+
+  padding: clamp(24px, 3.5vw, 36px);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  /* Ombre stratificate: spessore + profondità */
+  box-shadow:
+    0 2px  0   rgba(255, 255, 255, 0.60) inset,  /* bordo luminoso top */
+    0 -1px 0   rgba(26,  26,  26,  0.06) inset,  /* bordo scuro bottom */
+    0 24px 48px rgba(26, 26, 26, 0.14),           /* ombra esterna morbida */
+    0  6px 16px rgba(26, 26, 26, 0.08),           /* ombra ravvicinata */
+    0  1px 40px rgba(232, 168, 191, 0.20);        /* glow blush interno */
+}
+
+/* Grain: rumore fine via SVG feTurbulence — simula vetro satinato */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  opacity: 0.055;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* I figli della card devono stare sopra il grain */
+.card > * { position: relative; z-index: 1; }
+
+/* Label "Chi sono" */
+.label {
+  font-family: var(--font-condensed);
+  font-size: 0.65rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.label::before {
+  content: '';
+  display: inline-block;
+  width: 18px;
+  height: 1.5px;
+  background: var(--color-warm);
+  flex-shrink: 0;
+}
+
+/* Nome */
+.name {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text);
+  line-height: 0.95;
+  margin: 0;
+}
+
+/* Bio */
+.bio {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid rgba(26, 26, 26, 0.08);
+  padding-top: 14px;
+}
+
+.para {
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  line-height: 1.72;
+  color: rgba(26, 26, 26, 0.88);
+  margin: 0;
+  font-weight: 400;
+}
+
+.para strong {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+/* Socials */
+.socials {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-top: 12px;
+  border-top: 1px solid rgba(26, 26, 26, 0.08);
+}
+
+.socialLink {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.socialLink:hover { color: var(--color-warm); }
+
+/* ── Ticker ────────────────────────────────────────────────── */
+
+.tickerWrap {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-top: 1px solid rgba(26, 26, 26, 0.1);
+  background: rgba(245, 240, 232, 0.98); /* Quasi solido per massima leggibilità */
+  overflow: hidden;
+  padding: 32px 0;
+  z-index: 5;
+}
+
+.ticker {
+  display: flex;
+  width: max-content;
+  animation: tickerScroll 45s linear infinite;
+}
+
+.ticker:hover { animation-play-state: paused; }
+
+@keyframes tickerScroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.tickerTrack {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.tickerItem {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 0 clamp(20px, 3vw, 36px);
+  white-space: nowrap;
+}
+
+.tickerStar {
+  font-size: 0.5rem;
+  color: var(--color-warm);
+  font-family: sans-serif;
+  flex-shrink: 0;
+}
+
+.tickerCode {
+  font-family: var(--font-condensed);
+  font-size: 0.6rem;
+  letter-spacing: 0.18em;
+  color: var(--color-muted);
+  text-transform: uppercase;
+}
+
+.tickerLabel {
+  font-family: var(--font-condensed);
+  font-size: 1.4rem;
+  letter-spacing: 0.12em;
+  color: var(--color-text);
+  text-transform: uppercase;
+}
+
+.tickerSubs {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  color: var(--color-muted);
+}
+
+/* ── Responsive ────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .card { max-width: 100%; }
+  .section { padding-bottom: 80px; }
+}

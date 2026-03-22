@@ -1,0 +1,48 @@
+/* Custom cursor — solo desktop */
+
+.dot,
+.ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 9997;
+  border-radius: 50%;
+  opacity: 0;
+  /* will-change promuove a layer GPU dedicato */
+  will-change: transform;
+  /* Transizioni solo su opacity e size, NON su transform (gestito da RAF) */
+  transition: opacity 0.3s, width 0.2s ease, height 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  background: #C4622D;
+  /* NO mix-blend-mode: troppo costoso a 60fps */
+}
+
+.ring {
+  width: 40px;
+  height: 40px;
+  border: 1.5px solid rgba(196, 98, 45, 0.5);
+  background: transparent;
+}
+
+/* Hover state — su link e button */
+.dotHovered {
+  width: 5px;
+  height: 5px;
+  background: #E2FF00;
+}
+
+.ringHovered {
+  width: 56px;
+  height: 56px;
+  border-color: rgba(226, 255, 0, 0.65);
+}
+
+/* Touch device: nascosti */
+@media (pointer: coarse) {
+  .dot, .ring { display: none; }
+}

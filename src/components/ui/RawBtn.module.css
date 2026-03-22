@@ -1,0 +1,93 @@
+/*
+ * RawBtn — Bottone grezzo, artigianale.
+ * Niente border-radius. Bordo doppio con outline offset.
+ * Leggero tilt su hover per effetto stampato-a-mano.
+ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-condensed);
+  font-size: clamp(0.9rem, 1.6vw, 1.1rem);
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  padding: 14px 34px;
+  border-radius: 0;
+  cursor: pointer;
+  position: relative;
+  /* Leggero disallineamento — effetto timbro artigianale */
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, color 0.18s ease;
+  user-select: none;
+}
+
+/* ── Primary: riempito scuro, accento giallo su hover ──────────────────── */
+.primary {
+  color: #1A1A1A;
+  background: var(--color-accent);
+  border: 2.5px solid #1A1A1A;
+  /* Doppio bordo: outline sfalsato dà effetto "blockprint" */
+  outline: 1.5px solid #1A1A1A;
+  outline-offset: 3px;
+}
+
+.primary:hover {
+  background: #1A1A1A;
+  color: var(--color-accent);
+  outline-color: #1A1A1A;
+  transform: rotate(-0.8deg) translateY(-2px);
+  box-shadow: 4px 4px 0 var(--color-accent);
+}
+
+/* ── Secondary: vuoto, solo bordo ─────────────────────────────────────── */
+.secondary {
+  color: var(--color-text);
+  background: transparent;
+  border: 2.5px solid var(--color-text);
+  outline: 1.5px solid transparent;
+  outline-offset: 3px;
+}
+
+.secondary:hover {
+  background: rgba(26, 26, 26, 0.07);
+  outline-color: var(--color-text);
+  transform: rotate(0.6deg) translateY(-2px);
+  box-shadow: 3px 3px 0 var(--color-text);
+}
+
+/* ── Con asset (lettering disegnato a mano) ────────────────────────────── */
+.hasAsset {
+  /* Il bottone si ridimensiona attorno all'immagine */
+  padding: 10px 24px;
+}
+
+.assetImg {
+  display: block;
+  /* Altezza fissa; width auto per rispettare proporzioni del lettering */
+  height: 28px;
+  width: auto;
+  /* Mix-blend: il PNG/SVG si integra col colore di sfondo */
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+/* In modalità primary con asset: inverte il blend */
+.primary.hasAsset .assetImg {
+  mix-blend-mode: screen;
+  filter: invert(1);
+}
+
+/* ── Screen reader only ───────────────────────────────────────────────── */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
