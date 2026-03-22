@@ -589,8 +589,8 @@ export function ProjectPage({
 }) {
   // Determine layout and tone based on category
   let layout: Layout = LAYOUT_MAP[project.id] ?? 'split_light'
-  const isIllustration = project.category.toLowerCase().includes('illustrazione') ||
-                         project.category.toLowerCase().includes('grafica')
+  const isIllustration = project.category?.toLowerCase()?.includes('illustrazione') ||
+                         project.category?.toLowerCase()?.includes('grafica') || false
 
   if (isIllustration) {
     layout = 'centered'
@@ -708,6 +708,7 @@ export function ProjectPage({
         <Lightbox
           src={lightboxSrc}
           all={lightboxAll}
+          isIllustration={isIllustration}
           onClose={() => setLightboxSrc(null)}
           onNav={setLightboxSrc}
         />

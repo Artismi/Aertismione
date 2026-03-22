@@ -72,6 +72,7 @@ export default function RootLayout({
     <html
       lang="it"
       className={`${bebasNeue.variable} ${spaceGrotesk.variable} ${courierPrime.variable} ${jetbrainsMono.variable}`}
+      suppressHydrationWarning
     >
       <head>
         {/* Preload 3D model files — browser fetches them in parallel with JS bundle */}
