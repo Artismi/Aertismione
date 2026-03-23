@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 /**
  * PortfolioSection â€” Mappa con due meccaniche di movimento:
@@ -59,6 +59,11 @@ function hexToRgb(hex: string): [number, number, number] {
 function getCanvasPos(e: React.MouseEvent<HTMLCanvasElement>): { lx: number; ly: number } {
   const rect = e.currentTarget.getBoundingClientRect()
   return { lx: e.clientX - rect.left, ly: e.clientY - rect.top }
+}
+
+function getTouchCanvasPos(e: React.TouchEvent<HTMLCanvasElement>, touch: React.Touch): { lx: number; ly: number } {
+  const rect = e.currentTarget.getBoundingClientRect()
+  return { lx: touch.clientX - rect.left, ly: touch.clientY - rect.top }
 }
 
 /* â”€â”€â”€ Disegno: sfondo con hex dots + reveal radiale â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
@@ -348,7 +353,11 @@ export function PortfolioSection() {
     const canvasEl = canvas, wrapperEl = wrapper
     function resize() {
       const dpr=window.devicePixelRatio||1, w=wrapperEl.clientWidth
-      const h=Math.min(620, Math.max(380, Math.round(w*0.54)))
+      // On narrow screens give more vertical room so the ball playground is playable
+      const isMobile = w < 768
+      const h = isMobile
+        ? Math.min(700, Math.max(480, Math.round(w * 0.78)))
+        : Math.min(620, Math.max(380, Math.round(w * 0.54)))
       canvasEl.width=w*dpr; canvasEl.height=h*dpr
       canvasEl.style.width=`${w}px`; canvasEl.style.height=`${h}px`
       sizeRef.current={w,h}
@@ -577,6 +586,48 @@ export function PortfolioSection() {
     if (!isDraggingRef.current && canvasRef.current) canvasRef.current.style.cursor='crosshair'
   }
 
+  /* ── Touch handlers (mirror mouse logic for mobile) ── */
+
+  function handleTouchStart(e: React.TouchEvent<HTMLCanvasElement>) {
+    if (e.touches.length === 0) return
+    e.preventDefault()
+    const touch = e.touches[0]
+    const {lx,ly} = getTouchCanvasPos(e, touch)
+    const ball = ballRef.current
+    if (Math.hypot(lx-ball.x, ly-ball.y) < BALL_R+20) {
+      isDraggingRef.current = true
+      dragOriginRef.current = {x: ball.x, y: ball.y}
+      dragPosRef.current = {x: lx, y: ly}
+      jumpRef.current = null
+    }
+  }
+
+  function handleTouchMove(e: React.TouchEvent<HTMLCanvasElement>) {
+    if (!isDraggingRef.current || e.touches.length === 0) return
+    e.preventDefault()
+    const touch = e.touches[0]
+    const {lx,ly} = getTouchCanvasPos(e, touch)
+    dragPosRef.current = {x: lx, y: ly}
+  }
+
+  function handleTouchEnd(e: React.TouchEvent<HTMLCanvasElement>) {
+    e.preventDefault()
+    if (isDraggingRef.current) {
+      fireSlingshot()
+    } else {
+      // Tap: jump to tapped point
+      const touch = e.changedTouches[0]
+      if (touch) {
+        const rect = canvasRef.current?.getBoundingClientRect()
+        if (rect) {
+          const lx = touch.clientX - rect.left
+          const ly = touch.clientY - rect.top
+          jumpToPoint(lx, ly)
+        }
+      }
+    }
+  }
+
   return (
     <div ref={sectionRef} className={styles.section}>
       <div className="container">
@@ -596,6 +647,10 @@ export function PortfolioSection() {
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseLeave}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          style={{ touchAction: 'none' }}
         />
         <div className={styles.legend}>
           {PROJECTS.map(p=>(

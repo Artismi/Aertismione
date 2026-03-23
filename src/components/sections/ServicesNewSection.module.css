@@ -302,3 +302,31 @@
   }
   .intro { text-align: left; max-width: 100%; }
 }
+
+@media (max-width: 480px) {
+  .sectionHeader {
+    padding: 0 clamp(16px, 4vw, 28px);
+    margin-bottom: clamp(20px, 4vw, 36px);
+  }
+
+  .heading {
+    font-size: clamp(2rem, 10vw, 3rem);
+  }
+
+  .intro {
+    font-size: 0.82rem;
+    max-width: 100%;
+  }
+
+  .blockTitle {
+    font-size: clamp(1.1rem, 5vw, 1.5rem);
+  }
+
+  .blockHead {
+    padding: clamp(16px, 4vw, 22px) clamp(16px, 4vw, 22px) clamp(12px, 3vw, 18px);
+  }
+
+  .item {
+    padding: clamp(8px, 2vw, 12px) clamp(16px, 4vw, 22px);
+  }
+}

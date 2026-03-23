@@ -36,12 +36,12 @@ export default function Home() {
         <ProblemSection />
       </section>
 
-      <section id="servizi">
-        <ServicesNewSection />
-      </section>
-
       <section id="portfolio">
         <PortfolioSection />
+      </section>
+
+      <section id="servizi">
+        <ServicesNewSection />
       </section>
 
       <section id="chi-sono">

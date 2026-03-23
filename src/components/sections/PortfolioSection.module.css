@@ -293,11 +293,29 @@
   border-color: var(--color-warm);
 }
 
-/* ── Responsive ──────────────────────────────────────────────────── */
+/* ── Responsive ──────────────────────────────────────────────────────── */
+
+/* mobileGrid (card list) stays hidden — canvas is used on all screens */
+.mobileGrid { display: none !important; }
 
 @media (max-width: 768px) {
-  .canvasWrapper { display: none; }
-  .mobileGrid    { display: flex; }
+  /* Canvas is visible on mobile — touch events handle interaction */
+  .canvasWrapper { display: block; }
+
+  .intro {
+    font-size: 0.9375rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .legend {
+    gap: 4px 12px;
+  }
+
+  .legendItem {
+    font-size: 0.55rem;
+  }
+
+  /* Modal adjustments */
   .modalBody     { grid-template-columns: 1fr; gap: 20px; }
   .modal         { max-height: 90vh; }
   .modalHeader,

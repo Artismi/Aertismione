@@ -120,15 +120,20 @@ export function LogoModel(props: any) {
             rotatingRef.current.rotation.y = Math.sin(timeRef.current) * (Math.PI / 6)
         }
 
-        const glassFade = Math.max(0, Math.min(1, 1 - (scrollY - 500) / 400))
-        glassMaterial.opacity = glassFade   // il Fresnel scala internamente
+        // Fase 1: vetro → cristallo puro (scrollY 0–200): le linee spariscono più rapidamente
+        // Fase 2: dissolvenza totale (scrollY 200–480): il corpo del logo svanisce
+        const glassFade = Math.max(0, Math.min(1, 1 - scrollY / 480))
+        // Le linee di bordo spariscono prima (×2 veloce) per l'effetto cristallo
+        const edgeFade = Math.max(0, Math.min(1, 1 - scrollY / 220))
+
+        glassMaterial.opacity = glassFade
         glassMaterial.emissiveIntensity = 0.32 * glassFade
-        glassMaterial.visible = glassFade > 0.005
+        glassMaterial.visible = glassFade > 0.003
         glassMaterial.depthWrite = glassFade > 0.05
 
         if (edgeMatRef.current) {
-            edgeMatRef.current.uniforms.u_opacity.value = 0.32 * glassFade
-            edgeMatRef.current.visible = glassFade > 0.005
+            edgeMatRef.current.uniforms.u_opacity.value = 0.32 * edgeFade
+            edgeMatRef.current.visible = edgeFade > 0.003
         }
     })
 
