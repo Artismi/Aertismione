@@ -112,6 +112,44 @@ function LoadingSync() {
 
 
 /**
+ * ResponsiveCamera — adjusts vertical FOV to maintain consistent visual proportions
+ * across viewport aspect ratios (landscape desktop vs portrait mobile).
+ *
+ * Strategy: preserve the horizontal angular coverage of the desktop reference
+ * (vFOV=35 at 16:9). On portrait screens the vFOV is increased so the scene
+ * "zooms out" uniformly — the logo and background keep the same ratio with the
+ * viewport frame regardless of device orientation.
+ */
+function ResponsiveCamera() {
+  const { camera, size } = useThree()
+
+  useEffect(() => {
+    const aspect = size.width / size.height
+    const BASE_FOV = 35
+    const REF_ASPECT = 16 / 9
+
+    let fov: number
+    if (aspect >= REF_ASPECT) {
+      // Landscape / wide desktop: use the designed FOV unchanged
+      fov = BASE_FOV
+    } else {
+      // Portrait / narrow: maintain the same horizontal angular coverage
+      // as the desktop reference so proportions stay consistent.
+      const hFov = 2 * Math.atan(Math.tan((BASE_FOV * Math.PI / 180) / 2) * REF_ASPECT)
+      fov = Math.min(
+        2 * Math.atan(Math.tan(hFov / 2) / aspect) * (180 / Math.PI),
+        65 // cap to limit fisheye distortion on very narrow screens
+      )
+    }
+
+    ;(camera as any).fov = fov
+    ;(camera as any).updateProjectionMatrix()
+  }, [camera, size.width, size.height])
+
+  return null
+}
+
+/**
  * CameraRig — smooth lerp of the camera following scrollY.
  * scrollY 0 → camera at y=2 (looking at logo)
  * scrollY increases → camera descends
@@ -186,6 +224,7 @@ function Scene({ isHome }: { isHome: boolean }) {
     <>
       <LoadingSync />
       <ScrollSync />
+      <ResponsiveCamera />
       <CameraRig />
       {/* Turn off heavy physics/updates when not home */}
       {isHome && <HeroStage onTrackedPoints={noop} />}
