@@ -72,7 +72,8 @@ function drawBackground(ctx: CanvasRenderingContext2D, w: number, h: number, rev
   if (reveal <= 0) return
   const maxR = Math.hypot(w/2, h/2) * Math.min(reveal * 1.35, 1)
   const cx = w/2, cy = h/2, sp = 29, rowH = sp * 0.866
-  ctx.fillStyle = 'rgba(26,26,26,0.09)'
+  // Dot rosa tenue visibili su sfondo scuro
+  ctx.fillStyle = 'rgba(232,168,191,0.09)'
   for (let row = 0; row * rowH <= h + rowH; row++) {
     const y = row * rowH, xOff = (row % 2) * sp * 0.5
     for (let col = -1; col * sp <= w + sp; col++) {
@@ -86,22 +87,22 @@ function drawBackground(ctx: CanvasRenderingContext2D, w: number, h: number, rev
 
 function drawMapDecorations(ctx: CanvasRenderingContext2D, w: number, h: number) {
   const cx = w-44, cy = 44, r = 14
-  ctx.strokeStyle = 'rgba(26,26,26,0.18)'; ctx.lineWidth = 1.2
+  ctx.strokeStyle = 'rgba(242,237,228,0.30)'; ctx.lineWidth = 1.2
   ctx.beginPath(); ctx.moveTo(cx, cy-r); ctx.lineTo(cx, cy+r); ctx.stroke()
   ctx.beginPath(); ctx.moveTo(cx-r, cy); ctx.lineTo(cx+r, cy); ctx.stroke()
   const rd = r * 0.62
-  ctx.strokeStyle = 'rgba(26,26,26,0.09)'
+  ctx.strokeStyle = 'rgba(242,237,228,0.15)'
   for (const a of [Math.PI/4, -Math.PI/4, 3*Math.PI/4, -3*Math.PI/4]) {
     ctx.beginPath(); ctx.moveTo(cx+Math.cos(a)*rd*0.3, cy+Math.sin(a)*rd*0.3)
     ctx.lineTo(cx+Math.cos(a)*rd, cy+Math.sin(a)*rd); ctx.stroke()
   }
   ctx.beginPath(); ctx.moveTo(cx, cy-r); ctx.lineTo(cx-4, cy); ctx.lineTo(cx+4, cy)
-  ctx.closePath(); ctx.fillStyle = 'rgba(26,26,26,0.20)'; ctx.fill()
+  ctx.closePath(); ctx.fillStyle = 'rgba(232,168,191,0.75)'; ctx.fill()
   ctx.font = 'bold 7px "JetBrains Mono",monospace'
-  ctx.fillStyle = 'rgba(26,26,26,0.32)'; ctx.textAlign = 'center'
+  ctx.fillStyle = 'rgba(242,237,228,0.60)'; ctx.textAlign = 'center'
   ctx.fillText('N', cx, cy-r-5)
   ctx.font = '600 7.5px "JetBrains Mono",monospace'
-  ctx.fillStyle = 'rgba(26,26,26,0.16)'; ctx.textAlign = 'left'
+  ctx.fillStyle = 'rgba(242,237,228,0.25)'; ctx.textAlign = 'left'
   ctx.fillText('ARTISMI STUDIO', 14, h-12)
 }
 
@@ -132,7 +133,7 @@ function drawPaths(ctx: CanvasRenderingContext2D, projects: Project[], w: number
     const p1=projects[a], p2=projects[b]
     const x1=p1.mapX*w, y1=p1.mapY*h, x2=p2.mapX*w, y2=p2.mapY*h
     const mx=(x1+x2)/2, my=(y1+y2)/2, dx=x2-x1, dy=y2-y1, len=Math.hypot(dx,dy)
-    ctx.strokeStyle = 'rgba(26,26,26,0.09)'
+    ctx.strokeStyle = 'rgba(232,168,191,0.18)'
     ctx.beginPath(); ctx.moveTo(x1,y1)
     ctx.quadraticCurveTo(mx-(dy/len)*len*0.16, my+(dx/len)*len*0.16, x2,y2); ctx.stroke()
   }
@@ -157,10 +158,12 @@ function drawFolder(ctx: CanvasRenderingContext2D, p: Project, w: number, h: num
   ctx.strokeStyle = `rgba(${cr},${cg},${cb},${isHovered ? 0.50 : (0.07+pulse*0.10).toFixed(3)})`
   ctx.lineWidth = isHovered ? 2.2 : 1.2; ctx.stroke()
 
-  ctx.shadowColor = `rgba(26,26,26,${isHovered?0.28:0.12})`
-  ctx.shadowBlur = isHovered ? 22 : 9
-  ctx.shadowOffsetX = 2; ctx.shadowOffsetY = isHovered ? 10 : 5
+  // Shadow — viola scuro (non grigio)
+  ctx.shadowColor = `rgba(0,0,0,${isHovered?0.65:0.35})`
+  ctx.shadowBlur = isHovered ? 28 : 12
+  ctx.shadowOffsetX = 2; ctx.shadowOffsetY = isHovered ? 12 : 6
 
+  // Tab categoria — colore accent del progetto
   ctx.beginPath()
   ctx.moveTo(-fw/2,      -fh/2)
   ctx.lineTo(-fw/2+32,   -fh/2)
@@ -171,12 +174,13 @@ function drawFolder(ctx: CanvasRenderingContext2D, p: Project, w: number, h: num
 
   ctx.shadowBlur=0; ctx.shadowOffsetX=0; ctx.shadowOffsetY=0
   ctx.textAlign='center'
-  ctx.fillStyle='rgba(255,255,255,0.85)'
+  ctx.fillStyle='rgba(255,255,255,0.90)'
   ctx.font='bold 6px "JetBrains Mono",monospace'
   ctx.fillText(p.category.toUpperCase(), -fw/2+16, -fh/2-4)
 
-  ctx.shadowColor=`rgba(26,26,26,${isHovered?0.20:0.08})`
-  ctx.shadowBlur=isHovered?14:5; ctx.shadowOffsetY=isHovered?6:3
+  // Corpo cartella — viola scuro con sfumatura
+  ctx.shadowColor=`rgba(0,0,0,${isHovered?0.45:0.22})`
+  ctx.shadowBlur=isHovered?18:7; ctx.shadowOffsetY=isHovered?8:4
   const bx=-fw/2, by=-fh/2
   ctx.beginPath()
   ctx.moveTo(bx+br, by); ctx.lineTo(bx+fw-br, by)
@@ -188,28 +192,45 @@ function drawFolder(ctx: CanvasRenderingContext2D, p: Project, w: number, h: num
   ctx.lineTo(bx, by+br)
   ctx.quadraticCurveTo(bx, by, bx+br, by)
   ctx.closePath()
-  ctx.fillStyle='#F8F4ED'; ctx.fill()
+  // Gradiente viola scuro — carta nera del portfolio
+  const bodyGrad = ctx.createLinearGradient(bx, by, bx+fw, by+fh)
+  // Schiarito il gradiente per farlo staccare dallo sfondo che è anch'esso scuro (migliorata la distinzione)
+  bodyGrad.addColorStop(0, 'rgba(54, 24, 82, 0.97)')
+  bodyGrad.addColorStop(1, 'rgba(28, 12, 42, 0.97)')
+  ctx.fillStyle=bodyGrad; ctx.fill()
   ctx.shadowBlur=0; ctx.shadowOffsetX=0; ctx.shadowOffsetY=0
-  ctx.strokeStyle=p.accent; ctx.lineWidth=isHovered?2.6:1.8; ctx.stroke()
+  // Border accent con glow su hover
+  if (isHovered) {
+    ctx.shadowColor=`rgba(${cr},${cg},${cb},0.65)`; ctx.shadowBlur=16
+  }
+  // Aumentata l'opacità del bordo di base da 0.45 a 0.75 affinché le cartelline "disegnino" lo stacco visivo
+  ctx.strokeStyle=isHovered ? p.accent : 'rgba(242, 237, 228, 0.75)'
+  ctx.lineWidth=isHovered?2.5:1.5; ctx.stroke()
+  ctx.shadowBlur=0
 
+  // Dog-ear accent
   const dex=fw/2, dey=fh/2, ds=11
   ctx.beginPath()
   ctx.moveTo(dex-ds, dey); ctx.lineTo(dex, dey-ds); ctx.lineTo(dex, dey)
   ctx.closePath()
-  ctx.fillStyle=`rgba(${cr},${cg},${cb},0.28)`; ctx.fill()
+  ctx.fillStyle=`rgba(${cr},${cg},${cb},0.55)`; ctx.fill()
 
-  ctx.strokeStyle='rgba(26,26,26,0.07)'; ctx.lineWidth=1
+  // Linee contenuto — chiare su scuro
+  ctx.strokeStyle='rgba(242,237,228,0.10)'; ctx.lineWidth=1
   for (let i=0;i<3;i++) {
     ctx.beginPath()
     ctx.moveTo(-fw/2+11, -fh/2+28+i*9); ctx.lineTo(fw/2-15, -fh/2+28+i*9)
     ctx.stroke()
   }
 
+  // Titolo — crema su viola scuro
   ctx.textAlign='center'
-  ctx.fillStyle='#1A1A1A'
-  ctx.font='bold 11px "Anton","Impact",sans-serif'
+  ctx.fillStyle='#FFFFFF' // Bianco puro per contrasto perfetto
+  // Font cambiato da Anton/Impact a Space Grotesk (leggibile) maggiorato
+  ctx.font='600 12.5px "Space Grotesk", sans-serif'
   ctx.fillText(p.title.toUpperCase(), 0, -fh/2+18)
 
+  // Dot accent
   ctx.beginPath(); ctx.arc(-fw/2+11, fh/2-9, 3.5, 0, Math.PI*2)
   ctx.fillStyle=p.accent; ctx.fill()
 
@@ -217,12 +238,45 @@ function drawFolder(ctx: CanvasRenderingContext2D, p: Project, w: number, h: num
 }
 
 function drawTrail(ctx: CanvasRenderingContext2D, trail: Array<{x:number;y:number;speed:number}>) {
+  if (trail.length === 0) return
+  const prev = ctx.globalCompositeOperation
+  // Screen = additivo su sfondo scuro → fuoco vero, non overlay opaco
+  ctx.globalCompositeOperation = 'screen'
+
   for (let i = 0; i < trail.length; i++) {
-    const t = i/trail.length
-    const alpha = t * 0.24 * (Math.min(trail[i].speed, MAX_LAUNCH)/MAX_LAUNCH)
-    ctx.beginPath(); ctx.arc(trail[i].x, trail[i].y, Math.max(2, BALL_R*0.34*t), 0, Math.PI*2)
-    ctx.fillStyle = `rgba(26,26,26,${alpha.toFixed(3)})`; ctx.fill()
+    const t = i / trail.length          // 0 = coda lontana, 1 = vicino alla pallina
+    const spd = Math.min(trail[i].speed, MAX_LAUNCH) / MAX_LAUNCH
+    if (spd < 0.06) continue
+    const { x, y } = trail[i]
+
+    // Bloom viola — strato esterno
+    const bloomR = Math.max(3, BALL_R * (0.22 + t * 1.05))
+    const bloom = ctx.createRadialGradient(x, y, 0, x, y, bloomR)
+    bloom.addColorStop(0,   `rgba(140,55,210,${(t * 0.52 * spd).toFixed(3)})`)
+    bloom.addColorStop(0.55,`rgba(90,25,160,${(t * 0.28 * spd).toFixed(3)})`)
+    bloom.addColorStop(1,   'rgba(60,10,120,0)')
+    ctx.beginPath(); ctx.arc(x, y, bloomR, 0, Math.PI*2)
+    ctx.fillStyle = bloom; ctx.fill()
+
+    // Mid pink
+    const midR = bloomR * 0.52
+    const mid = ctx.createRadialGradient(x, y, 0, x, y, midR)
+    mid.addColorStop(0,   `rgba(240,75,195,${(t * 0.65 * spd).toFixed(3)})`)
+    mid.addColorStop(0.6, `rgba(180,40,155,${(t * 0.30 * spd).toFixed(3)})`)
+    mid.addColorStop(1,   'rgba(140,20,120,0)')
+    ctx.beginPath(); ctx.arc(x, y, midR, 0, Math.PI*2)
+    ctx.fillStyle = mid; ctx.fill()
+
+    // Core bianco-caldo — solo ultimo 38% della scia
+    if (t > 0.62) {
+      const ct = (t - 0.62) / 0.38
+      const cR = midR * 0.38
+      ctx.beginPath(); ctx.arc(x, y, cR, 0, Math.PI*2)
+      ctx.fillStyle = `rgba(255,215,255,${(ct * 0.88 * spd).toFixed(3)})`; ctx.fill()
+    }
   }
+
+  ctx.globalCompositeOperation = prev
 }
 
 function drawSlingshot(
@@ -240,8 +294,10 @@ function drawSlingshot(
 
   const perpX = (-dy / dist) * 9, perpY = (dx / dist) * 9
   const alpha = 0.55 + powerPct * 0.35
+  const prevComp = ctx.globalCompositeOperation
+  ctx.globalCompositeOperation = 'screen'
   ctx.lineCap = 'round'; ctx.lineWidth = 2.4
-  ctx.strokeStyle = `rgba(226,255,0,${alpha.toFixed(3)})`
+  ctx.strokeStyle = `rgba(255,80,215,${alpha.toFixed(3)})`
   ctx.beginPath()
   ctx.moveTo(origin.x - perpX * 0.55, origin.y - perpY * 0.55)
   ctx.lineTo(ball.x - perpX, ball.y - perpY)
@@ -252,16 +308,18 @@ function drawSlingshot(
   ctx.stroke()
 
   ctx.beginPath(); ctx.arc(origin.x, origin.y, 4.5, 0, Math.PI*2)
-  ctx.fillStyle = `rgba(226,255,0,${(0.65 + powerPct*0.25).toFixed(3)})`; ctx.fill()
+  ctx.fillStyle = `rgba(255,80,215,${(0.65 + powerPct*0.25).toFixed(3)})`; ctx.fill()
 
   ctx.beginPath()
   ctx.arc(ball.x, ball.y, BALL_R + 6 + powerPct * 16, 0, Math.PI*2)
-  ctx.strokeStyle = `rgba(226,255,0,${(0.28 + powerPct * 0.42).toFixed(3)})`
+  ctx.strokeStyle = `rgba(200,70,210,${(0.28 + powerPct * 0.42).toFixed(3)})`
   ctx.lineWidth = 1.6; ctx.stroke()
 
+  ctx.globalCompositeOperation = prevComp
   let px = origin.x, py = origin.y
   let pvx = (dx / dist) * spd, pvy = (dy / dist) * spd
   const m = BALL_R + 2
+  ctx.globalCompositeOperation = 'screen'
   for (let i = 1; i <= 32; i++) {
     px += pvx; py += pvy
     pvx *= FRICTION; pvy *= FRICTION
@@ -271,8 +329,9 @@ function drawSlingshot(
     const a = (1 - i / 32) * 0.55
     const r = Math.max(1.2, 3.8 - i * 0.09)
     ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2)
-    ctx.fillStyle = `rgba(26,26,26,${a.toFixed(3)})`; ctx.fill()
+    ctx.fillStyle = `rgba(200,70,210,${a.toFixed(3)})`; ctx.fill()
   }
+  ctx.globalCompositeOperation = prevComp
 }
 
 function drawBall(ctx: CanvasRenderingContext2D, ball: Ball, js: JumpState | null) {
@@ -294,28 +353,91 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball, js: JumpState | nul
     shadowX=ball.x; shadowY=ball.y+3; shadowSx=ss; shadowSy=ss*0.28
   }
 
+  const spd = Math.hypot(ball.vx, ball.vy)
+  const speedF = Math.min(spd / 14, 1)
+  const prev = ctx.globalCompositeOperation
+
+  // ── Glow plasma esterno — screen composite (luce additiva su dark) ──
+  ctx.globalCompositeOperation = 'screen'
+  const glowR = BALL_R * (2.0 + speedF * 1.6)
+  const glow = ctx.createRadialGradient(drawX, drawY, BALL_R*0.5, drawX, drawY, glowR)
+  glow.addColorStop(0,   `rgba(200,70,200,${(0.38 + speedF*0.40).toFixed(3)})`)
+  glow.addColorStop(0.45,`rgba(110,30,175,${(0.18 + speedF*0.20).toFixed(3)})`)
+  glow.addColorStop(1,   'rgba(60,0,100,0)')
+  ctx.beginPath(); ctx.arc(drawX, drawY, glowR, 0, Math.PI*2)
+  ctx.fillStyle = glow; ctx.fill()
+  ctx.globalCompositeOperation = prev
+
+  // ── Shadow viola (normale, non screen) ──
   ctx.beginPath()
   ctx.ellipse(shadowX, shadowY, BALL_R*shadowSx, BALL_R*shadowSy, 0, 0, Math.PI*2)
-  ctx.fillStyle = `rgba(26,26,26,${(0.22*shadowSx).toFixed(3)})`; ctx.fill()
+  ctx.fillStyle = `rgba(60,0,80,${(0.45*shadowSx).toFixed(3)})`; ctx.fill()
 
   ctx.save(); ctx.translate(drawX, drawY); ctx.scale(sx, sy)
-  const grad = ctx.createRadialGradient(-BALL_R*0.3,-BALL_R*0.3,BALL_R*0.08, 0,0,BALL_R)
-  grad.addColorStop(0,'#636363'); grad.addColorStop(1,'#1A1A1A')
-  ctx.beginPath(); ctx.arc(0,0,BALL_R,0,Math.PI*2); ctx.fillStyle=grad; ctx.fill()
+
+  // ── Corpo meteorite — gradiente viola-rosa rocky ──
+  const body = ctx.createRadialGradient(-BALL_R*0.28,-BALL_R*0.32, BALL_R*0.05, 0, 0, BALL_R)
+  body.addColorStop(0,    '#D068DC')  // rosa-viola caldo
+  body.addColorStop(0.30, '#8228B0')  // viola profondo
+  body.addColorStop(0.65, '#3A0E58')  // quasi nero viola
+  body.addColorStop(1,    '#120620')  // bordo scurissimo
+  ctx.beginPath(); ctx.arc(0, 0, BALL_R, 0, Math.PI*2)
+  ctx.fillStyle = body; ctx.fill()
+
+  // ── Texture superficie — ruota con la fisica ──
   ctx.save(); ctx.rotate(ball.rotation)
-  ctx.beginPath(); ctx.arc(0,0,BALL_R-2.5,-0.18,Math.PI+0.18)
-  ctx.strokeStyle='rgba(255,255,255,0.17)'; ctx.lineWidth=1.5; ctx.stroke(); ctx.restore()
-  ctx.beginPath(); ctx.arc(-BALL_R*0.3,-BALL_R*0.3,BALL_R*0.27,0,Math.PI*2)
-  ctx.fillStyle='rgba(255,255,255,0.13)'; ctx.fill()
+
+  // Crepe
+  ctx.strokeStyle = 'rgba(210,110,230,0.28)'; ctx.lineWidth = 0.9
+  ctx.beginPath()
+  ctx.moveTo(-BALL_R*0.42, -BALL_R*0.06)
+  ctx.lineTo(-BALL_R*0.05,  BALL_R*0.26)
+  ctx.lineTo( BALL_R*0.32,  BALL_R*0.12)
+  ctx.stroke()
+  ctx.beginPath()
+  ctx.moveTo( BALL_R*0.16, -BALL_R*0.40)
+  ctx.lineTo(-BALL_R*0.08, -BALL_R*0.02)
+  ctx.stroke()
+
+  // Crateri
+  const craters: Array<{x:number;y:number;r:number}> = [
+    {x:-0.28, y:0.22,  r:0.20},
+    {x: 0.30, y:-0.20, r:0.13},
+    {x:-0.08, y:-0.30, r:0.09},
+  ]
+  for (const c of craters) {
+    ctx.beginPath(); ctx.arc(c.x*BALL_R, c.y*BALL_R, c.r*BALL_R, 0, Math.PI*2)
+    ctx.fillStyle = 'rgba(6,0,14,0.58)'; ctx.fill()
+    ctx.beginPath(); ctx.arc(
+      (c.x-c.r*0.32)*BALL_R, (c.y-c.r*0.32)*BALL_R, c.r*BALL_R*0.52, 0, Math.PI*2
+    )
+    ctx.strokeStyle = 'rgba(210,110,230,0.20)'; ctx.lineWidth=0.5; ctx.stroke()
+  }
+  ctx.restore()
+
+  // ── Specular — screen per brillantezza additiva ──
+  ctx.globalCompositeOperation = 'screen'
+  const spec = ctx.createRadialGradient(-BALL_R*0.32,-BALL_R*0.36, 0, -BALL_R*0.26,-BALL_R*0.28, BALL_R*0.46)
+  spec.addColorStop(0,   'rgba(255,200,255,0.72)')
+  spec.addColorStop(0.42,'rgba(220,130,255,0.25)')
+  spec.addColorStop(1,   'rgba(180,70,220,0)')
+  ctx.beginPath(); ctx.arc(0, 0, BALL_R, 0, Math.PI*2)
+  ctx.fillStyle = spec; ctx.fill()
+  ctx.globalCompositeOperation = prev
+
   ctx.restore()
 }
 
 function drawParticles(ctx: CanvasRenderingContext2D, particles: Particle[]) {
+  if (particles.length === 0) return
+  const prev = ctx.globalCompositeOperation
+  ctx.globalCompositeOperation = 'screen'
   for (const p of particles) {
     const [rr,gg,bb] = hexToRgb(p.color)
     ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2)
     ctx.fillStyle=`rgba(${rr},${gg},${bb},${Math.max(0,p.alpha).toFixed(3)})`; ctx.fill()
   }
+  ctx.globalCompositeOperation = prev
 }
 
 export function PortfolioSection() {
@@ -413,9 +535,14 @@ export function PortfolioSection() {
           js.scaleX=1.6; js.scaleY=0.50; js.landed=true
           const proj=PROJECTS.find(p=>p.id===js.projectId)
           if (proj) {
-            for (let i=0; i<16; i++) {
-              const a=(i/16)*Math.PI*2+Math.random()*0.4, spd=2.5+Math.random()*5
+            for (let i=0; i<12; i++) {
+              const a=(i/12)*Math.PI*2+Math.random()*0.4, spd=2.5+Math.random()*5
               particlesRef.current.push({x:ball.x,y:ball.y,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd-2,r:3+Math.random()*3.5,alpha:0.9,color:proj.accent})
+            }
+            const fire=['#FF55E0','#CC44FF','#FF99EE','#EE44CC']
+            for (let i=0; i<16; i++) {
+              const a=Math.random()*Math.PI*2, spd=2+Math.random()*8
+              particlesRef.current.push({x:ball.x,y:ball.y,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd-3,r:1.5+Math.random()*3,alpha:1,color:fire[i%fire.length]})
             }
           }
           setTimeout(()=>{
@@ -454,9 +581,14 @@ export function PortfolioSection() {
               collisionCooldownRef.current=now
               const ang=Math.atan2(ball.y-p.mapY*h, ball.x-p.mapX*w)
               ball.vx=Math.cos(ang)*6; ball.vy=Math.sin(ang)*6
-              for (let i=0;i<14;i++) {
-                const a=(i/14)*Math.PI*2+Math.random()*0.4, sp=2+Math.random()*4
+              for (let i=0;i<10;i++) {
+                const a=(i/10)*Math.PI*2+Math.random()*0.4, sp=2+Math.random()*4
                 particlesRef.current.push({x:ball.x,y:ball.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1.5,r:2.5+Math.random()*3,alpha:0.85,color:p.accent})
+              }
+              const fire=['#FF55E0','#CC44FF','#FF99EE']
+              for (let i=0;i<12;i++) {
+                const a=Math.random()*Math.PI*2, sp=1.5+Math.random()*5.5
+                particlesRef.current.push({x:ball.x,y:ball.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,r:1.2+Math.random()*2.5,alpha:0.95,color:fire[i%fire.length]})
               }
               const proj=p; setTimeout(()=>routerRef.current.push(`/portfolio/${proj.id}`), 300)
               break

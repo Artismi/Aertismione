@@ -1,7 +1,8 @@
 .section {
   padding: var(--section-py) 0;
-  background: rgba(237, 232, 223, 0.97);
-  overflow: hidden;
+  position: relative;
+  z-index: 1; /* CRITICAL: Forces this section's background to render ON TOP of the 3D Canvas (z=0) */
+  background: rgba(18, 8, 28, 0.80);
 }
 
 .grid {
@@ -9,6 +10,8 @@
   grid-template-columns: 1fr 1fr;
   gap: clamp(48px, 7vw, 100px);
   align-items: start;
+  position: relative;
+  z-index: 1; /* Il contenuto sale sopra i pseudo-elementi */
 }
 
 /* ── Blocco singolo ─────────────────────────────────────────────── */
@@ -26,7 +29,7 @@
   font-size: clamp(7rem, 12vw, 13rem);
   font-weight: 400;
   line-height: 1;
-  color: rgba(26, 26, 26, 0.05);
+  color: rgba(242, 237, 228, 0.06);
   pointer-events: none;
   user-select: none;
   letter-spacing: -0.03em;
@@ -39,8 +42,8 @@
   align-items: center;
   gap: 8px;
   font-family: var(--font-condensed);
-  font-size: 0.65rem;
-  letter-spacing: 0.22em;
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--color-muted);
   margin-bottom: 14px;
@@ -86,11 +89,11 @@
 
 .body {
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.9rem;
   line-height: 1.75;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  text-align: justify;
+  letter-spacing: 0.03em;
+  text-transform: none;
+  text-align: left;
   color: var(--color-body);
 }
 

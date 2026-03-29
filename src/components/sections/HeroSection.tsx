@@ -25,10 +25,10 @@ function MaskLine({ text, delay, accent }: { text: string; delay: number; accent
 export function HeroSection() {
   return (
     <div className={styles.hero} aria-label="Sezione principale">
-      {/* Primo viewport — solo il logo 3D gira */}
+      {/* 40vh breather space for the logo exclusively */}
       <div className={styles.firstViewport} aria-hidden="true" />
 
-      {/* Secondo viewport — il testo emerge */}
+      {/* Testo protetto dall'overlay viola 0.85 */}
       <div className={styles.secondViewport}>
 
         {/* Eyebrow + disponibilità */}

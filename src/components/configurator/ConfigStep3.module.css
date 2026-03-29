@@ -75,9 +75,9 @@
 }
 
 .form {
-  background: white;
+  background: rgba(255, 255, 255, 0.55);
   padding: 32px;
-  border: 1px solid rgba(26,26,26,0.06);
+  border: 1px solid rgba(26,26,26,0.08);
 }
 
 .formIntro {
@@ -104,6 +104,7 @@
 .field input, .field select, .field textarea {
   padding: 12px;
   border: 1px solid rgba(26,26,26,0.1);
+  background: rgba(255,255,255,0.75);
   font-family: var(--font-body);
   font-size: 0.95rem;
   outline: none;
@@ -121,19 +122,20 @@
 .submitBtn {
   width: 100%;
   padding: 18px;
-  background: var(--color-text);
-  color: white;
+  background: #1A1A1A;
+  color: #F2EDE4;
   border: none;
   font-family: var(--font-display);
   font-size: 1.1rem;
   text-transform: uppercase;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
   margin-top: 12px;
 }
 
 .submitBtn:hover {
   background: var(--color-accent);
+  box-shadow: 4px 4px 0 var(--color-amber);
 }
 
 .privacy {

@@ -16,7 +16,7 @@ export function Navbar() {
 
     // Aggiorna classe direttamente sul DOM — nessun re-render React
     const onScroll = () => {
-      nav.classList.toggle(styles.scrolled, window.scrollY > 30)
+      nav.classList.toggle(styles.scrolled, window.scrollY > 80)
     }
 
     window.addEventListener('scroll', onScroll, { passive: true })

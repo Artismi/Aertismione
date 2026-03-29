@@ -7,11 +7,11 @@
 
 .root {
   --accent: #C4622D; /* overridden per-project from JS */
-  --bg: #F5F0E8;
-  --bg-alt: #EDE8DF;
+  --bg: #F2EAF0; /* carta rosata — emerge dal buio come da richiesta */
+  --bg-alt: #EAE0E8;
   --ink: #1A1A1A;
-  --ink-muted: #6A6560;
-  --surface: rgba(255,255,255,0.55);
+  --ink-muted: #5A5248;
+  --surface: rgba(255,255,255,0.40);
   min-height: 100vh;
   background-color: var(--bg);
   color: var(--ink);
@@ -213,7 +213,7 @@
   font-size: clamp(4rem, 10vw, 9rem);
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #F5F0E8;
+  color: #F2EDE4;
   line-height: 0.9;
   text-shadow: 0 0 80px rgba(0,0,0,0.8);
 }
@@ -244,7 +244,7 @@
   font-size: clamp(3.5rem, 7vw, 7.5rem);
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  color: #F5F0E8;
+  color: #F2EDE4;
   line-height: 0.92;
 }
 
@@ -843,7 +843,7 @@
   right: 32px;
   background: none;
   border: none;
-  color: #F5F0E8;
+  color: #F2EDE4;
   font-size: 2rem;
   cursor: none;
   line-height: 1;
@@ -859,9 +859,9 @@
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  background: rgba(245, 240, 232, 0.1);
-  border: 1px solid rgba(245, 240, 232, 0.2);
-  color: #F5F0E8;
+  background: rgba(242, 237, 228, 0.1);
+  border: 1px solid rgba(242, 237, 228, 0.2);
+  color: #F2EDE4;
   font-size: 1.2rem;
   padding: 12px 18px;
   cursor: none;
@@ -873,7 +873,7 @@
 
 .lightboxPrev:hover,
 .lightboxNext:hover {
-  background: rgba(245, 240, 232, 0.2);
+  background: rgba(242, 237, 228, 0.2);
 }
 
 .lightboxPrev:disabled,
@@ -890,7 +890,7 @@
   font-family: var(--font-mono);
   font-size: 0.65rem;
   letter-spacing: 0.14em;
-  color: rgba(245, 240, 232, 0.5);
+  color: rgba(242, 237, 228, 0.5);
 }
 
 /* ─── Responsive ───────────────────────────────────────────── */

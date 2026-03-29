@@ -167,49 +167,24 @@ function ResponsiveCamera() {
  */
 function CameraRig() {
   const scrollY = useStore((s) => s.scrollY)
-  const aboutSectionTop = useStore((s) => s.aboutSectionTop)
   const { camera } = useThree()
 
   useFrame((_, delta) => {
-    const landingPoint = aboutSectionTop || 4500
-    const contactPoint = (useStore.getState() as any).contactSectionTop || (landingPoint + 1200)
+    // Il modello Avatar è stato rimosso, quindi non c'è più bisogno 
+    // di far scendere la camera a y=-36. Se la moviamo giù, la scena 3D
+    // ("lo sfondo procedurale") esce dal campo visivo e lo schermo diventa nero.
+    // Manteniamo la camera fissa (con un lievissimo parallax di profondità)
+    // per garantire che lo sfondo procedurale resti *sempre visibile* dietro tutto il sito.
+    
+    // Parallax sub-millimetrico per dare senso di connessione allo scroll
+    const targetY = scrollY * -0.0003
+    const targetZ = 6 + (scrollY * 0.0001)
 
-    // --- DEFINIZIONE ZONE DI SCROLL ---
-    const transitionStart = landingPoint - 1800 // Inizio camera anticipato
-    const transitionEnd = landingPoint - 100 
-
-    // t per la transizione (da logo a landing)
-    const t = Math.max(0, Math.min((scrollY - transitionStart) / (transitionEnd - transitionStart), 1))
-
-    // Parametri LANDED ricalibrati per centraggio perfetto (Verticale + Fluidità)
-    const LANDED_Y = -36.5             // Via di mezzo per centraggio millimetrico
-    const LANDED_Z = 17.0              
-    const LANDED_ROT_X = -0.15         
-
-    let targetY = -t * 36.5
-    let targetZ = 6 + t * 11.0
-    let targetRotX = -t * 0.15
-
-    // --- GESTIONE DINAMICA: LEGAME "SOLIDALE" 1:1 IMMEDIATO ---
-    if (scrollY > transitionEnd) {
-      targetZ = LANDED_Z
-      targetRotX = LANDED_ROT_X
-      
-      // Nessuna pausa: il movimento diventa solidale istantaneamente
-      const exitStart = transitionEnd 
-      
-      // Risalita perfettamente sincronizzata 1:1 con lo scroll del DOM
-      // 0.013 è il fattore calcolato per "incollare" il 3D ai pixel a Z=17
-      const exitProgress = scrollY - exitStart
-      targetY = LANDED_Y - (exitProgress * 0.013) 
-    }
-
-    // Reattività estrema (lerp 20) per eliminare ogni micro-ritardo (Lag Zero)
-    const lerpFactor = Math.min(1, delta * 20)
+    const lerpFactor = Math.min(1, delta * 5)
     camera.position.y += (targetY - camera.position.y) * lerpFactor
     camera.position.z += (targetZ - camera.position.z) * lerpFactor
     camera.position.x += (0 - camera.position.x) * lerpFactor
-    camera.rotation.x += (targetRotX - camera.rotation.x) * lerpFactor
+    camera.rotation.x = 0
     camera.rotation.y = 0
     camera.rotation.z = 0
   })

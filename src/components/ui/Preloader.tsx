@@ -47,13 +47,11 @@ function MatrixGrid() {
       wave = wave / 3 + Math.sin(t * 1.8 + SALTS[idx]) * 0.10
 
       const norm    = (wave + 1) / 2            // 0..1
-      const scale   = 0.50 + norm * 0.60        // 0.50..1.10
-      const opacity = 0.18 + norm * 0.72        // 0.18..0.90  ← dark zones glow at 0.18, not 0
-      const rotX    = wave * 20
-      const rotY    = wave * 16
+      const scale   = 0.90 + norm * 0.10        // Extremely subdued movement for performance
+      const opacity = 0.15 + norm * 0.65        // Main visual indicator is now opacity
 
-      // Single transform call — no children, no layout thrash
-      el.style.transform = `rotateX(${rotX.toFixed(1)}deg) rotateY(${rotY.toFixed(1)}deg) scale3d(${scale.toFixed(3)},${scale.toFixed(3)},${scale.toFixed(3)})`
+      // Single transform call — purely planar scaling avoids massive 3D box-shadow repaints causing lag
+      el.style.transform = `scale3d(${scale.toFixed(3)},${scale.toFixed(3)},1)`
       el.style.opacity   = opacity.toFixed(3)
     }
 
@@ -91,13 +89,13 @@ function useSmoothedProgress(realProgress: number) {
       const real = realRef.current
       if (real >= 100) {
         // Loading done → rush to 100
-        fakeRef.current = Math.min(100, fakeRef.current + 4)
+        fakeRef.current = Math.min(100, fakeRef.current + 8)
       } else {
         // Always advance independently, pause at 95 to wait for real load
-        fakeRef.current = Math.min(95, fakeRef.current + 1.25)
+        fakeRef.current = Math.min(95, fakeRef.current + 3.0)
       }
       setDisplay(Math.floor(fakeRef.current))
-    }, 80)
+    }, 35)
     return () => clearInterval(id)
   }, [])
 

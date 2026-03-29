@@ -120,11 +120,18 @@ export function LogoModel(props: any) {
             rotatingRef.current.rotation.y = Math.sin(timeRef.current) * (Math.PI / 6)
         }
 
-        // Fase 1: vetro → cristallo puro (scrollY 0–200): le linee spariscono più rapidamente
-        // Fase 2: dissolvenza totale (scrollY 200–480): il corpo del logo svanisce
-        const glassFade = Math.max(0, Math.min(1, 1 - scrollY / 480))
-        // Le linee di bordo spariscono prima (×2 veloce) per l'effetto cristallo
-        const edgeFade = Math.max(0, Math.min(1, 1 - scrollY / 220))
+        // Il logo resta staticamente ben inquadrato al centro dello schermo.
+        // Essendo il Canvas fisso, l'interfaccia HTML scrollando gli passerà naturalmente sopra.
+        if (groupRef.current) {
+            const targetY = -0.2 // Altezza perfetta al centro
+            const lerpFactor = Math.min(1, delta * 6.5)
+            groupRef.current.position.y += (targetY - groupRef.current.position.y) * lerpFactor
+        }
+
+        // Il logo svanisce gradualmente solo dopo aver iniziato a scorrere in alto,
+        // così rimane ben visibile e inquadrato più a lungo senza essere schiacciato dal pannello.
+        const glassFade = Math.max(0, Math.min(1, 1 - (scrollY - 150) / 600))
+        const edgeFade = glassFade
 
         glassMaterial.opacity = glassFade
         glassMaterial.emissiveIntensity = 0.32 * glassFade

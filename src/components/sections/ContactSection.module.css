@@ -2,20 +2,19 @@
   position: relative;
   z-index: 10;
   padding: var(--section-py) 0;
-  /* Cambio: sfondo nero pieno immediato per coprire residui 3D */
-  background: #0e0e0d;
-  color: var(--color-bg-solid);
+  background: rgba(18, 8, 28, 0.88);
+  color: var(--color-text);
 }
 
-/* Barra di transizione superiore — sfuma il passaggio dal ticker precedente */
+/* Barra di transizione superiore — sfuma morbidamente l'uscita dalla transparent AboutSection */
 .section::before {
   content: '';
   position: absolute;
-  top: -60px; /* Ridotto per non sovrapporsi al ticker */
+  top: -150px;
   left: 0;
   right: 0;
-  height: 60px;
-  background: linear-gradient(to bottom, transparent, #0e0e0d);
+  height: 150px;
+  background: linear-gradient(to bottom, transparent, rgba(18, 8, 28, 0.88));
   pointer-events: none;
 }
 
@@ -36,7 +35,7 @@
   font-weight: 700;
   font-style: normal;
   line-height: 0.95;
-  color: var(--color-bg);
+  color: var(--color-text);
   margin-bottom: 1.25rem;
 }
 
@@ -50,10 +49,10 @@
 
 .note {
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--color-accent);
+  letter-spacing: 0.1em;
+  color: var(--color-amber);
   margin-bottom: 2rem;
 }
 
@@ -87,7 +86,7 @@
   flex-shrink: 0;
 }
 
-.directBtn:hover { color: var(--color-accent); }
+.directBtn:hover { color: var(--color-amber); }
 
 /* Form */
 .form {
@@ -114,7 +113,7 @@
 .textarea {
   background: rgba(245,240,232,0.05);
   border: 1px solid rgba(245,240,232,0.15);
-  color: var(--color-bg);
+  color: var(--color-text);
   font-family: var(--font-body);
   font-size: 1rem;
   padding: 12px 14px;
@@ -129,8 +128,8 @@
 }
 
 .input:focus, .textarea:focus {
-  border-color: var(--color-accent);
-  background: rgba(226,255,0,0.04);
+  border-color: var(--color-amber);
+  background: rgba(200,134,10,0.05);
 }
 
 .submitBtn {
@@ -139,10 +138,10 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  background: var(--color-accent);
-  color: var(--color-text);
-  border: 2.5px solid var(--color-accent);
-  outline: 1.5px solid var(--color-accent);
+  background: var(--color-amber);
+  color: #1A1A1A;
+  border: 2.5px solid var(--color-amber);
+  outline: 1.5px solid var(--color-amber);
   outline-offset: 2px;
   padding: 14px 32px;
   cursor: pointer;
@@ -153,7 +152,7 @@
 
 .submitBtn:hover {
   transform: rotate(-0.6deg) translateY(-2px);
-  box-shadow: 4px 4px 0 var(--color-accent);
+  box-shadow: 4px 4px 0 var(--color-amber);
   background: #fff;
 }
 

@@ -4,24 +4,26 @@
    ============================================ */
 
 :root {
-  /* --- Palette: Vetro & Carta --- */
-  /* Ispirata ai materiali 3D della scena: vetro ghiacciato, blush, carta */
-  --color-bg: rgba(245, 240, 232, 0.92);
-  /* Carta invecchiata — semi-trasparente per mostrare 3D */
-  --color-bg-alt: rgba(237, 232, 223, 0.93);
-  /* Sezioni alternate */
-  --color-bg-solid: #F5F0E8;
-  /* Opacità piena (pulsanti, form) */
-  --color-text: #1A1A1A;
-  /* Inchiostro primario */
-  --color-body: #3A3530;
-  /* Corpo testo — leggermente caldo */
-  --color-accent: #9DD4EE;
-  /* Ghiaccio vetro — dal materiale avatar (#77ccff desaturato) */
+  /* --- Palette: Notte d'Inchiostro --- */
+  /* Viola bordeaux quasi nero — la carta diventa testo, il rosa diventa luce */
+  --color-bg: rgba(18, 8, 28, 0.94);
+  /* Viola-bordeaux — semi-trasparente per mostrare 3D */
+  --color-bg-alt: rgba(26, 14, 40, 0.97);
+  /* Sezioni alternate — viola leggermente più aperto */
+  --color-bg-solid: #12081C;
+  /* Opacità piena (modal, form) */
+  --color-text: #F2EDE4;
+  /* Carta invecchiata — ora è il testo */
+  --color-body: #BEB5A8;
+  /* Warm off-white secondario — corpo testo */
+  --color-accent: #E8A8BF;
+  /* Rosa blush — accento strutturale su scuro: 8.2:1 AA */
+  --color-amber: #C8860A;
+  /* Ambra — bottoni, badge: 6.9:1 su scuro */
   --color-warm: #E8A8BF;
-  /* Blush vetro — dal materiale background (#ffb5d8 ammorbidito) */
-  --color-muted: #9090A0;
-  /* Grigio-blu secondario — coerente con la scena glass */
+  /* Rosa — bordi, linee decorative, materiali 3D */
+  --color-muted: #9A9088;
+  /* Grigio caldo chiaro — metadata su scuro: 6.3:1 AA */
 
   /* --- Layer 3D (intoccabili dal CSS principale) --- */
   --color-3d-cyan: #00ffff;
@@ -46,12 +48,12 @@
   --radius-btn: 0px;
 
   /* --- Scala tipografica editoriale --- */
-  --type-display:   clamp(4.5rem, 9.5vw, 9.5rem);  /* H1 hero — massivo */
-  --type-title:     clamp(3rem, 5.5vw, 5.5rem);    /* H2 sezioni */
-  --type-heading:   clamp(2rem, 3.5vw, 3.75rem);   /* H3 */
-  --type-label:     0.68rem;
-  --type-body:      clamp(0.88rem, 1.2vw, 1rem);
-  --type-small:     0.72rem;
+  --type-display:   clamp(2rem, 4.5vw + 0.5rem, 4rem);  /* H1 hero — 5 righe visive nel viewport */
+  --type-title:     clamp(2.25rem, 4vw + 0.5rem, 4.5rem);    /* H2 sezioni */
+  --type-heading:   clamp(1.5rem, 2.5vw + 0.5rem, 3rem);   /* H3 */
+  --type-label:     0.8rem;   /* min 12.8px — leggibile per uppercase */
+  --type-body:      clamp(0.9375rem, 1.2vw, 1.0625rem); /* 15–17px, mai sotto 15 */
+  --type-small:     0.85rem;  /* 13.6px — metadata secondari */
 
   /* --- Easing curve top-tier --- */
   --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
@@ -76,7 +78,7 @@ html {
 
 body {
   font-family: var(--font-body);
-  background-color: #F5F0E8;
+  background-color: #12081C;
   color: var(--color-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -117,10 +119,10 @@ body::after {
   inset: 0;
   pointer-events: none;
   z-index: 9998;
-  opacity: 0.045;
+  opacity: 0.06;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' /%3E%3C/svg%3E");
   background-size: 256px 256px;
-  mix-blend-mode: multiply;
+  mix-blend-mode: screen;
 }
 
 /* --- Scrollbar --- */
@@ -185,14 +187,14 @@ body::after {
   display: inline-block;
 }
 
-/* --- Body micro — colonna di testo stretto uppercase justified (poster) --- */
+/* --- Body micro — corpo testo secondario in monospace (editoriale) --- */
 .body-micro {
   font-family: var(--font-mono);
-  font-size: 0.62rem;
-  line-height: 1.6;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  text-align: justify;
+  font-size: 0.8rem;
+  line-height: 1.65;
+  letter-spacing: 0.03em;
+  text-transform: none;
+  text-align: left;
   color: var(--color-body);
 }
 
@@ -209,6 +211,6 @@ body::after {
 
 /* --- Text selection --- */
 ::selection {
-  background: var(--color-accent);
-  color: var(--color-text);
+  background: var(--color-amber);
+  color: #1A1A1A;
 }

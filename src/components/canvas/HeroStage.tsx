@@ -50,7 +50,12 @@ export function HeroStage({ onTrackedPoints }: HeroStageProps = {}) {
                 scale={fadeScale}
                 visible={isVisible}
             >
-                <AvatarParticles
+                {/* 
+                  3D SCENE TEMPORANEAMENTE SOSTITUITA DA UNO SCREENSHOT 
+                  in src/components/sections/AboutSection.tsx
+                  Tieni i modelli disabilitati per leggerezza:
+                */}
+                {/* <AvatarParticles
                     position={[5.8, -2.0, 0]}
                     scale={5.0}
                     onTrackedPoints={onTrackedPoints}
@@ -63,7 +68,7 @@ export function HeroStage({ onTrackedPoints }: HeroStageProps = {}) {
                 <ambientLight intensity={1.5} />
                 <directionalLight position={[5, 10, 5]} intensity={2.5} />
                 <pointLight position={[5.2, 2, 2]} intensity={5} color="#00ffff" distance={10} />
-                <spotLight position={[3.2, 5, 5]} angle={0.5} penumbra={1} intensity={8} color="white" />
+                <spotLight position={[3.2, 5, 5]} angle={0.5} penumbra={1} intensity={8} color="white" /> */}
             </group>
 
             <Environment preset="studio" />

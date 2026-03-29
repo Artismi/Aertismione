@@ -169,8 +169,8 @@ export function CausticsPlane() {
       return t * t * (3 - 2 * t)
     }
 
-    // Finestra 1: Hero — dissolvenza rapida: il rosa sparisce prima che il testo emerga
-    const f1 = 1 - ss(0, 600, scrollY)   // 600px: già sbiadito quando il testo è leggibile
+    // Finestra 1: Hero — La griglia rosa deve rimanere SEMPRE visibile!
+    const f1 = 1.0   // Annullata la dissolvenza rapida. Sfondo procedurale onnipresente.
 
     // Finestra 2: About/Avatar — nebbia che sale lentamente
     let f2 = 0

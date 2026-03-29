@@ -9,6 +9,8 @@ const vp = { once: true, margin: '-60px' }
 export function AboutSection() {
   return (
     <div className={styles.section}>
+      {/* Immagine di fallback per la scena 3D (inserire l'immagine in public/images/chi-sono-bg.webp) */}
+      <div className={styles.bgImage} />
 
       {/* Card bio — ancorata a sinistra, avatar libero a destra */}
       <motion.div

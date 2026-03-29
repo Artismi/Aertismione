@@ -191,51 +191,78 @@ export const PORTFOLIO = {
       ]
     },
     {
-      id:       'punk',
-      title:    "Punk Isn't Dead",
-      category: 'Illustrazione',
-      tagline:  'Contest Bonobolabo × Birrificio Mad One.',
-      context:  'Contest di illustrazione indipendente.',
-      problem:  'Comunicare energia punk in un formato stampabile senza perdere autenticità.',
-      solution: "Una per la lattina di birra — la resurrezione dello spirito punk, caotica e visionaria. Una per la tavola da skate — il legame tra cultura dello skate, birra artigianale e ribellione. Personaggi ibridi, colori acidi, energia instabile.",
-      result:   'Selezione contest. Ristampa richiesta.',
+      id:       'illustrazioni',
+      title:    'Illustrazioni & Artwork Singoli',
+      category: 'Raccolta / Illustrazione',
+      tagline:  'Selezione di illustrazioni personali, locandine e artwork indipendenti.',
+      context:  'Raccolta di lavori illustrativi che esplorano diversi linguaggi e applicazioni.',
+      problem:  'Unire mondi diversi — come l\'immaginario di Alice, l\'energia punk indipendente, e l\'inclusione sociale della ciclomeccanica — in un unico spazio.',
+      solution: 'Scorri questa sezione per esplorare ogni singolo progetto. Ognuno mantiene il suo layout e lo stile visivo unico con cui è stato concepito.',
+      result:   'Stampa, contest, e commissioni private.',
       mapX: 0.80, mapY: 0.22,
-      accent: '#1A1A1A',
-      gallery: [
-        '/portfolio/punk/beer.jpg',
-        '/portfolio/punk/skate.jpg'
-      ]
-    },
-    {
-      id:       'ciclomeccanica',
-      title:    'Campionati di Ciclomeccanica',
-      category: 'Grafica / Illustrazione',
-      tagline:  'Volantino pro bono per i Campionati di Ciclomeccanica.',
-      context:  "I Campionati di Ciclomeccanica mettono insieme riuso, riciclo, competenze meccaniche e inclusione sociale. Andrea conosce quel mondo dall'interno.",
-      problem:  'Nessuna comunicazione visiva per un evento che meritava visibilità.',
-      solution: "Una narrazione illustrata in cui attrezzi e componenti meccaniche prendono vita — una città diversa, con la mobilità sostenibile al centro. Realizzato gratuitamente per sostenere un'iniziativa in cui crede.",
-      result:   'Distribuzione nella rete ciclistica. Evento sold out.',
-      mapX: 0.88, mapY: 0.62,
-      accent: '#7B9E4A',
-      pdfs: [
-        { label: 'Volantino Campionati', url: '/portfolio/ciclomeccanica/flyer.pdf' }
-      ]
-    },
-    {
-      id:       'alice',
-      title:    'Alice Un Mondo di Matti',
-      category: 'Illustrazione',
-      tagline:  "Illustrazione personalizzata ispirata all'universo di Alice nel Paese delle Meraviglie.",
-      context:  "Una commissione privata — un'illustrazione su misura che parte da un immaginario letterario noto e lo reinterpreta con il linguaggio visivo di Andrea.",
-      problem:  "Tradurre lo spirito originale di Carroll — meraviglioso e disturbante insieme — in un'immagine che sia personale e non una citazione.",
-      solution: 'Un mondo visionario e leggermente disturbante, coerente con lo spirito originale di Carroll — personaggi ibridi, proporzioni impossibili, colori inaspettati.',
-      result:   'Commissione privata consegnata.',
-      mapX: 0.18, mapY: 0.75,
-      accent: '#8B4DA8',
-      mainImage: '/portfolio/alice/hero.png',
-      gallery: [
-        '/portfolio/alice/detail-1.png',
-        '/portfolio/alice/detail-2.png'
+      accent: '#E8A8BF',
+      subProjects: [
+        {
+          id:       'alice',
+          layout:   'centered',
+          title:    'Alice Un Mondo di Matti',
+          category: 'Illustrazione',
+          tagline:  "Illustrazione personalizzata ispirata all'universo di Alice nel Paese delle Meraviglie.",
+          context:  "Una commissione privata — un'illustrazione su misura che parte da un immaginario letterario noto e lo reinterpreta con il linguaggio visivo di Andrea.",
+          problem:  "Tradurre lo spirito originale di Carroll — meraviglioso e disturbante insieme — in un'immagine che sia personale e non una citazione.",
+          solution: 'Un mondo visionario e leggermente disturbante, coerente con lo spirito originale di Carroll — personaggi ibridi, proporzioni impossibili, colori inaspettati.',
+          result:   'Commissione privata consegnata.',
+          accent: '#8B4DA8',
+          mainImage: '/portfolio/alice/hero.png',
+          gallery: [
+            '/portfolio/alice/detail-1.png',
+            '/portfolio/alice/detail-2.png'
+          ]
+        },
+        {
+          id:       'ridi-piangi-balli',
+          layout:   'centered',
+          title:    'Ridi Piangi Balli',
+          category: 'Illustrazione',
+          tagline:  'Illustrazione personalizzata su tre stati emotivi — un ritratto visivo.',
+          context:  'Una commissione privata. Tre parole come punto di partenza — ridi, piangi, balli — tre facce di una stessa persona da raccontare in un\'unica immagine.',
+          problem:  "Tre emozioni da tenere insieme in una composizione sola, senza gerarchia, senza ordine imposto.",
+          solution: "Un'illustrazione che non descrive — interpreta. Le tre emozioni convivono nella stessa composizione.",
+          result:   'Commissione privata consegnata.',
+          accent: '#E8A8BF',
+          mainImage: '/portfolio/ridi-piangi-balli/hero.png'
+        },
+        {
+          id:       'punk',
+          layout:   'dual',
+          title:    "Punk Isn't Dead",
+          category: 'Illustrazione',
+          tagline:  'Contest Bonobolabo × Birrificio Mad One.',
+          context:  'Contest di illustrazione indipendente.',
+          problem:  'Comunicare energia punk in un formato stampabile senza perdere autenticità.',
+          solution: "Una per la lattina di birra — la resurrezione dello spirito punk, caotica e visionaria. Una per la tavola da skate — il legame tra cultura dello skate, birra artigianale e ribellione. Personaggi ibridi, colori acidi, energia instabile.",
+          result:   'Selezione contest. Ristampa richiesta.',
+          accent: '#1A1A1A',
+          gallery: [
+            '/portfolio/punk/beer.jpg',
+            '/portfolio/punk/skate.jpg'
+          ]
+        },
+        {
+          id:       'ciclomeccanica',
+          layout:   'split_light',
+          title:    'Campionati di Ciclomeccanica',
+          category: 'Grafica / Illustrazione',
+          tagline:  'Volantino pro bono per i Campionati di Ciclomeccanica.',
+          context:  "I Campionati di Ciclomeccanica mettono insieme riuso, riciclo, competenze meccaniche e inclusione sociale. Andrea conosce quel mondo dall'interno.",
+          problem:  'Nessuna comunicazione visiva per un evento che meritava visibilità.',
+          solution: "Una narrazione illustrata in cui attrezzi e componenti meccaniche prendono vita — una città diversa, con la mobilità sostenibile al centro. Realizzato gratuitamente per sostenere un'iniziativa in cui crede.",
+          result:   'Distribuzione nella rete ciclistica. Evento sold out.',
+          accent: '#7B9E4A',
+          pdfs: [
+            { label: 'Volantino Campionati', url: '/portfolio/ciclomeccanica/flyer.pdf' }
+          ]
+        }
       ]
     },
     {
@@ -250,19 +277,6 @@ export const PORTFOLIO = {
       mapX: 0.38, mapY: 0.82,
       accent: '#4A6741',
       mainImage: '/portfolio/ecosistema-boreale/hero-web.jpg'
-    },
-    {
-      id:       'ridi-piangi-balli',
-      title:    'Ridi Piangi Balli',
-      category: 'Illustrazione',
-      tagline:  'Illustrazione personalizzata su tre stati emotivi — un ritratto visivo.',
-      context:  'Una commissione privata. Tre parole come punto di partenza — ridi, piangi, balli — tre facce di una stessa persona da raccontare in un\'unica immagine.',
-      problem:  "Tre emozioni da tenere insieme in una composizione sola, senza gerarchia, senza ordine imposto.",
-      solution: "Un'illustrazione che non descrive — interpreta. Le tre emozioni convivono nella stessa composizione.",
-      result:   'Commissione privata consegnata.',
-      mapX: 0.58, mapY: 0.82,
-      accent: '#E8A8BF',
-      mainImage: '/portfolio/ridi-piangi-balli/hero.png'
     },
     {
       id:       'sperimentazione',

@@ -159,16 +159,22 @@ export const CONFIG_SERVICES: ServiceItem[] = [
   }
 ]
 
+export type IdentityMode = boolean | 'single' | null
+// false    → parto da zero: forza identity_narrative come base
+// true     → ho già un'identità: nessun forzato
+// 'single' → solo prestazione singola: nessun forzato, messaggio dedicato
+// null     → non ancora scelto
+
 interface ConfiguratorState {
   currentStep: 1 | 2 | 3
-  haIdentity: boolean | null
+  haIdentity: IdentityMode
   selectedServices: string[]
   insegnaType: 'base' | 'lum' | null
   isModalOpen: boolean
-  
+
   // Actions
   setStep: (step: 1 | 2 | 3) => void
-  setHaIdentity: (val: boolean | null) => void
+  setHaIdentity: (val: IdentityMode) => void
   toggleService: (id: string) => void
   setInsegnaType: (type: 'base' | 'lum' | null) => void
   openModal: () => void
@@ -201,12 +207,12 @@ export const useConfiguratorStore = create<ConfiguratorState>((set, get) => ({
     set((state) => {
       let selected = [...state.selectedServices]
       if (haIdentity === false) {
-        // Se non ha identità, forziamo il pacchetto identity
+        // Parto da zero: forza identity_narrative
         if (!selected.includes('identity_narrative')) {
           selected.push('identity_narrative')
         }
-      } else if (haIdentity === true) {
-        // Se ha identità, togliamo il pacchetto core se era lì
+      } else {
+        // Ha già identità o vuole solo prestazione singola: rimuovi identity se presente
         selected = selected.filter(id => id !== 'identity_narrative')
       }
       return { haIdentity, selectedServices: selected }
@@ -225,7 +231,7 @@ export const useConfiguratorStore = create<ConfiguratorState>((set, get) => ({
 
   setInsegnaType: (insegnaType) => set({ insegnaType }),
 
-  reset: () => set({ currentStep: 1, haIdentity: null, selectedServices: [], insegnaType: null }),
+  reset: () => set({ currentStep: 1, haIdentity: null as IdentityMode, selectedServices: [], insegnaType: null }),
 
   getTotals: () => {
     const { selectedServices, insegnaType } = get()

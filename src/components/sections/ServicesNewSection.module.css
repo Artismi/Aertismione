@@ -4,13 +4,29 @@
 
 .section {
   padding: var(--section-py) 0;
-  background: rgba(245, 240, 232, 0.97);
-  overflow: hidden;
+  position: relative;
+  z-index: 1; /* CRITICAL: Forces this section's background to render ON TOP of the 3D Canvas (z=0) */
+}
+
+.section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(18, 8, 28, 0.85) 0%,
+    rgba(18, 8, 28, 0.85) calc(100% - 150px),
+    rgba(18, 8, 28, 0) 100%
+  );
+  z-index: -1;
+  pointer-events: none;
 }
 
 /* ── Header sezione ──────────────────────────────────────── */
 
 .sectionHeader {
+  position: relative;
+  z-index: 1;
   padding: 0 clamp(24px, 6vw, 80px);
   margin-bottom: clamp(32px, 5vw, 56px);
   display: flex;
@@ -25,9 +41,9 @@
   align-items: center;
   gap: 8px;
   font-family: var(--font-condensed);
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.18em;
   color: var(--color-muted);
 }
 
@@ -67,17 +83,19 @@
 /* ── Griglia blocchi ─────────────────────────────────────── */
 
 .grid {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: 1fr 1.1fr 1fr;
   /* Nessun gap — i bordi dei blocchi sono i separatori */
   gap: 0;
-  border-top: 1.5px solid rgba(26,26,26,0.12);
+  border-top: 1.5px solid rgba(242,237,228,0.12);
 }
 
 /* ── Blocco singolo ──────────────────────────────────────── */
 
 .block {
-  border-right: 1.5px solid rgba(26,26,26,0.12);
+  border-right: 1.5px solid rgba(242,237,228,0.12);
   display: flex;
   flex-direction: column;
   position: relative;
@@ -87,17 +105,17 @@
   border-right: none;
 }
 
-/* Blocco featured — invertito in nero */
+/* Blocco featured — viola rosato saturo, contrasto col fondo scuro */
 .block.featured {
-  background: var(--color-text);
-  color: var(--color-bg-solid);
+  background: #35144E;
+  color: #F2EDE4;
 }
 
 /* ── Header blocco: tipo, titolo, numero indice ──────────── */
 
 .blockHead {
   padding: clamp(20px, 2.5vw, 28px) clamp(20px, 2.5vw, 28px) clamp(16px, 2vw, 20px);
-  border-bottom: 1.5px solid rgba(26,26,26,0.12);
+  border-bottom: 1.5px solid rgba(242,237,228,0.12);
   position: relative;
 }
 
@@ -113,7 +131,7 @@
   font-family: var(--font-condensed);
   font-size: 0.55rem;
   letter-spacing: 0.18em;
-  color: rgba(26,26,26,0.2);
+  color: rgba(242,237,228,0.15);
 }
 
 .featured .blockIdx {
@@ -123,8 +141,8 @@
 .blockType {
   display: block;
   font-family: var(--font-condensed);
-  font-size: 0.6rem;
-  letter-spacing: 0.2em;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--color-muted);
   margin-bottom: 6px;
@@ -144,18 +162,18 @@
 }
 
 .featured .blockTitle {
-  color: var(--color-bg-solid);
+  color: #F2EDE4;
 }
 
 /* Badge "Più richiesto" — strisce inclinata sopra il titolo */
 .badge {
   display: inline-block;
   font-family: var(--font-condensed);
-  font-size: 0.58rem;
-  letter-spacing: 0.18em;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  background: var(--color-accent);
-  color: var(--color-text);
+  background: var(--color-amber);
+  color: #1A1A1A;
   padding: 2px 8px;
   margin-bottom: 8px;
   transform: rotate(-0.8deg);
@@ -176,7 +194,7 @@
   align-items: baseline;
   gap: 12px;
   padding: clamp(10px, 1.5vw, 14px) clamp(20px, 2.5vw, 28px);
-  border-bottom: 1px solid rgba(26,26,26,0.07);
+  border-bottom: 1px solid rgba(242,237,228,0.08);
 }
 
 .featured .item {
@@ -199,25 +217,25 @@
 
 .itemPrice {
   font-family: var(--font-mono);
-  font-size: 0.72rem;
-  color: var(--color-warm);
+  font-size: 0.8rem;
+  color: var(--color-accent);
   white-space: nowrap;
   flex-shrink: 0;
 }
 
 .featured .itemPrice {
-  color: var(--color-accent);
+  color: var(--color-amber);
 }
 
 /* ── Note e CTA ──────────────────────────────────────────── */
 
 .blockNote {
   font-family: var(--font-mono);
-  font-size: 0.6rem;
+  font-size: 0.72rem;
   line-height: 1.65;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: rgba(245,240,232,0.45);
+  letter-spacing: 0.03em;
+  text-transform: none;
+  color: rgba(245,240,232,0.6);
   padding: clamp(12px, 1.5vw, 16px) clamp(20px, 2.5vw, 28px);
   border-top: 1px solid rgba(245,240,232,0.08);
 }
@@ -232,7 +250,7 @@
   text-transform: uppercase;
   text-decoration: none;
   padding: clamp(14px, 2vw, 18px) clamp(20px, 2.5vw, 28px);
-  border-top: 1.5px solid rgba(26,26,26,0.1);
+  border-top: 1.5px solid rgba(242,237,228,0.1);
   color: var(--color-text);
   transition: color 0.18s, background 0.18s;
   margin-top: auto;
@@ -240,7 +258,7 @@
 
 .featured .blockCta {
   border-top-color: rgba(245,240,232,0.12);
-  color: var(--color-accent);
+  color: var(--color-amber);
 }
 
 .blockCta::after {
@@ -263,7 +281,7 @@
 /* ── Riga decorativa sotto la griglia ────────────────────── */
 
 .gridFooter {
-  border-top: 1.5px solid rgba(26,26,26,0.12);
+  border-top: 1.5px solid rgba(242,237,228,0.12);
   padding: clamp(14px, 2vw, 20px) clamp(24px, 6vw, 80px);
   display: flex;
   align-items: center;
@@ -273,9 +291,9 @@
 
 .gridFooterNote {
   font-family: var(--font-mono);
-  font-size: 0.6rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  text-transform: none;
   color: var(--color-muted);
 }
 

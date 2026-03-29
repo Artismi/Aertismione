@@ -3,11 +3,12 @@
   /* no z-index — hero must NOT create a stacking context so title
      layers can reach the root context and sandwich the fixed canvas */
   width: 100%;
-  height: 200vh;
+  /* Removed height: 200vh to allow the section to naturally contour around its 135vh contents, 
+     sealing the massive transparent gap that was leaking the pink caustics. */
 }
 
 .firstViewport {
-  height: 100vh;
+  height: 50vh; /* Aumentato per dare più respiro e spazio al logo 3D */
   width: 100%;
 }
 
@@ -19,26 +20,24 @@
   justify-content: flex-end;
   padding: 0 0 clamp(40px, 6vh, 64px) 0;
   position: relative;
-  /* No background here — moved to ::before so it can live at z-index: -1
-     alongside the dark title lines, both behind the canvas */
+  z-index: 1; /* CRITICAL: Creates stacking context so the ::before overlay draws OVER the 3D canvas (z=0) instead of slipping behind it. */
 }
 
-/* Gradient backdrop — behind the canvas (z-index: -1 in root context).
-   Lives before the title text in DOM order so text renders on top of it. */
+/* 0.80 Dark Theme Purple Layer directly behind the text. 
+   Fades in right above the text, preventing massive useless dark space at the top. */
 .secondViewport::before {
   content: '';
   position: absolute;
-  inset: 0;
+  bottom: 0; left: 0; right: 0;
+  height: 60vh; /* Solo la parte inferiore (attorno al testo), il resto sopra è trasparente! */
   z-index: -1;
   pointer-events: none;
   background: linear-gradient(
     to bottom,
-    rgba(245, 240, 232, 0.0)  0%,
-    rgba(245, 240, 232, 0.65) 18%,
-    rgba(245, 240, 232, 0.90) 38%,
-    rgba(245, 240, 232, 0.97) 55%,
-    rgba(245, 240, 232, 1.0)  70%
-  );
+    rgba(18, 8, 28, 0.0) 0%,
+    rgba(18, 8, 28, 0.80) 15vh,
+    rgba(18, 8, 28, 0.80) 100%
+  ); /* Colori uniformati all'update di ProblemSection per una fusione invisibile */
 }
 
 /* ── Eyebrow row: studio label + disponibilità ── */
@@ -78,11 +77,11 @@
   align-items: center;
   gap: 7px;
   font-family: var(--font-condensed);
-  font-size: 0.62rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
-  letter-spacing: 0.18em;
-  color: #4caf6a;
-  border: 1px solid rgba(76, 175, 106, 0.35);
+  letter-spacing: 0.14em;
+  color: #3d9e57;
+  border: 1px solid rgba(61, 158, 87, 0.4);
   padding: 3px 10px 3px 8px;
   border-radius: 0;
 }
@@ -90,7 +89,7 @@
 .availableDot {
   width: 6px;
   height: 6px;
-  background: #4caf6a;
+  background: #3d9e57;
   border-radius: 50%;
   flex-shrink: 0;
   animation: pulse 2s ease-in-out infinite;
@@ -231,11 +230,8 @@
 /* ── Responsive ── */
 
 @media (max-width: 640px) {
-  .title {
-    font-size: clamp(3rem, 12vw, 4.5rem);
-  }
   .line, .lineAccent {
-    font-size: clamp(3rem, 12vw, 4.5rem);
+    font-size: clamp(1.75rem, 8vw + 0.25rem, 2.5rem);
   }
   .bottom {
     flex-direction: column;

@@ -62,7 +62,6 @@ export function ServicesNewSection() {
                   transition={{ duration: 0.4, delay: idx * 0.12 + i * 0.07 + 0.2 }}
                 >
                   <span className={styles.itemName}>{item.name}</span>
-                  <span className={styles.itemPrice}>{item.price}</span>
                 </motion.li>
               ))}
             </ul>
@@ -90,7 +89,7 @@ export function ServicesNewSection() {
         transition={{ duration: 0.6, delay: 0.4 }}
       >
         <span className={styles.gridFooterNote}>
-          Tutti i prezzi sono indicativi — ogni progetto è un'altra storia
+          Ogni progetto è un'altra storia. Contattami per un preventivo personalizzato.
         </span>
         <span className={styles.gridFooterStar} aria-hidden="true">✦ ✦ ✦</span>
       </motion.div>

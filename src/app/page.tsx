@@ -28,7 +28,7 @@ export default function Home() {
       <ConfiguratorModal />
       <SceneLoader />
 
-      <section id="hero" style={{ position: 'relative', height: '200vh' }}>
+      <section id="hero" style={{ position: 'relative' }}>
         <HeroSection />
       </section>
 

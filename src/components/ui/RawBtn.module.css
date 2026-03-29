@@ -23,10 +23,10 @@
   user-select: none;
 }
 
-/* ── Primary: riempito scuro, accento giallo su hover ──────────────────── */
+/* ── Primary: riempito ambra, ink su hover ──────────────────── */
 .primary {
   color: #1A1A1A;
-  background: var(--color-accent);
+  background: var(--color-amber);
   border: 2.5px solid #1A1A1A;
   /* Doppio bordo: outline sfalsato dà effetto "blockprint" */
   outline: 1.5px solid #1A1A1A;
@@ -35,10 +35,10 @@
 
 .primary:hover {
   background: #1A1A1A;
-  color: var(--color-accent);
+  color: var(--color-amber);
   outline-color: #1A1A1A;
   transform: rotate(-0.8deg) translateY(-2px);
-  box-shadow: 4px 4px 0 var(--color-accent);
+  box-shadow: 4px 4px 0 var(--color-amber);
 }
 
 /* ── Secondary: vuoto, solo bordo ─────────────────────────────────────── */

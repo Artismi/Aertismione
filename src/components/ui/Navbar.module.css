@@ -4,13 +4,15 @@
   left: 0;
   width: 100%;
   z-index: 1000;
-  transition: background 0.3s ease, box-shadow 0.3s ease;
+  transition: background 0.7s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.7s ease, border-color 0.7s ease;
 }
 
 .nav.scrolled {
-  background: rgba(245, 240, 232, 0.92);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 1px 0 rgba(0,0,0,0.08);
+  background: rgba(242, 224, 232, 0.82);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-bottom: 1px solid rgba(232, 168, 191, 0.45);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.18);
 }
 
 /* Brand e link scompaiono al top — il logo 3D ha la scena per sé */
@@ -28,6 +30,12 @@
   transform: translateY(0);
   pointer-events: auto;
 }
+
+.nav.scrolled .brand { color: #1A1A1A; }
+.nav.scrolled .brandLogo { filter: brightness(0); }
+.nav.scrolled .link, .nav.scrolled .linkBtn { color: rgba(26, 26, 26, 0.65); }
+.nav.scrolled .link:hover, .nav.scrolled .linkBtn:hover { color: #1A1A1A; }
+.nav.scrolled .hamburger span { background: #1A1A1A; }
 
 .inner {
   max-width: 1200px;
@@ -65,10 +73,10 @@
 .link,
 .linkBtn {
   font-family: var(--font-condensed);
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 400;
   text-transform: uppercase;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.16em;
   color: var(--color-muted);
   text-decoration: none;
   transition: color 0.2s;
@@ -90,7 +98,7 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: #1A1A1A;
-  background: var(--color-accent);
+  background: var(--color-amber);
   border: 2.5px solid #1A1A1A;
   outline: 1.5px solid #1A1A1A;
   outline-offset: 2px;
@@ -103,9 +111,9 @@
 
 .cta:hover {
   background: #1A1A1A;
-  color: var(--color-accent);
+  color: var(--color-amber);
   transform: rotate(-0.6deg);
-  box-shadow: 3px 3px 0 var(--color-accent);
+  box-shadow: 3px 3px 0 var(--color-amber);
 }
 
 /* Hamburger */
@@ -130,8 +138,10 @@
 
 /* Mobile drawer */
 .drawer {
-  background: rgba(245, 240, 232, 0.97);
-  backdrop-filter: blur(16px);
+  background: rgba(242, 224, 232, 0.92);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border-bottom: 1px solid rgba(232, 168, 191, 0.45);
   padding: 24px clamp(20px, 5vw, 60px);
   display: flex;
   flex-direction: column;
@@ -142,7 +152,7 @@
   font-family: var(--font-display);
   font-size: 1.5rem;
   text-transform: uppercase;
-  color: var(--color-text);
+  color: #1A1A1A;
   text-decoration: none;
 }
 

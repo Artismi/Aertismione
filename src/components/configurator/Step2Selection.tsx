@@ -1,6 +1,6 @@
 'use client'
 
-import { useConfiguratorStore, CONFIG_SERVICES, ConfiguratorCategory } from '@/stores/useConfiguratorStore'
+import { useConfiguratorStore, CONFIG_SERVICES, ConfiguratorCategory, IdentityMode } from '@/stores/useConfiguratorStore'
 import styles from './Configurator.module.css'
 import { motion } from 'framer-motion'
 
@@ -69,13 +69,23 @@ export function Step2Selection() {
   return (
     <div className={styles.step}>
       <h3 className={styles.title}>
-        {haIdentity === false 
+        {haIdentity === false
           ? "Il percorso identità è la base. Aggiungi tutto quello che vuoi declinare."
-          : "Seleziona quello di cui hai bisogno."
+          : haIdentity === 'single'
+            ? "Seleziona la prestazione che ti serve."
+            : "Seleziona quello di cui hai bisogno."
         }
       </h3>
 
-      {/* Identity block - always visible if starting from zero */}
+      {/* Nota per prestazione singola */}
+      {haIdentity === 'single' && (
+        <div className={styles.singleNote}>
+          Nessun percorso identità — parto da quello che hai già o dal brief che ci scambiamo.
+          I prezzi non includono sconti fedeltà. Ogni voce è autonoma.
+        </div>
+      )}
+
+      {/* Identity block - solo se si parte da zero */}
       {haIdentity === false && (
         <div className={styles.categoryBlock}>
           <div className={styles.categoryHeader}>Identità</div>
