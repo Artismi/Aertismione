@@ -344,7 +344,7 @@ export const CONTACT = {
   lead:    'Anche se non hai ancora le idee chiare — partiamo da lì.',
   note:    'Rispondo entro 24 ore.',
   /** Ottieni il tuo ID su formspree.io */
-  formspreeId: 'REPLACE_WITH_YOUR_ID',
+  formspreeId: 'xvgzbgzl',
   directLinks: [
     {
       label: 'WhatsApp',
