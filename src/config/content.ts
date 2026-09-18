@@ -127,6 +127,7 @@ export const PORTFOLIO = {
   projects: [
     {
       id:       'bicicleria',
+      thumb:    '/portfolio/_thumbs/bicicleria.jpg',
       title:    'Bicicleria',
       category: 'Identità visiva completa',
       tagline:  'Dal murale alla vetrina, dai gadget al feed.',
@@ -157,6 +158,7 @@ export const PORTFOLIO = {
 
     {
       id:       'mulini',
+      thumb:    '/portfolio/_thumbs/mulini.jpg',
       title:    'Mulini',
       category: 'Illustrazione / Tesi di laurea',
       tagline:  'Striscia illustrata di 6 metri sul passato e futuro delle macchine ad acqua.',
@@ -173,6 +175,7 @@ export const PORTFOLIO = {
     },
     {
       id:       'torino-invisibile',
+      thumb:    '/portfolio/_thumbs/torino-invisibile.jpg',
       title:    'Torino Invisibile',
       category: '3D / Produzione multimediale',
       tagline:  "Contributo alla produzione di un'opera in realtà aumentata ispirata a Calvino.",
@@ -192,6 +195,7 @@ export const PORTFOLIO = {
     },
     {
       id:       'illustrazioni',
+      thumb:    '/portfolio/_thumbs/illustrazioni.jpg',
       title:    'Illustrazioni & Artwork Singoli',
       category: 'Raccolta / Illustrazione',
       tagline:  'Selezione di illustrazioni personali, locandine e artwork indipendenti.',
@@ -280,6 +284,7 @@ export const PORTFOLIO = {
     },
     {
       id:       'sperimentazione',
+      thumb:    '/portfolio/_thumbs/sperimentazione.jpg',
       title:    'Stamperia',
       category: 'Stampa / Monotipo',
       tagline:  'Circa 80 fogli A3 — monotipi, macchie, texture da esplorare liberamente.',

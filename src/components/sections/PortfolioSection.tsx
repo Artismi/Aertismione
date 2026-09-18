@@ -14,7 +14,7 @@ import { PORTFOLIO } from '@/config/content'
 /* â”€â”€â”€ Costanti â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 const BALL_R        = 15
-const FOLDER_HIT_R  = 40   // raggio collisione/hover cartellina
+const FOLDER_HIT_R  = 62   // raggio collisione/hover cartellina
 const FRICTION      = 0.972
 const MIN_SPEED     = 0.07
 const MAX_LAUNCH    = 38
@@ -73,7 +73,7 @@ function drawBackground(ctx: CanvasRenderingContext2D, w: number, h: number, rev
   const maxR = Math.hypot(w/2, h/2) * Math.min(reveal * 1.35, 1)
   const cx = w/2, cy = h/2, sp = 29, rowH = sp * 0.866
   // Dot rosa tenue visibili su sfondo scuro
-  ctx.fillStyle = 'rgba(232,168,191,0.09)'
+  ctx.fillStyle = 'rgba(236,230,224,0.075)'
   for (let row = 0; row * rowH <= h + rowH; row++) {
     const y = row * rowH, xOff = (row % 2) * sp * 0.5
     for (let col = -1; col * sp <= w + sp; col++) {
@@ -133,109 +133,167 @@ function drawPaths(ctx: CanvasRenderingContext2D, projects: Project[], w: number
     const p1=projects[a], p2=projects[b]
     const x1=p1.mapX*w, y1=p1.mapY*h, x2=p2.mapX*w, y2=p2.mapY*h
     const mx=(x1+x2)/2, my=(y1+y2)/2, dx=x2-x1, dy=y2-y1, len=Math.hypot(dx,dy)
-    ctx.strokeStyle = 'rgba(232,168,191,0.18)'
+    ctx.strokeStyle = 'rgba(236,230,224,0.14)'
     ctx.beginPath(); ctx.moveTo(x1,y1)
     ctx.quadraticCurveTo(mx-(dy/len)*len*0.16, my+(dx/len)*len*0.16, x2,y2); ctx.stroke()
   }
   ctx.setLineDash([])
 }
 
+/* Cache delle anteprime disegnate dentro le cartelline (file leggeri, ~30KB) */
+const thumbCache = new Map<string, HTMLImageElement>()
+
+function getThumb(src?: string): HTMLImageElement | null {
+  if (!src || typeof window === 'undefined') return null
+  const cached = thumbCache.get(src)
+  if (cached) return cached.complete && cached.naturalWidth > 0 ? cached : null
+  const img = new window.Image()
+  img.src = src
+  thumbCache.set(src, img)
+  return null
+}
+
+function roundRectPath(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+  ctx.beginPath()
+  ctx.moveTo(x + r, y)
+  ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r)
+  ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h)
+  ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r)
+  ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y)
+  ctx.closePath()
+}
+
+/** Manda a capo il titolo su massimo 2 righe, troncando con "…" se non ci sta. */
+function wrapTitle(ctx: CanvasRenderingContext2D, text: string, maxW: number): string[] {
+  if (ctx.measureText(text).width <= maxW) return [text]
+  const words = text.split(' ')
+  const lines: string[] = []
+  let cur = ''
+  for (const word of words) {
+    const next = cur ? `${cur} ${word}` : word
+    if (ctx.measureText(next).width <= maxW) { cur = next; continue }
+    if (cur) lines.push(cur)
+    cur = word
+    if (lines.length === 2) break
+  }
+  if (cur && lines.length < 2) lines.push(cur)
+  if (lines.length === 2 && ctx.measureText(lines[1]).width > maxW) {
+    let t = lines[1]
+    while (t.length > 1 && ctx.measureText(`${t}…`).width > maxW) t = t.slice(0, -1)
+    lines[1] = `${t}…`
+  }
+  return lines.slice(0, 2)
+}
+
 function drawFolder(ctx: CanvasRenderingContext2D, p: Project, w: number, h: number, time: number, isHovered: boolean) {
   const cx = p.mapX*w, cy = p.mapY*h
   const [cr,cg,cb] = hexToRgb(p.accent)
   const seed = p.id.split('').reduce((a,c)=>a+c.charCodeAt(0),0)
-  const tilt = ((seed*73)%100-50)/100*0.13
-  const fw=82, fh=58, br=4
-  const lift = isHovered ? -8 : 0
+  const tilt = ((seed*73)%100-50)/100*0.10
+  // Cartelline piu' grandi: si vede l'anteprima e invogliano ad aprirle
+  const fw=126, fh=94, br=5
+  const lift = isHovered ? -10 : 0
+  const bx=-fw/2, by=-fh/2
 
   ctx.save()
   ctx.translate(cx, cy+lift)
   ctx.rotate(tilt)
 
+  // Alone pulsante attorno alla cartellina
   const pulse = 0.5+0.5*Math.sin(time*0.0019+p.mapX*8)
   ctx.beginPath()
-  ctx.arc(0, 0, 52 + (isHovered ? 0 : pulse*9), 0, Math.PI*2)
-  ctx.strokeStyle = `rgba(${cr},${cg},${cb},${isHovered ? 0.50 : (0.07+pulse*0.10).toFixed(3)})`
+  ctx.arc(0, 0, 76 + (isHovered ? 0 : pulse*9), 0, Math.PI*2)
+  ctx.strokeStyle = `rgba(${cr},${cg},${cb},${isHovered ? 0.45 : (0.06+pulse*0.08).toFixed(3)})`
   ctx.lineWidth = isHovered ? 2.2 : 1.2; ctx.stroke()
 
-  // Shadow — viola scuro (non grigio)
-  ctx.shadowColor = `rgba(0,0,0,${isHovered?0.65:0.35})`
-  ctx.shadowBlur = isHovered ? 28 : 12
+  // Linguetta con la categoria
+  ctx.shadowColor = `rgba(0,0,0,${isHovered?0.60:0.32})`
+  ctx.shadowBlur = isHovered ? 26 : 12
   ctx.shadowOffsetX = 2; ctx.shadowOffsetY = isHovered ? 12 : 6
-
-  // Tab categoria — colore accent del progetto
   ctx.beginPath()
-  ctx.moveTo(-fw/2,      -fh/2)
-  ctx.lineTo(-fw/2+32,   -fh/2)
-  ctx.lineTo(-fw/2+27,   -fh/2-13)
-  ctx.lineTo(-fw/2+4,    -fh/2-13)
+  ctx.moveTo(bx,     by)
+  ctx.lineTo(bx+52,  by)
+  ctx.lineTo(bx+45,  by-15)
+  ctx.lineTo(bx+5,   by-15)
   ctx.closePath()
   ctx.fillStyle = p.accent; ctx.fill()
-
   ctx.shadowBlur=0; ctx.shadowOffsetX=0; ctx.shadowOffsetY=0
-  ctx.textAlign='center'
-  ctx.fillStyle='rgba(255,255,255,0.90)'
-  ctx.font='bold 6px "JetBrains Mono",monospace'
-  ctx.fillText(p.category.toUpperCase(), -fw/2+16, -fh/2-4)
 
-  // Corpo cartella — viola scuro con sfumatura
-  ctx.shadowColor=`rgba(0,0,0,${isHovered?0.45:0.22})`
-  ctx.shadowBlur=isHovered?18:7; ctx.shadowOffsetY=isHovered?8:4
-  const bx=-fw/2, by=-fh/2
-  ctx.beginPath()
-  ctx.moveTo(bx+br, by); ctx.lineTo(bx+fw-br, by)
-  ctx.quadraticCurveTo(bx+fw, by, bx+fw, by+br)
-  ctx.lineTo(bx+fw, by+fh-br)
-  ctx.quadraticCurveTo(bx+fw, by+fh, bx+fw-br, by+fh)
-  ctx.lineTo(bx+br, by+fh)
-  ctx.quadraticCurveTo(bx, by+fh, bx, by+fh-br)
-  ctx.lineTo(bx, by+br)
-  ctx.quadraticCurveTo(bx, by, bx+br, by)
-  ctx.closePath()
-  // Gradiente viola scuro — carta nera del portfolio
+  ctx.textAlign='left'
+  ctx.fillStyle='rgba(255,255,255,0.92)'
+  ctx.font='bold 6.5px "JetBrains Mono",monospace'
+  ctx.fillText(p.category.toUpperCase(), bx+8, by-5)
+
+  // Corpo cartella — grafite scuro neutro (non piu' viola)
+  ctx.shadowColor=`rgba(0,0,0,${isHovered?0.50:0.26})`
+  ctx.shadowBlur=isHovered?20:9; ctx.shadowOffsetY=isHovered?9:5
+  roundRectPath(ctx, bx, by, fw, fh, br)
   const bodyGrad = ctx.createLinearGradient(bx, by, bx+fw, by+fh)
-  // Schiarito il gradiente per farlo staccare dallo sfondo che è anch'esso scuro (migliorata la distinzione)
-  bodyGrad.addColorStop(0, 'rgba(54, 24, 82, 0.97)')
-  bodyGrad.addColorStop(1, 'rgba(28, 12, 42, 0.97)')
+  bodyGrad.addColorStop(0, 'rgba(32, 29, 36, 0.98)')
+  bodyGrad.addColorStop(1, 'rgba(17, 15, 21, 0.98)')
   ctx.fillStyle=bodyGrad; ctx.fill()
   ctx.shadowBlur=0; ctx.shadowOffsetX=0; ctx.shadowOffsetY=0
-  // Border accent con glow su hover
-  if (isHovered) {
-    ctx.shadowColor=`rgba(${cr},${cg},${cb},0.65)`; ctx.shadowBlur=16
+
+  // Anteprima del progetto dentro la cartellina
+  const pad = 5, stripH = 22
+  const px = bx+pad, py = by+pad, pw = fw-pad*2, ph = fh-pad*2-stripH
+  const thumb = getThumb((p as { thumb?: string }).thumb)
+  if (thumb) {
+    ctx.save()
+    roundRectPath(ctx, px, py, pw, ph, 2)
+    ctx.clip()
+    const ar = thumb.naturalWidth/thumb.naturalHeight, tr = pw/ph
+    let sw: number, sh: number, sx: number, sy: number
+    if (ar > tr) { sh = thumb.naturalHeight; sw = sh*tr; sx = (thumb.naturalWidth-sw)/2; sy = 0 }
+    else         { sw = thumb.naturalWidth;  sh = sw/tr; sx = 0; sy = (thumb.naturalHeight-sh)/2 }
+    ctx.drawImage(thumb, sx, sy, sw, sh, px, py, pw, ph)
+    // Velo scuro a riposo, foto piena al passaggio del mouse
+    ctx.fillStyle = isHovered ? 'rgba(10,8,14,0.05)' : 'rgba(10,8,14,0.34)'
+    ctx.fillRect(px, py, pw, ph)
+    ctx.restore()
+  } else {
+    // Nessuna anteprima disponibile: righe finte come prima
+    ctx.strokeStyle='rgba(242,237,228,0.10)'; ctx.lineWidth=1
+    for (let i=0;i<4;i++) {
+      ctx.beginPath(); ctx.moveTo(px+7, py+13+i*12); ctx.lineTo(px+pw-16, py+13+i*12); ctx.stroke()
+    }
   }
-  // Aumentata l'opacità del bordo di base da 0.45 a 0.75 affinché le cartelline "disegnino" lo stacco visivo
-  ctx.strokeStyle=isHovered ? p.accent : 'rgba(242, 237, 228, 0.75)'
-  ctx.lineWidth=isHovered?2.5:1.5; ctx.stroke()
+
+  // Bordo (glow sull'hover)
+  if (isHovered) { ctx.shadowColor=`rgba(${cr},${cg},${cb},0.60)`; ctx.shadowBlur=16 }
+  roundRectPath(ctx, bx, by, fw, fh, br)
+  ctx.strokeStyle=isHovered ? p.accent : 'rgba(242,237,228,0.55)'
+  ctx.lineWidth=isHovered?2.2:1.3; ctx.stroke()
   ctx.shadowBlur=0
 
-  // Dog-ear accent
-  const dex=fw/2, dey=fh/2, ds=11
+  // Dog-ear
+  const dex=fw/2, dey=fh/2, ds=12
   ctx.beginPath()
   ctx.moveTo(dex-ds, dey); ctx.lineTo(dex, dey-ds); ctx.lineTo(dex, dey)
   ctx.closePath()
   ctx.fillStyle=`rgba(${cr},${cg},${cb},0.55)`; ctx.fill()
 
-  // Linee contenuto — chiare su scuro
-  ctx.strokeStyle='rgba(242,237,228,0.10)'; ctx.lineWidth=1
-  for (let i=0;i<3;i++) {
-    ctx.beginPath()
-    ctx.moveTo(-fw/2+11, -fh/2+28+i*9); ctx.lineTo(fw/2-15, -fh/2+28+i*9)
-    ctx.stroke()
+  // Titolo nella fascia bassa, mandato a capo se serve (niente piu' testo che esce)
+  ctx.textAlign='left'
+  ctx.fillStyle='#FFFFFF'
+  ctx.font='600 10.5px "Space Grotesk", sans-serif'
+  const lines = wrapTitle(ctx, p.title.toUpperCase(), fw-26)
+  if (lines.length === 1) {
+    ctx.fillText(lines[0], bx+8, by+fh-8)
+  } else {
+    ctx.font='600 9px "Space Grotesk", sans-serif'
+    const l2 = wrapTitle(ctx, p.title.toUpperCase(), fw-26)
+    ctx.fillText(l2[0], bx+8, by+fh-13)
+    if (l2[1]) ctx.fillText(l2[1], bx+8, by+fh-4)
   }
 
-  // Titolo — crema su viola scuro
-  ctx.textAlign='center'
-  ctx.fillStyle='#FFFFFF' // Bianco puro per contrasto perfetto
-  // Font cambiato da Anton/Impact a Space Grotesk (leggibile) maggiorato
-  ctx.font='600 12.5px "Space Grotesk", sans-serif'
-  ctx.fillText(p.title.toUpperCase(), 0, -fh/2+18)
-
-  // Dot accent
-  ctx.beginPath(); ctx.arc(-fw/2+11, fh/2-9, 3.5, 0, Math.PI*2)
+  // Pallino accent
+  ctx.beginPath(); ctx.arc(bx+fw-10, by+fh-11, 3.2, 0, Math.PI*2)
   ctx.fillStyle=p.accent; ctx.fill()
 
   ctx.restore()
 }
+
 
 function drawTrail(ctx: CanvasRenderingContext2D, trail: Array<{x:number;y:number;speed:number}>) {
   if (trail.length === 0) return

@@ -6,7 +6,7 @@
   padding: var(--section-py) 0;
   position: relative;
   z-index: 1; /* CRITICAL: Establishes stacking context over the fixed Canvas */
-  background: rgba(18, 8, 28, 0.85); /* Sempre visibile il canvas con opacità */
+  background: rgba(16, 15, 19, 0.90); /* grafite neutro, meno viola */
 }
 
 .heading {
@@ -90,7 +90,7 @@
   flex-direction: column;
   gap: 6px;
   padding: 20px 22px;
-  background: rgba(26, 14, 40, 0.97);
+  background: rgba(24, 22, 28, 0.97);
   border: 1px solid rgba(242, 237, 228, 0.10);
   border-left: 4px solid var(--ca, #C4622D);
   border-radius: var(--radius-card);
