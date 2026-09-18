@@ -293,6 +293,9 @@ export const PORTFOLIO = {
       solution: "I fogli sono sparsi su una superficie morbida — come un tavolo da lavoro. Si scorrono, si sfiorano, si scoprono. Nessuna griglia, nessun ordine imposto.",
       result:   'Archivio aperto, esplorabile liberamente.',
       mainImage: '/portfolio/sperimentazione/foglio-01.jpg',
+      // Copertina in cima alla pagina: il primo video della serie
+      coverVideo:  '/portfolio/sperimentazione/video-01.mp4',
+      coverPoster: '/portfolio/sperimentazione/video-01-poster.jpg',
       gallery: [
         '/portfolio/sperimentazione/foglio-01.jpg',
         '/portfolio/sperimentazione/foglio-02.jpg',
@@ -317,7 +320,7 @@ export const PORTFOLIO = {
         '/portfolio/sperimentazione/foglio-21.jpg',
         '/portfolio/sperimentazione/foglio-22.jpg',
       ],
-      // NB: video-01 manca ancora — va inserito in testa quando arriva.
+      // video-01 e' la copertina in cima alla pagina, non si ripete qui sotto.
       videos: [
         '/portfolio/sperimentazione/video-02.mp4',
         '/portfolio/sperimentazione/video-03.mp4',

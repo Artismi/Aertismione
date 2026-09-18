@@ -19,6 +19,8 @@ type Project = {
   result: string
   accent: string
   mainImage?: string
+  coverVideo?: string
+  coverPoster?: string
   gallery?: string[]
   videos?: string[]
   marquee?: string
@@ -149,6 +151,38 @@ function HeroBlock({
             <Image src={img} alt="" fill style={{ objectFit: 'cover' }} />
           </motion.div>
         ))}
+      </div>
+    )
+  }
+
+  /* VIDEO HERO — copertina in movimento, stesso trattamento dell'hero immagine */
+  if (project.coverVideo && !isIllustration) {
+    return (
+      <div className={styles.heroImage} ref={ref} data-illustration={isIllustration}>
+        <motion.div className={styles.heroImageParallax} style={{ y }}>
+          <video
+            src={project.coverVideo}
+            poster={project.coverPoster || project.mainImage}
+            className={styles.heroCoverVideo}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+          />
+        </motion.div>
+        <div className={styles.heroImageOverlay} />
+        <motion.div
+          className={styles.heroImageContent}
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
+          style={{ opacity }}
+        >
+          <span className={styles.heroNum}>{num}</span>
+          <h1 className={styles.heroTitle}>{project.title}</h1>
+          <p className={styles.heroCategory}>{project.category}</p>
+        </motion.div>
       </div>
     )
   }
