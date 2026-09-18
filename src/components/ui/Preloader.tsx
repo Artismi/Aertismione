@@ -103,17 +103,33 @@ function useSmoothedProgress(realProgress: number) {
 }
 
 // ── Preloader ─────────────────────────────────────────────────────────────────
+/** L'intro si vede una volta per sessione del browser, non a ogni ritorno in home. */
+const INTRO_KEY = 'artismi:intro-visto'
+
 export function Preloader() {
   const isLoaded        = useStore((s) => s.isLoaded)
   const loadingProgress = useStore((s) => s.loadingProgress)
-  const [show, setShow] = useState(true)
+  // Se la scena e' gia' carica (si torna in home da una pagina progetto)
+  // l'intro non parte nemmeno: niente lampo di caricamento.
+  const [show, setShow] = useState(!isLoaded)
   const displayNum      = useSmoothedProgress(loadingProgress)
 
+  // Ricaricando la pagina nella stessa sessione l'intro resta saltata.
   useEffect(() => {
-    if (isLoaded) {
-      const t = setTimeout(() => setShow(false), 700)
-      return () => clearTimeout(t)
+    try {
+      if (sessionStorage.getItem(INTRO_KEY)) setShow(false)
+    } catch {
+      /* sessionStorage non disponibile: pazienza, si vede l'intro */
     }
+  }, [])
+
+  useEffect(() => {
+    if (!isLoaded) return
+    const t = setTimeout(() => {
+      setShow(false)
+      try { sessionStorage.setItem(INTRO_KEY, '1') } catch { /* ignora */ }
+    }, 700)
+    return () => clearTimeout(t)
   }, [isLoaded])
 
   return (

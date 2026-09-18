@@ -75,6 +75,13 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
+        {/* Intro gia' vista in questa sessione? Lo segniamo prima del primo disegno,
+            cosi' al ricaricamento non lampeggia il caricamento. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "try{if(sessionStorage.getItem('artismi:intro-visto'))document.documentElement.dataset.introVisto='1'}catch(e){}",
+          }}
+        />
         {/* Preload 3D model files — browser fetches them in parallel with JS bundle */}
         <link rel="preload" href="/models/logo.glb" as="fetch" crossOrigin="anonymous" />
         <link rel="preload" href="/models/avatar.glb" as="fetch" crossOrigin="anonymous" />

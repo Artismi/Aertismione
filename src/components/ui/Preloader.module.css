@@ -123,3 +123,10 @@
   transition: width 0.18s linear;
   z-index: 11;
 }
+
+
+/* Intro gia' vista in questa sessione: nascosta prima ancora del primo disegno
+   (l'attributo lo mette uno script minimo in layout.tsx). */
+:global(html[data-intro-visto='1']) .overlay {
+  display: none;
+}
