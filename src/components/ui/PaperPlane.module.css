@@ -1,4 +1,4 @@
-/* Fogli sparsi su un piano — condiviso da illustrazioni e stamperia */
+/* Fogli appoggiati su un piano — condiviso da illustrazioni e stamperia */
 
 .defs {
   position: absolute;
@@ -7,42 +7,46 @@
   overflow: hidden;
 }
 
+/* A riposo: griglia vera. I fogli non si sovrappongono mai e si adattano alla
+   larghezza dello schermo. Il disordine nasce solo quando l'utente trascina. */
 .plane {
-  position: relative;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  align-items: start;
+  gap: 28px 24px;
   width: 100%;
-  height: var(--plane-h, 900px);
-  margin: 0 auto 72px;
   max-width: 1280px;
-  /* piano di lavoro: superficie appena piu' chiara del fondo */
-  background:
-    radial-gradient(ellipse at 50% 20%, rgba(242, 237, 228, 0.045), transparent 70%),
-    rgba(242, 237, 228, 0.022);
-  border: 1px solid rgba(242, 237, 228, 0.07);
-  touch-action: pan-y;
+  margin: 0 auto 80px;
+  padding: 36px 28px 48px;
+}
+
+.plane[data-size='large'] {
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 40px 32px;
 }
 
 .sheet {
-  position: absolute;
-  left: var(--x);
-  top: var(--y);
-  width: var(--w);
-  translate: -50% 0;
-  rotate: var(--rot);
+  position: relative;
   padding: 0;
   border: none;
-  background: #F6F2EA;
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.40), 0 2px 6px rgba(0, 0, 0, 0.30);
-  filter: url(#paper-warp);
+  /* la carta e' il lavoro stesso: niente cornice bianca attorno */
+  background: transparent;
+  filter: drop-shadow(0 12px 22px rgba(0, 0, 0, 0.48)) url(#paper-warp);
   cursor: grab;
   will-change: transform;
 }
 
-.sheet:active {
-  cursor: grabbing;
-}
+.sheet:active { cursor: grabbing; }
 
 .sheet[data-front='true'] {
-  box-shadow: 0 26px 60px rgba(0, 0, 0, 0.55), 0 4px 10px rgba(0, 0, 0, 0.35);
+  filter: drop-shadow(0 26px 46px rgba(0, 0, 0, 0.62)) url(#paper-warp);
+}
+
+/* Sui video l'increspatura andrebbe ricalcolata a ogni fotogramma: e' quello
+   che faceva scattare il trascinamento. Restano ombra e bordo ondulato. */
+.sheet[data-kind='video'],
+.sheet[data-kind='video'][data-front='true'] {
+  filter: drop-shadow(0 14px 26px rgba(0, 0, 0, 0.50));
 }
 
 .sheet:focus-visible {
@@ -54,68 +58,64 @@
   display: block;
   width: 100%;
   height: auto;
-  /* il foglio e' la carta: l'immagine ci appoggia sopra con un filo di margine */
-  padding: 4px;
-  background: #F6F2EA;
+  /* il browser non deve trascinare l'immagine per conto suo: il puntatore
+     appartiene al foglio, altrimenti le foto restano ferme */
+  -webkit-user-drag: none;
+  user-select: none;
+  pointer-events: none;
 }
 
-/* piega di luce diagonale, da' spessore alla carta */
+/* piega di luce diagonale: da' spessore al foglio senza schiarirlo */
 .crease {
   position: absolute;
   inset: 0;
   pointer-events: none;
   background: linear-gradient(
     104deg,
-    rgba(255, 255, 255, 0.16) 0%,
+    rgba(255, 255, 255, 0.13) 0%,
     rgba(255, 255, 255, 0) 26%,
-    rgba(0, 0, 0, 0.06) 48%,
-    rgba(255, 255, 255, 0.10) 62%,
-    rgba(0, 0, 0, 0.05) 100%
+    rgba(0, 0, 0, 0.10) 48%,
+    rgba(255, 255, 255, 0.07) 62%,
+    rgba(0, 0, 0, 0.09) 100%
   );
   mix-blend-mode: soft-light;
 }
 
 .label {
   display: block;
-  padding: 8px 10px 10px;
+  padding: 10px 2px 0;
+  margin-top: 8px;
   font-family: var(--font-mono);
-  font-size: 0.62rem;
-  letter-spacing: 0.1em;
+  font-weight: 700;
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #2A2520;
-  background: #F6F2EA;
+  color: var(--color-text, #F2EDE4);
   border-top: 2px solid var(--accent);
 }
 
 .plane[data-size='large'] .label {
-  font-size: 0.68rem;
+  font-size: 0.74rem;
   letter-spacing: 0.08em;
 }
 
-/* ─── Mobile: niente trascinamento, niente increspature, lettura semplice ── */
+/* ─── Mobile e touch: niente trascinamento ne' increspature ──────────────── */
 
 @media (max-width: 899px), (hover: none), (pointer: coarse) {
   .plane {
-    position: static;
-    height: auto !important;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 18px 14px;
     padding: 16px;
-    background: none;
-    border: none;
   }
 
   .plane[data-size='large'] {
-    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 22px 16px;
   }
 
-  .sheet {
-    position: static;
-    width: 100%;
-    translate: none;
-    rotate: calc(var(--rot) * 0.25);
-    filter: none;
+  .sheet,
+  .sheet[data-kind='video'] {
+    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.45));
     clip-path: none !important;
     cursor: pointer;
   }
@@ -124,5 +124,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sheet { filter: none; }
+  .sheet,
+  .sheet[data-kind='video'] {
+    filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.45));
+  }
 }

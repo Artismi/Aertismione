@@ -60,7 +60,18 @@ function PlaneVideo({ src }: { src: string }) {
     else el.pause()
   }, [inView])
 
-  return <video ref={ref} src={src} className={styles.media} muted loop playsInline preload="metadata" />
+  return (
+    <video
+      ref={ref}
+      src={src}
+      className={styles.media}
+      muted
+      loop
+      playsInline
+      preload="metadata"
+      draggable={false}
+    />
+  )
 }
 
 export function PaperPlane({
@@ -117,6 +128,7 @@ export function PaperPlane({
           <motion.div
             key={item.id}
             className={styles.sheet}
+            data-kind={item.kind}
             data-front={front === item.id ? 'true' : undefined}
             style={{
               '--accent': item.accent ?? '#E8A8BF',
@@ -157,6 +169,7 @@ export function PaperPlane({
                 height={1200}
                 sizes={size === 'large' ? '(max-width: 899px) 46vw, 380px' : '(max-width: 899px) 46vw, 260px'}
                 style={{ width: '100%', height: 'auto' }}
+                draggable={false}
               />
             )}
             {/* piega di luce sulla carta */}
