@@ -269,20 +269,41 @@ export const PORTFOLIO = {
           mainImage: '/portfolio/ridi-piangi-balli/hero.png'
         },
         {
-          id:       'punk',
-          layout:   'dual',
-          title:    "Punk Isn't Dead",
-          category: 'Illustrazione',
-          tagline:  'Contest Bonobolabo × Birrificio Mad One.',
-          context:  'Contest di illustrazione indipendente.',
-          problem:  'Comunicare energia punk in un formato stampabile senza perdere autenticità.',
-          solution: "Una per la lattina di birra — la resurrezione dello spirito punk, caotica e visionaria. Una per la tavola da skate — il legame tra cultura dello skate, birra artigianale e ribellione. Personaggi ibridi, colori acidi, energia instabile.",
-          result:   'Selezione contest. Ristampa richiesta.',
-          accent: '#1A1A1A',
-          gallery: [
-            '/portfolio/punk/beer.jpg',
-            '/portfolio/punk/skate.jpg'
-          ]
+          // Sono due illustrazioni distinte, nate per lo stesso contest.
+          id:        'punk-lattina',
+          title:     "Punk Isn't Dead — Lattina",
+          category:  'Illustrazione',
+          tagline:   'Contest Bonobolabo × Birrificio Mad One, 2024.',
+          accent:    '#1A1A1A',
+          mainImage: '/portfolio/punk/beer.jpg',
+          sections: [
+            {
+              label: 'Il contest',
+              text:  "Contest \"Punk is not dead\", promosso da Bonobolabo e dal birrificio Mad One.",
+            },
+            {
+              label: "L'illustrazione",
+              text:  'Racconta una riesumazione dello spirito punk, che per poco rischiava la sussunzione da parte del mercato.',
+            },
+          ],
+        },
+        {
+          id:        'punk-skate',
+          title:     "Punk Isn't Dead — Skate",
+          category:  'Illustrazione',
+          tagline:   'Contest Bonobolabo × Birrificio Mad One, 2024.',
+          accent:    '#1A1A1A',
+          mainImage: '/portfolio/punk/skate.jpg',
+          sections: [
+            {
+              label: 'Il contest',
+              text:  "Contest \"Punk is not dead\", promosso da Bonobolabo e dal birrificio Mad One.",
+            },
+            {
+              label: "L'illustrazione",
+              text:  'Ripercorre il legame tra skate, birra e lo spirito ribelle della cultura punk.',
+            },
+          ],
         },
         {
           id:       'ciclomeccanica',
