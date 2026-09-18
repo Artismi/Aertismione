@@ -151,8 +151,16 @@ export const PORTFOLIO = {
         '/portfolio/bicicleria/adesivo-2.jpg'
       ],
       pdfs: [
-        { label: 'Orari Negozio', url: '/portfolio/bicicleria/orario.pdf' },
-        { label: 'Maglietta Black', url: '/portfolio/bicicleria/maglietta-black.pdf' }
+        {
+          label: 'Orari Negozio',
+          url:   '/portfolio/bicicleria/orario.pdf',
+          pages: ['/portfolio/bicicleria/orario.jpg'],
+        },
+        {
+          label: 'Maglietta Black',
+          url:   '/portfolio/bicicleria/maglietta-black.pdf',
+          pages: ['/portfolio/bicicleria/maglietta-black.jpg'],
+        },
       ]
     },
 
@@ -170,7 +178,31 @@ export const PORTFOLIO = {
       accent: '#5B8EA6',
       panoramaStrip: '/portfolio/mulini/strip.png',
       pdfs: [
-        { label: 'Presentazione', url: '/portfolio/mulini/thesis.pdf' }
+        {
+          label: 'Presentazione della tesi',
+          url:   '/portfolio/mulini/thesis.pdf',
+          pages: [
+            '/portfolio/mulini/tesi/slide-01.jpg',
+            '/portfolio/mulini/tesi/slide-02.jpg',
+            '/portfolio/mulini/tesi/slide-03.jpg',
+            '/portfolio/mulini/tesi/slide-04.jpg',
+            '/portfolio/mulini/tesi/slide-05.jpg',
+            '/portfolio/mulini/tesi/slide-06.jpg',
+            '/portfolio/mulini/tesi/slide-07.jpg',
+            '/portfolio/mulini/tesi/slide-08.jpg',
+            '/portfolio/mulini/tesi/slide-09.jpg',
+            '/portfolio/mulini/tesi/slide-10.jpg',
+            '/portfolio/mulini/tesi/slide-11.jpg',
+            '/portfolio/mulini/tesi/slide-12.jpg',
+            '/portfolio/mulini/tesi/slide-13.jpg',
+            '/portfolio/mulini/tesi/slide-14.jpg',
+            '/portfolio/mulini/tesi/slide-15.jpg',
+            '/portfolio/mulini/tesi/slide-16.jpg',
+            '/portfolio/mulini/tesi/slide-17.jpg',
+            '/portfolio/mulini/tesi/slide-18.jpg',
+            '/portfolio/mulini/tesi/slide-19.jpg',
+          ],
+        },
       ]
     },
     {
@@ -263,8 +295,13 @@ export const PORTFOLIO = {
           solution: "Una narrazione illustrata in cui attrezzi e componenti meccaniche prendono vita — una città diversa, con la mobilità sostenibile al centro. Realizzato gratuitamente per sostenere un'iniziativa in cui crede.",
           result:   'Distribuzione nella rete ciclistica. Evento sold out.',
           accent: '#7B9E4A',
+          mainImage: '/portfolio/ciclomeccanica/flyer-cover.jpg',
           pdfs: [
-            { label: 'Volantino Campionati', url: '/portfolio/ciclomeccanica/flyer.pdf' }
+            {
+              label: 'Volantino Campionati',
+              url:   '/portfolio/ciclomeccanica/flyer.pdf',
+              pages: ['/portfolio/ciclomeccanica/flyer-cover.jpg'],
+            },
           ]
         }
       ]

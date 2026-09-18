@@ -28,7 +28,7 @@ type Project = {
   videos?: string[]
   marquee?: string
   panoramaStrip?: string
-  pdfs?: { label: string; url: string }[]
+  pdfs?: { label: string; url: string; pages?: string[] }[]
 }
 
 type Layout =
@@ -568,12 +568,6 @@ function MarqueeBlock({ url }: { url: string }) {
   )
 }
 
-import dynamic from 'next/dynamic'
-const PdfViewer = dynamic(
-  () => import('@/components/ui/PdfViewer').then((mod) => mod.PdfViewer),
-  { ssr: false, loading: () => <p style={{fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--ink-muted)'}}>Caricamento viewer PDF...</p> }
-)
-
 /* ─── Panorama Block (Horizontal Strip) ──────────────────────────────────── */
 
 function PanoramaBlock({ url }: { url?: string }) {
@@ -591,19 +585,58 @@ function PanoramaBlock({ url }: { url?: string }) {
 
 /* ─── PDF block ──────────────────────────────────────────────────────────── */
 
-function PdfBlock({ pdfs }: { pdfs: { label: string; url: string }[] }) {
+/**
+ * Documenti — le pagine dei PDF sono gia' convertite in immagini a monte:
+ * si vedono sempre, su qualsiasi browser, senza visualizzatori esterni.
+ * Il PDF originale resta scaricabile per chi lo vuole.
+ */
+function PdfBlock({
+  pdfs,
+  onLightbox,
+}: {
+  pdfs: { label: string; url: string; pages?: string[] }[]
+  onLightbox: (src: string, all: string[]) => void
+}) {
   return (
     <div className={styles.pdfSection}>
       <FadeUp>
         <h3 className={styles.pdfHeading}>Documenti</h3>
       </FadeUp>
-      <div className={styles.pdfInlineGrid}>
-        {pdfs.map((pdf, i) => (
-          <FadeUp key={i} delay={i * 0.07}>
-            <PdfViewer url={pdf.url} label={pdf.label} />
+
+      {pdfs.map((pdf, i) => {
+        const pages = pdf.pages ?? []
+        return (
+          <FadeUp key={i} delay={i * 0.07} className={styles.pdfDoc}>
+            <div className={styles.pdfDocHead}>
+              <span className={styles.pdfDocLabel}>{pdf.label}</span>
+              <a
+                href={pdf.url}
+                className={styles.pdfDownload}
+                target="_blank"
+                rel="noopener noreferrer"
+                download
+              >
+                Scarica il PDF ↓
+              </a>
+            </div>
+
+            {pages.length > 0 ? (
+              <div className={styles.pdfPages} data-single={pages.length === 1 ? 'true' : undefined}>
+                {pages.map((src, j) => (
+                  <button
+                    key={j}
+                    className={styles.pdfPage}
+                    onClick={() => onLightbox(src, pages)}
+                    aria-label={`${pdf.label} — pagina ${j + 1}`}
+                  >
+                    <img src={src} alt="" loading="lazy" decoding="async" />
+                  </button>
+                ))}
+              </div>
+            ) : null}
           </FadeUp>
-        ))}
-      </div>
+        )
+      })}
     </div>
   )
 }
@@ -785,7 +818,7 @@ export function ProjectPage({
       {(project.mainImage || project.gallery?.length || project.pdfs?.length) && (
         <section className={styles.mediaSection} data-illustration={isIllustration}>
           <GalleryBlock project={project} layout={layout} onLightbox={openLightbox} isIllustration={isIllustration} />
-          {project.pdfs?.length ? <PdfBlock pdfs={project.pdfs} /> : null}
+          {project.pdfs?.length ? <PdfBlock pdfs={project.pdfs} onLightbox={openLightbox} /> : null}
         </section>
       )}
 

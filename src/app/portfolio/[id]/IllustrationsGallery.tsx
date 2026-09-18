@@ -1,109 +1,233 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+/**
+ * IllustrationsGallery — vista d'insieme delle illustrazioni.
+ *
+ * Prima si sfogliava una pagina intera per volta con le frecce, e l'immagine
+ * non si vedeva nemmeno subito. Ora si vedono tutte insieme: si clicca
+ * un'illustrazione e si apre il suo dettaglio, con le immagini e il testo.
+ */
+
+import { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ProjectPage } from './ProjectPage'
+import styles from './IllustrationsGallery.module.css'
+
+type SubProject = {
+  id: string
+  title: string
+  category: string
+  tagline?: string
+  accent?: string
+  mainImage?: string
+  gallery?: string[]
+  sections?: { label: string; text: string }[]
+  context?: string
+  problem?: string
+  solution?: string
+  result?: string
+  pdfs?: { label: string; url: string; pages?: string[] }[]
+}
+
+const LEGACY_LABELS = {
+  context:  'Contesto',
+  problem:  'Il Problema',
+  solution: 'La Soluzione',
+  result:   'Il Risultato',
+} as const
+
+/** Le sezioni del progetto se ci sono, altrimenti lo schema storico senza caselle vuote. */
+function blocksOf(p: SubProject) {
+  if (p.sections?.length) return p.sections
+  return ([
+    { label: LEGACY_LABELS.context,  text: p.context  },
+    { label: LEGACY_LABELS.problem,  text: p.problem  },
+    { label: LEGACY_LABELS.solution, text: p.solution },
+    { label: LEGACY_LABELS.result,   text: p.result   },
+  ].filter((b) => b.text) as { label: string; text: string }[])
+}
+
+/** Tutte le immagini del progetto, copertina inclusa e senza doppioni. */
+function imagesOf(p: SubProject): string[] {
+  const all = [p.mainImage, ...(p.gallery ?? []), ...(p.pdfs?.flatMap((d) => d.pages ?? []) ?? [])]
+  return all.filter((src, i, arr): src is string => Boolean(src) && arr.indexOf(src) === i)
+}
 
 export function IllustrationsGallery({ project }: { project: any }) {
-  const [idx, setIdx] = useState(0)
+  const subProjects: SubProject[] = project.subProjects ?? []
+  const [openIdx, setOpenIdx] = useState<number | null>(null)
+  const [imgIdx, setImgIdx] = useState(0)
 
-  // Scroll to top automatically when swiping between parallel pages
+  const close = useCallback(() => setOpenIdx(null), [])
+
+  const open = useCallback((i: number) => {
+    setOpenIdx(i)
+    setImgIdx(0)
+  }, [])
+
+  const goTo = useCallback((i: number) => {
+    setOpenIdx(((i % subProjects.length) + subProjects.length) % subProjects.length)
+    setImgIdx(0)
+  }, [subProjects.length])
+
+  // Tastiera: Esc chiude, frecce cambiano illustrazione
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'instant' })
-  }, [idx])
+    if (openIdx === null) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape')     close()
+      if (e.key === 'ArrowRight') goTo(openIdx + 1)
+      if (e.key === 'ArrowLeft')  goTo(openIdx - 1)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [openIdx, close, goTo])
 
-  const subProjects = project.subProjects || []
+  // Blocca lo scroll della pagina mentre il dettaglio e' aperto
+  useEffect(() => {
+    if (openIdx === null) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [openIdx])
+
   if (!subProjects.length) return null
 
-  const current = subProjects[idx]
-  const total = subProjects.length
-
-  const handlePrev = () => setIdx((i) => Math.max(0, i - 1))
-  const handleNext = () => setIdx((i) => Math.min(total - 1, i + 1))
+  const current = openIdx !== null ? subProjects[openIdx] : null
+  const currentImages = current ? imagesOf(current) : []
 
   return (
-    <>
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={current.id}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          transition={{ duration: 0.3, ease: 'easeOut' }}
-        >
-          <ProjectPage
-            project={current}
-            prev={null} // Nascondo i link di rotta originali
-            next={null}
-            index={idx}
-            total={total}
-          />
-        </motion.div>
+    <main className={styles.page}>
+      <header className={styles.head}>
+        <Link href="/#portfolio" className={styles.back}>← Portfolio</Link>
+        <h1 className={styles.title}>{project.title}</h1>
+        {project.tagline && <p className={styles.tagline}>{project.tagline}</p>}
+        <span className={styles.count}>
+          {subProjects.length} lavori — clicca per leggere
+        </span>
+      </header>
+
+      <section className={styles.grid}>
+        {subProjects.map((p, i) => {
+          const cover = imagesOf(p)[0]
+          return (
+            <motion.button
+              key={p.id}
+              className={styles.card}
+              style={{ '--accent': p.accent ?? '#E8A8BF' } as React.CSSProperties}
+              onClick={() => open(i)}
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-60px' }}
+              transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1], delay: (i % 3) * 0.07 }}
+            >
+              <span className={styles.cardMedia}>
+                {cover ? (
+                  <Image
+                    src={cover}
+                    alt={p.title}
+                    fill
+                    sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 33vw"
+                    style={{ objectFit: 'cover' }}
+                  />
+                ) : (
+                  <span className={styles.cardNoImage} />
+                )}
+              </span>
+              <span className={styles.cardInfo}>
+                <span className={styles.cardCategory}>{p.category}</span>
+                <span className={styles.cardTitle}>{p.title}</span>
+              </span>
+            </motion.button>
+          )
+        })}
+      </section>
+
+      <AnimatePresence>
+        {current && (
+          <motion.div
+            className={styles.overlay}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            onClick={close}
+          >
+            <motion.article
+              className={styles.detail}
+              style={{ '--accent': current.accent ?? '#E8A8BF' } as React.CSSProperties}
+              initial={{ opacity: 0, y: 28 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 16 }}
+              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button className={styles.close} onClick={close} aria-label="Chiudi">×</button>
+
+              {currentImages.length > 0 && (
+                <div className={styles.detailMedia}>
+                  <Image
+                    key={currentImages[imgIdx]}
+                    src={currentImages[imgIdx]}
+                    alt={current.title}
+                    fill
+                    sizes="(max-width: 1000px) 100vw, 900px"
+                    style={{ objectFit: 'contain' }}
+                    priority
+                  />
+                </div>
+              )}
+
+              {currentImages.length > 1 && (
+                <div className={styles.thumbs}>
+                  {currentImages.map((src, j) => (
+                    <button
+                      key={src}
+                      className={styles.thumb}
+                      data-active={j === imgIdx ? 'true' : undefined}
+                      onClick={() => setImgIdx(j)}
+                      aria-label={`Immagine ${j + 1}`}
+                    >
+                      <Image src={src} alt="" fill sizes="80px" style={{ objectFit: 'cover' }} />
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div className={styles.detailText}>
+                <span className={styles.detailCategory}>{current.category}</span>
+                <h2 className={styles.detailTitle}>{current.title}</h2>
+                {current.tagline && <p className={styles.detailTagline}>{current.tagline}</p>}
+
+                {blocksOf(current).map((b) => (
+                  <div key={b.label} className={styles.block}>
+                    <span className={styles.blockLabel}>{b.label}</span>
+                    <p className={styles.blockText}>{b.text}</p>
+                  </div>
+                ))}
+
+                {current.pdfs?.map((d) => (
+                  <a
+                    key={d.url}
+                    href={d.url}
+                    className={styles.download}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    download
+                  >
+                    {d.label} — scarica il PDF ↓
+                  </a>
+                ))}
+              </div>
+
+              <nav className={styles.detailNav}>
+                <button onClick={() => goTo(openIdx! - 1)}>← {subProjects[(openIdx! - 1 + subProjects.length) % subProjects.length].title}</button>
+                <button onClick={() => goTo(openIdx! + 1)}>{subProjects[(openIdx! + 1) % subProjects.length].title} →</button>
+              </nav>
+            </motion.article>
+          </motion.div>
+        )}
       </AnimatePresence>
-
-      {/* Frecce fisse orizzontali per "sfogliare" a pagine parallele */}
-      <div 
-        style={{
-          position: 'fixed',
-          top: '50%',
-          left: 0,
-          right: 0,
-          transform: 'translateY(-50%)',
-          pointerEvents: 'none',
-          display: 'flex',
-          justifyContent: 'space-between',
-          padding: '0 24px',
-          zIndex: 900
-        }}
-      >
-        <button
-          onClick={handlePrev}
-          disabled={idx === 0}
-          style={{
-            pointerEvents: idx === 0 ? 'none' : 'auto',
-            background: 'rgba(26,26,26,0.65)',
-            color: '#fff',
-            border: 'none',
-            backdropFilter: 'blur(8px)',
-            width: '48px',
-            height: '80px',
-            fontSize: '1.2rem',
-            cursor: 'pointer',
-            opacity: idx === 0 ? 0 : 0.8,
-            transition: 'opacity 0.2s, background 0.2s',
-            borderRadius: '4px',
-            fontFamily: 'var(--font-mono)'
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(26,26,26,0.95)'}
-          onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(26,26,26,0.65)'}
-        >
-          ←
-        </button>
-
-        <button
-          onClick={handleNext}
-          disabled={idx === total - 1}
-          style={{
-            pointerEvents: idx === total - 1 ? 'none' : 'auto',
-            background: 'rgba(26,26,26,0.65)',
-            color: '#fff',
-            border: 'none',
-            backdropFilter: 'blur(8px)',
-            width: '48px',
-            height: '80px',
-            fontSize: '1.2rem',
-            cursor: 'pointer',
-            opacity: idx === total - 1 ? 0 : 0.8,
-            transition: 'opacity 0.2s, background 0.2s',
-            borderRadius: '4px',
-            fontFamily: 'var(--font-mono)'
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(26,26,26,0.95)'}
-          onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(26,26,26,0.65)'}
-        >
-          →
-        </button>
-      </div>
-    </>
+    </main>
   )
 }
