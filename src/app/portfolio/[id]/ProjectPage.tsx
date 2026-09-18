@@ -293,6 +293,63 @@ function NarrativeGrid({
   )
 }
 
+/* ─── Archivio: immagini + video mescolati ───────────────────────────────── */
+
+type ArchiveItem = { kind: 'image' | 'video'; src: string }
+
+/**
+ * Distribuisce i video tra le immagini a intervalli regolari, mantenendo
+ * l'ordine relativo di entrambi. Con 22 fogli e 5 video ne esce circa
+ * un video ogni 4 fogli.
+ */
+function interleaveMedia(images: string[], videos: string[]): ArchiveItem[] {
+  if (!videos.length) return images.map((src) => ({ kind: 'image' as const, src }))
+
+  const out: ArchiveItem[] = []
+  const step = images.length / (videos.length + 1)
+  let next = step
+  let v = 0
+
+  images.forEach((src, i) => {
+    out.push({ kind: 'image', src })
+    if (v < videos.length && i + 1 >= Math.round(next)) {
+      out.push({ kind: 'video', src: videos[v] })
+      v += 1
+      next += step
+    }
+  })
+  while (v < videos.length) {
+    out.push({ kind: 'video', src: videos[v] })
+    v += 1
+  }
+  return out
+}
+
+/** Video dell'archivio: parte da solo quando entra nello schermo, muto e in loop. */
+function ArchiveVideo({ src }: { src: string }) {
+  const ref = useRef<HTMLVideoElement>(null)
+  const isInView = useInView(ref, { margin: '0px 0px -80px 0px' })
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    if (isInView) el.play().catch(() => {})
+    else el.pause()
+  }, [isInView])
+
+  return (
+    <video
+      ref={ref}
+      src={src}
+      className={styles.galleryArchiveVideo}
+      muted
+      loop
+      playsInline
+      preload="metadata"
+    />
+  )
+}
+
 /* ─── Gallery variants ───────────────────────────────────────────────────── */
 
 function GalleryBlock({
@@ -330,27 +387,34 @@ function GalleryBlock({
 
   if (!all.length) return null
 
-  /* ARCHIVE — scattered pile */
+  /* ARCHIVE — scattered pile, con i video mescolati tra i fogli */
   if (layout === 'archive') {
+    const items = interleaveMedia(all, project.videos || [])
     return (
       <div className={styles.galleryArchive} data-illustration={isIllustration}>
-        {all.map((img, i) => {
+        {items.map((item, i) => {
           const seed = i * 137
           const rot = ((seed % 9) - 4) * 1.2
           const delay = (i % 8) * 0.04
+          const isVideo = item.kind === 'video'
           return (
             <motion.button
-              key={i}
+              key={`${item.kind}-${item.src}`}
               className={styles.galleryArchiveItem}
+              data-video={isVideo ? 'true' : undefined}
               style={{ '--rot': `${rot}deg` } as React.CSSProperties}
               initial={{ opacity: 0, rotate: rot - 4, scale: 0.9 }}
               whileInView={{ opacity: 1, rotate: rot, scale: 1 }}
               whileHover={{ scale: 1.04, rotate: rot * 0.5, zIndex: 10 }}
               transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay }}
               viewport={{ once: true, margin: '-40px' }}
-              onClick={() => onLightbox(img, all)}
+              onClick={isVideo ? undefined : () => onLightbox(item.src, all)}
             >
-              <Image src={img} alt="" fill style={{ objectFit: isIllustration ? 'contain' : 'cover' }} />
+              {isVideo ? (
+                <ArchiveVideo src={item.src} />
+              ) : (
+                <Image src={item.src} alt="" fill style={{ objectFit: isIllustration ? 'contain' : 'cover' }} />
+              )}
             </motion.button>
           )
         })}
@@ -665,10 +729,10 @@ export function ProjectPage({
       {project.panoramaStrip && <PanoramaBlock url={project.panoramaStrip} />}
 
       {/* Mixed Media: Marquee (Vertical) + Videos */}
-      {(project.marquee || project.videos?.length) && (
+      {(project.marquee || (layout !== 'archive' && project.videos?.length)) && (
         <section className={styles.mixedMediaSection}>
           {project.marquee && <MarqueeBlock url={project.marquee} />}
-          <VideoBlock videos={project.videos || []} />
+          {layout !== 'archive' && <VideoBlock videos={project.videos || []} />}
         </section>
       )}
 

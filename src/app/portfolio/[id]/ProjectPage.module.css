@@ -683,6 +683,20 @@
   object-fit: cover;
 }
 
+/* Video mescolati tra i fogli dell'archivio */
+.galleryArchiveVideo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.galleryArchiveItem[data-video='true'] {
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.22);
+}
+
 /* ─── PDF section ──────────────────────────────────────────── */
 
 .pdfSection {
