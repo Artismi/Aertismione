@@ -12,6 +12,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
+import { PaperPlane, type PaperItem } from '@/components/ui/PaperPlane'
 import styles from './IllustrationsGallery.module.css'
 
 type SubProject = {
@@ -107,41 +108,22 @@ export function IllustrationsGallery({ project }: { project: any }) {
         </span>
       </header>
 
-      <section className={styles.grid}>
-        {subProjects.map((p, i) => {
-          const cover = imagesOf(p)[0]
-          return (
-            <motion.button
-              key={p.id}
-              className={styles.card}
-              style={{ '--accent': p.accent ?? '#E8A8BF' } as React.CSSProperties}
-              onClick={() => open(i)}
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-60px' }}
-              transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1], delay: (i % 3) * 0.07 }}
-            >
-              <span className={styles.cardMedia}>
-                {cover ? (
-                  <Image
-                    src={cover}
-                    alt={p.title}
-                    fill
-                    sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 33vw"
-                    style={{ objectFit: 'cover' }}
-                  />
-                ) : (
-                  <span className={styles.cardNoImage} />
-                )}
-              </span>
-              <span className={styles.cardInfo}>
-                <span className={styles.cardCategory}>{p.category}</span>
-                <span className={styles.cardTitle}>{p.title}</span>
-              </span>
-            </motion.button>
-          )
-        })}
-      </section>
+      <PaperPlane
+        size="large"
+        items={subProjects
+          .map((p): PaperItem => ({
+            id: p.id,
+            kind: 'image',
+            src: imagesOf(p)[0] ?? '',
+            label: p.title,
+            accent: p.accent,
+          }))
+          .filter((it) => it.src)}
+        onOpen={(item) => {
+          const i = subProjects.findIndex((p) => p.id === item.id)
+          if (i >= 0) open(i)
+        }}
+      />
 
       <AnimatePresence>
         {current && (

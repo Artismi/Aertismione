@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { motion, useScroll, useTransform, useInView } from 'framer-motion'
 import { useRef, useState, useEffect } from 'react'
+import { PaperPlane, type PaperItem } from '@/components/ui/PaperPlane'
 import styles from './ProjectPage.module.css'
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
@@ -432,38 +433,21 @@ function GalleryBlock({
 
   if (!all.length) return null
 
-  /* ARCHIVE — scattered pile, con i video mescolati tra i fogli */
+  /* ARCHIVE — fogli sparsi su un piano, trascinabili da desktop */
   if (layout === 'archive') {
     const items = interleaveMedia(all, project.videos || [])
     return (
-      <div className={styles.galleryArchive} data-illustration={isIllustration}>
-        {items.map((item, i) => {
-          const seed = i * 137
-          const rot = ((seed % 9) - 4) * 1.2
-          const delay = (i % 8) * 0.04
-          const isVideo = item.kind === 'video'
-          return (
-            <motion.button
-              key={`${item.kind}-${item.src}`}
-              className={styles.galleryArchiveItem}
-              data-video={isVideo ? 'true' : undefined}
-              style={{ '--rot': `${rot}deg` } as React.CSSProperties}
-              initial={{ opacity: 0, rotate: rot - 4, scale: 0.9 }}
-              whileInView={{ opacity: 1, rotate: rot, scale: 1 }}
-              whileHover={{ scale: 1.04, rotate: rot * 0.5, zIndex: 10 }}
-              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay }}
-              viewport={{ once: true, margin: '-40px' }}
-              onClick={isVideo ? undefined : () => onLightbox(item.src, all)}
-            >
-              {isVideo ? (
-                <ArchiveVideo src={item.src} />
-              ) : (
-                <Image src={item.src} alt="" fill style={{ objectFit: isIllustration ? 'contain' : 'cover' }} />
-              )}
-            </motion.button>
-          )
-        })}
-      </div>
+      <PaperPlane
+        items={items.map((it, i): PaperItem => ({
+          id: `${it.kind}-${i}`,
+          kind: it.kind,
+          src: it.src,
+          accent: project.accent,
+        }))}
+        onOpen={(item) => {
+          if (item.kind === 'image') onLightbox(item.src, all)
+        }}
+      />
     )
   }
 

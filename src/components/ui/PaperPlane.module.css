@@ -1,0 +1,128 @@
+/* Fogli sparsi su un piano — condiviso da illustrazioni e stamperia */
+
+.defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.plane {
+  position: relative;
+  width: 100%;
+  height: var(--plane-h, 900px);
+  margin: 0 auto 72px;
+  max-width: 1280px;
+  /* piano di lavoro: superficie appena piu' chiara del fondo */
+  background:
+    radial-gradient(ellipse at 50% 20%, rgba(242, 237, 228, 0.045), transparent 70%),
+    rgba(242, 237, 228, 0.022);
+  border: 1px solid rgba(242, 237, 228, 0.07);
+  touch-action: pan-y;
+}
+
+.sheet {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--w);
+  translate: -50% 0;
+  rotate: var(--rot);
+  padding: 0;
+  border: none;
+  background: #F6F2EA;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.40), 0 2px 6px rgba(0, 0, 0, 0.30);
+  filter: url(#paper-warp);
+  cursor: grab;
+  will-change: transform;
+}
+
+.sheet:active {
+  cursor: grabbing;
+}
+
+.sheet[data-front='true'] {
+  box-shadow: 0 26px 60px rgba(0, 0, 0, 0.55), 0 4px 10px rgba(0, 0, 0, 0.35);
+}
+
+.sheet:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.media {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* il foglio e' la carta: l'immagine ci appoggia sopra con un filo di margine */
+  padding: 4px;
+  background: #F6F2EA;
+}
+
+/* piega di luce diagonale, da' spessore alla carta */
+.crease {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    104deg,
+    rgba(255, 255, 255, 0.16) 0%,
+    rgba(255, 255, 255, 0) 26%,
+    rgba(0, 0, 0, 0.06) 48%,
+    rgba(255, 255, 255, 0.10) 62%,
+    rgba(0, 0, 0, 0.05) 100%
+  );
+  mix-blend-mode: soft-light;
+}
+
+.label {
+  display: block;
+  padding: 8px 10px 10px;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #2A2520;
+  background: #F6F2EA;
+  border-top: 2px solid var(--accent);
+}
+
+.plane[data-size='large'] .label {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+}
+
+/* ─── Mobile: niente trascinamento, niente increspature, lettura semplice ── */
+
+@media (max-width: 899px), (hover: none), (pointer: coarse) {
+  .plane {
+    position: static;
+    height: auto !important;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 14px;
+    padding: 16px;
+    background: none;
+    border: none;
+  }
+
+  .plane[data-size='large'] {
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  }
+
+  .sheet {
+    position: static;
+    width: 100%;
+    translate: none;
+    rotate: calc(var(--rot) * 0.25);
+    filter: none;
+    clip-path: none !important;
+    cursor: pointer;
+  }
+
+  .crease { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet { filter: none; }
+}
