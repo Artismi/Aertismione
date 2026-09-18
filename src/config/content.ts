@@ -130,11 +130,21 @@ export const PORTFOLIO = {
       thumb:    '/portfolio/_thumbs/bicicleria.jpg',
       title:    'Bicicleria',
       category: 'Identità visiva completa',
-      tagline:  'Dal murale alla vetrina, dai gadget al feed.',
-      context:  'La Bicicleria è una ciclofficina. Un posto fatto di mani, ruote, comunità e passione artigianale. Un mondo già ricco — che non aveva ancora una voce visiva capace di raccontarlo.',
-      problem:  "Un'attività unica nel suo genere, con una storia e un immaginario fortissimi, che comunicava poco e in modo disomogeneo. Chi entrava in negozio viveva un'esperienza autentica. Chi la cercava online non trovava niente di tutto questo.",
-      solution: "Un percorso completo di identità narrativa. Ascolto del contesto, co-progettazione, costruzione dell'immaginario visivo. L'illustrazione madre fonde meccanica, movimento e carattere — e diventa il sistema da cui tutto deriva: il murale sulla colonna interna, la vetrina, le illustrazioni, i gadget, i social.",
-      result:   'Chi entra in negozio e chi arriva online vede la stessa anima. L\'identità vive su tutti i livelli — dal muro al feed — con la stessa voce.',
+      tagline:  'Identità visiva di una ciclofficina. Progetto continuativo dal 2024.',
+      sections: [
+        {
+          label: 'Il lavoro',
+          text:  "Curo l'identità visiva della ciclofficina Bicicleria nel suo insieme: dalle grafiche ai murales fino ai canali social. È un progetto continuativo, iniziato nel 2024 e ancora in corso.",
+        },
+        {
+          label: 'Il murale',
+          text:  "Dipinto a mano su una colonna interna del negozio. Le componenti meccaniche e gli attrezzi prendono vita e si collegano in un unico flusso di avvenimenti che percorre le varie facce della colonna. Linea nera su fondo rosa, dal pavimento al soffitto.",
+        },
+        {
+          label: 'Cosa ho prodotto',
+          text:  'Murale, adesivi, locandine per gli eventi, grafiche per le magliette, il cartello degli orari, il video promozionale e le grafiche per i social.',
+        },
+      ],
       mapX: 0.15, mapY: 0.30,
       accent: '#C4622D',
       mainImage: '/portfolio/bicicleria/detail-1.jpg',
