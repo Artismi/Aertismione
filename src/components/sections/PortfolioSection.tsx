@@ -210,19 +210,22 @@ function drawFolder(ctx: CanvasRenderingContext2D, p: Project, w: number, h: num
   ctx.shadowColor = `rgba(0,0,0,${isHovered?0.60:0.32})`
   ctx.shadowBlur = isHovered ? 26 : 12
   ctx.shadowOffsetX = 2; ctx.shadowOffsetY = isHovered ? 12 : 6
+  // La linguetta si adatta alla lunghezza della categoria (prima il testo usciva fuori)
+  const catLabel = p.category.toUpperCase()
+  ctx.font='bold 6.5px "JetBrains Mono",monospace'
+  const tabW = Math.min(fw-10, Math.max(40, ctx.measureText(catLabel).width + 18))
   ctx.beginPath()
-  ctx.moveTo(bx,     by)
-  ctx.lineTo(bx+52,  by)
-  ctx.lineTo(bx+45,  by-15)
-  ctx.lineTo(bx+5,   by-15)
+  ctx.moveTo(bx,          by)
+  ctx.lineTo(bx+tabW,     by)
+  ctx.lineTo(bx+tabW-7,   by-15)
+  ctx.lineTo(bx+5,        by-15)
   ctx.closePath()
   ctx.fillStyle = p.accent; ctx.fill()
   ctx.shadowBlur=0; ctx.shadowOffsetX=0; ctx.shadowOffsetY=0
 
   ctx.textAlign='left'
   ctx.fillStyle='rgba(255,255,255,0.92)'
-  ctx.font='bold 6.5px "JetBrains Mono",monospace'
-  ctx.fillText(p.category.toUpperCase(), bx+8, by-5)
+  ctx.fillText(catLabel, bx+8, by-5)
 
   // Corpo cartella — grafite scuro neutro (non piu' viola)
   ctx.shadowColor=`rgba(0,0,0,${isHovered?0.50:0.26})`

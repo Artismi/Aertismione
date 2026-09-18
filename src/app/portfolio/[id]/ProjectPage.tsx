@@ -13,10 +13,13 @@ type Project = {
   title: string
   category: string
   tagline: string
-  context: string
-  problem: string
-  solution: string
-  result: string
+  /** Sezioni libere: ogni progetto racconta quello che ha da raccontare. */
+  sections?: { label: string; text: string }[]
+  /** Schema storico a quattro caselle, usato dai progetti che non hanno "sections". */
+  context?: string
+  problem?: string
+  solution?: string
+  result?: string
   accent: string
   mainImage?: string
   coverVideo?: string
@@ -252,12 +255,20 @@ function NarrativeGrid({
   layout: Layout
   isIllustration: boolean
 }) {
-  const blocks = [
-    { key: 'context',  text: project.context  },
-    { key: 'problem',  text: project.problem  },
-    { key: 'solution', text: project.solution },
-    { key: 'result',   text: project.result   },
-  ] as const
+  /**
+   * La struttura della pagina segue il contenuto, non il contrario:
+   * se il progetto definisce le sue sezioni si usano quelle (quante sono,
+   * con i titoli che servono), altrimenti si ricade sullo schema storico
+   * Contesto / Problema / Soluzione / Risultato.
+   */
+  const blocks = project.sections?.length
+    ? project.sections.map((s, i) => ({ key: `s${i}`, label: s.label, text: s.text }))
+    : ([
+        { key: 'context',  label: NARRATIVE_LABELS.context,  text: project.context  },
+        { key: 'problem',  label: NARRATIVE_LABELS.problem,  text: project.problem  },
+        { key: 'solution', label: NARRATIVE_LABELS.solution, text: project.solution },
+        { key: 'result',   label: NARRATIVE_LABELS.result,   text: project.result   },
+      ].filter((b) => b.text) as { key: string; label: string; text: string }[])
 
   /* CASE STUDY — 4 cards in a horizontal grid */
   if (layout === 'case_study') {
@@ -267,7 +278,7 @@ function NarrativeGrid({
           <FadeUp key={b.key} delay={i * 0.07} className={styles.narrativeCard}>
             <span className={styles.narrativeCardNum}>0{i + 1}</span>
             <span className={styles.narrativeLabel}>
-              {NARRATIVE_LABELS[b.key]}
+              {b.label}
             </span>
             <p className={styles.narrativeText}>{b.text}</p>
           </FadeUp>
@@ -282,7 +293,7 @@ function NarrativeGrid({
       <div className={styles.narrativePanoramic} data-illustration={isIllustration}>
         {blocks.map((b, i) => (
           <FadeUp key={b.key} delay={i * 0.1} className={styles.narrativePanoramicBlock}>
-            <span className={styles.narrativeLabel}>{NARRATIVE_LABELS[b.key]}</span>
+            <span className={styles.narrativeLabel}>{b.label}</span>
             <p className={styles.narrativeTextLarge}>{b.text}</p>
           </FadeUp>
         ))}
@@ -297,7 +308,7 @@ function NarrativeGrid({
         <div className={styles.narrativeSplitCol}>
           {blocks.slice(0, 2).map((b, i) => (
             <FadeUp key={b.key} delay={i * 0.08} className={styles.narrativeBlock}>
-              <span className={styles.narrativeLabel}>{NARRATIVE_LABELS[b.key]}</span>
+              <span className={styles.narrativeLabel}>{b.label}</span>
               <p className={styles.narrativeText}>{b.text}</p>
             </FadeUp>
           ))}
@@ -305,7 +316,7 @@ function NarrativeGrid({
         <div className={styles.narrativeSplitCol}>
           {blocks.slice(2).map((b, i) => (
             <FadeUp key={b.key} delay={i * 0.08 + 0.12} className={styles.narrativeBlock}>
-              <span className={styles.narrativeLabel}>{NARRATIVE_LABELS[b.key]}</span>
+              <span className={styles.narrativeLabel}>{b.label}</span>
               <p className={styles.narrativeText}>{b.text}</p>
             </FadeUp>
           ))}
@@ -319,7 +330,7 @@ function NarrativeGrid({
     <div className={styles.narrativeLinear} data-illustration={isIllustration}>
       {blocks.map((b, i) => (
         <FadeUp key={b.key} delay={i * 0.08} className={styles.narrativeBlock}>
-          <span className={styles.narrativeLabel}>{NARRATIVE_LABELS[b.key]}</span>
+          <span className={styles.narrativeLabel}>{b.label}</span>
           <p className={styles.narrativeText}>{b.text}</p>
         </FadeUp>
       ))}

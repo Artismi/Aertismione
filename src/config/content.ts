@@ -286,12 +286,27 @@ export const PORTFOLIO = {
       id:       'sperimentazione',
       thumb:    '/portfolio/_thumbs/sperimentazione.jpg',
       title:    'Stamperia',
-      category: 'Stampa / Monotipo',
-      tagline:  'Circa 80 fogli A3 — monotipi, macchie, texture da esplorare liberamente.',
-      context:  'Non commissioni, non progetti. Fogli A3, inchiostro, colore, gesto. Circa 80 lavori accumulati nel tempo — ogni foglio è un esperimento autonomo.',
-      problem:  "Un archivio personale che non ha una forma pubblica.",
-      solution: "I fogli sono sparsi su una superficie morbida — come un tavolo da lavoro. Si scorrono, si sfiorano, si scoprono. Nessuna griglia, nessun ordine imposto.",
-      result:   'Archivio aperto, esplorabile liberamente.',
+      category: 'Ricerca personale',
+      tagline:  'Ricerca personale, 2024 — in corso. Circa 80 fogli A3: spontaneità, ripetizione, stratificazione.',
+      // Sezioni su misura: una ricerca personale non ha un "problema" e una "soluzione".
+      sections: [
+        {
+          label: 'Il progetto',
+          text:  'Alcuni estratti di un progetto esplorativo, iniziato nel 2024 e tuttora in corso. Circa 80 fogli A3: monotipi, macchie, segni, texture.',
+        },
+        {
+          label: 'La ricerca',
+          text:  'Si concentra sulla ricerca di significato nella spontaneità, nella ripetizione e nella stratificazione.',
+        },
+        {
+          label: 'Il metodo',
+          text:  "Procedure approssimative e sbrigative, senza pretendere il controllo e contemplando l'errore come parte integrante del processo.",
+        },
+        {
+          label: "L'intento",
+          text:  "Trovare il corretto equilibrio che permetta alla casualità di esprimersi ed evolversi, concedendomi per analogia di riflettere sul mistero dell'origine delle cose.",
+        },
+      ],
       mainImage: '/portfolio/sperimentazione/foglio-01.jpg',
       // Copertina in cima alla pagina: il primo video della serie
       coverVideo:  '/portfolio/sperimentazione/video-01.mp4',
