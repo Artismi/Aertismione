@@ -27,8 +27,6 @@ import { usePathname } from 'next/navigation'
 
 // ─── Preload all models immediately ───────────────────────────────────────────
 useGLTF.preload('/models/logo.glb')
-useGLTF.preload('/models/avatar.glb')
-useGLTF.preload('/models/Background_v2.glb')
 // ──────────────────────────────────────────────────────────────────────────────
 
 function Loader() {

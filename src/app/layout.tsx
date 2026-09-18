@@ -77,8 +77,6 @@ export default function RootLayout({
       <head>
         {/* Preload 3D model files — browser fetches them in parallel with JS bundle */}
         <link rel="preload" href="/models/logo.glb" as="fetch" crossOrigin="anonymous" />
-        <link rel="preload" href="/models/avatar.glb" as="fetch" crossOrigin="anonymous" />
-        <link rel="preload" href="/models/Background_v2.glb" as="fetch" crossOrigin="anonymous" />
       </head>
       <body>
         <CustomCursor />

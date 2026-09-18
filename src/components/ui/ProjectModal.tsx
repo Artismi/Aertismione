@@ -471,6 +471,8 @@ function LayoutDual({ project }: { project: Project }) {
               <img
                 src={src}
                 alt=""
+                loading="lazy"
+                decoding="async"
                 onLoad={e => handleImgLoad(e, i)}
               />
             </motion.div>

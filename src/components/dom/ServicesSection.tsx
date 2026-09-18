@@ -238,6 +238,8 @@ export function ServicesSection() {
                                 src={currentService.image}
                                 alt={currentService.title}
                                 className="w-full h-full object-cover"
+                                loading="lazy"
+                                decoding="async"
                             />
                             {/* Inner Glass Shadow / Shine to make it look like a bubble */}
                             <div className="absolute inset-0 rounded-full border border-white/20 shadow-[inset_0_0_50px_rgba(255,255,255,0.1)] pointer-events-none" />

@@ -30,6 +30,8 @@ export function FotoBook({ images, accent, onImageClick }: Props) {
               alt=""
               className={styles.img}
               draggable={false}
+              loading="lazy"
+              decoding="async"
               onClick={() => onImageClick?.(src, images)}
             />
             <span className={styles.counter} style={{ color: accent }}>

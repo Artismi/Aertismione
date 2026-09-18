@@ -70,6 +70,8 @@ export function MapViewer({ src, accent, onImageClick }: Props) {
           src={src}
           alt=""
           className={styles.img}
+          loading="lazy"
+          decoding="async"
           style={{
             transform: `scale(${scale}) translate(${offset.x / scale}px, ${offset.y / scale}px)`,
           }}

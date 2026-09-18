@@ -6,8 +6,6 @@ import { Environment } from '@react-three/drei'
 import { useStore } from '../../stores/useStore'
 
 import { LogoModel } from './LogoModel'
-import { AvatarParticles } from './AvatarParticles'
-import { BackgroundModel } from './BackgroundModel'
 import { CausticsPlane } from './CausticsPlane'
 import type { AvatarTarget } from './AvatarParticles'
 
