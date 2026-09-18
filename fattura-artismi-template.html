@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Fattura — Artismi Design Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;1,9..144,900&family=Bebas+Neue&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#1A1A1A;--violet:#7B4FBF;--muted:#5A5248;
+  --paper:#F5F0E8;--rule:#C8C0B4;--ghost:rgba(26,26,26,0.04);
+}
+
+/* ── BODY & TOOLBAR ────────────────────────────────────────── */
+body{background:#221D15;font-family:'Courier Prime',monospace;color:var(--ink);padding:28px 16px 80px}
+
+.toolbar{
+  width:210mm;margin:0 auto 12px;
+  display:flex;align-items:center;gap:8px;
+}
+.toolbar-hint{
+  font-family:'Courier Prime',monospace;font-size:7.5pt;
+  color:#7A6E60;margin-right:auto;
+}
+.btn{
+  font-family:'Bebas Neue',sans-serif;font-size:10.5pt;
+  letter-spacing:2px;padding:6px 18px;border:none;cursor:pointer;transition:.15s;
+}
+.btn-tipo{background:transparent;color:#7A6E60;border:1px solid #3A3228;font-size:9.5pt;padding:5px 12px;}
+.btn-tipo.active{background:var(--violet);color:var(--paper);border-color:var(--violet);}
+.btn-tipo:not(.active):hover{color:var(--paper);border-color:#7A6E60;}
+.btn-reset{background:transparent;color:#7A6E60;border:1px solid #3A3228;}
+.btn-reset:hover{color:var(--paper);border-color:#7A6E60;}
+.btn-print{background:var(--violet);color:var(--paper);}
+.btn-print:hover{background:#9B6FEF;}
+.tipo-group{display:flex;gap:4px;}
+
+/* ── PAGE ──────────────────────────────────────────────────── */
+.page{
+  width:210mm;min-height:297mm;
+  margin:0 auto;padding:17mm 20mm 16mm;
+  background:var(--paper);
+  box-shadow:0 12px 80px rgba(0,0,0,0.6);
+  position:relative;overflow:hidden;
+}
+
+/* Ghost watermark */
+.page::before{
+  content:attr(data-docnum);
+  font-family:'Fraunces',serif;font-weight:900;font-style:italic;
+  font-size:180pt;line-height:1;color:var(--ghost);
+  position:absolute;right:-10mm;top:8mm;
+  pointer-events:none;user-select:none;z-index:0;
+  letter-spacing:-8px;
+}
+.page>*{position:relative;z-index:1;}
+
+/* ── TYPE ──────────────────────────────────────────────────── */
+.t-brand{
+  font-family:'Fraunces',serif;font-weight:900;font-style:italic;
+  font-size:70pt;line-height:.82;letter-spacing:-3px;color:var(--ink);display:block;
+}
+.t-sub{
+  font-family:'Bebas Neue',sans-serif;font-size:10pt;
+  letter-spacing:3px;margin-top:5px;margin-bottom:10px;
+  display:flex;align-items:center;gap:8px;
+}
+.t-sub-studio{color:var(--violet);}
+.t-sub-sep{color:var(--rule);}
+.t-sub-tipo{color:var(--muted);}
+
+.t-tag{font-family:'Bebas Neue',sans-serif;font-size:7.5pt;letter-spacing:2.5px;color:var(--violet);display:block;margin-bottom:4px;}
+.t-name{font-family:'Fraunces',serif;font-weight:900;font-size:14pt;line-height:1.05;display:block;margin-bottom:1px;}
+.t-namesub{font-family:'Courier Prime',monospace;font-size:8pt;color:var(--muted);display:block;margin-bottom:6px;}
+.t-detail{font-family:'Courier Prime',monospace;font-size:8pt;color:var(--muted);line-height:1.75;display:block;}
+
+/* ── RULES ─────────────────────────────────────────────────── */
+.rule-ink   {height:3px;background:var(--ink);display:block;}
+.rule-violet{height:2px;background:var(--violet);display:block;}
+.rule-muted {height:1px;background:var(--rule);display:block;}
+
+/* ── META 2-COL ────────────────────────────────────────────── */
+.meta{display:flex;padding:11px 0 10px;gap:0;align-items:flex-start;}
+.col-from{flex:1.25;padding-right:8px;}
+.col-num{flex:1;display:flex;flex-direction:column;align-items:flex-end;}
+
+.t-docnum{
+  font-family:'Fraunces',serif;font-weight:900;font-style:italic;
+  font-size:52pt;line-height:.85;color:var(--ink);
+  text-align:right;display:block;
+  max-width:100%;word-break:break-all;
+  margin-bottom:10px;
+}
+.t-n-label{font-family:'Bebas Neue',sans-serif;font-size:7.5pt;letter-spacing:2.5px;color:var(--violet);text-align:right;display:block;margin-bottom:3px;}
+
+.meta-field{
+  display:flex;align-items:baseline;gap:8px;
+  justify-content:flex-end;margin-bottom:4px;
+}
+.meta-lbl{font-family:'Bebas Neue',sans-serif;font-size:7.5pt;letter-spacing:2px;color:var(--violet);}
+.meta-val{font-family:'Courier Prime',monospace;font-size:8.5pt;color:var(--ink);}
+
+/* ── CLIENTE ───────────────────────────────────────────────── */
+.cliente{padding:10px 0 10px;border-left:2.5px solid var(--violet);padding-left:10px;margin-left:-10px;}
+.t-client{font-family:'Fraunces',serif;font-weight:900;font-size:13.5pt;display:block;margin-bottom:3px;}
+.prow{display:flex;gap:8px;align-items:baseline;margin-bottom:3px;}
+.plbl{font-family:'Bebas Neue',sans-serif;font-size:7.5pt;letter-spacing:2px;color:var(--violet);min-width:75px;}
+.pval{font-family:'Courier Prime',monospace;font-size:8.5pt;color:var(--ink);}
+
+/* ── TABLE ─────────────────────────────────────────────────── */
+.services{width:100%;border-collapse:collapse;margin-top:0;}
+.services thead th{
+  font-family:'Bebas Neue',sans-serif;font-size:9pt;
+  letter-spacing:1.5px;color:var(--paper);background:var(--ink);
+  padding:5px 8px;text-align:left;font-weight:normal;
+}
+.services thead th.r{text-align:right;}
+
+.services tbody tr{transition:background .1s;}
+.services tbody tr:nth-child(even){background:rgba(26,26,26,0.025);}
+
+.services tbody td{
+  font-family:'Courier Prime',monospace;font-size:8.5pt;
+  border-bottom:1px solid var(--rule);vertical-align:top;padding:0;
+}
+.ci{display:block;padding:7px 8px;min-height:34px;width:100%;}
+.r .ci{text-align:right;}
+.c .ci{text-align:center;}
+
+.note-row td{border-bottom:none!important;border-top:none!important;}
+.note-row .ci{font-size:7.5pt;color:var(--muted);min-height:22px;padding:5px 8px;}
+
+.row-total .ci{color:var(--ink);font-weight:700;}
+
+/* ── TOTALS ────────────────────────────────────────────────── */
+.totals{display:flex;flex-direction:column;align-items:flex-end;gap:2px;margin-top:3px;}
+
+.tot-row{display:flex;align-items:baseline;gap:0;}
+.tot-lbl{
+  font-family:'Bebas Neue',sans-serif;font-size:8.5pt;
+  letter-spacing:1.5px;color:var(--muted);
+  min-width:148px;text-align:right;padding-right:14px;
+}
+.tot-val{
+  font-family:'Courier Prime',monospace;font-size:8.5pt;
+  color:var(--muted);min-width:88px;text-align:right;
+}
+
+.rit-row{display:flex;align-items:center;gap:8px;justify-content:flex-end;margin-bottom:2px;}
+.rit-toggle{
+  appearance:none;width:28px;height:14px;
+  background:var(--rule);border-radius:7px;cursor:pointer;
+  position:relative;transition:.2s;flex-shrink:0;
+}
+.rit-toggle:checked{background:var(--violet);}
+.rit-toggle::after{
+  content:'';position:absolute;top:2px;left:2px;
+  width:10px;height:10px;background:white;border-radius:5px;transition:.2s;
+}
+.rit-toggle:checked::after{left:16px;}
+.rit-lbl-text{
+  font-family:'Bebas Neue',sans-serif;font-size:8.5pt;
+  letter-spacing:1.5px;color:var(--muted);
+}
+
+.tot-final{
+  display:flex;align-items:center;
+  background:var(--ink);margin-top:5px;
+  min-width:240px;
+}
+.tot-final .tot-lbl{color:var(--paper);padding:6px 14px 6px 20px;font-size:9pt;}
+.tot-final .tot-val{
+  font-family:'Fraunces',serif;font-weight:900;
+  font-size:14pt;color:var(--paper);
+  padding:5px 10px 5px 0;
+  min-width:90px;
+}
+
+/* ── PAGAMENTO ─────────────────────────────────────────────── */
+.pagamento{padding:10px 0 10px;}
+
+/* ── LEGAL & FOOTER ────────────────────────────────────────── */
+.legal{font-family:'Courier Prime',monospace;font-size:6.5pt;color:var(--muted);line-height:1.65;margin-top:9px;}
+.footer{
+  text-align:center;
+  font-family:'Bebas Neue',sans-serif;font-size:8pt;
+  letter-spacing:3.5px;color:var(--muted);
+  margin-top:16px;padding-top:9px;border-top:1px solid var(--rule);
+}
+
+/* ── CONTENTEDITABLE ───────────────────────────────────────── */
+[contenteditable]{outline:none;}
+[contenteditable]:hover{background:rgba(123,79,191,.07);border-radius:2px;}
+[contenteditable]:focus{background:rgba(123,79,191,.12);border-radius:2px;box-shadow:inset 0 0 0 1px rgba(123,79,191,.4);}
+[contenteditable]:empty::before{content:attr(data-ph);color:var(--rule);pointer-events:none;font-style:italic;}
+
+.calc-field{font-style:normal!important;}
+
+/* ── ADD ROW ───────────────────────────────────────────────── */
+.add-row-wrap{display:flex;justify-content:flex-start;margin-top:4px;}
+.add-row-btn{
+  font-family:'Bebas Neue',sans-serif;font-size:7.5pt;letter-spacing:2px;
+  color:var(--violet);background:none;border:1px dashed rgba(123,79,191,.4);
+  padding:3px 10px;cursor:pointer;opacity:.7;transition:.15s;
+}
+.add-row-btn:hover{opacity:1;}
+
+/* ── PRINT ──────────────────────────────────────────────────── */
+@media print{
+  body{background:none;padding:0;}
+  .toolbar,.add-row-wrap,.rit-toggle{display:none!important;}
+  .page{margin:0;box-shadow:none;width:100%;padding:14mm 18mm;}
+  [contenteditable]:hover,[contenteditable]:focus{background:none!important;box-shadow:none!important;}
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important;}
+  .rit-row .rit-lbl-text{display:none;}
+}
+@page{size:A4;margin:0;}
+</style>
+</head>
+<body>
+
+<!-- ── TOOLBAR ───────────────────────────────────────────── -->
+<div class="toolbar">
+  <span class="toolbar-hint">Clicca su qualsiasi campo per modificarlo — Ctrl+P per esportare PDF</span>
+  <div class="tipo-group">
+    <button class="btn btn-tipo active" data-tipo="FATTURA">FATTURA</button>
+    <button class="btn btn-tipo" data-tipo="PROFORMA">PROFORMA</button>
+    <button class="btn btn-tipo" data-tipo="PREVENTIVO">PREVENTIVO</button>
+  </div>
+  <button class="btn btn-reset" onclick="resetDoc()">AZZERA</button>
+  <button class="btn btn-print" onclick="window.print()">STAMPA / PDF</button>
+</div>
+
+<!-- ── PAGE ──────────────────────────────────────────────── -->
+<div class="page" id="page" data-docnum="001">
+
+  <!-- HEADER -->
+  <span class="t-brand">ARTISMI</span>
+  <div class="t-sub">
+    <span class="t-sub-studio">DESIGN STUDIO</span>
+    <span class="t-sub-sep">✦</span>
+    <span class="t-sub-tipo" id="tipoLabel">FATTURA</span>
+  </div>
+
+  <span class="rule-ink"></span>
+
+  <!-- META: DA / N° -->
+  <div class="meta">
+    <div class="col-from">
+      <span class="t-tag">DA</span>
+      <span class="t-name">Artismi Design Studio</span>
+      <span class="t-namesub">Di Pizzoglio Andrea</span>
+      <span class="t-detail">Via Oropa 103 — 10153 Torino (TO)</span>
+      <span class="t-detail">P.IVA 13356960016 · CF PZZNDR01T10L219O</span>
+      <span class="t-detail">apizzoglio@gmail.com · +39 319 5975752</span>
+    </div>
+
+    <div class="col-num">
+      <span class="t-n-label">N°</span>
+      <span class="t-docnum" id="docNum" contenteditable="true" data-ph="001 / 2026">001 / 2026</span>
+      <div class="meta-field">
+        <span class="meta-lbl">DATA</span>
+        <span class="meta-val" id="dataDoc" contenteditable="true" data-ph="GG/MM/AAAA"></span>
+      </div>
+      <div class="meta-field">
+        <span class="meta-lbl">SCADENZA</span>
+        <span class="meta-val" id="scadDoc" contenteditable="true" data-ph="GG/MM/AAAA"></span>
+      </div>
+    </div>
+  </div>
+
+  <span class="rule-violet"></span>
+
+  <!-- CLIENTE -->
+  <div class="cliente" style="margin-top:10px;">
+    <span class="t-tag">A</span>
+    <span class="t-client" contenteditable="true" data-ph="Nome Cliente / Ragione Sociale"></span>
+    <span class="t-detail" style="color:var(--ink);font-size:8.5pt;margin-bottom:4px;" contenteditable="true" data-ph="Indirizzo, CAP, Città"></span>
+    <div class="prow" style="margin-top:3px;">
+      <span class="plbl">P.IVA / CF</span>
+      <span class="pval" contenteditable="true" data-ph="—"></span>
+    </div>
+    <div class="prow">
+      <span class="plbl">SDI / PEC</span>
+      <span class="pval" contenteditable="true" data-ph="—"></span>
+    </div>
+  </div>
+
+  <!-- SERVICES TABLE -->
+  <table class="services" style="margin-top:10px;">
+    <thead>
+      <tr>
+        <th style="width:51%">DESCRIZIONE PRESTAZIONE</th>
+        <th class="r" style="width:8%">QTY</th>
+        <th class="r" style="width:20%">PREZZO UNIT.</th>
+        <th class="r" style="width:21%">TOTALE</th>
+      </tr>
+    </thead>
+    <tbody id="rows">
+    </tbody>
+  </table>
+
+  <div class="add-row-wrap">
+    <button class="add-row-btn" onclick="addRow()">+ AGGIUNGI RIGA</button>
+  </div>
+
+  <!-- TOTALS -->
+  <div class="totals" style="margin-top:6px;">
+    <div class="tot-row">
+      <span class="tot-lbl">IMPONIBILE</span>
+      <span class="tot-val" id="totImponibile">—</span>
+    </div>
+    <div class="rit-row">
+      <span class="rit-lbl-text">RIT. D'ACCONTO 20%</span>
+      <input type="checkbox" class="rit-toggle" id="ritToggle" onchange="calcTotals()">
+    </div>
+    <div class="tot-row" id="ritRow" style="display:none;">
+      <span class="tot-lbl">RIT. D'ACCONTO 20%</span>
+      <span class="tot-val" id="totRit" style="color:var(--muted);">—</span>
+    </div>
+    <div class="tot-final">
+      <span class="tot-lbl">TOTALE DA PAGARE</span>
+      <span class="tot-val" id="totFinale">—</span>
+    </div>
+  </div>
+
+  <div style="height:13px;"></div>
+  <span class="rule-violet"></span>
+
+  <!-- PAGAMENTO -->
+  <div class="pagamento">
+    <span class="t-tag">PAGAMENTO</span>
+    <div class="prow"><span class="plbl">METODO</span><span class="pval">Bonifico bancario</span></div>
+    <div class="prow">
+      <span class="plbl">IBAN</span>
+      <span class="pval" contenteditable="true" data-ph="IT00 X000 0000 0000 0000 0000 000"></span>
+    </div>
+    <div class="prow">
+      <span class="plbl">CAUSALE</span>
+      <span class="pval" id="causale" contenteditable="true" data-ph="Fattura n. 001/2026 — Artismi Design Studio Di Pizzoglio Andrea"></span>
+    </div>
+  </div>
+
+  <span class="rule-muted"></span>
+
+  <!-- LEGAL -->
+  <p class="legal">Operazione effettuata in regime forfettario ex art. 1, commi 54–89, L. 190/2014. Imposta di bollo assolta sull'originale ai sensi del DPR 642/1972 (per importi &gt; 77,47 €). Prestazione non soggetta a IVA. — P.IVA 13356960016 — CF PZZNDR01T10L219O — ATECO 74.12.09</p>
+  <p class="legal" style="margin-top:2px;">Dati trattati per finalità contabili ai sensi del Regolamento UE 2016/679 (GDPR).</p>
+
+  <!-- FOOTER -->
+  <div class="footer">✦ &nbsp; ARTISMI &nbsp; ✦ &nbsp; artismidesignstudio.com &nbsp; · &nbsp; @angea_pangea</div>
+
+</div><!-- /page -->
+
+<script>
+/* ── UTILS ──────────────────────────────────────────────── */
+function parseNum(str){
+  if(!str) return 0;
+  const s = str.trim().replace(/\s*€\s*/g,'').replace(/\./g,'').replace(',','.');
+  return parseFloat(s)||0;
+}
+function fmtEuro(n){
+  if(isNaN(n)||n===0) return '—';
+  return n.toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+}
+function fmtNum(n){
+  if(isNaN(n)||n===0) return '';
+  return n.toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+}
+function today(offset=0){
+  const d=new Date(); d.setDate(d.getDate()+offset);
+  return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});
+}
+
+/* ── ROW TEMPLATE ───────────────────────────────────────── */
+function makeRow(){
+  const tr=document.createElement('tr');
+  tr.innerHTML=`
+    <td><div class="ci" contenteditable="true" data-ph="Descrizione prestazione"></div></td>
+    <td class="c"><div class="ci qty-cell" contenteditable="true" data-ph="1"></div></td>
+    <td class="r"><div class="ci price-cell" contenteditable="true" data-ph="0,00 €"></div></td>
+    <td class="r row-total"><div class="ci total-cell calc-field" contenteditable="true" data-ph="0,00 €"></div></td>`;
+  // Auto-calc on qty/price input
+  const qty  = tr.querySelector('.qty-cell');
+  const price= tr.querySelector('.price-cell');
+  const tot  = tr.querySelector('.total-cell');
+  function calc(){
+    const q=parseNum(qty.textContent), p=parseNum(price.textContent);
+    if(q&&p){ tot.textContent=fmtNum(q*p); calcTotals(); }
+    else{ calcTotals(); }
+  }
+  qty.addEventListener('input', calc);
+  price.addEventListener('input', calc);
+  tot.addEventListener('input', calcTotals);
+  // Format price on blur
+  price.addEventListener('blur',()=>{
+    const v=parseNum(price.textContent);
+    if(v) price.textContent=fmtNum(v);
+  });
+  return tr;
+}
+
+function addRow(note=false){
+  const tbody=document.getElementById('rows');
+  if(note){
+    const tr=document.createElement('tr');
+    tr.className='note-row';
+    tr.innerHTML=`<td colspan="4"><div class="ci" contenteditable="true" data-ph="Note aggiuntive (opzionale)"></div></td>`;
+    tbody.appendChild(tr);
+  } else {
+    const noteRow=tbody.querySelector('.note-row');
+    const tr=makeRow();
+    noteRow ? tbody.insertBefore(tr,noteRow) : tbody.appendChild(tr);
+    calcTotals();
+  }
+}
+
+/* ── TOTALS ─────────────────────────────────────────────── */
+function calcTotals(){
+  let sum=0;
+  document.querySelectorAll('#rows .total-cell').forEach(c=>{
+    sum+=parseNum(c.textContent);
+  });
+  const rit=document.getElementById('ritToggle').checked;
+  const ritAmt=rit ? sum*0.20 : 0;
+  const finale=sum-ritAmt;
+
+  document.getElementById('totImponibile').textContent=fmtEuro(sum);
+  document.getElementById('totRit').textContent=rit?'- '+fmtEuro(ritAmt):'—';
+  document.getElementById('ritRow').style.display=rit?'flex':'none';
+  document.getElementById('totFinale').textContent=fmtEuro(sum>0?finale:0);
+
+  // Update ghost watermark
+  const numEl=document.getElementById('docNum');
+  const raw=numEl.textContent.replace(/[^0-9]/g,'').padStart(3,'0')||'001';
+  document.getElementById('page').setAttribute('data-docnum',raw);
+}
+
+/* ── TIPO DOCUMENTO ─────────────────────────────────────── */
+document.querySelectorAll('.btn-tipo').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.btn-tipo').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tipoLabel').textContent=btn.dataset.tipo;
+  });
+});
+
+/* ── DOCNUM SYNC ────────────────────────────────────────── */
+document.getElementById('docNum').addEventListener('input',()=>{
+  const raw=document.getElementById('docNum').textContent.replace(/[^0-9]/g,'').padStart(3,'0')||'001';
+  document.getElementById('page').setAttribute('data-docnum',raw);
+});
+
+/* ── RESET ──────────────────────────────────────────────── */
+function resetDoc(){
+  if(!confirm('Azzerare tutti i campi?')) return;
+  document.querySelectorAll('[contenteditable]').forEach(el=>{
+    // Keep static fields
+    if(el.id==='docNum'){ el.textContent=''; }
+    else if(!el.closest('.col-from')){ el.textContent=''; }
+  });
+  // Reset invoice number
+  document.getElementById('docNum').textContent='';
+  // Reset dates
+  document.getElementById('dataDoc').textContent=today();
+  document.getElementById('scadDoc').textContent=today(30);
+  // Re-init rows
+  const tbody=document.getElementById('rows');
+  tbody.innerHTML='';
+  for(let i=0;i<5;i++) addRow();
+  addRow(true);
+  document.getElementById('ritToggle').checked=false;
+  calcTotals();
+  document.getElementById('page').setAttribute('data-docnum','001');
+}
+
+/* ── INIT ───────────────────────────────────────────────── */
+(function init(){
+  // Dates
+  document.getElementById('dataDoc').textContent=today();
+  document.getElementById('scadDoc').textContent=today(30);
+  // 5 rows + note
+  const tbody=document.getElementById('rows');
+  for(let i=0;i<5;i++) addRow();
+  addRow(true);
+  calcTotals();
+})();
+</script>
+</body>
+</html>

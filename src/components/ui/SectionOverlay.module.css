@@ -1,0 +1,100 @@
+/* SectionOverlay — pannello laterale slide-in sopra la scena 3D */
+
+.panel {
+  position: fixed;
+  top: 0;
+  width: 44vw;
+  min-width: 320px;
+  max-width: 680px;
+  height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  z-index: 50;
+
+  background: rgba(18, 8, 28, 0.96);
+  backdrop-filter: blur(20px) saturate(1.4);
+  border-color: rgba(232, 168, 191, 0.18);
+
+  animation-duration: 0.45s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-fill-mode: both;
+}
+
+/* Variante sinistra (Servizi / Toolbox) */
+.panel.left {
+  left: 0;
+  border-right: 1px solid rgba(232, 168, 191, 0.18);
+  box-shadow: 4px 0 40px rgba(232, 168, 191, 0.08);
+  animation-name: slideInLeft;
+}
+
+/* Variante destra (About / Contatti) */
+.panel.right {
+  right: 0;
+  border-left: 1px solid rgba(232, 168, 191, 0.18);
+  box-shadow: -4px 0 40px rgba(232, 168, 191, 0.08);
+  animation-name: slideInRight;
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+/* Close button (angolo) */
+.closeBtn {
+  position: sticky;
+  top: 1rem;
+  float: right;
+  margin: 1rem 1rem 0 0;
+  z-index: 2;
+
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 50%;
+  border: 1px solid rgba(232, 168, 191, 0.3);
+  background: rgba(232, 168, 191, 0.08);
+  color: #F2EDE4;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, border-color 0.2s;
+}
+.closeBtn:hover {
+  background: rgba(232, 168, 191, 0.18);
+  border-color: rgba(232, 168, 191, 0.6);
+}
+
+/* Back button (testuale sotto il close) */
+.backBtn {
+  display: block;
+  margin: 1.2rem 1.5rem 0;
+  padding: 0;
+  background: none;
+  border: none;
+  color: rgba(242, 237, 228, 0.5);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.backBtn:hover { color: #E8A8BF; }
+
+/* Content area — ospita le sezioni esistenti */
+.content {
+  padding: 0 0 4rem;
+  /* Resetta i margin/padding delle sezioni che si auto-centrano */
+}
+.content > * {
+  /* Le sezioni hanno position:relative e margin auto — va bene */
+  min-height: unset !important;
+}

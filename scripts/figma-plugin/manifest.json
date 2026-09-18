@@ -1,0 +1,8 @@
+{
+  "name": "Artismi — Generate Full Figma File",
+  "id": "artismi-figma-generator",
+  "api": "1.0.0",
+  "main": "code.js",
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page"
+}
