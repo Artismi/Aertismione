@@ -191,33 +191,9 @@ function HeroBlock({
     )
   }
 
-  /* IMAGE HERO — full bleed with parallax + overlay */
-  if (project.mainImage && !isIllustration) {
-    return (
-      <div className={styles.heroImage} ref={ref} data-illustration={isIllustration}>
-        <motion.div className={styles.heroImageParallax} style={{ y }}>
-          <Image
-            src={project.mainImage}
-            alt={project.title}
-            fill
-            style={{ objectFit: 'cover' }}
-            priority
-          />
-        </motion.div>
-        <div className={styles.heroImageOverlay} />
-        <motion.div
-          className={styles.heroImageContent}
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
-          style={{ opacity }}
-        >
-          <span className={styles.heroNum}>{num}</span>
-          <h1 className={styles.heroTitle}>{project.title}</h1>
-        </motion.div>
-      </div>
-    )
-  }
+  /* Niente hero-immagine: la copertina ripeteva una foto che si rivede
+     subito sotto in galleria e allontanava il soggetto. Restano l'hero video
+     (dove il video E' il lavoro) e quello tipografico. */
 
   /* TEXT HERO — no image, editorial typographic */
   return (
@@ -411,11 +387,14 @@ function GalleryBlock({
 }) {
   let all = project.gallery || []
 
+  // La copertina non ha piu' un hero dedicato: se non e' gia' in galleria
+  // entra qui, altrimenti sparirebbe dalla pagina (bicicleria, torino-invisibile).
+  if (project.mainImage && !all.includes(project.mainImage)) {
+    all = [project.mainImage, ...all]
+  }
+
   /* ILLUSTRATION — full width stacked images avoiding Next Image absolute positioning */
   if (isIllustration) {
-    if (project.mainImage && !all.includes(project.mainImage)) {
-      all = [project.mainImage, ...all]
-    }
     if (!all.length) return null
 
     return (

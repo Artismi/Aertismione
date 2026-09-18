@@ -16,6 +16,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import Image from 'next/image'
 import { motion, useInView } from 'framer-motion'
 import styles from './PaperPlane.module.css'
 
@@ -132,11 +133,12 @@ export function PaperPlane({
           const col = i % cols
           const row = Math.floor(i / cols)
 
-          // posizione sul piano, con abbastanza disordine da sembrare appoggiati a mano
-          const left = ((col + 0.5) / cols) * 100 + (rand(i, 1) - 0.5) * (52 / cols)
-          const top = row * rowH + (rand(i, 2) - 0.5) * rowH * 0.34 + 40
-          const rot = (rand(i, 3) - 0.5) * 15
-          const width = (size === 'large' ? 300 : 190) + rand(i, 4) * (size === 'large' ? 130 : 90)
+          // Partenza ordinata: fogli allineati e dritti. Il disordine lo fa
+          // l'utente trascinandoli in giro, non noi.
+          const left = ((col + 0.5) / cols) * 100
+          const top = row * rowH + 40
+          const rot = 0
+          const width = size === 'large' ? 360 : 230
 
           return (
             <motion.div
@@ -157,8 +159,8 @@ export function PaperPlane({
               dragElastic={0.12}
               dragMomentum={false}
               onDragStart={() => setFront(item.id)}
-              whileDrag={{ scale: 1.05, rotate: rot * 0.4 }}
-              whileHover={canDrag ? { scale: 1.03, rotate: rot * 0.6 } : undefined}
+              whileDrag={{ scale: 1.05, rotate: (rand(i, 3) - 0.5) * 9 }}
+              whileHover={canDrag ? { scale: 1.03, y: -4 } : undefined}
               initial={{ opacity: 0, y: 18 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-40px' }}
@@ -177,7 +179,15 @@ export function PaperPlane({
               {item.kind === 'video' ? (
                 <PlaneVideo src={item.src} />
               ) : (
-                <img src={item.src} alt={item.label ?? ''} className={styles.media} loading="lazy" decoding="async" />
+                <Image
+                  src={item.src}
+                  alt={item.label ?? ''}
+                  className={styles.media}
+                  width={900}
+                  height={1200}
+                  sizes={size === 'large' ? '(max-width: 899px) 45vw, 420px' : '(max-width: 899px) 45vw, 280px'}
+                  style={{ width: '100%', height: 'auto' }}
+                />
               )}
               {/* piega di luce sulla carta */}
               <span className={styles.crease} aria-hidden="true" />
