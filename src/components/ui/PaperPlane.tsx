@@ -1,18 +1,15 @@
 'use client'
 
 /**
- * PaperPlane — fogli sparsi su un piano.
+ * PaperPlane — fogli appoggiati su un piano.
  *
- * Usato sia dalle illustrazioni sia dalle stampe di Stamperia: le immagini
- * non stanno in una griglia ma appoggiate sul piano, ruotate, un po'
- * sovrapposte, con i bordi ondulati e sgualciti.
+ * A riposo i fogli sono in ordine: li dispone una griglia CSS, quindi non si
+ * sovrappongono mai e si adattano alla larghezza dello schermo. Da desktop si
+ * possono afferrare e spostare: il foglio trascinato si stacca dalla griglia e
+ * va dove lo lasci, sovrapponendosi agli altri. Il disordine lo fa l'utente.
  *
- * Da desktop si possono afferrare e spostare. Da mobile il trascinamento e'
- * disattivato e il piano diventa una sequenza leggibile: la disposizione e'
- * decisa dal CSS, qui passiamo solo le variabili.
- *
- * Le posizioni sono pseudo-casuali ma deterministiche (stessa formula sul
- * server e sul client), altrimenti Next si lamenterebbe dell'hydration.
+ * Nota: l'animazione d'ingresso non tocca x/y, altrimenti si scontra con il
+ * trascinamento e i fogli tornano al loro posto da soli.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -28,7 +25,7 @@ export type PaperItem = {
   accent?: string
 }
 
-/** Rumore deterministico in [0,1): stesso risultato ovunque, nessun Math.random. */
+/** Rumore deterministico in [0,1): stesso risultato su server e client. */
 function rand(i: number, salt: number): number {
   const x = Math.sin(i * 127.1 + salt * 311.7) * 43758.5453
   return x - Math.floor(x)
@@ -37,7 +34,7 @@ function rand(i: number, salt: number): number {
 /** Bordo del foglio: poligono con i vertici leggermente sfalsati, mai due uguali. */
 function paperClip(i: number): string {
   const per = 5
-  const amp = 1.6
+  const amp = 1.5
   const pts: string[] = []
   const push = (x: number, y: number, k: number) => {
     const jx = (rand(i, k) - 0.5) * amp
@@ -81,7 +78,7 @@ export function PaperPlane({
   const [front, setFront] = useState<string | null>(null)
   const down = useRef<{ x: number; y: number } | null>(null)
 
-  // Trascinamento solo da desktop con mouse: niente su touch e schermi piccoli.
+  // Trascinamento solo da desktop con mouse.
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 900px) and (hover: hover) and (pointer: fine)')
     const apply = () => setCanDrag(mq.matches)
@@ -90,111 +87,83 @@ export function PaperPlane({
     return () => mq.removeEventListener('change', apply)
   }, [])
 
-  // Un trascinamento non deve valere come clic di apertura.
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     down.current = { x: e.clientX, y: e.clientY }
   }, [])
 
+  // Un trascinamento non deve valere come clic di apertura.
   const handleClick = useCallback(
     (item: PaperItem, index: number) => (e: React.MouseEvent) => {
       const start = down.current
       down.current = null
-      if (start) {
-        const moved = Math.hypot(e.clientX - start.x, e.clientY - start.y)
-        if (moved > 6) return
-      }
+      if (start && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 6) return
       onOpen?.(item, index)
     },
     [onOpen],
   )
 
-  const cols = size === 'large' ? 3 : 4
-  const rowH = size === 'large' ? 340 : 250
-  const rows = Math.ceil(items.length / cols)
-  const planeH = rows * rowH + (size === 'large' ? 200 : 150)
-
   return (
     <>
-      {/* Filtro che increspa i fogli: definito una volta sola, riusato da tutti. */}
+      {/* Filtro che increspa la carta: definito una volta, riusato da tutti i fogli. */}
       <svg className={styles.defs} aria-hidden="true" focusable="false">
         <filter id="paper-warp" x="-6%" y="-6%" width="112%" height="112%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.011 0.021" numOctaves="2" seed="7" result="noise" />
-          <feDisplacementMap in="SourceGraphic" in2="noise" scale="8" xChannelSelector="R" yChannelSelector="G" />
+          <feTurbulence type="fractalNoise" baseFrequency="0.012 0.022" numOctaves="2" seed="7" result="noise" />
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="7" xChannelSelector="R" yChannelSelector="G" />
         </filter>
       </svg>
 
-      <div
-        ref={planeRef}
-        className={styles.plane}
-        data-size={size}
-        style={{ '--plane-h': `${planeH}px` } as React.CSSProperties}
-      >
-        {items.map((item, i) => {
-          const col = i % cols
-          const row = Math.floor(i / cols)
-
-          // Partenza ordinata: fogli allineati e dritti. Il disordine lo fa
-          // l'utente trascinandoli in giro, non noi.
-          const left = ((col + 0.5) / cols) * 100
-          const top = row * rowH + 40
-          const rot = 0
-          const width = size === 'large' ? 360 : 230
-
-          return (
-            <motion.div
-              key={item.id}
-              className={styles.sheet}
-              data-front={front === item.id ? 'true' : undefined}
-              style={{
-                '--x': `${left}%`,
-                '--y': `${top}px`,
-                '--rot': `${rot}deg`,
-                '--w': `${width}px`,
-                '--accent': item.accent ?? '#E8A8BF',
-                clipPath: paperClip(i),
-                zIndex: front === item.id ? 400 : 10 + (i % 7),
-              } as React.CSSProperties}
-              drag={canDrag}
-              dragConstraints={planeRef}
-              dragElastic={0.12}
-              dragMomentum={false}
-              onDragStart={() => setFront(item.id)}
-              whileDrag={{ scale: 1.05, rotate: (rand(i, 3) - 0.5) * 9 }}
-              whileHover={canDrag ? { scale: 1.03, y: -4 } : undefined}
-              initial={{ opacity: 0, y: 18 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-40px' }}
-              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: (i % 6) * 0.05 }}
-              onPointerDown={handlePointerDown}
-              onClick={handleClick(item, i)}
-              role={onOpen ? 'button' : undefined}
-              tabIndex={onOpen ? 0 : undefined}
-              onKeyDown={(e) => {
-                if (onOpen && (e.key === 'Enter' || e.key === ' ')) {
-                  e.preventDefault()
-                  onOpen(item, i)
-                }
-              }}
-            >
-              {item.kind === 'video' ? (
-                <PlaneVideo src={item.src} />
-              ) : (
-                <Image
-                  src={item.src}
-                  alt={item.label ?? ''}
-                  className={styles.media}
-                  width={900}
-                  height={1200}
-                  sizes={size === 'large' ? '(max-width: 899px) 45vw, 420px' : '(max-width: 899px) 45vw, 280px'}
-                  style={{ width: '100%', height: 'auto' }}
-                />
-              )}
-              {/* piega di luce sulla carta */}
-              <span className={styles.crease} aria-hidden="true" />
-              {item.label && <span className={styles.label}>{item.label}</span>}
-            </motion.div>
-          )
-        })}
+      <div ref={planeRef} className={styles.plane} data-size={size}>
+        {items.map((item, i) => (
+          <motion.div
+            key={item.id}
+            className={styles.sheet}
+            data-front={front === item.id ? 'true' : undefined}
+            style={{
+              '--accent': item.accent ?? '#E8A8BF',
+              clipPath: paperClip(i),
+              zIndex: front === item.id ? 400 : 1,
+            } as React.CSSProperties}
+            drag={canDrag}
+            dragConstraints={planeRef}
+            dragElastic={0.06}
+            dragMomentum={false}
+            onDragStart={() => setFront(item.id)}
+            whileDrag={{ scale: 1.06, rotate: (rand(i, 3) - 0.5) * 10 }}
+            whileHover={canDrag ? { scale: 1.02, rotate: (rand(i, 5) - 0.5) * 2.4 } : undefined}
+            /* Solo opacita': toccare x/y qui romperebbe il trascinamento. */
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true, margin: '-40px' }}
+            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1], delay: (i % 6) * 0.05 }}
+            onPointerDown={handlePointerDown}
+            onClick={handleClick(item, i)}
+            role={onOpen ? 'button' : undefined}
+            tabIndex={onOpen ? 0 : undefined}
+            onKeyDown={(e) => {
+              if (onOpen && (e.key === 'Enter' || e.key === ' ')) {
+                e.preventDefault()
+                onOpen(item, i)
+              }
+            }}
+          >
+            {item.kind === 'video' ? (
+              <PlaneVideo src={item.src} />
+            ) : (
+              <Image
+                src={item.src}
+                alt={item.label ?? ''}
+                className={styles.media}
+                width={900}
+                height={1200}
+                sizes={size === 'large' ? '(max-width: 899px) 46vw, 380px' : '(max-width: 899px) 46vw, 260px'}
+                style={{ width: '100%', height: 'auto' }}
+              />
+            )}
+            {/* piega di luce sulla carta */}
+            <span className={styles.crease} aria-hidden="true" />
+            {item.label && <span className={styles.label}>{item.label}</span>}
+          </motion.div>
+        ))}
       </div>
     </>
   )

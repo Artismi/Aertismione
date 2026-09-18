@@ -104,6 +104,23 @@
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
 }
 
+.mobileCardMedia {
+  display: block;
+  position: relative;
+  width: calc(100% + 44px);
+  margin: -20px -22px 12px;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #0E0A14;
+}
+
+.mobileCardMedia img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .mobileCardCat {
   font-family: var(--font-mono);
   font-size: 0.6rem;
@@ -295,12 +312,19 @@
 
 /* ── Responsive ──────────────────────────────────────────────────────── */
 
-/* mobileGrid (card list) stays hidden — canvas is used on all screens */
-.mobileGrid { display: none !important; }
+/* Su schermo largo con mouse si gioca sulla mappa; altrove si legge l'elenco.
+   Le cartelline sono grandi 154px: su un telefono si sovrapporrebbero, e la
+   fionda al tocco e' pressoche' ingiocabile. */
+.introMobile { display: none; }
+
+@media (max-width: 899px), (pointer: coarse) {
+  .canvasWrapper { display: none; }
+  .mobileGrid { display: flex; }
+  .introDesktop { display: none; }
+  .introMobile { display: inline; }
+}
 
 @media (max-width: 768px) {
-  /* Canvas is visible on mobile — touch events handle interaction */
-  .canvasWrapper { display: block; }
 
   .intro {
     font-size: 0.9375rem;

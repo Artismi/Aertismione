@@ -14,7 +14,7 @@ import { PORTFOLIO } from '@/config/content'
 /* â”€â”€â”€ Costanti â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 const BALL_R        = 15
-const FOLDER_HIT_R  = 62   // raggio collisione/hover cartellina
+const FOLDER_HIT_R  = 74   // raggio collisione/hover cartellina
 const FRICTION      = 0.972
 const MIN_SPEED     = 0.07
 const MAX_LAUNCH    = 38
@@ -191,7 +191,7 @@ function drawFolder(ctx: CanvasRenderingContext2D, p: Project, w: number, h: num
   const seed = p.id.split('').reduce((a,c)=>a+c.charCodeAt(0),0)
   const tilt = ((seed*73)%100-50)/100*0.10
   // Cartelline piu' grandi: si vede l'anteprima e invogliano ad aprirle
-  const fw=126, fh=94, br=5
+  const fw=154, fh=118, br=5
   const lift = isHovered ? -10 : 0
   const bx=-fw/2, by=-fh/2
 
@@ -202,7 +202,7 @@ function drawFolder(ctx: CanvasRenderingContext2D, p: Project, w: number, h: num
   // Alone pulsante attorno alla cartellina
   const pulse = 0.5+0.5*Math.sin(time*0.0019+p.mapX*8)
   ctx.beginPath()
-  ctx.arc(0, 0, 76 + (isHovered ? 0 : pulse*9), 0, Math.PI*2)
+  ctx.arc(0, 0, 88 + (isHovered ? 0 : pulse*9), 0, Math.PI*2)
   ctx.strokeStyle = `rgba(${cr},${cg},${cb},${isHovered ? 0.45 : (0.06+pulse*0.08).toFixed(3)})`
   ctx.lineWidth = isHovered ? 2.2 : 1.2; ctx.stroke()
 
@@ -238,7 +238,7 @@ function drawFolder(ctx: CanvasRenderingContext2D, p: Project, w: number, h: num
   ctx.shadowBlur=0; ctx.shadowOffsetX=0; ctx.shadowOffsetY=0
 
   // Anteprima del progetto dentro la cartellina
-  const pad = 5, stripH = 22
+  const pad = 4, stripH = 24
   const px = bx+pad, py = by+pad, pw = fw-pad*2, ph = fh-pad*2-stripH
   const thumb = getThumb((p as { thumb?: string }).thumb)
   if (thumb) {
@@ -251,7 +251,7 @@ function drawFolder(ctx: CanvasRenderingContext2D, p: Project, w: number, h: num
     else         { sw = thumb.naturalWidth;  sh = sw/tr; sx = 0; sy = (thumb.naturalHeight-sh)/2 }
     ctx.drawImage(thumb, sx, sy, sw, sh, px, py, pw, ph)
     // Velo scuro a riposo, foto piena al passaggio del mouse
-    ctx.fillStyle = isHovered ? 'rgba(10,8,14,0.05)' : 'rgba(10,8,14,0.34)'
+    ctx.fillStyle = isHovered ? 'rgba(10,8,14,0.05)' : 'rgba(10,8,14,0.24)'
     ctx.fillRect(px, py, pw, ph)
     ctx.restore()
   } else {
@@ -560,6 +560,11 @@ export function PortfolioSection() {
   }, [])
 
   useEffect(() => {
+    // Da telefono la mappa non viene nemmeno disegnata: le cartelline si
+    // sovrappongono su schermi stretti e la fionda e' ingiocabile al tocco.
+    // Li' si usa l'elenco sotto, che il CSS mostra al posto del canvas.
+    if (!window.matchMedia('(min-width: 900px) and (pointer: fine)').matches) return
+
     const canvas=canvasRef.current; if (!canvas) return
     const canvasLoop = canvas
     startTimeRef.current=performance.now()
@@ -828,7 +833,10 @@ export function PortfolioSection() {
         <h2 className={styles.heading}>Portfolio</h2>
         <p className={styles.intro}>
           Ogni progetto è un territorio.{' '}
-          <em>Clicca per saltare — trascina la pallina per spararla come una bilia.</em>
+          <em className={styles.introDesktop}>
+            Clicca per saltare — trascina la pallina per spararla come una bilia.
+          </em>
+          <em className={styles.introMobile}>Tocca un progetto per aprirlo.</em>
         </p>
       </div>
 
@@ -859,10 +867,15 @@ export function PortfolioSection() {
           <button key={p.id} type="button" className={styles.mobileCard}
             style={{'--ca':p.accent} as React.CSSProperties}
             onClick={()=>router.push(`/portfolio/${p.id}`)}>
+            {(p as { thumb?: string }).thumb && (
+              <span className={styles.mobileCardMedia}>
+                <img src={(p as { thumb?: string }).thumb} alt="" loading="lazy" decoding="async" />
+              </span>
+            )}
             <span className={styles.mobileCardCat}>{p.category}</span>
             <span className={styles.mobileCardTitle}>{p.title}</span>
             <span className={styles.mobileCardTagline}>{p.tagline}</span>
-            <span className={styles.mobileCardCta}>Apri â†’</span>
+            <span className={styles.mobileCardCta}>Apri →</span>
           </button>
         ))}
       </div>
