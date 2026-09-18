@@ -303,6 +303,14 @@ export const PORTFOLIO = {
               pages: ['/portfolio/ciclomeccanica/flyer-cover.jpg'],
             },
           ]
+        },
+        {
+          // Descrizione da scrivere: per ora compare solo titolo e immagine.
+          id:        'locandina-start',
+          title:     'Locandina START',
+          category:  'Illustrazione',
+          accent:    '#9DD4EE',
+          mainImage: '/portfolio/locandina-start/hero.jpg',
         }
       ]
     },
