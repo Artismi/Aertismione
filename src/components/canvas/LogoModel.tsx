@@ -17,7 +17,6 @@ export function LogoModel(props: any) {
     const timeRef = useRef(0)
     const edgeMatRef = useRef<THREE.ShaderMaterial | null>(null)
 
-    const scrollY = useStore((s) => s.scrollY)
 
     const glassMaterial = useMemo(() => {
         const mat = new THREE.MeshPhysicalMaterial({
@@ -130,6 +129,7 @@ export function LogoModel(props: any) {
 
         // Il logo svanisce gradualmente solo dopo aver iniziato a scorrere in alto,
         // così rimane ben visibile e inquadrato più a lungo senza essere schiacciato dal pannello.
+        const scrollY = useStore.getState().scrollY
         const glassFade = Math.max(0, Math.min(1, 1 - (scrollY - 150) / 600))
         const edgeFade = glassFade
 

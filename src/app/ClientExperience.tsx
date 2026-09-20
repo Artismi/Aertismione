@@ -71,8 +71,17 @@ function ScrollSync() {
       if (contactEl) setContactSectionTop(contactEl.offsetTop)
     }
 
-    // Lo scroll aggiorna solo scrollY — nessun DOM query
-    const updateScroll = () => setScrollY(window.scrollY)
+    // Lo scroll aggiorna scrollY al massimo una volta per fotogramma.
+    // L'evento scroll puo' arrivare anche 120 volte al secondo: scrivere nello
+    // store a ogni evento faceva ridisegnare mezzo sito a ripetizione.
+    let scrollRaf: number | null = null
+    const updateScroll = () => {
+      if (scrollRaf !== null) return
+      scrollRaf = requestAnimationFrame(() => {
+        scrollRaf = null
+        setScrollY(window.scrollY)
+      })
+    }
 
     updateSections()
     updateScroll()
@@ -80,6 +89,7 @@ function ScrollSync() {
     window.addEventListener('scroll', updateScroll, { passive: true })
     window.addEventListener('resize', updateSections, { passive: true })
     return () => {
+      if (scrollRaf !== null) cancelAnimationFrame(scrollRaf)
       window.removeEventListener('scroll', updateScroll)
       window.removeEventListener('resize', updateSections)
     }
@@ -165,10 +175,13 @@ function ResponsiveCamera() {
  *   Portfolio: 60vh, Chi Sono: 100vh → ~610vh total ≈ 5800-6200px
  */
 function CameraRig() {
-  const scrollY = useStore((s) => s.scrollY)
+  // Lettura "transitoria": dentro useFrame il valore si legge al volo, senza
+  // iscriversi allo store. Iscriversi qui voleva dire ricostruire la scena 3D
+  // a ogni scatto di scroll.
   const { camera } = useThree()
 
   useFrame((_, delta) => {
+    const scrollY = useStore.getState().scrollY
     // Il modello Avatar è stato rimosso, quindi non c'è più bisogno 
     // di far scendere la camera a y=-36. Se la moviamo giù, la scena 3D
     // ("lo sfondo procedurale") esce dal campo visivo e lo schermo diventa nero.

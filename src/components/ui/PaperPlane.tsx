@@ -91,17 +91,11 @@ export function PaperPlane({
 
   // Trascinamento solo da desktop con mouse.
   useEffect(() => {
-    // Mouse su schermo largo, oppure telefono girato in orizzontale.
-    const conMouse = window.matchMedia('(min-width: 900px) and (hover: hover) and (pointer: fine)')
-    const girato = window.matchMedia('(orientation: landscape) and (min-width: 640px)')
-    const apply = () => setCanDrag(conMouse.matches || girato.matches)
+    const mq = window.matchMedia('(min-width: 900px) and (hover: hover) and (pointer: fine)')
+    const apply = () => setCanDrag(mq.matches)
     apply()
-    conMouse.addEventListener('change', apply)
-    girato.addEventListener('change', apply)
-    return () => {
-      conMouse.removeEventListener('change', apply)
-      girato.removeEventListener('change', apply)
-    }
+    mq.addEventListener('change', apply)
+    return () => mq.removeEventListener('change', apply)
   }, [])
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {

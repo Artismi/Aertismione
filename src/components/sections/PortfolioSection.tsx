@@ -207,9 +207,11 @@ function drawFolder(ctx: CanvasRenderingContext2D, p: Project, w: number, h: num
   ctx.lineWidth = isHovered ? 2.2 : 1.2; ctx.stroke()
 
   // Linguetta con la categoria
+  // shadowBlur in canvas 2D e' costoso: lo accendiamo solo sulla cartellina
+  // sotto il puntatore, le altre tengono un'ombra netta che non costa nulla.
   ctx.shadowColor = `rgba(0,0,0,${isHovered?0.60:0.32})`
-  ctx.shadowBlur = isHovered ? 26 : 12
-  ctx.shadowOffsetX = 2; ctx.shadowOffsetY = isHovered ? 12 : 6
+  ctx.shadowBlur = isHovered ? 26 : 0
+  ctx.shadowOffsetX = 2; ctx.shadowOffsetY = isHovered ? 12 : 5
   // La linguetta si adatta alla lunghezza della categoria (prima il testo usciva fuori)
   const catLabel = p.category.toUpperCase()
   ctx.font='bold 6.5px "JetBrains Mono",monospace'
@@ -229,7 +231,7 @@ function drawFolder(ctx: CanvasRenderingContext2D, p: Project, w: number, h: num
 
   // Corpo cartella — grafite scuro neutro (non piu' viola)
   ctx.shadowColor=`rgba(0,0,0,${isHovered?0.50:0.26})`
-  ctx.shadowBlur=isHovered?20:9; ctx.shadowOffsetY=isHovered?9:5
+  ctx.shadowBlur=isHovered?20:0; ctx.shadowOffsetY=isHovered?9:4
   roundRectPath(ctx, bx, by, fw, fh, br)
   const bodyGrad = ctx.createLinearGradient(bx, by, bx+fw, by+fh)
   bodyGrad.addColorStop(0, 'rgba(32, 29, 36, 0.98)')
@@ -563,12 +565,10 @@ export function PortfolioSection() {
     // Da telefono la mappa non viene nemmeno disegnata: le cartelline si
     // sovrappongono su schermi stretti e la fionda e' ingiocabile al tocco.
     // Li' si usa l'elenco sotto, che il CSS mostra al posto del canvas.
-    // Schermo largo con mouse, oppure telefono girato in orizzontale: in
-    // verticale le cartelline si sovrappongono e la fionda e' ingiocabile.
-    const scenico =
-      window.matchMedia('(min-width: 900px) and (pointer: fine)').matches ||
-      window.matchMedia('(orientation: landscape) and (min-width: 640px)').matches
-    if (!scenico) return
+    // Solo schermo largo con mouse. Su telefono le cartelline si
+    // sovrappongono e la fionda al tocco e' ingiocabile, in qualunque
+    // orientamento: li' si usa l'elenco di schede.
+    if (!window.matchMedia('(min-width: 900px) and (pointer: fine)').matches) return
 
     const canvas=canvasRef.current; if (!canvas) return
     const canvasLoop = canvas
@@ -587,6 +587,15 @@ export function PortfolioSection() {
 
       gridRevealRef.current+=(( inViewRef.current?1:0)-gridRevealRef.current)*0.03
       canvasLoop.style.opacity=Math.max(0, gridRevealRef.current).toFixed(3)
+
+      // Sezione fuori schermo: si salta tutto il disegno. Prima la mappa
+      // continuava a ridisegnare cartelline, ombre, scia e particelle 60 volte
+      // al secondo anche mentre si guardava tutt'altra parte del sito: era una
+      // tassa costante che faceva scattare 3D, cursore e video.
+      if (!inViewRef.current && gridRevealRef.current < 0.02) {
+        rafRef.current = requestAnimationFrame(loop)
+        return
+      }
 
       const js=jumpRef.current
 

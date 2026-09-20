@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import { Bebas_Neue, Courier_Prime, JetBrains_Mono, Space_Grotesk } from 'next/font/google'
 import './globals.css'
 import { CustomCursor } from '@/components/ui/CustomCursor'
-import { RotateGate } from '@/components/ui/RotateGate'
 import { Ambience } from '@/components/ui/Ambience'
 
 /*
@@ -91,7 +90,6 @@ export default function RootLayout({
       </head>
       <body>
         <CustomCursor />
-        <RotateGate />
         <Ambience />
         {children}
       </body>

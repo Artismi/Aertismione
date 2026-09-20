@@ -17,24 +17,35 @@ interface HeroStageProps {
 
 export function HeroStage({ onTrackedPoints }: HeroStageProps = {}) {
     const groupRef = useRef<any>(null)
-    const scrollY = useStore((state) => state.scrollY)
-    const aboutSectionTop = useStore((state) => state.aboutSectionTop)
-    const contactSectionTop = useStore((state) => state.contactSectionTop)
+    const stageRef = useRef<any>(null)
 
-    const landingPoint = aboutSectionTop || 4500
-    const contactPoint = contactSectionTop || (landingPoint + 1800)
-    const avatarStart = landingPoint - 1400
-    const avatarEnd = contactPoint + 1500
-    const isVisible = scrollY > avatarStart && scrollY < avatarEnd
+    // Comparsa e scala dell'avatar si calcolano dentro il ciclo di disegno,
+    // leggendo lo scroll al volo. Prima erano proprieta' React: ogni scatto di
+    // scroll ricostruiva questo pezzo di scena, ed e' una delle ragioni per cui
+    // il sito andava a scatti.
+    useFrame(() => {
+        const g = stageRef.current
+        if (!g) return
 
-    const fadeScale = Math.max(0, Math.min(
-        scrollY < landingPoint - 800
-            ? (scrollY - avatarStart) / 400
-            : scrollY < avatarEnd - 1200
-                ? 1
-                : (avatarEnd - scrollY) / 1200,
-        1
-    ))
+        const { scrollY, aboutSectionTop, contactSectionTop } = useStore.getState()
+        const landingPoint = aboutSectionTop || 4500
+        const contactPoint = contactSectionTop || (landingPoint + 1800)
+        const avatarStart = landingPoint - 1400
+        const avatarEnd = contactPoint + 1500
+
+        const visible = scrollY > avatarStart && scrollY < avatarEnd
+        const fade = Math.max(0, Math.min(
+            scrollY < landingPoint - 800
+                ? (scrollY - avatarStart) / 400
+                : scrollY < avatarEnd - 1200
+                    ? 1
+                    : (avatarEnd - scrollY) / 1200,
+            1
+        ))
+
+        g.visible = visible
+        g.scale.setScalar(fade)
+    })
 
     return (
         <group ref={groupRef}>
@@ -45,11 +56,7 @@ export function HeroStage({ onTrackedPoints }: HeroStageProps = {}) {
             <LogoModel position={[0, 0, 0]} />
 
             {/* STAGE 2: Avatar + Paesaggio — Inchiodato alla sezione Chi Sono */}
-            <group
-                position={[0, -43, 0]}
-                scale={fadeScale}
-                visible={isVisible}
-            >
+            <group ref={stageRef} position={[0, -43, 0]} visible={false}>
                 <AvatarParticles
                     position={[5.8, -2.0, 0]}
                     scale={5.0}

@@ -317,8 +317,7 @@
    fionda al tocco e' pressoche' ingiocabile. */
 .introMobile { display: none; }
 
-@media (orientation: portrait) and (max-width: 899px),
-       (orientation: portrait) and (pointer: coarse) {
+@media (max-width: 899px), (pointer: coarse) {
   .canvasWrapper { display: none; }
   .mobileGrid { display: flex; }
   .introDesktop { display: none; }
