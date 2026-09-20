@@ -130,19 +130,19 @@ export const PORTFOLIO = {
       thumb:    '/portfolio/_thumbs/bicicleria.jpg',
       title:    'Bicicleria',
       category: 'Identità visiva completa',
-      tagline:  'Identità visiva di una ciclofficina. Progetto continuativo dal 2024.',
+      tagline:  'Identità visiva di una ciclofficina. Progetto continuativo dal 2025.',
       sections: [
         {
-          label: 'Il lavoro',
-          text:  "Curo l'identità visiva della ciclofficina Bicicleria nel suo insieme: dalle grafiche ai murales fino ai canali social. È un progetto continuativo, iniziato nel 2024 e ancora in corso.",
-        },
-        {
           label: 'Il murale',
-          text:  "Dipinto a mano su una colonna interna del negozio. Le componenti meccaniche e gli attrezzi prendono vita e si collegano in un unico flusso di avvenimenti che percorre le varie facce della colonna. Linea nera su fondo rosa, dal pavimento al soffitto.",
+          text:  'Una colonna al centro della ciclofficina, dipinta a mano dal pavimento al soffitto. Componenti meccaniche e attrezzi prendono vita e si collegano in un unico flusso di avvenimenti che gira su tutte le facce della colonna. Linea nera su fondo rosa.',
         },
         {
-          label: 'Cosa ho prodotto',
-          text:  'Murale, adesivi, locandine per gli eventi, grafiche per le magliette, il cartello degli orari, il video promozionale e le grafiche per i social.',
+          label: 'Il branding',
+          text:  "Curo l'identità visiva della ciclofficina nel suo insieme: adesivi, locandine per gli eventi, grafiche per le magliette, il cartello degli orari, il video promozionale e i contenuti per i social. Un progetto continuativo, iniziato nel 2025 e ancora in corso.",
+        },
+        {
+          label: 'I personaggi',
+          text:  'Nascono dalle componenti meccaniche e dagli attrezzi. Il piccione è fuso con una maglia della catena: vista di lato, ha già la forma del suo corpo.',
         },
       ],
       mapX: 0.15, mapY: 0.30,
@@ -179,11 +179,25 @@ export const PORTFOLIO = {
       thumb:    '/portfolio/_thumbs/mulini.jpg',
       title:    'Mulini',
       category: 'Illustrazione / Tesi di laurea',
-      tagline:  'Striscia illustrata di 6 metri sul passato e futuro delle macchine ad acqua.',
-      context:  "Tesi di laurea in Design e Comunicazione al Politecnico di Torino. La ricerca studia il ruolo sociale ed economico delle macchine ad acqua nell'area dell'Ecomuseo Terra del Castelmagno — mulini, fucine, segherie attivi fino agli anni Sessanta.",
-      problem:  "Come restituire una ricerca complessa — fatta di storie, prospettive contrastanti e visioni di futuro — a una comunità che quella ricerca l'ha vissuta? Un report accademico non basta.",
-      solution: "Una striscia illustrata di 6 metri che usa il sogno come spazio narrativo. 11 spazi interconnessi raccontano la riattivazione dei mulini attraverso metafore visive, personaggi, oggetti e situazioni — mettendo in dialogo le prospettive contrastanti della popolazione.",
-      result:   'Una ricerca che torna alle persone che l\'hanno generata, in un formato che possono vedere, leggere e sentire proprio. Tesi con lode.',
+      tagline:  'Tesi di laurea in Design e Comunicazione, Politecnico di Torino, 2024.',
+      sections: [
+        {
+          label: 'La ricerca',
+          text:  "Studio del ruolo delle macchine ad acqua come motore di sviluppo economico e sociale nell'areale dell'Ecomuseo Terra del Castelmagno. Erano poli produttivi multifunzionali, snodi di una rete di relazioni umane ed economiche ormai quasi sparita, che teneva insieme la comunità, le filiere e il territorio.",
+        },
+        {
+          label: 'Sul campo',
+          text:  "Condotta attraverso colloqui con chi abita l'areale. Ricostruisce quei legami nel contesto storico, in quello attuale e in quelli possibili: riattivare un mulino non è un intervento di restauro, ma la ricomposizione di un sistema di sostegno reciproco e di gestione collettiva delle risorse.",
+        },
+        {
+          label: 'Il progetto',
+          text:  'Uno schema sistemico rappresenta su più livelli la rete di interconnessione tra la comunità e le filiere, e sovrappone ai punti di intervento nevralgici un sistema di undici spazi interconnessi, co-progettato con la comunità.',
+        },
+        {
+          label: 'La restituzione',
+          text:  "Una striscia illustrata di sei metri, installata in loco. Tramite metafore narrative e l'escamotage del sogno come spazio privo di limitazioni, mette in condivisione le prospettive, il potenziale e le necessità che legano la riattivazione dei mulini al tessuto sociale e produttivo dell'area.",
+        },
+      ],
       mapX: 0.48, mapY: 0.22,
       accent: '#5B8EA6',
       panoramaStrip: '/portfolio/mulini/strip.png',
@@ -219,12 +233,22 @@ export const PORTFOLIO = {
       id:       'torino-invisibile',
       thumb:    '/portfolio/_thumbs/torino-invisibile.jpg',
       title:    'Torino Invisibile',
-      category: '3D / Produzione multimediale',
-      tagline:  "Contributo alla produzione di un'opera in realtà aumentata ispirata a Calvino.",
-      context:  "Torino Invisibile è un progetto multimediale di Kaninchen-Haus e ConiglioViola — vincitore di un bando PNRR per la transizione digitale. L'idea: trasformare Le città invisibili di Italo Calvino in un'opera d'arte pubblica da fruire in realtà aumentata attraverso gli spazi urbani.",
-      problem:  "Tradurre in immagini tridimensionali le città immaginarie di Calvino — mantenendo la qualità letteraria dell'originale e rendendole fruibili su dispositivi mobili e Oculus nello spazio pubblico.",
-      solution: "Andrea ha contribuito alla produzione come parte del servizio civile presso Borealis: modellazione 3D delle scene, composizione degli ambienti, assegnazione di materiali e texture, preparazione delle card identitarie del progetto.",
-      result:   "Scene tridimensionali pronte per la realtà aumentata, distribuite nei luoghi reali. Una città dentro la città — visibile solo a chi sa dove guardare.",
+      category: '3D / Realtà aumentata',
+      tagline:  'Progetto PNRR, 2025 – 2026.',
+      sections: [
+        {
+          label: "L'opera",
+          text:  "Le città invisibili di Italo Calvino diventano un'opera transmediale in realtà aumentata, diffusa nello spazio urbano: ogni città del libro è ancorata a un luogo reale di Torino — Olivia al Grattacielo San Paolo, Leonia in Piazza San Carlo, Ersilia alle Porte Palatine, Valdrada in Piazza Statuto, Zaira ai Murazzi — e prende forma sullo schermo di smartphone e visori mentre il testo di Calvino accompagna la visione.",
+        },
+        {
+          label: 'Il mio ruolo',
+          text:  'Durante il servizio civile a Kaninchen-Haus, tra il 2025 e il 2026, ho realizzato tutti gli ambienti 3D dell\'opera e ho partecipato alla fase di co-creazione e produzione artistica precedente.',
+        },
+        {
+          label: 'Chi c\'è dietro',
+          text:  'Progetto di Kaninchen-Haus con la direzione artistica di ConiglioViola, vincitore del bando PNRR Transizione Digitale Organismi Culturali e Creativi, in rete con Museo Nazionale del Cinema, Circolo dei Lettori, DAMS e Accademia Albertina.',
+        },
+      ],
       mapX: 0.65, mapY: 0.42,
       accent: '#1A1A2E',
       mainImage: '/portfolio/torino-invisibile/scene-1.png',
@@ -240,24 +264,26 @@ export const PORTFOLIO = {
       thumb:    '/portfolio/_thumbs/illustrazioni.jpg',
       title:    'Illustrazioni & Artwork Singoli',
       category: 'Raccolta / Illustrazione',
-      tagline:  'Selezione di illustrazioni personali, locandine e artwork indipendenti.',
-      context:  'Raccolta di lavori illustrativi che esplorano diversi linguaggi e applicazioni.',
-      problem:  'Unire mondi diversi — come l\'immaginario di Alice, l\'energia punk indipendente, e l\'inclusione sociale della ciclomeccanica — in un unico spazio.',
-      solution: 'Scorri questa sezione per esplorare ogni singolo progetto. Ognuno mantiene il suo layout e lo stile visivo unico con cui è stato concepito.',
-      result:   'Stampa, contest, e commissioni private.',
+      tagline:  'Copertine per singoli musicali, locandine per eventi, illustrazioni per contest.',
       mapX: 0.80, mapY: 0.22,
       accent: '#E8A8BF',
       subProjects: [
         {
           id:       'alice',
           layout:   'centered',
-          title:    'Alice Un Mondo di Matti',
-          category: 'Illustrazione',
-          tagline:  "Illustrazione personalizzata ispirata all'universo di Alice nel Paese delle Meraviglie.",
-          context:  "Una commissione privata — un'illustrazione su misura che parte da un immaginario letterario noto e lo reinterpreta con il linguaggio visivo di Andrea.",
-          problem:  "Tradurre lo spirito originale di Carroll — meraviglioso e disturbante insieme — in un'immagine che sia personale e non una citazione.",
-          solution: 'Un mondo visionario e leggermente disturbante, coerente con lo spirito originale di Carroll — personaggi ibridi, proporzioni impossibili, colori inaspettati.',
-          result:   'Commissione privata consegnata.',
+          title:    'Alice, un mondo di matti',
+          category: 'Copertina / Illustrazione',
+          tagline:  'Copertina per un singolo di Gcomemarco.',
+          sections: [
+            {
+              label: 'La richiesta',
+              text:  'Unire Torino, Alice nel Paese delle Meraviglie e il Giardino delle delizie di Bosch.',
+            },
+            {
+              label: "L'illustrazione",
+              text:  'Ne è nata una città rossa dove palazzi torinesi, castelli e funghi giganti ospitano i personaggi del libro.',
+            },
+          ],
           accent: '#8B4DA8',
           mainImage: '/portfolio/alice/hero.png',
           gallery: [
@@ -268,13 +294,15 @@ export const PORTFOLIO = {
         {
           id:       'ridi-piangi-balli',
           layout:   'centered',
-          title:    'Ridi Piangi Balli',
-          category: 'Illustrazione',
-          tagline:  'Illustrazione personalizzata su tre stati emotivi — un ritratto visivo.',
-          context:  'Una commissione privata. Tre parole come punto di partenza — ridi, piangi, balli — tre facce di una stessa persona da raccontare in un\'unica immagine.',
-          problem:  "Tre emozioni da tenere insieme in una composizione sola, senza gerarchia, senza ordine imposto.",
-          solution: "Un'illustrazione che non descrive — interpreta. Le tre emozioni convivono nella stessa composizione.",
-          result:   'Commissione privata consegnata.',
+          title:    'Ridi, piangi, balli',
+          category: 'Copertina / Illustrazione',
+          tagline:  'Copertina per un singolo di Gcomemarco.',
+          sections: [
+            {
+              label: "L'illustrazione",
+              text:  'Una sala da ballo sospesa sulla notte, dove convivono chi festeggia, chi si innamora e chi piange da solo.',
+            },
+          ],
           accent: '#E8A8BF',
           mainImage: '/portfolio/ridi-piangi-balli/hero.png'
         },
@@ -319,12 +347,18 @@ export const PORTFOLIO = {
           id:       'ciclomeccanica',
           layout:   'split_light',
           title:    'Campionati di Ciclomeccanica',
-          category: 'Grafica / Illustrazione',
-          tagline:  'Volantino pro bono per i Campionati di Ciclomeccanica.',
-          context:  "I Campionati di Ciclomeccanica mettono insieme riuso, riciclo, competenze meccaniche e inclusione sociale. Andrea conosce quel mondo dall'interno.",
-          problem:  'Nessuna comunicazione visiva per un evento che meritava visibilità.',
-          solution: "Una narrazione illustrata in cui attrezzi e componenti meccaniche prendono vita — una città diversa, con la mobilità sostenibile al centro. Realizzato gratuitamente per sostenere un'iniziativa in cui crede.",
-          result:   'Distribuzione nella rete ciclistica. Evento sold out.',
+          category: 'Locandina / Illustrazione',
+          tagline:  'Locandina per il XIV Trofeo Sheldon Brown. Torino, 5 ottobre 2024.',
+          sections: [
+            {
+              label: "L'evento",
+              text:  "La gara tra ciclofficine popolari ospitata alle Officine Creative di via Cecchi. In cinque ore le squadre rimettono in strada bici recuperate, che finiscono all'asta benefica.",
+            },
+            {
+              label: "L'illustrazione",
+              text:  'I pezzi della bici diventano paesaggio: il telaio attraversa la scena e la serie sterzo si trasforma in un UFO che illumina la Mole.',
+            },
+          ],
           accent: '#7B9E4A',
           mainImage: '/portfolio/ciclomeccanica/flyer-cover.jpg',
           pdfs: [
@@ -336,12 +370,18 @@ export const PORTFOLIO = {
           ]
         },
         {
-          // Descrizione da scrivere: per ora compare solo titolo e immagine.
-          id:        'locandina-start',
-          title:     'Locandina START',
-          category:  'Illustrazione',
+          id:        'campus-boreale',
+          title:     'Campus Boreale',
+          category:  'Locandina / Illustrazione',
+          tagline:   "Locandina per la prima apertura del Campus, l'aula studio di Borealis.",
           accent:    '#9DD4EE',
           mainImage: '/portfolio/locandina-start/hero.jpg',
+          sections: [
+            {
+              label: "L'illustrazione",
+              text:  'Chi legge, chi scrive, chi lavora al computer: tavoli e sedie si staccano dal pavimento e lo studio diventa uno spazio condiviso e leggero.',
+            },
+          ],
         }
       ]
     },
@@ -349,14 +389,28 @@ export const PORTFOLIO = {
       id:       'ecosistema-boreale',
       title:    'Ecosistema Boreale',
       category: 'Illustrazione',
-      tagline:  "Illustrazione per una call del centro culturale Borealis nel quartiere Aurora.",
-      context:  "Borealis è il centro culturale di Kaninchen-Haus nel quartiere Aurora di Torino — uno spazio che mescola arte, comunità e innovazione sociale. Andrea ci lavora dentro con il servizio civile.",
-      problem:  "Raccontare l'ecosistema immaginario di Borealis — un mondo vivo, fatto di connessioni, energie e presenze diverse che coabitano.",
-      solution: "Un'illustrazione che racconta l'ecosistema immaginario di Borealis. Il linguaggio visivo di Andrea incontra i valori del posto.",
-      result:   'Illustrazione consegnata per la call di Borealis / Kaninchen-Haus.',
+      thumb:    '/portfolio/_thumbs/ecosistema-boreale.jpg',
+      tagline:  'Illustrazione per la call di Borealis, 2025.',
+      sections: [
+        {
+          label: 'La richiesta',
+          text:  'Per la call di Borealis rivolta a imprese creative e realtà a impatto sociale da ospitare negli spazi del centro.',
+        },
+        {
+          label: "L'illustrazione",
+          text:  "Un'isola dove piante, animali, strumenti musicali e da pittura convivono e mettono radici insieme.",
+        },
+        {
+          label: 'Il disegno',
+          text:  'In galleria anche il disegno a linea, prima del colore.',
+        },
+      ],
       mapX: 0.38, mapY: 0.82,
       accent: '#4A6741',
-      mainImage: '/portfolio/ecosistema-boreale/hero-web.jpg'
+      mainImage: '/portfolio/ecosistema-boreale/hero.jpg',
+      gallery: [
+        '/portfolio/ecosistema-boreale/linea.jpg'
+      ]
     },
     {
       id:       'sperimentazione',
