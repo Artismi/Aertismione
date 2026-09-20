@@ -1186,63 +1186,68 @@
 
 
 /* ─── Impaginazione a movimenti ───────────────────────────────── */
+/* Impostazione da catalogo autoprodotto: griglia fissa, filetti sottili,
+   tutto allineato allo stesso margine. Il carattere artigianale sta nella
+   tipografia e nei filetti, non nel disordine. */
 
 .flow {
+  --gutter: clamp(20px, 3.2vw, 44px);
+  --margine: clamp(22px, 4vw, 48px);
   padding: 0 0 40px;
 }
 
-/* Un movimento: testo da una parte, immagine dall'altra, sfalsati. */
 .movement {
   display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-  align-items: center;
-  gap: clamp(32px, 5vw, 72px);
+  grid-template-columns: 5fr 7fr;
+  align-items: start;
+  column-gap: var(--gutter);
+  row-gap: 22px;
   max-width: 1240px;
-  margin: 0 auto clamp(80px, 11vw, 150px);
-  padding: 0 clamp(22px, 4vw, 48px);
+  margin: 0 auto clamp(72px, 9vw, 122px);
+  padding: 0 var(--margine);
+}
+
+/* Il filetto attraversa tutta la griglia e tiene l'allineamento. */
+.movementRule {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+  padding-top: 14px;
+  border-top: 1px solid color-mix(in srgb, var(--ink) 22%, transparent);
+}
+
+.movementIndex {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.movementLabel {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+/* testo e immagine partono dalla stessa riga: nessuno sfalsamento */
+.movementText {
+  max-width: 44ch;
 }
 
 .movement[data-side='right'] .movementText { order: 2; }
 .movement[data-side='right'] .movementFigure { order: 1; }
 
-/* lo sfalsamento verticale: è quello che toglie l'aria "a blocchi" */
-.movement[data-side='left'] .movementFigure { transform: translateY(clamp(12px, 3vw, 46px)); }
-.movement[data-side='right'] .movementText { transform: translateY(clamp(10px, 2.5vw, 38px)); }
-
-.movementText {
-  position: relative;
-  max-width: 46ch;
-}
-
-/* numero grande in filigrana, il testo ci sale sopra */
-.movementNum {
-  display: block;
-  font-family: var(--font-display);
-  font-size: clamp(3.5rem, 8vw, 7rem);
-  line-height: 0.72;
-  color: var(--accent);
-  opacity: 0.17;
-  margin-bottom: -0.16em;
-  user-select: none;
-}
-
-.movementLabel {
-  position: relative;
-  display: block;
-  font-family: var(--font-mono);
-  font-weight: 700;
-  font-size: 0.74rem;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 16px;
-}
-
 .movementBody {
   font-family: var(--font-body);
   font-weight: 500;
-  font-size: clamp(1.05rem, 1.9vw, 1.35rem);
-  line-height: 1.55;
+  font-size: clamp(1.02rem, 1.7vw, 1.28rem);
+  line-height: 1.6;
   color: var(--ink);
   margin: 0;
 }
@@ -1252,6 +1257,7 @@
   aspect-ratio: 4 / 3;
   overflow: hidden;
   background: var(--bg-alt);
+  border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
 }
 
 .movementFigure button {
@@ -1263,20 +1269,17 @@
   cursor: pointer;
 }
 
-.movementFigure img {
-  transition: transform 0.9s var(--ease-expo);
-}
+.movementFigure img { transition: transform 0.9s var(--ease-expo); }
+.movementFigure:hover img { transform: scale(1.03); }
 
-.movementFigure:hover img { transform: scale(1.04); }
-
-/* A metà racconto un'immagine a tutta larghezza rompe il ritmo. */
+/* Una sola immagine a tutta larghezza, a meta' racconto. */
 .bleed {
   position: relative;
   width: 100vw;
   margin-left: calc(50% - 50vw);
-  height: clamp(320px, 62vh, 720px);
+  height: clamp(320px, 58vh, 660px);
   overflow: hidden;
-  margin-bottom: clamp(80px, 11vw, 150px);
+  margin-bottom: clamp(72px, 9vw, 122px);
   background: var(--bg-alt);
 }
 
@@ -1289,26 +1292,23 @@
   cursor: pointer;
 }
 
-/* Quello che resta: griglia irregolare, non un reticolo uniforme. */
+/* Il resto: griglia regolare, stesso passo, stesse proporzioni. */
 .rest {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--gutter);
   max-width: 1240px;
   margin: 0 auto;
-  padding: 0 clamp(22px, 4vw, 48px);
+  padding: 0 var(--margine);
 }
 
 .restItem {
   position: relative;
-  grid-column: span 2;
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 4 / 3;
   overflow: hidden;
   background: var(--bg-alt);
+  border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
 }
-
-.restItem:nth-child(4n + 1) { grid-column: span 3; aspect-ratio: 4 / 3; }
-.restItem:nth-child(4n + 4) { grid-column: span 3; aspect-ratio: 4 / 3; }
 
 .restItem button {
   position: absolute;
@@ -1320,21 +1320,16 @@
 }
 
 .restItem img { transition: transform 0.8s var(--ease-expo); }
-.restItem:hover img { transform: scale(1.05); }
+.restItem:hover img { transform: scale(1.04); }
 
 @media (max-width: 860px) {
   .movement {
     grid-template-columns: 1fr;
-    gap: 22px;
-    margin-bottom: 64px;
+    margin-bottom: 58px;
   }
   .movement[data-side='right'] .movementText,
-  .movement[data-side='left'] .movementFigure,
-  .movement[data-side='right'] .movementFigure { transform: none; order: 0; }
+  .movement[data-side='right'] .movementFigure { order: 0; }
   .movementText { max-width: none; }
-  .bleed { height: 46vh; margin-bottom: 64px; }
+  .bleed { height: 42vh; margin-bottom: 58px; }
   .rest { grid-template-columns: repeat(2, 1fr); }
-  .restItem,
-  .restItem:nth-child(4n + 1),
-  .restItem:nth-child(4n + 4) { grid-column: span 1; aspect-ratio: 1 / 1; }
 }

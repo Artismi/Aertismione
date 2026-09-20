@@ -154,16 +154,15 @@ export const PORTFOLIO = {
           note:  'Il profilo della ciclofficina, dove escono le grafiche',
         },
       ],
-      mainImage: '/portfolio/bicicleria/colonna-1.jpg',
+      mainImage: '/portfolio/bicicleria/detail-1.jpg',
       videos: [
         '/portfolio/bicicleria/video-promo.mp4'
       ],
       marquee: '/portfolio/bicicleria/stickers-loop.png',
+      // I ritagli presi dal portfolio duplicavano foto gia' presenti in
+      // risoluzione migliore: qui restano solo gli originali.
       gallery: [
         // il murale sulla colonna
-        '/portfolio/bicicleria/colonna-2.jpg',
-        '/portfolio/bicicleria/colonna-3.jpg',
-        '/portfolio/bicicleria/detail-1.jpg',
         '/portfolio/bicicleria/detail-2.jpg',
         '/portfolio/bicicleria/detail-3.jpg',
         // i personaggi nati dalle componenti meccaniche
@@ -172,11 +171,8 @@ export const PORTFOLIO = {
         '/portfolio/bicicleria/ape-banner-1.jpg',
         '/portfolio/bicicleria/ape-banner-2.jpg',
         // stampati e grafiche per il negozio
-        '/portfolio/bicicleria/orario-grafica.jpg',
-        '/portfolio/bicicleria/ape-bellavita.jpg',
-        '/portfolio/bicicleria/adesivi-foto.jpg',
-        '/portfolio/bicicleria/promo.png',
         '/portfolio/bicicleria/aperidivo.png',
+        '/portfolio/bicicleria/promo.png',
         '/portfolio/bicicleria/adesivo-1.jpg',
         '/portfolio/bicicleria/adesivo-2.jpg'
       ],

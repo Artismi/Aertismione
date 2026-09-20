@@ -598,11 +598,14 @@ function NarrativeFlow({
       {blocks.map((b, i) => (
         <div key={b.label}>
           <section className={styles.movement} data-side={i % 2 === 0 ? 'left' : 'right'}>
-            <FadeUp className={styles.movementText} delay={0.05}>
-              <span className={styles.movementNum} aria-hidden="true">
-                {String(i + 1).padStart(2, '0')}
-              </span>
+            {/* filetto di apertura: numero a sinistra, titolo a destra, come in
+                un catalogo. E' la struttura a tenere insieme la pagina. */}
+            <div className={styles.movementRule}>
+              <span className={styles.movementIndex}>{String(i + 1).padStart(2, '0')}</span>
               <span className={styles.movementLabel}>{b.label}</span>
+            </div>
+
+            <FadeUp className={styles.movementText} delay={0.05}>
               <p className={styles.movementBody}>{b.text}</p>
             </FadeUp>
 
