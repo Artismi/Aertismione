@@ -1242,53 +1242,38 @@
 }
 
 .movement[data-side='right'] .movementText { order: 2; }
-.movement[data-side='right'] .movementFigure { order: 1; }
-
-.movementBody {
-  font-family: var(--font-body);
-  font-weight: 400;
-  font-size: clamp(1.02rem, 1.7vw, 1.28rem);
-  line-height: 1.6;
-  color: var(--ink);
-  margin: 0;
-}
-
-/* Le parole chiave in grassetto dentro il testo: firma del portfolio. */
-.movementBody strong {
-  font-weight: 700;
-  color: var(--ink);
-}
-
-.movementFigure {
+.movement[data-side='right'] .movementFigure {
   position: relative;
-  aspect-ratio: 4 / 3;
-  overflow: hidden;
-  background: var(--bg-alt);
-  border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
 }
 
-.movementFigure button {
-  position: absolute;
-  inset: 0;
+/* ogni immagine nelle sue proporzioni vere: nessun ritaglio */
+.figuraBtn {
+  display: block;
+  width: 100%;
   padding: 0;
   border: none;
   background: none;
   cursor: pointer;
 }
 
-.movementFigure img { transition: transform 0.9s var(--ease-expo); }
-.movementFigure:hover img { transform: scale(1.03); }
+.figuraBtn img {
+  display: block;
+  outline: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
+  transition: transform 0.9s var(--ease-expo), filter 0.4s;
+}
+
+.figuraBtn:hover img { filter: brightness(1.05); }
 
 /* Una stampa posata sopra l'altra: il guizzo, uno solo per pagina. */
+.movementFigure:has(.sovrapposta) { margin-bottom: 40px; }
+
 .sovrapposta {
   position: absolute;
   right: -18px;
-  bottom: -26px;
-  width: 38%;
-  aspect-ratio: 3 / 4;
+  bottom: -40px;
+  width: 36%;
   z-index: 2;
-  overflow: hidden;
-  background: var(--bg-alt);
+  background: var(--bg);
   border: 6px solid var(--bg);
   box-shadow: 0 16px 34px rgba(0, 0, 0, 0.30);
   rotate: -2.2deg;
@@ -1296,65 +1281,41 @@
 }
 
 .sovrapposta:hover { rotate: -0.6deg; translate: 0 -4px; }
+.sovrapposta img { outline: none; }
 
-.sovrapposta button {
-  position: absolute;
-  inset: 0;
-  padding: 0;
-  border: none;
-  background: none;
-  cursor: pointer;
-}
-
-/* Una sola immagine a tutta larghezza, a meta' racconto. */
+/* A tutta larghezza solo le immagini che ne hanno la risoluzione. */
 .bleed {
-  position: relative;
+  display: flex;
+  justify-content: center;
   width: 100vw;
   margin-left: calc(50% - 50vw);
-  height: clamp(320px, 58vh, 660px);
-  overflow: hidden;
   margin-bottom: clamp(72px, 9vw, 122px);
-  background: var(--bg-alt);
 }
 
-.bleed button {
-  position: absolute;
-  inset: 0;
-  padding: 0;
-  border: none;
-  background: none;
-  cursor: pointer;
+/* Le strisce lunghe diventano un fregio intero, alla larghezza della pagina. */
+.fregio {
+  display: flex;
+  justify-content: center;
+  max-width: 1240px;
+  margin: 0 auto clamp(72px, 9vw, 122px);
+  padding: 0 var(--margine);
 }
 
-/* Il resto: griglia regolare, stesso passo, stesse proporzioni. */
+/* Il resto: colonne ordinate, ogni immagine intera. */
 .rest {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--gutter);
+  columns: 3;
+  column-gap: var(--gutter);
   max-width: 1240px;
   margin: 0 auto;
   padding: 0 var(--margine);
 }
 
 .restItem {
-  position: relative;
-  aspect-ratio: 4 / 3;
-  overflow: hidden;
-  background: var(--bg-alt);
-  border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
+  break-inside: avoid;
+  margin-bottom: var(--gutter);
+  display: flex;
+  justify-content: center;
 }
-
-.restItem button {
-  position: absolute;
-  inset: 0;
-  padding: 0;
-  border: none;
-  background: none;
-  cursor: pointer;
-}
-
-.restItem img { transition: transform 0.8s var(--ease-expo); }
-.restItem:hover img { transform: scale(1.04); }
 
 @media (max-width: 860px) {
   .movement {
@@ -1364,8 +1325,10 @@
   .movement[data-side='right'] .movementText,
   .movement[data-side='right'] .movementFigure { order: 0; }
   .movementText { max-width: none; }
-  .bleed { height: 42vh; margin-bottom: 58px; }
-  .rest { grid-template-columns: repeat(2, 1fr); }
+  .bleed { margin-bottom: 58px; }
+  .fregio { margin-bottom: 58px; }
+  .rest { columns: 2; }
+  .sovrapposta { right: -6px; width: 42%; }
 }
 
 

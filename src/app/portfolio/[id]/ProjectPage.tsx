@@ -6,6 +6,7 @@ import { motion, useScroll, useTransform, useInView } from 'framer-motion'
 import { useRef, useState, useEffect } from 'react'
 import { useStore } from '@/stores/useStore'
 import { PaperPlane, type PaperItem } from '@/components/ui/PaperPlane'
+import imageSizes from '@/config/imageSizes.json'
 import styles from './ProjectPage.module.css'
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
@@ -582,12 +583,52 @@ function imagesOf(project: Project): string[] {
   return all.filter((src, i, arr): src is string => Boolean(src) && arr.indexOf(src) === i)
 }
 
+/* ─── Misure vere delle immagini ─────────────────────────────────────────── */
+
+/** Larghezza e altezza reali, lette dai file (scripts/image-sizes.py). */
+function misura(src: string): [number, number] {
+  return (imageSizes as unknown as Record<string, [number, number]>)[src] ?? [1600, 1200]
+}
+const rapporto = (src: string) => { const [w, h] = misura(src); return w / h }
+/** Strisce lunghe e basse: si mostrano intere, come un fregio. */
+const eStriscia = (src: string) => rapporto(src) > 3.2
+/** Abbastanza grande e orizzontale da reggere tutta la larghezza senza sgranare. */
+const reggeTuttaLarghezza = (src: string) => misura(src)[0] >= 1800 && rapporto(src) >= 1.2 && !eStriscia(src)
+
 /**
- * NarrativeFlow — testo e immagini si alternano invece di stare in due
- * mucchi separati. Ogni sezione e' un "movimento": la colonna di testo da
- * una parte, l'immagine che le corrisponde dall'altra, sfalsata in verticale.
- * A meta' racconto un'immagine a tutta larghezza rompe il ritmo, e quello che
- * resta chiude in una griglia irregolare.
+ * Figura — un'immagine nelle sue proporzioni vere: niente tagli, e mai
+ * allargata oltre la sua risoluzione (e' quello che la faceva sgranare).
+ */
+function Figura({
+  src,
+  sizes,
+  className,
+  onClick,
+}: {
+  src: string
+  sizes: string
+  className?: string
+  onClick: () => void
+}) {
+  const [w, h] = misura(src)
+  return (
+    <button
+      className={className}
+      onClick={onClick}
+      // mai oltre la risoluzione vera, e mai piu' alta di tre quarti di schermo
+      style={{ maxWidth: `min(${w}px, calc(78vh * ${(w / h).toFixed(4)}))` }}
+    >
+      <Image src={src} alt="" width={w} height={h} sizes={sizes} quality={85} style={{ width: '100%', height: 'auto' }} />
+    </button>
+  )
+}
+
+/**
+ * NarrativeFlow — testo e immagini si alternano. Ogni sezione e' un
+ * "movimento": filetto, testo, e l'immagine che gli corrisponde. Un'immagine
+ * a tutta larghezza rompe il ritmo solo se ha la risoluzione per farlo; le
+ * strisce diventano fregi interi; il resto chiude in colonne ordinate.
+ * Nessuna immagine viene ritagliata.
  */
 function NarrativeFlow({
   project,
@@ -599,26 +640,30 @@ function NarrativeFlow({
   const blocks = blocksOf(project)
   const images = imagesOf(project)
 
-  // una immagine per movimento; la prima dopo il secondo va a tutta larghezza
-  const perMovement = images.slice(0, blocks.length)
-  const bleed = images[blocks.length]
-  const dopoBleed = images.slice(blocks.length + (bleed ? 1 : 0))
+  // le strisce non vanno mai in una casella: diventano fregi a tutta riga
+  const strisce = images.filter(eStriscia)
+  const normali = images.filter((src) => !eStriscia(src))
 
-  // Il guizzo, preso dal portfolio: una seconda immagine piu' piccola
-  // appoggiata sull'angolo della prima, come una stampa posata sopra un'altra.
-  // Una sola, sul secondo movimento, altrimenti diventa disordine.
-  const sovrapposta = dopoBleed[0]
-  const rest = sovrapposta ? dopoBleed.slice(1) : dopoBleed
+  const perMovement = normali.slice(0, blocks.length)
+  const dopo = normali.slice(blocks.length)
+
+  // tutta larghezza solo per chi la regge; altrimenti niente
+  const bleed = dopo.find(reggeTuttaLarghezza)
+  const senzaBleed = dopo.filter((src) => src !== bleed)
+
+  // Il guizzo: una stampa piu' piccola posata sull'angolo di un'altra.
+  // Solo se ha proporzioni da foglio (non una striscia, non un banner).
+  const sovrapposta = senzaBleed.find((src) => rapporto(src) > 0.6 && rapporto(src) < 1.5)
+  const rest = senzaBleed.filter((src) => src !== sovrapposta)
   const movimentoConSovrapposta = blocks.length > 1 ? 1 : 0
   const bleedAfter = Math.min(1, blocks.length - 1)
+  const fregioAfter = Math.min(2, blocks.length - 1)
 
   return (
     <div className={styles.flow}>
       {blocks.map((b, i) => (
         <div key={b.label}>
           <section className={styles.movement} data-side={i % 2 === 0 ? 'left' : 'right'}>
-            {/* filetto di apertura: numero a sinistra, titolo a destra, come in
-                un catalogo. E' la struttura a tenere insieme la pagina. */}
             <div className={styles.movementRule}>
               <span className={styles.movementIndex}>{String(i + 1).padStart(2, '0')}</span>
               <span className={styles.movementLabel}>{b.label}</span>
@@ -629,28 +674,25 @@ function NarrativeFlow({
             </FadeUp>
 
             {perMovement[i] && (
-              <FadeUp className={styles.movementFigure} delay={0.12}>
-                <button onClick={() => onLightbox(perMovement[i], images)}>
-                  <Image
-                    src={perMovement[i]}
-                    alt=""
-                    fill
-                    sizes="(max-width: 900px) 100vw, 46vw"
-                    style={{ objectFit: 'cover' }}
-                  />
-                </button>
+              <FadeUp
+                className={styles.movementFigure}
+                delay={0.12}
+              >
+                <Figura
+                  src={perMovement[i]}
+                  sizes="(max-width: 900px) 100vw, 46vw"
+                  className={styles.figuraBtn}
+                  onClick={() => onLightbox(perMovement[i], images)}
+                />
 
                 {sovrapposta && i === movimentoConSovrapposta && (
                   <span className={styles.sovrapposta}>
-                    <button onClick={() => onLightbox(sovrapposta, images)}>
-                      <Image
-                        src={sovrapposta}
-                        alt=""
-                        fill
-                        sizes="(max-width: 900px) 40vw, 200px"
-                        style={{ objectFit: 'cover' }}
-                      />
-                    </button>
+                    <Figura
+                      src={sovrapposta}
+                      sizes="(max-width: 900px) 40vw, 240px"
+                      className={styles.figuraBtn}
+                      onClick={() => onLightbox(sovrapposta, images)}
+                    />
                   </span>
                 )}
               </FadeUp>
@@ -659,21 +701,24 @@ function NarrativeFlow({
 
           {bleed && i === bleedAfter && (
             <FadeIn className={styles.bleed}>
-              <button onClick={() => onLightbox(bleed, images)}>
-                <Image src={bleed} alt="" fill sizes="100vw" style={{ objectFit: 'cover' }} />
-              </button>
+              <Figura src={bleed} sizes="100vw" className={styles.figuraBtn} onClick={() => onLightbox(bleed, images)} />
             </FadeIn>
           )}
+
+          {i === fregioAfter &&
+            strisce.map((src) => (
+              <FadeIn key={src} className={styles.fregio}>
+                <Figura src={src} sizes="(max-width: 1240px) 100vw, 1240px" className={styles.figuraBtn} onClick={() => onLightbox(src, images)} />
+              </FadeIn>
+            ))}
         </div>
       ))}
 
       {rest.length > 0 && (
         <div className={styles.rest}>
           {rest.map((src, i) => (
-            <FadeIn key={src} delay={(i % 4) * 0.05} className={styles.restItem}>
-              <button onClick={() => onLightbox(src, images)}>
-                <Image src={src} alt="" fill sizes="(max-width: 900px) 50vw, 32vw" style={{ objectFit: 'cover' }} />
-              </button>
+            <FadeIn key={src} delay={(i % 3) * 0.05} className={styles.restItem}>
+              <Figura src={src} sizes="(max-width: 900px) 50vw, 32vw" className={styles.figuraBtn} onClick={() => onLightbox(src, images)} />
             </FadeIn>
           ))}
         </div>
