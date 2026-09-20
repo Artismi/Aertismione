@@ -551,6 +551,101 @@ function PanoramaBlock({ url }: { url?: string }) {
   )
 }
 
+/* ─── Impaginazione a movimenti ──────────────────────────────────────────── */
+
+/** Le sezioni del progetto, saltando le caselle vuote dello schema storico. */
+function blocksOf(project: Project): { label: string; text: string }[] {
+  if (project.sections?.length) return project.sections
+  return ([
+    { label: NARRATIVE_LABELS.context,  text: project.context  },
+    { label: NARRATIVE_LABELS.problem,  text: project.problem  },
+    { label: NARRATIVE_LABELS.solution, text: project.solution },
+    { label: NARRATIVE_LABELS.result,   text: project.result   },
+  ].filter((b) => b.text) as { label: string; text: string }[])
+}
+
+/** Tutte le immagini del progetto, copertina inclusa, senza doppioni. */
+function imagesOf(project: Project): string[] {
+  const all = [project.mainImage, ...(project.gallery ?? [])]
+  return all.filter((src, i, arr): src is string => Boolean(src) && arr.indexOf(src) === i)
+}
+
+/**
+ * NarrativeFlow — testo e immagini si alternano invece di stare in due
+ * mucchi separati. Ogni sezione e' un "movimento": la colonna di testo da
+ * una parte, l'immagine che le corrisponde dall'altra, sfalsata in verticale.
+ * A meta' racconto un'immagine a tutta larghezza rompe il ritmo, e quello che
+ * resta chiude in una griglia irregolare.
+ */
+function NarrativeFlow({
+  project,
+  onLightbox,
+}: {
+  project: Project
+  onLightbox: (src: string, all: string[]) => void
+}) {
+  const blocks = blocksOf(project)
+  const images = imagesOf(project)
+
+  // una immagine per movimento; la prima dopo il secondo va a tutta larghezza
+  const perMovement = images.slice(0, blocks.length)
+  const bleed = images[blocks.length]
+  const rest = images.slice(blocks.length + (bleed ? 1 : 0))
+  const bleedAfter = Math.min(1, blocks.length - 1)
+
+  return (
+    <div className={styles.flow}>
+      {blocks.map((b, i) => (
+        <div key={b.label}>
+          <section className={styles.movement} data-side={i % 2 === 0 ? 'left' : 'right'}>
+            <FadeUp className={styles.movementText} delay={0.05}>
+              <span className={styles.movementNum} aria-hidden="true">
+                {String(i + 1).padStart(2, '0')}
+              </span>
+              <span className={styles.movementLabel}>{b.label}</span>
+              <p className={styles.movementBody}>{b.text}</p>
+            </FadeUp>
+
+            {perMovement[i] && (
+              <FadeUp className={styles.movementFigure} delay={0.12}>
+                <button onClick={() => onLightbox(perMovement[i], images)}>
+                  <Image
+                    src={perMovement[i]}
+                    alt=""
+                    fill
+                    sizes="(max-width: 900px) 100vw, 46vw"
+                    style={{ objectFit: 'cover' }}
+                  />
+                </button>
+              </FadeUp>
+            )}
+          </section>
+
+          {bleed && i === bleedAfter && (
+            <FadeIn className={styles.bleed}>
+              <button onClick={() => onLightbox(bleed, images)}>
+                <Image src={bleed} alt="" fill sizes="100vw" style={{ objectFit: 'cover' }} />
+              </button>
+            </FadeIn>
+          )}
+        </div>
+      ))}
+
+      {rest.length > 0 && (
+        <div className={styles.rest}>
+          {rest.map((src, i) => (
+            <FadeIn key={src} delay={(i % 4) * 0.05} className={styles.restItem}>
+              <button onClick={() => onLightbox(src, images)}>
+                <Image src={src} alt="" fill sizes="(max-width: 900px) 50vw, 32vw" style={{ objectFit: 'cover' }} />
+              </button>
+            </FadeIn>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 /* ─── Collegamenti esterni ───────────────────────────────────────────────── */
 
 function LinksBlock({ links }: { links: { label: string; url: string; note?: string }[] }) {
@@ -731,6 +826,11 @@ export function ProjectPage({
     return () => setAmbienceTrack(null)
   }, [project.audio, setAmbienceTrack])
 
+  const useFlow =
+    layout !== 'archive' &&
+    imagesOf(project).length > 0 &&
+    !(project.category?.toLowerCase()?.includes('illustrazione') && !project.sections?.length)
+
   const isIllustration = project.category?.toLowerCase()?.includes('illustrazione') ||
                          project.category?.toLowerCase()?.includes('grafica') || false
 
@@ -798,10 +898,16 @@ export function ProjectPage({
         />
       </section>
 
-      {/* Narrative */}
-      <section className={styles.narrativeSection}>
-        <NarrativeGrid project={project} layout={layout} isIllustration={isIllustration} />
-      </section>
+      {/* Racconto: a movimenti quando ci sono immagini da alternare al testo,
+          altrimenti lo schema storico. Stamperia e le illustrazioni hanno
+          impaginazioni loro. */}
+      {useFlow ? (
+        <NarrativeFlow project={project} onLightbox={openLightbox} />
+      ) : (
+        <section className={styles.narrativeSection}>
+          <NarrativeGrid project={project} layout={layout} isIllustration={isIllustration} />
+        </section>
+      )}
 
       {/* Panorama Strip */}
       {project.panoramaStrip && <PanoramaBlock url={project.panoramaStrip} />}
@@ -815,9 +921,12 @@ export function ProjectPage({
       )}
 
       {/* Media: gallery + PDFs */}
-      {(project.mainImage || project.gallery?.length || project.pdfs?.length) && (
+      {((!useFlow && (project.mainImage || project.gallery?.length)) ||
+        project.pdfs?.length || project.links?.length) && (
         <section className={styles.mediaSection} data-illustration={isIllustration}>
-          <GalleryBlock project={project} layout={layout} onLightbox={openLightbox} isIllustration={isIllustration} />
+          {!useFlow && (
+            <GalleryBlock project={project} layout={layout} onLightbox={openLightbox} isIllustration={isIllustration} />
+          )}
           {project.pdfs?.length ? <PdfBlock pdfs={project.pdfs} onLightbox={openLightbox} /> : null}
           {project.links?.length ? <LinksBlock links={project.links} /> : null}
         </section>
