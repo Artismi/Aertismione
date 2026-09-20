@@ -210,6 +210,31 @@ export const PORTFOLIO = {
           label: 'La restituzione',
           text:  "Una striscia illustrata di sei metri, installata in loco. Tramite metafore narrative e l'escamotage del sogno come spazio privo di limitazioni, mette in condivisione le prospettive, il potenziale e le necessità che legano la riattivazione dei mulini al tessuto sociale e produttivo dell'area.",
         },
+        {
+          label: 'Dopo la tesi',
+          text:  "La ricerca è uscita dall'università. L'ho presentata al convegno «Mulini e macchine ad acqua: un esempio di retro-futuro» di Italia Nostra Cuneo, nel febbraio 2025, e al Museo Terra del Castelmagno di Monterosso Grana durante la mostra «Di acque e di Mulini», aperta dall'aprile al giugno 2025.",
+        },
+      ],
+      links: [
+        {
+          label: 'La tesi completa su WebThesis — Politecnico di Torino',
+          url:   'https://webthesis.biblio.polito.it/34064/',
+        },
+        {
+          label: 'Convegno «Mulini e macchine ad acqua: un esempio di retro-futuro»',
+          url:   'https://www.italianostra.org/sezioni-e-consigli-regionali/piemonte/cuneo/minore-mulini-e-macchine-ad-acqua-un-esempio-di-retro-futuro-il-14-febbraio-evento-organizzato-da-italia-nostra/',
+          note:  'Italia Nostra Cuneo, febbraio 2025',
+        },
+        {
+          label: 'Mostra «Di acque e di Mulini»',
+          url:   'https://www.terradelcastelmagno.it/mulini-e-macchine-ad-acqua-i-tesori-nascosti-del-cuneese/',
+          note:  'Museo Terra del Castelmagno, Monterosso Grana, aprile – giugno 2025',
+        },
+        {
+          label: 'Le macchine ad acqua della Valle Grana',
+          url:   'https://www.terradelcastelmagno.it/macchine-ad-acqua/',
+          note:  "Approfondimento storico dell'Ecomuseo",
+        },
       ],
       mapX: 0.48, mapY: 0.22,
       accent: '#5B8EA6',

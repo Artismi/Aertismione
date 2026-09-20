@@ -30,6 +30,8 @@ type Project = {
   marquee?: string
   panoramaStrip?: string
   pdfs?: { label: string; url: string; pages?: string[] }[]
+  /** Collegamenti esterni: dove il progetto e' finito davvero. */
+  links?: { label: string; url: string; note?: string }[]
 }
 
 type Layout =
@@ -546,6 +548,31 @@ function PanoramaBlock({ url }: { url?: string }) {
   )
 }
 
+/* ─── Collegamenti esterni ───────────────────────────────────────────────── */
+
+function LinksBlock({ links }: { links: { label: string; url: string; note?: string }[] }) {
+  return (
+    <div className={styles.linksSection}>
+      <FadeUp>
+        <h3 className={styles.linksHeading}>Approfondimenti</h3>
+      </FadeUp>
+      <ul className={styles.linksList}>
+        {links.map((l, i) => (
+          <FadeUp key={l.url} delay={i * 0.06}>
+            <li className={styles.linkItem}>
+              <a href={l.url} target="_blank" rel="noopener noreferrer" className={styles.linkAnchor}>
+                <span className={styles.linkLabel}>{l.label}</span>
+                <span className={styles.linkArrow} aria-hidden="true">↗</span>
+              </a>
+              {l.note && <span className={styles.linkNote}>{l.note}</span>}
+            </li>
+          </FadeUp>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 /* ─── PDF block ──────────────────────────────────────────────────────────── */
 
 /**
@@ -782,6 +809,7 @@ export function ProjectPage({
         <section className={styles.mediaSection} data-illustration={isIllustration}>
           <GalleryBlock project={project} layout={layout} onLightbox={openLightbox} isIllustration={isIllustration} />
           {project.pdfs?.length ? <PdfBlock pdfs={project.pdfs} onLightbox={openLightbox} /> : null}
+          {project.links?.length ? <LinksBlock links={project.links} /> : null}
         </section>
       )}
 
