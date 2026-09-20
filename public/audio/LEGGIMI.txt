@@ -1,18 +1,50 @@
-Metti qui la traccia di sottofondo del sito, chiamata: lounge.mp3
+MUSICA DEL SITO
+===============
 
-Il comando della musica compare in basso a sinistra solo se questo file
-esiste. Finche' non c'e', il sito non mostra nulla: nessun bottone che
-non suona.
+Metti qui la traccia di sottofondo, chiamata:  lounge.mp3
 
-La musica non parte mai da sola (i browser lo impediscono, e comunque
-nessuno si aspetta di essere suonato addosso): parte solo se qualcuno
-la accende, e la scelta resta per tutta la visita.
+Finche' il file non c'e', il comando della musica non compare affatto:
+niente bottoni che non suonano.
 
-Un singolo progetto puo' avere la sua traccia: basta aggiungere
-  audio: '/audio/nome-del-file.mp3'
-alla sua voce in src/config/content.ts. La musica cambia entrando nella
-pagina e torna quella di casa uscendone, senza interrompersi.
 
-Importante: serve musica di cui hai i diritti — tua, o con licenza
-libera per uso commerciale. Un brano protetto su un sito professionale
-e' un problema legale, non un dettaglio.
+DOVE PRENDERE LA MUSICA (licenze verificate)
+--------------------------------------------
+
+1) PIXABAY  — consigliato
+   https://pixabay.com/music/search/jazz%20lounge/
+   Licenza Pixabay: uso commerciale consentito, NESSUNA attribuzione
+   richiesta. Unico limite: non si puo' rivendere il brano cosi' com'e'.
+   Come sottofondo di un sito professionale va benissimo.
+
+2) KEVIN MACLEOD / incompetech
+   https://incompetech.com/music/royalty-free/music.html
+   Licenza Creative Commons BY 4.0: uso commerciale consentito, ma
+   L'ATTRIBUZIONE E' OBBLIGATORIA — titolo del brano, nome dell'autore e
+   link alla licenza, in un punto dove chi cerca la trovi.
+   Se scegli uno di questi, dimmelo: aggiungo io la riga di credito.
+
+Attenzione: "gratis" non vuol dire "libero per uso commerciale". Molti
+brani su YouTube e simili sono liberi solo per uso personale, oppure
+Creative Commons NON COMMERCIALE (NC), che per Artismi Design Studio,
+essendo un'attivita' con partita IVA, non va bene.
+
+
+UNA TRACCIA DIVERSA PER UN SINGOLO PROGETTO
+--------------------------------------------
+
+Metti il file qui dentro e aggiungi alla scheda del progetto, in
+src/config/content.ts:
+
+    audio: '/audio/nome-del-file.mp3',
+
+Entrando nella pagina la musica cambia in dissolvenza senza
+interrompersi; uscendo torna quella di casa.
+
+
+COME SI COMPORTA
+----------------
+
+- Non parte mai da sola: i browser lo vietano, e comunque nessuno
+  gradisce essere suonato addosso appena apre un sito.
+- Si accende dal comando in basso a sinistra, volume al 32%.
+- La scelta resta per tutta la visita, anche cambiando pagina.
