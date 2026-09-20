@@ -1,0 +1,18 @@
+Metti qui la traccia di sottofondo del sito, chiamata: lounge.mp3
+
+Il comando della musica compare in basso a sinistra solo se questo file
+esiste. Finche' non c'e', il sito non mostra nulla: nessun bottone che
+non suona.
+
+La musica non parte mai da sola (i browser lo impediscono, e comunque
+nessuno si aspetta di essere suonato addosso): parte solo se qualcuno
+la accende, e la scelta resta per tutta la visita.
+
+Un singolo progetto puo' avere la sua traccia: basta aggiungere
+  audio: '/audio/nome-del-file.mp3'
+alla sua voce in src/config/content.ts. La musica cambia entrando nella
+pagina e torna quella di casa uscendone, senza interrompersi.
+
+Importante: serve musica di cui hai i diritti — tua, o con licenza
+libera per uso commerciale. Un brano protetto su un sito professionale
+e' un problema legale, non un dettaglio.

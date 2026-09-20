@@ -147,6 +147,13 @@ export const PORTFOLIO = {
       ],
       mapX: 0.15, mapY: 0.30,
       accent: '#C4622D',
+      links: [
+        {
+          label: 'Bicicleria su Instagram',
+          url:   'https://www.instagram.com/bicicleria/',
+          note:  'Il profilo della ciclofficina, dove escono le grafiche',
+        },
+      ],
       mainImage: '/portfolio/bicicleria/colonna-1.jpg',
       videos: [
         '/portfolio/bicicleria/video-promo.mp4'
@@ -299,6 +306,13 @@ export const PORTFOLIO = {
       ],
       mapX: 0.65, mapY: 0.42,
       accent: '#1A1A2E',
+      links: [
+        {
+          label: 'Torino (Città) Invisibile — il sito del progetto',
+          url:   'https://torinoinvisibile.coniglioviola.com/',
+          note:  "Kaninchen-Haus con la direzione artistica di ConiglioViola: la mappa e l'app in realtà aumentata",
+        },
+      ],
       mainImage: '/portfolio/torino-invisibile/scene-1.png',
       gallery: [
         '/portfolio/torino-invisibile/scene-2.png',

@@ -3,6 +3,7 @@ import { Bebas_Neue, Courier_Prime, JetBrains_Mono, Space_Grotesk } from 'next/f
 import './globals.css'
 import { CustomCursor } from '@/components/ui/CustomCursor'
 import { RotateGate } from '@/components/ui/RotateGate'
+import { Ambience } from '@/components/ui/Ambience'
 
 /*
  * Bebas Neue: condensed ultra-bold sans-serif — headline occupa spazio,
@@ -91,6 +92,7 @@ export default function RootLayout({
       <body>
         <CustomCursor />
         <RotateGate />
+        <Ambience />
         {children}
       </body>
     </html>

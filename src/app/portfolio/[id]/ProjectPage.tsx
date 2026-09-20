@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { motion, useScroll, useTransform, useInView } from 'framer-motion'
 import { useRef, useState, useEffect } from 'react'
+import { useStore } from '@/stores/useStore'
 import { PaperPlane, type PaperItem } from '@/components/ui/PaperPlane'
 import styles from './ProjectPage.module.css'
 
@@ -32,6 +33,8 @@ type Project = {
   pdfs?: { label: string; url: string; pages?: string[] }[]
   /** Collegamenti esterni: dove il progetto e' finito davvero. */
   links?: { label: string; url: string; note?: string }[]
+  /** Traccia audio propria del progetto, se ne ha una. */
+  audio?: string
 }
 
 type Layout =
@@ -721,6 +724,13 @@ export function ProjectPage({
 }) {
   // Determine layout and tone based on category
   let layout: Layout = LAYOUT_MAP[project.id] ?? 'split_light'
+  // Ogni progetto puo' avere la sua musica: si imposta entrando e si lascia uscendo.
+  const setAmbienceTrack = useStore((st) => st.setAmbienceTrack)
+  useEffect(() => {
+    setAmbienceTrack(project.audio ?? null)
+    return () => setAmbienceTrack(null)
+  }, [project.audio, setAmbienceTrack])
+
   const isIllustration = project.category?.toLowerCase()?.includes('illustrazione') ||
                          project.category?.toLowerCase()?.includes('grafica') || false
 

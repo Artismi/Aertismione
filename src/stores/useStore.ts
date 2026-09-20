@@ -17,6 +17,10 @@ interface AppState {
     setContactSectionTop: (top: number) => void
     isLoaded: boolean
     setIsLoaded: (isLoaded: boolean) => void
+
+    /** Traccia audio corrente: null = quella di casa, altrimenti quella del progetto. */
+    ambienceTrack: string | null
+    setAmbienceTrack: (src: string | null) => void
     loadingProgress: number
     setLoadingProgress: (progress: number) => void
 
@@ -77,6 +81,9 @@ export const useStore = create<AppState>((set) => ({
     setContactSectionTop: (top) => set({ contactSectionTop: top }),
     isLoaded: false,
     setIsLoaded: (isLoaded) => set({ isLoaded }),
+
+    ambienceTrack: null,
+    setAmbienceTrack: (ambienceTrack) => set({ ambienceTrack }),
     loadingProgress: 0,
     setLoadingProgress: (loadingProgress) => set({ loadingProgress }),
 
