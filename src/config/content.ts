@@ -134,7 +134,7 @@ export const PORTFOLIO = {
       sections: [
         {
           label: 'Il murale',
-          text:  'Una colonna al centro della ciclofficina, dipinta a mano dal pavimento al soffitto. Componenti meccaniche e attrezzi prendono vita e si collegano in un unico flusso di avvenimenti che gira su tutte le facce della colonna. Linea nera su fondo rosa.',
+          text:  'Una colonna al centro della ciclofficina, dipinta a mano **dal pavimento al soffitto**. Componenti meccaniche e attrezzi **prendono vita e si collegano in un unico flusso di avvenimenti** che gira su tutte le facce della colonna. Linea nera su fondo rosa.',
         },
         {
           label: 'Il branding',
@@ -142,7 +142,7 @@ export const PORTFOLIO = {
         },
         {
           label: 'I personaggi',
-          text:  'Nascono dalle componenti meccaniche e dagli attrezzi. Il piccione è fuso con una maglia della catena: vista di lato, ha già la forma del suo corpo.',
+          text:  'Nascono dalle componenti meccaniche e dagli attrezzi. Il **piccione** è fuso con una **maglia della catena**: vista di lato, ha già la forma del suo corpo.',
         },
       ],
       mapX: 0.15, mapY: 0.30,
@@ -199,19 +199,19 @@ export const PORTFOLIO = {
       sections: [
         {
           label: 'La ricerca',
-          text:  "Studio del ruolo delle macchine ad acqua come motore di sviluppo economico e sociale nell'areale dell'Ecomuseo Terra del Castelmagno. Erano poli produttivi multifunzionali, snodi di una rete di relazioni umane ed economiche ormai quasi sparita, che teneva insieme la comunità, le filiere e il territorio.",
+          text:  "Studio del ruolo delle macchine ad acqua come motore di sviluppo economico e sociale nell'areale dell'Ecomuseo Terra del Castelmagno. Erano poli produttivi multifunzionali, **snodi di una rete di relazioni umane ed economiche** ormai quasi sparita, che teneva insieme la comunità, le filiere e il territorio.",
         },
         {
           label: 'Sul campo',
-          text:  "Condotta attraverso colloqui con chi abita l'areale. Ricostruisce quei legami nel contesto storico, in quello attuale e in quelli possibili: riattivare un mulino non è un intervento di restauro, ma la ricomposizione di un sistema di sostegno reciproco e di gestione collettiva delle risorse.",
+          text:  "Condotta attraverso colloqui con chi abita l'areale. **Ricostruisce quei legami nel contesto storico, in quello attuale e in quelli possibili**: riattivare un mulino non è un intervento di restauro, ma la ricomposizione di un sistema di sostegno reciproco e di gestione collettiva delle risorse.",
         },
         {
           label: 'Il progetto',
-          text:  'Uno schema sistemico rappresenta su più livelli la rete di interconnessione tra la comunità e le filiere, e sovrappone ai punti di intervento nevralgici un sistema di undici spazi interconnessi, co-progettato con la comunità.',
+          text:  'Uno schema sistemico rappresenta su più livelli la rete di interconnessione tra la comunità e le filiere, e sovrappone ai punti di intervento nevralgici un sistema di **undici spazi interconnessi, co-progettato con la comunità**.',
         },
         {
           label: 'La restituzione',
-          text:  "Una striscia illustrata di sei metri, installata in loco. Tramite metafore narrative e l'escamotage del sogno come spazio privo di limitazioni, mette in condivisione le prospettive, il potenziale e le necessità che legano la riattivazione dei mulini al tessuto sociale e produttivo dell'area.",
+          text:  "Una **striscia illustrata di sei metri**, installata in loco. Tramite **metafore narrative** e l'escamotage del sogno come spazio privo di limitazioni, mette in condivisione le prospettive, il potenziale e le necessità che legano la riattivazione dei mulini al tessuto sociale e produttivo dell'area.",
         },
         {
           label: 'Dopo la tesi',
@@ -289,11 +289,11 @@ export const PORTFOLIO = {
       sections: [
         {
           label: "L'opera",
-          text:  "Le città invisibili di Italo Calvino diventano un'opera transmediale in realtà aumentata, diffusa nello spazio urbano: ogni città del libro è ancorata a un luogo reale di Torino — Olivia al Grattacielo San Paolo, Leonia in Piazza San Carlo, Ersilia alle Porte Palatine, Valdrada in Piazza Statuto, Zaira ai Murazzi — e prende forma sullo schermo di smartphone e visori mentre il testo di Calvino accompagna la visione.",
+          text:  "Le città invisibili di Italo Calvino diventano un'**opera transmediale in realtà aumentata**, diffusa nello spazio urbano: ogni città del libro è ancorata a un luogo reale di Torino — Olivia al Grattacielo San Paolo, Leonia in Piazza San Carlo, Ersilia alle Porte Palatine, Valdrada in Piazza Statuto, Zaira ai Murazzi — e prende forma sullo schermo di smartphone e visori mentre il testo di Calvino accompagna la visione.",
         },
         {
           label: 'Il mio ruolo',
-          text:  'Durante il servizio civile a Kaninchen-Haus, tra il 2025 e il 2026, ho realizzato tutti gli ambienti 3D dell\'opera e ho partecipato alla fase di co-creazione e produzione artistica precedente.',
+          text:  'Durante il **servizio civile a Kaninchen-Haus**, tra il 2025 e il 2026, ho realizzato **tutti gli ambienti 3D** dell\'opera e ho partecipato alla fase di co-creazione e produzione artistica precedente.',
         },
         {
           label: 'Chi c\'è dietro',
@@ -335,7 +335,7 @@ export const PORTFOLIO = {
           sections: [
             {
               label: 'La richiesta',
-              text:  'Unire Torino, Alice nel Paese delle Meraviglie e il Giardino delle delizie di Bosch.',
+              text:  'Unire Torino, **Alice nel Paese delle Meraviglie** e il **Giardino delle delizie** di Bosch.',
             },
             {
               label: "L'illustrazione",
@@ -379,7 +379,7 @@ export const PORTFOLIO = {
             },
             {
               label: "L'illustrazione",
-              text:  'Racconta una riesumazione dello spirito punk, che per poco rischiava la sussunzione da parte del mercato.',
+              text:  'Racconta una **riesumazione dello spirito punk**, che per poco rischiava la sussunzione da parte del mercato.',
             },
           ],
         },
@@ -397,7 +397,7 @@ export const PORTFOLIO = {
             },
             {
               label: "L'illustrazione",
-              text:  'Ripercorre il legame tra skate, birra e lo spirito ribelle della cultura punk.',
+              text:  'Ripercorre il **legame tra skate, birra** e lo spirito ribelle della cultura punk.',
             },
           ],
         },
@@ -410,11 +410,11 @@ export const PORTFOLIO = {
           sections: [
             {
               label: "L'evento",
-              text:  "La gara tra ciclofficine popolari ospitata alle Officine Creative di via Cecchi. In cinque ore le squadre rimettono in strada bici recuperate, che finiscono all'asta benefica.",
+              text:  "La gara tra **ciclofficine popolari** ospitata alle Officine Creative di via Cecchi. In cinque ore le squadre rimettono in strada bici recuperate, che finiscono all'**asta benefica**.",
             },
             {
               label: "L'illustrazione",
-              text:  'I pezzi della bici diventano paesaggio: il telaio attraversa la scena e la serie sterzo si trasforma in un UFO che illumina la Mole.',
+              text:  'I pezzi della bici diventano paesaggio: il telaio attraversa la scena e la **serie sterzo** si trasforma in un UFO che illumina la Mole.',
             },
           ],
           accent: '#7B9E4A',
@@ -437,7 +437,7 @@ export const PORTFOLIO = {
           sections: [
             {
               label: "L'illustrazione",
-              text:  'Chi legge, chi scrive, chi lavora al computer: tavoli e sedie si staccano dal pavimento e lo studio diventa uno spazio condiviso e leggero.',
+              text:  'Chi legge, chi scrive, chi lavora al computer: tavoli e sedie si staccano dal pavimento e lo studio diventa uno **spazio condiviso e leggero**.',
             },
           ],
         }
@@ -452,7 +452,7 @@ export const PORTFOLIO = {
       sections: [
         {
           label: 'La richiesta',
-          text:  'Per la call di Borealis rivolta a imprese creative e realtà a impatto sociale da ospitare negli spazi del centro.',
+          text:  'Per la call di Borealis rivolta a **imprese creative** e realtà a **impatto sociale** da ospitare negli spazi del centro.',
         },
         {
           label: "L'illustrazione",
@@ -484,11 +484,11 @@ export const PORTFOLIO = {
         },
         {
           label: 'La ricerca',
-          text:  'Si concentra sulla ricerca di significato nella spontaneità, nella ripetizione e nella stratificazione.',
+          text:  'Si concentra sulla ricerca di significato nella **spontaneità, nella ripetizione e nella stratificazione**.',
         },
         {
           label: 'Il metodo',
-          text:  "Procedure approssimative e sbrigative, senza pretendere il controllo e contemplando l'errore come parte integrante del processo.",
+          text:  "Procedure approssimative e sbrigative, **senza pretendere il controllo** e contemplando **l'errore come parte integrante del processo**.",
         },
         {
           label: "L'intento",

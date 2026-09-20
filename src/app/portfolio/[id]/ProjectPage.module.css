@@ -6,6 +6,7 @@
 /* ─── Root ─────────────────────────────────────────────────── */
 
 .root {
+  position: relative;
   --accent: #C4622D; /* overridden per-project from JS */
   --bg: #F2EAF0; /* carta rosata — emerge dal buio come da richiesta */
   --bg-alt: #EAE0E8;
@@ -1245,11 +1246,17 @@
 
 .movementBody {
   font-family: var(--font-body);
-  font-weight: 500;
+  font-weight: 400;
   font-size: clamp(1.02rem, 1.7vw, 1.28rem);
   line-height: 1.6;
   color: var(--ink);
   margin: 0;
+}
+
+/* Le parole chiave in grassetto dentro il testo: firma del portfolio. */
+.movementBody strong {
+  font-weight: 700;
+  color: var(--ink);
 }
 
 .movementFigure {
@@ -1271,6 +1278,33 @@
 
 .movementFigure img { transition: transform 0.9s var(--ease-expo); }
 .movementFigure:hover img { transform: scale(1.03); }
+
+/* Una stampa posata sopra l'altra: il guizzo, uno solo per pagina. */
+.sovrapposta {
+  position: absolute;
+  right: -18px;
+  bottom: -26px;
+  width: 38%;
+  aspect-ratio: 3 / 4;
+  z-index: 2;
+  overflow: hidden;
+  background: var(--bg-alt);
+  border: 6px solid var(--bg);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.30);
+  rotate: -2.2deg;
+  transition: rotate 0.5s var(--ease-expo), translate 0.5s var(--ease-expo);
+}
+
+.sovrapposta:hover { rotate: -0.6deg; translate: 0 -4px; }
+
+.sovrapposta button {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
 
 /* Una sola immagine a tutta larghezza, a meta' racconto. */
 .bleed {
@@ -1332,4 +1366,25 @@
   .movementText { max-width: none; }
   .bleed { height: 42vh; margin-bottom: 58px; }
   .rest { grid-template-columns: repeat(2, 1fr); }
+}
+
+
+/* ─── Carta ───────────────────────────────────────────────── */
+/* Le pagine del portfolio stanno su una carta con la grana: qui la
+   riprendiamo, tenuta bassissima per non sporcare le immagini. */
+.root::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: url('/images/grana.png');
+  background-repeat: repeat;
+  z-index: 5;
+  opacity: 0.55;
+  mix-blend-mode: multiply;
+}
+
+@media (max-width: 640px) {
+  .sovrapposta { right: -10px; bottom: -16px; width: 42%; border-width: 4px; }
 }

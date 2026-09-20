@@ -551,6 +551,18 @@ function PanoramaBlock({ url }: { url?: string }) {
   )
 }
 
+/**
+ * Nel portfolio le parole chiave sono in grassetto dentro il testo corrente:
+ * e' la firma tipografica di Andrea. Qui si scrivono con **due asterischi**.
+ */
+function conGrassetto(testo: string) {
+  return testo.split(/(\*\*[^*]+\*\*)/g).map((pezzo, i) =>
+    pezzo.startsWith('**') && pezzo.endsWith('**')
+      ? <strong key={i}>{pezzo.slice(2, -2)}</strong>
+      : <span key={i}>{pezzo}</span>,
+  )
+}
+
 /* ─── Impaginazione a movimenti ──────────────────────────────────────────── */
 
 /** Le sezioni del progetto, saltando le caselle vuote dello schema storico. */
@@ -590,7 +602,14 @@ function NarrativeFlow({
   // una immagine per movimento; la prima dopo il secondo va a tutta larghezza
   const perMovement = images.slice(0, blocks.length)
   const bleed = images[blocks.length]
-  const rest = images.slice(blocks.length + (bleed ? 1 : 0))
+  const dopoBleed = images.slice(blocks.length + (bleed ? 1 : 0))
+
+  // Il guizzo, preso dal portfolio: una seconda immagine piu' piccola
+  // appoggiata sull'angolo della prima, come una stampa posata sopra un'altra.
+  // Una sola, sul secondo movimento, altrimenti diventa disordine.
+  const sovrapposta = dopoBleed[0]
+  const rest = sovrapposta ? dopoBleed.slice(1) : dopoBleed
+  const movimentoConSovrapposta = blocks.length > 1 ? 1 : 0
   const bleedAfter = Math.min(1, blocks.length - 1)
 
   return (
@@ -606,7 +625,7 @@ function NarrativeFlow({
             </div>
 
             <FadeUp className={styles.movementText} delay={0.05}>
-              <p className={styles.movementBody}>{b.text}</p>
+              <p className={styles.movementBody}>{conGrassetto(b.text)}</p>
             </FadeUp>
 
             {perMovement[i] && (
@@ -620,6 +639,20 @@ function NarrativeFlow({
                     style={{ objectFit: 'cover' }}
                   />
                 </button>
+
+                {sovrapposta && i === movimentoConSovrapposta && (
+                  <span className={styles.sovrapposta}>
+                    <button onClick={() => onLightbox(sovrapposta, images)}>
+                      <Image
+                        src={sovrapposta}
+                        alt=""
+                        fill
+                        sizes="(max-width: 900px) 40vw, 200px"
+                        style={{ objectFit: 'cover' }}
+                      />
+                    </button>
+                  </span>
+                )}
               </FadeUp>
             )}
           </section>
