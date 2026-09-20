@@ -147,14 +147,27 @@ export const PORTFOLIO = {
       ],
       mapX: 0.15, mapY: 0.30,
       accent: '#C4622D',
-      mainImage: '/portfolio/bicicleria/detail-1.jpg',
+      mainImage: '/portfolio/bicicleria/colonna-1.jpg',
       videos: [
         '/portfolio/bicicleria/video-promo.mp4'
       ],
       marquee: '/portfolio/bicicleria/stickers-loop.png',
       gallery: [
+        // il murale sulla colonna
+        '/portfolio/bicicleria/colonna-2.jpg',
+        '/portfolio/bicicleria/colonna-3.jpg',
+        '/portfolio/bicicleria/detail-1.jpg',
         '/portfolio/bicicleria/detail-2.jpg',
         '/portfolio/bicicleria/detail-3.jpg',
+        // i personaggi nati dalle componenti meccaniche
+        '/portfolio/bicicleria/personaggi.jpg',
+        '/portfolio/bicicleria/chiave-inglese.jpg',
+        '/portfolio/bicicleria/ape-banner-1.jpg',
+        '/portfolio/bicicleria/ape-banner-2.jpg',
+        // stampati e grafiche per il negozio
+        '/portfolio/bicicleria/orario-grafica.jpg',
+        '/portfolio/bicicleria/ape-bellavita.jpg',
+        '/portfolio/bicicleria/adesivi-foto.jpg',
         '/portfolio/bicicleria/promo.png',
         '/portfolio/bicicleria/aperidivo.png',
         '/portfolio/bicicleria/adesivo-1.jpg',

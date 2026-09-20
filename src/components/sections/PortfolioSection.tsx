@@ -563,7 +563,12 @@ export function PortfolioSection() {
     // Da telefono la mappa non viene nemmeno disegnata: le cartelline si
     // sovrappongono su schermi stretti e la fionda e' ingiocabile al tocco.
     // Li' si usa l'elenco sotto, che il CSS mostra al posto del canvas.
-    if (!window.matchMedia('(min-width: 900px) and (pointer: fine)').matches) return
+    // Schermo largo con mouse, oppure telefono girato in orizzontale: in
+    // verticale le cartelline si sovrappongono e la fionda e' ingiocabile.
+    const scenico =
+      window.matchMedia('(min-width: 900px) and (pointer: fine)').matches ||
+      window.matchMedia('(orientation: landscape) and (min-width: 640px)').matches
+    if (!scenico) return
 
     const canvas=canvasRef.current; if (!canvas) return
     const canvasLoop = canvas
