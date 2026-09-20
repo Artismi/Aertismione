@@ -212,7 +212,7 @@ export const PORTFOLIO = {
         },
         {
           label: 'Dopo la tesi',
-          text:  "La ricerca è uscita dall'università. L'ho presentata al convegno «Mulini e macchine ad acqua: un esempio di retro-futuro» di Italia Nostra Cuneo, nel febbraio 2025, e al Museo Terra del Castelmagno di Monterosso Grana durante la mostra «Di acque e di Mulini», aperta dall'aprile al giugno 2025.",
+          text:  "La ricerca è uscita dall'università ed è entrata in MINORE, il progetto di Italia Nostra sul patrimonio culturale minore. L'ho presentata al convegno «Mulini e macchine ad acqua: un esempio di retro-futuro» a Cuneo nel febbraio 2025, e al Museo Terra del Castelmagno di Monterosso Grana durante la mostra «Di acque e di Mulini», aperta dall'aprile al giugno 2025.",
         },
       ],
       links: [
@@ -229,6 +229,16 @@ export const PORTFOLIO = {
           label: 'Mostra «Di acque e di Mulini»',
           url:   'https://www.terradelcastelmagno.it/mulini-e-macchine-ad-acqua-i-tesori-nascosti-del-cuneese/',
           note:  'Museo Terra del Castelmagno, Monterosso Grana, aprile – giugno 2025',
+        },
+        {
+          label: 'Il ciclo di eventi nel Cuneese, dentro il progetto MINORE',
+          url:   'https://www.italianostra.org/archivio/eventi/minore-alla-scoperta-dei-tesori-nascosti-del-cuneese-mulini-ad-acqua-protagonisti/',
+          note:  'Italia Nostra, archivio eventi nazionale',
+        },
+        {
+          label: 'I mulini sotto lo sguardo dei Babaciu',
+          url:   'https://laguida.it/2025/04/14/san-pietro-monterosso-i-mulini-sotto-lo-sguardo-dei-babaciu/',
+          note:  'La Guida, aprile 2025',
         },
         {
           label: 'Le macchine ad acqua della Valle Grana',
