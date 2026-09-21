@@ -164,7 +164,7 @@
   left: 40px;
   transform: translateY(-50%);
   font-family: var(--font-display);
-  font-size: clamp(11rem, 20vw, 18rem);
+  font-size: clamp(9rem, 16vw, 15rem);
   line-height: 1;
   opacity: 0.08;
   user-select: none;
@@ -219,7 +219,7 @@
 
 .heroTitleDual {
   font-family: var(--font-display);
-  font-size: clamp(4rem, 10vw, 9rem);
+  font-size: clamp(2.8rem, 7vw, 6.4rem);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #F2EDE4;
@@ -250,11 +250,12 @@
 
 .heroTitle {
   font-family: var(--font-display);
-  font-size: clamp(4.25rem, 10vw, 10rem);
+  font-size: clamp(3rem, 7.4vw, 7rem);
   letter-spacing: -0.005em;
   text-transform: uppercase;
-  color: #F2EDE4;
+  color: var(--ink);
   line-height: 0.84;
+  font-weight: 800;
 }
 
 .heroCategory {
@@ -458,9 +459,11 @@
   margin: 0 auto;
   padding: 0 48px 80px;
   display: grid;
-  grid-template-columns: 1fr 2.5fr; /* Organic asymmetric ratio */
+  grid-template-columns: 1fr 2.5fr;
   gap: 40px;
-  align-items: start;
+  /* le due colonne finiscono alla stessa altezza: era il nastro degli
+     adesivi a sbilanciare la pagina */
+  align-items: stretch;
 }
 
 .videoWrapper {
@@ -484,8 +487,8 @@
 
 .verticalMarqueeWindow {
   width: 100%;
-  /* Adjust height to fit ~5 stickers depending on exact image aspect ratio */
-  height: 700px; 
+  /* alta piu' o meno quanto il video che le sta accanto */
+  height: clamp(320px, 30vw, 460px); 
   overflow: hidden;
   position: relative;
   background: var(--bg-alt);
@@ -1208,6 +1211,18 @@
   padding: 0 var(--margine);
 }
 
+/* Immagine verticale: le due colonne si pareggiano, altrimenti resta
+   un vuoto largo accanto al testo. */
+.movement[data-figura='alta'] { grid-template-columns: 6fr 6fr; }
+
+/* Movimento senza immagine: una colonna sola, larga come una colonna di
+   giornale. Meglio una misura giusta che mezza pagina vuota. */
+.movement[data-figura='nessuna'] {
+  grid-template-columns: minmax(0, 62ch);
+  justify-content: center;
+  margin-bottom: clamp(44px, 5vw, 70px);
+}
+
 /* Il filetto attraversa tutta la griglia e tiene l'allineamento. */
 .movementRule {
   grid-column: 1 / -1;
@@ -1256,16 +1271,35 @@
   cursor: pointer;
 }
 
-.figuraBtn img {
+.figuraImg {
   display: block;
+  width: 100%;
+  height: auto;
   outline: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
-  transition: transform 0.9s var(--ease-expo), filter 0.4s;
+  transition: filter 0.4s;
+}
+
+/* L'immagine del movimento non supera i due terzi di schermo: cosi' le
+   pagine restano equilibrate anche con foto molto verticali. */
+.movementFigure .figuraImg {
+  max-height: min(66vh, 620px);
+  width: auto;
+  max-width: 100%;
 }
 
 .figuraBtn:hover img { filter: brightness(1.05); }
 
 /* Una stampa posata sopra l'altra: il guizzo, uno solo per pagina. */
 .movementFigure:has(.sovrapposta) { margin-bottom: 40px; }
+
+/* La nota: un'immagine piccola sotto il paragrafo, riempie la colonna. */
+.nota {
+  display: block;
+  margin-top: 26px;
+  max-width: 300px;
+}
+
+.nota .figuraImg { outline: none; }
 
 .sovrapposta {
   position: absolute;
@@ -1292,29 +1326,57 @@
   margin-bottom: clamp(72px, 9vw, 122px);
 }
 
-/* Le strisce lunghe diventano un fregio intero, alla larghezza della pagina. */
+/* Le strisce lunghe diventano un fregio che scorre per tutta la pagina. */
 .fregio {
-  display: flex;
-  justify-content: center;
-  max-width: 1240px;
-  margin: 0 auto clamp(72px, 9vw, 122px);
-  padding: 0 var(--margine);
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-bottom: clamp(72px, 9vw, 122px);
+  overflow: hidden;
+  border-top: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+  background: var(--bg-alt);
 }
 
-/* Il resto: colonne ordinate, ogni immagine intera. */
+.fregioTrack {
+  display: flex;
+  width: max-content;
+  animation: scorreFregio 96s linear infinite;
+}
+
+.fregioImg {
+  display: block;
+  height: clamp(120px, 13vw, 190px);
+  width: auto;
+}
+
+@keyframes scorreFregio {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-25%); }
+}
+
+/* Il resto: righe piene. Ogni immagine e' larga in proporzione alle sue
+   proporzioni, quindi le altezze di una riga coincidono, i bordi sono
+   allineati e lo spazio si riempie senza tagliare nulla. */
 .rest {
-  columns: 3;
-  column-gap: var(--gutter);
+  --riga: clamp(190px, 20vw, 280px);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gutter);
   max-width: 1240px;
   margin: 0 auto;
   padding: 0 var(--margine);
 }
 
 .restItem {
-  break-inside: avoid;
-  margin-bottom: var(--gutter);
   display: flex;
-  justify-content: center;
+}
+
+.restItem .figuraBtn { max-width: 100% !important; }
+
+.restItem .figuraImg {
+  width: 100%;
+  height: auto;
+  outline: none;
 }
 
 @media (max-width: 860px) {
@@ -1327,8 +1389,10 @@
   .movementText { max-width: none; }
   .bleed { margin-bottom: 58px; }
   .fregio { margin-bottom: 58px; }
-  .rest { columns: 2; }
-  .sovrapposta { right: -6px; width: 42%; }
+  .movement[data-figura='alta'] { grid-template-columns: 1fr; }
+  .nota { max-width: 60%; }
+  .rest { --riga: 150px; }
+.sovrapposta { right: -6px; width: 42%; }
 }
 
 
@@ -1349,5 +1413,9 @@
 }
 
 @media (max-width: 640px) {
-  .sovrapposta { right: -10px; bottom: -16px; width: 42%; border-width: 4px; }
+.sovrapposta { right: -10px; bottom: -16px; width: 42%; border-width: 4px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fregioTrack { animation: none; }
 }

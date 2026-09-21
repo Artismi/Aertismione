@@ -98,14 +98,17 @@ function FadeIn({
   children,
   delay = 0,
   className,
+  style,
 }: {
   children: React.ReactNode
   delay?: number
   className?: string
+  style?: React.CSSProperties
 }) {
   return (
     <motion.div
       className={className}
+      style={style}
       initial={{ opacity: 0 }}
       whileInView={{ opacity: 1 }}
       transition={{ duration: 1, ease: 'easeOut', delay }}
@@ -263,7 +266,7 @@ function NarrativeGrid({
             <span className={styles.narrativeLabel}>
               {b.label}
             </span>
-            <p className={styles.narrativeText}>{b.text}</p>
+            <p className={styles.narrativeText}>{conGrassetto(b.text)}</p>
           </FadeUp>
         ))}
       </div>
@@ -277,7 +280,7 @@ function NarrativeGrid({
         {blocks.map((b, i) => (
           <FadeUp key={b.key} delay={i * 0.1} className={styles.narrativePanoramicBlock}>
             <span className={styles.narrativeLabel}>{b.label}</span>
-            <p className={styles.narrativeTextLarge}>{b.text}</p>
+            <p className={styles.narrativeTextLarge}>{conGrassetto(b.text)}</p>
           </FadeUp>
         ))}
       </div>
@@ -292,7 +295,7 @@ function NarrativeGrid({
           {blocks.slice(0, 2).map((b, i) => (
             <FadeUp key={b.key} delay={i * 0.08} className={styles.narrativeBlock}>
               <span className={styles.narrativeLabel}>{b.label}</span>
-              <p className={styles.narrativeText}>{b.text}</p>
+              <p className={styles.narrativeText}>{conGrassetto(b.text)}</p>
             </FadeUp>
           ))}
         </div>
@@ -300,7 +303,7 @@ function NarrativeGrid({
           {blocks.slice(2).map((b, i) => (
             <FadeUp key={b.key} delay={i * 0.08 + 0.12} className={styles.narrativeBlock}>
               <span className={styles.narrativeLabel}>{b.label}</span>
-              <p className={styles.narrativeText}>{b.text}</p>
+              <p className={styles.narrativeText}>{conGrassetto(b.text)}</p>
             </FadeUp>
           ))}
         </div>
@@ -314,7 +317,7 @@ function NarrativeGrid({
       {blocks.map((b, i) => (
         <FadeUp key={b.key} delay={i * 0.08} className={styles.narrativeBlock}>
           <span className={styles.narrativeLabel}>{b.label}</span>
-          <p className={styles.narrativeText}>{b.text}</p>
+          <p className={styles.narrativeText}>{conGrassetto(b.text)}</p>
         </FadeUp>
       ))}
     </div>
@@ -617,9 +620,28 @@ function Figura({
       onClick={onClick}
       // mai oltre la risoluzione vera, e mai piu' alta di tre quarti di schermo
       style={{ maxWidth: `min(${w}px, calc(78vh * ${(w / h).toFixed(4)}))` }}
+      data-orient={w / h < 0.95 ? 'alto' : w / h > 1.6 ? 'largo' : 'quadro'}
     >
-      <Image src={src} alt="" width={w} height={h} sizes={sizes} quality={85} style={{ width: '100%', height: 'auto' }} />
+      <Image src={src} alt="" width={w} height={h} sizes={sizes} quality={85} className={styles.figuraImg} />
     </button>
+  )
+}
+
+/**
+ * Fregio — una striscia lunga e bassa scorre per tutta la larghezza della
+ * pagina, come un fregio dipinto sopra una porta. L'immagine e' ripetuta tre
+ * volte cosi' il ritorno a capo non si vede.
+ */
+function Fregio({ src }: { src: string }) {
+  return (
+    <div className={styles.fregio} aria-hidden="true">
+      <div className={styles.fregioTrack}>
+        {[0, 1, 2, 3].map((k) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img key={k} src={src} alt="" className={styles.fregioImg} loading="lazy" draggable={false} />
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -654,7 +676,12 @@ function NarrativeFlow({
   // Il guizzo: una stampa piu' piccola posata sull'angolo di un'altra.
   // Solo se ha proporzioni da foglio (non una striscia, non un banner).
   const sovrapposta = senzaBleed.find((src) => rapporto(src) > 0.6 && rapporto(src) < 1.5)
-  const rest = senzaBleed.filter((src) => src !== sovrapposta)
+  const avanzo = senzaBleed.filter((src) => src !== sovrapposta)
+
+  // Una nota per movimento, sotto la colonna di testo: e' quello che riempie
+  // il vuoto accanto ai paragrafi corti senza sfasare la griglia.
+  const note = avanzo.slice(0, blocks.length)
+  const rest = avanzo.slice(blocks.length)
   const movimentoConSovrapposta = blocks.length > 1 ? 1 : 0
   const bleedAfter = Math.min(1, blocks.length - 1)
   const fregioAfter = Math.min(2, blocks.length - 1)
@@ -663,7 +690,11 @@ function NarrativeFlow({
     <div className={styles.flow}>
       {blocks.map((b, i) => (
         <div key={b.label}>
-          <section className={styles.movement} data-side={i % 2 === 0 ? 'left' : 'right'}>
+          <section
+            className={styles.movement}
+            data-side={i % 2 === 0 ? 'left' : 'right'}
+            data-figura={perMovement[i] ? (rapporto(perMovement[i]) < 0.95 ? 'alta' : 'larga') : 'nessuna'}
+          >
             <div className={styles.movementRule}>
               <span className={styles.movementIndex}>{String(i + 1).padStart(2, '0')}</span>
               <span className={styles.movementLabel}>{b.label}</span>
@@ -671,6 +702,16 @@ function NarrativeFlow({
 
             <FadeUp className={styles.movementText} delay={0.05}>
               <p className={styles.movementBody}>{conGrassetto(b.text)}</p>
+              {note[i] && (
+                <span className={styles.nota}>
+                  <Figura
+                    src={note[i]}
+                    sizes="(max-width: 900px) 60vw, 300px"
+                    className={styles.figuraBtn}
+                    onClick={() => onLightbox(note[i], images)}
+                  />
+                </span>
+              )}
             </FadeUp>
 
             {perMovement[i] && (
@@ -706,18 +747,24 @@ function NarrativeFlow({
           )}
 
           {i === fregioAfter &&
-            strisce.map((src) => (
-              <FadeIn key={src} className={styles.fregio}>
-                <Figura src={src} sizes="(max-width: 1240px) 100vw, 1240px" className={styles.figuraBtn} onClick={() => onLightbox(src, images)} />
-              </FadeIn>
-            ))}
+            strisce.map((src) => <Fregio key={src} src={src} />)}
         </div>
       ))}
 
       {rest.length > 0 && (
         <div className={styles.rest}>
           {rest.map((src, i) => (
-            <FadeIn key={src} delay={(i % 3) * 0.05} className={styles.restItem}>
+            <FadeIn
+              key={src}
+              delay={(i % 3) * 0.05}
+              className={styles.restItem}
+              /* larghezza proporzionale alle proporzioni dell'immagine:
+                 la riga si chiude piena e le altezze si pareggiano */
+              style={{
+                flexGrow: rapporto(src),
+                flexBasis: `calc(${rapporto(src).toFixed(3)} * var(--riga))`,
+                maxWidth: `calc(${rapporto(src).toFixed(3)} * var(--riga) * 1.9)`,
+              }}>
               <Figura src={src} sizes="(max-width: 900px) 50vw, 32vw" className={styles.figuraBtn} onClick={() => onLightbox(src, images)} />
             </FadeIn>
           ))}
@@ -907,9 +954,12 @@ export function ProjectPage({
     return () => setAmbienceTrack(null)
   }, [project.audio, setAmbienceTrack])
 
+  // Le pagine con le sezioni scritte usano sempre l'impaginazione a
+  // movimenti, anche quando le immagini sono poche o nessuna: e' la
+  // struttura tipografica a reggere la pagina.
   const useFlow =
     layout !== 'archive' &&
-    imagesOf(project).length > 0 &&
+    (imagesOf(project).length > 0 || (project.sections?.length ?? 0) > 0) &&
     !(project.category?.toLowerCase()?.includes('illustrazione') && !project.sections?.length)
 
   const isIllustration = project.category?.toLowerCase()?.includes('illustrazione') ||

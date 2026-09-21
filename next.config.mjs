@@ -2,6 +2,7 @@
 const nextConfig = {
   // Allow Next.js Image component to serve images from Notion's S3 CDN
   images: {
+    qualities: [75, 85],
     remotePatterns: [
       {
         protocol: 'https',

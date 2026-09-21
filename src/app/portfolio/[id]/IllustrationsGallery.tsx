@@ -23,6 +23,7 @@ type SubProject = {
   accent?: string
   mainImage?: string
   gallery?: string[]
+  sdraiata?: boolean
   sections?: { label: string; text: string }[]
   context?: string
   problem?: string
@@ -117,6 +118,7 @@ export function IllustrationsGallery({ project }: { project: any }) {
             src: imagesOf(p)[0] ?? '',
             label: p.title,
             accent: p.accent,
+            sdraiata: p.sdraiata,
           }))
           .filter((it) => it.src)}
         onOpen={(item) => {

@@ -1,18 +1,18 @@
 import type { Metadata } from 'next'
-import { Bebas_Neue, Courier_Prime, JetBrains_Mono, Space_Grotesk } from 'next/font/google'
+import { Bricolage_Grotesque, Courier_Prime, JetBrains_Mono, Space_Grotesk } from 'next/font/google'
 import './globals.css'
 import { CustomCursor } from '@/components/ui/CustomCursor'
 import { Ambience } from '@/components/ui/Ambience'
 
 /*
- * Bebas Neue: condensed ultra-bold sans-serif — headline occupa spazio,
- * testo come elemento visivo puro. Coerente con il pitch deck e Luminescent.
- * Le sezioni heading di Andrea (graffiti tag) verranno rimpiazzate via SVG
- * asset attraverso RawBtn/RawHeading quando Andrea consegna i lettering.
+ * Bricolage Grotesque: grottesco variabile con le forme leggermente storte,
+ * disegnato per la stampa autoprodotta. Sostituisce Bebas Neue, che era la
+ * condensata di default vista ovunque. Restera' al suo posto finche' non
+ * arrivano i lettering disegnati a mano.
  */
-const bebasNeue = Bebas_Neue({
+const displayFont = Bricolage_Grotesque({
   subsets: ['latin'],
-  weight: '400',
+  weight: ['400', '600', '700', '800'],
   variable: '--font-display-var',
   display: 'swap',
 })
@@ -72,7 +72,7 @@ export default function RootLayout({
   return (
     <html
       lang="it"
-      className={`${bebasNeue.variable} ${spaceGrotesk.variable} ${courierPrime.variable} ${jetbrainsMono.variable}`}
+      className={`${displayFont.variable} ${spaceGrotesk.variable} ${courierPrime.variable} ${jetbrainsMono.variable}`}
       suppressHydrationWarning
     >
       <head>

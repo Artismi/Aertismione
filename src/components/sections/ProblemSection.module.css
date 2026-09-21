@@ -26,7 +26,7 @@
   top: -0.15em;
   right: -0.05em;
   font-family: var(--font-condensed);
-  font-size: clamp(7rem, 12vw, 13rem);
+  font-size: clamp(6rem, 10vw, 11rem);
   font-weight: 400;
   line-height: 1;
   color: rgba(242, 237, 228, 0.06);
@@ -61,7 +61,7 @@
 
 .heading {
   font-family: var(--font-display);
-  font-size: clamp(2.6rem, 4.5vw, 5rem);
+  font-size: clamp(2.3rem, 4vw, 4.2rem);
   font-weight: 700;
   font-style: normal;
   color: var(--color-text);

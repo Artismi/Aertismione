@@ -15,7 +15,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { motion, useInView } from 'framer-motion'
+import imageSizes from '@/config/imageSizes.json'
 import styles from './PaperPlane.module.css'
+
+/** Proporzione vera del file (larghezza / altezza). */
+function rapporto(src: string): number {
+  const m = (imageSizes as unknown as Record<string, [number, number]>)[src]
+  return m ? m[0] / m[1] : 1.3
+}
 
 export type PaperItem = {
   id: string
@@ -23,6 +30,15 @@ export type PaperItem = {
   src: string
   label?: string
   accent?: string
+  /** Immagine molto alta e stretta da mostrare di lato, ruotata. */
+  sdraiata?: boolean
+}
+
+/** Quanto e' larga, in riga, rispetto alla sua altezza: se il foglio e'
+ *  sdraiato le proporzioni si rovesciano. */
+function proporzioneInRiga(item: PaperItem): number {
+  const r = rapporto(item.src)
+  return item.sdraiata ? 1 / r : r
 }
 
 /** Rumore deterministico in [0,1): stesso risultato su server e client. */
@@ -49,7 +65,7 @@ function paperClip(i: number): string {
 }
 
 /** Video appoggiato sul piano: parte da solo quando entra nello schermo. */
-function PlaneVideo({ src }: { src: string }) {
+function PlaneVideo({ src, ratio }: { src: string; ratio: number }) {
   const ref = useRef<HTMLVideoElement>(null)
   const inView = useInView(ref, { margin: '0px 0px -60px 0px' })
 
@@ -65,6 +81,7 @@ function PlaneVideo({ src }: { src: string }) {
       ref={ref}
       src={src}
       className={styles.media}
+      style={{ aspectRatio: String(ratio) }}
       muted
       loop
       playsInline
@@ -129,9 +146,17 @@ export function PaperPlane({
             key={item.id}
             className={styles.sheet}
             data-kind={item.kind}
+            data-sdraiata={item.sdraiata ? 'true' : undefined}
             data-front={front === item.id ? 'true' : undefined}
+            /* La riga si riempie da sola: ogni foglio occupa una larghezza
+               proporzionale alle sue proporzioni, cosi' tutti i fogli della
+               stessa riga hanno la stessa altezza e i bordi sono allineati. */
             style={{
               '--accent': item.accent ?? '#E8A8BF',
+              '--r': rapporto(item.src).toFixed(4),
+              flexGrow: proporzioneInRiga(item),
+              flexBasis: `calc(${proporzioneInRiga(item).toFixed(3)} * var(--riga))`,
+              maxWidth: `calc(${proporzioneInRiga(item).toFixed(3)} * var(--riga) * 1.9)`,
               clipPath: paperClip(i),
               zIndex: front === item.id ? 400 : 1,
             } as React.CSSProperties}
@@ -159,7 +184,7 @@ export function PaperPlane({
             }}
           >
             {item.kind === 'video' ? (
-              <PlaneVideo src={item.src} />
+              <PlaneVideo src={item.src} ratio={rapporto(item.src)} />
             ) : (
               <Image
                 src={item.src}
@@ -167,13 +192,10 @@ export function PaperPlane({
                 className={styles.media}
                 width={900}
                 height={1200}
-                sizes={size === 'large' ? '(max-width: 899px) 46vw, 380px' : '(max-width: 899px) 46vw, 260px'}
-                style={{ width: '100%', height: 'auto' }}
+                sizes={size === 'large' ? '(max-width: 899px) 60vw, 520px' : '(max-width: 899px) 46vw, 340px'}
                 draggable={false}
               />
             )}
-            {/* piega di luce sulla carta */}
-            <span className={styles.crease} aria-hidden="true" />
             {item.label && <span className={styles.label}>{item.label}</span>}
           </motion.div>
         ))}

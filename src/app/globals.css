@@ -30,12 +30,13 @@
   --color-3d-magenta: #ff0088;
 
   /* --- Tipografia: sistema semplice a 2 famiglie ---
-     DISPLAY: Bebas Neue — titoli, numeri, label uppercase. Impatto visivo forte.
+     DISPLAY: Bricolage Grotesque — titoli e numeri. Grottesco dalle forme
+              volutamente irregolari: stampato in proprio, non di sistema.
      BODY:    Space Grotesk — sottotitoli, corpo testo, tutto il resto.
      MONO:    JetBrains Mono — metadata, prezzi, codici. Solo quando serve davvero.
   */
-  --font-display:   var(--font-display-var, 'Bebas Neue', sans-serif);
-  --font-condensed: var(--font-display-var, 'Bebas Neue', sans-serif);
+  --font-display:   var(--font-display-var, 'Bricolage Grotesque', sans-serif);
+  --font-condensed: var(--font-display-var, 'Bricolage Grotesque', sans-serif);
   --font-body:      var(--font-serif-var, 'Space Grotesk', sans-serif);
   --font-mono:      var(--font-mono-var, 'JetBrains Mono', monospace);
 
@@ -97,9 +98,9 @@ a, button { cursor: none; }
 
 h1 {
   font-family: var(--font-display);
-  font-weight: 400; /* Bebas Neue è sempre 400 */
-  letter-spacing: 0.02em;
-  line-height: 0.9;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 0.88;
 }
 
 h2, h3, h4 {

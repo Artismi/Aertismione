@@ -174,19 +174,9 @@ export const PORTFOLIO = {
         '/portfolio/bicicleria/aperidivo.png',
         '/portfolio/bicicleria/promo.png',
         '/portfolio/bicicleria/adesivo-1.jpg',
-        '/portfolio/bicicleria/adesivo-2.jpg'
-      ],
-      pdfs: [
-        {
-          label: 'Orari Negozio',
-          url:   '/portfolio/bicicleria/orario.pdf',
-          pages: ['/portfolio/bicicleria/orario.jpg'],
-        },
-        {
-          label: 'Maglietta Black',
-          url:   '/portfolio/bicicleria/maglietta-black.pdf',
-          pages: ['/portfolio/bicicleria/maglietta-black.jpg'],
-        },
+        '/portfolio/bicicleria/adesivo-2.jpg',
+        '/portfolio/bicicleria/orario.jpg',
+        '/portfolio/bicicleria/maglietta-black.jpg'
       ]
     },
 
@@ -248,6 +238,15 @@ export const PORTFOLIO = {
           url:   'https://www.terradelcastelmagno.it/macchine-ad-acqua/',
           note:  "Approfondimento storico dell'Ecomuseo",
         },
+      ],
+      // Le tavole della tesi accompagnano i movimenti del racconto:
+      // una per sezione, scelte fra quelle che si leggono anche in piccolo.
+      gallery: [
+        '/portfolio/mulini/tesi/slide-04.jpg',
+        '/portfolio/mulini/tesi/slide-08.jpg',
+        '/portfolio/mulini/tesi/slide-16.jpg',
+        '/portfolio/mulini/tesi/slide-19.jpg',
+        '/portfolio/mulini/tesi/slide-09.jpg',
       ],
       mapX: 0.48, mapY: 0.22,
       accent: '#5B8EA6',
@@ -387,6 +386,9 @@ export const PORTFOLIO = {
           id:        'punk-skate',
           title:     "Punk Isn't Dead — Skate",
           category:  'Illustrazione',
+          // la tavola e' lunga e stretta: nel piano si mette di lato,
+          // cosi' occupa la riga invece di stringersi in una colonnina
+          sdraiata:  true,
           tagline:   'Contest Bonobolabo × Birrificio Mad One, 2024.',
           accent:    '#1A1A1A',
           mainImage: '/portfolio/punk/skate.jpg',
