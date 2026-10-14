@@ -9,7 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@google/model-viewer": "~4.2.0",
     "@notionhq/client": "^2.2.15",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.4.2",

@@ -21,7 +21,7 @@
                 },
                 {
                     "key": "Permissions-Policy",
-                    "value": "geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=()"
+                    "value": "geolocation=(), microphone=(), camera=(self), payment=(), usb=(), magnetometer=(), gyroscope=()"
                 },
                 {
                     "key": "X-XSS-Protection",

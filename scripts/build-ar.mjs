@@ -1,18 +1,15 @@
 /**
- * build-ar.mjs — prepara i file per la realta' aumentata.
+ * build-ar.mjs — prepara i file della pagina /ar (l'ologramma del QR).
  *
  *   node scripts/build-ar.mjs
  *
- * 1. Prende public/models/logo.glb (pensato per la scena del sito: 48 unita'
- *    di larghezza, materiale sostituito a runtime) e ne fa public/ar/logo.glb:
- *    trasformazioni cotte nella mesh, larghezza reale di 40 cm, appoggiato a
- *    terra e centrato, materiale "vetro ghiaccio" del sito in PBR standard
- *    (Scene Viewer e Quick Look non eseguono shader personalizzati),
- *    geometria compressa Draco.
+ * 1. Prende public/models/logo.glb (7 MB, pensato per la home) e ne fa
+ *    public/ar/logo.glb: trasformazioni cotte nella mesh, girato verso chi
+ *    guarda come fa LogoModel, centrato, geometria compressa Draco (~300 KB).
+ *    Chi arriva dal QR e' quasi sempre in rete mobile: meglio non fargli
+ *    scaricare 7 MB. Il materiale nel file non conta: la pagina lo sostituisce
+ *    con lo shader della home (components/canvas/logoHologram.ts).
  * 2. Genera il QR stampabile che porta a /ar, in SVG e PNG.
- *
- * Il file AR e' separato da quello del sito: Scene Viewer (Android) scarica il
- * GLB cosi' com'e', quindi scala e materiale devono stare dentro il file.
  */
 
 import { NodeIO } from '@gltf-transform/core'
@@ -29,10 +26,8 @@ const OUT = path.join(ROOT, 'public/ar')
 
 /** Indirizzo a cui punta il QR. */
 const AR_URL = 'https://artismi.it/ar'
-/** Larghezza reale del logo in AR, in metri. */
+/** Larghezza del logo nel file, in unita'. */
 const WIDTH_M = 0.4
-/** #9DD4EE, il ghiaccio del sito, in lineare. */
-const ICE = [0.337, 0.665, 0.855, 1]
 const INK = '#1A1A1A'
 const PAPER = '#F5F0E8'
 
@@ -67,15 +62,6 @@ async function buildModel() {
     cx * s, -b.min[1] * s, cz * s, 1,
   ]
   for (const mesh of doc.getRoot().listMeshes()) transformMesh(mesh, matrix)
-
-  for (const mat of doc.getRoot().listMaterials()) {
-    mat
-      .setName('Vetro ghiaccio')
-      .setBaseColorFactor(ICE)
-      .setMetallicFactor(0.15)
-      .setRoughnessFactor(0.12)
-      .setDoubleSided(true)
-  }
 
   await doc.transform(weld(), dedup(), prune())
   doc.createExtension(KHRDracoMeshCompression).setRequired(true)
