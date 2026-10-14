@@ -6,7 +6,13 @@ import * as THREE from 'three'
  * cosi' il logo e' lo stesso dovunque compaia.
  */
 
-export function createLogoGlass() {
+/**
+ * edgeAlpha: opacita' dello spessore (le pareti viste di taglio).
+ * faceAlpha: opacita' del fronte.
+ * In home 0.18 e 0.92: sul fondo rosa il vetro sottile e' quello che si vuole.
+ * Sulla fotocamera, con un fondo scuro, lo spessore trasparente diventa grigio.
+ */
+export function createLogoGlass({ edgeAlpha = 0.18, faceAlpha = 0.92 } = {}) {
     const mat = new THREE.MeshPhysicalMaterial({
         color: new THREE.Color('#eef5ff'),
         emissive: new THREE.Color('#c8e8ff'),
@@ -30,10 +36,13 @@ export function createLogoGlass() {
             `#include <alphamap_fragment>
             float NdotV = abs(dot(normalize(vNormal), normalize(vViewPosition)));
             float fresnel = 1.0 - NdotV;
-            // fronte: ~0.92 opaco + riflettente | bordi: ~0.18 sottili
-            diffuseColor.a *= 0.18 + NdotV * NdotV * NdotV * 0.74;`
+            // fronte: faceAlpha opaco + riflettente | bordi: edgeAlpha
+            diffuseColor.a *= ${edgeAlpha.toFixed(3)} + NdotV * NdotV * NdotV * ${(faceAlpha - edgeAlpha).toFixed(3)};`
         )
     }
+    // Il testo di onBeforeCompile e' uguale per ogni opacita': senza chiave three
+    // riuserebbe lo shader compilato con i valori di un altro vetro.
+    mat.customProgramCacheKey = () => `logo-glass-${edgeAlpha}-${faceAlpha}`
 
     return mat
 }

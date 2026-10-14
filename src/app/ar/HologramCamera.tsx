@@ -25,13 +25,15 @@ const SITE_SCALE = 7.2
 const SITE_WIDTH = 0.4 * SITE_SCALE
 /** Opacita' del contorno: quella che LogoModel usa in cima alla home. */
 const EDGE_OPACITY = 0.32
+/** Vetro piu' coprente che in home: sul fondo scuro della stanza deve restare bianco, non grigio. */
+const GLASS = { edgeAlpha: 0.9, faceAlpha: 1 }
 
 function Hologram({ spin }: { spin: React.RefObject<number> }) {
   const { scene } = useGLTF(AR.model)
   const { viewport } = useThree()
   const rotatingRef = useRef<THREE.Group>(null)
   const timeRef = useRef(0)
-  const glass = useMemo(() => createLogoGlass(), [])
+  const glass = useMemo(() => createLogoGlass(GLASS), [])
 
   useEffect(() => {
     const edges = createLogoEdges()
