@@ -11,11 +11,17 @@ import * as THREE from 'three'
  * faceAlpha: opacita' del fronte.
  * In home 0.18 e 0.92: sul fondo rosa il vetro sottile e' quello che si vuole.
  * Sulla fotocamera, con un fondo scuro, lo spessore trasparente diventa grigio.
+ * color / emissive: la tinta del vetro (in home ghiaccio, in /ar un po' rosata).
  */
-export function createLogoGlass({ edgeAlpha = 0.18, faceAlpha = 0.92 } = {}) {
+export function createLogoGlass({
+    edgeAlpha = 0.18,
+    faceAlpha = 0.92,
+    color = '#eef5ff',
+    emissive = '#c8e8ff',
+} = {}) {
     const mat = new THREE.MeshPhysicalMaterial({
-        color: new THREE.Color('#eef5ff'),
-        emissive: new THREE.Color('#c8e8ff'),
+        color: new THREE.Color(color),
+        emissive: new THREE.Color(emissive),
         emissiveIntensity: 0.32,
         roughness: 0.0,
         metalness: 0.0,

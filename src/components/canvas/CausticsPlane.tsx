@@ -4,7 +4,7 @@ import * as THREE from 'three'
 import { useStore } from '../../stores/useStore'
 
 // ─── Vertex shader ────────────────────────────────────────────────────────────
-const vertexShader = /* glsl */`
+export const causticsVertexShader = /* glsl */`
   varying vec2 vUv;
   void main() {
     vUv = uv;
@@ -19,7 +19,7 @@ const vertexShader = /* glsl */`
 // si biforcano e si fondono nei punti sella — esattamente i filamenti
 // di luce sul fondo di una piscina.
 // Un solo campo → UN'unica famiglia di curve, senza caos da sovrapposizione.
-const fragmentShader = /* glsl */`
+export const causticsFragmentShader = /* glsl */`
   uniform float u_time;
   uniform float u_fade;
   uniform float u_white; // 0 = rosa hero, 1 = bianco about
@@ -195,8 +195,8 @@ export function CausticsPlane() {
       <planeGeometry args={[16, 10]} />
       <shaderMaterial
         ref={matRef}
-        vertexShader={vertexShader}
-        fragmentShader={fragmentShader}
+        vertexShader={causticsVertexShader}
+        fragmentShader={causticsFragmentShader}
         uniforms={uniforms}
         transparent
         depthWrite={false}
