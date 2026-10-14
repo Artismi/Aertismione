@@ -85,6 +85,10 @@ Project data (positions, colors, copy) comes from `PORTFOLIO.projects` in `conte
 
 `getPortfolio()` and `getServizi()` exist in `src/lib/notion.ts` but are not yet called from any page. Images from Notion S3 and `www.notion.so` are whitelisted in `next.config.mjs`. Never import `lib/notion.ts` in client components.
 
+### AR Page (`/ar`) — the QR target
+
+`src/app/ar/` shows the logo with `<model-viewer>` (Scene Viewer on Android, Quick Look on iOS, WebXR); devices that can't do AR see a QR instead. Copy lives in `AR` in `content.ts`. `public/ar/logo.glb` (40 cm, on the floor, Draco) and the printable `public/ar/qr-ar.{svg,png}` are generated from `public/models/logo.glb` by `node scripts/build-ar.mjs` — rerun it after changing the logo or the URL.
+
 ## Design System
 
 Defined in `src/app/globals.css`:

@@ -623,3 +623,23 @@ export const CONTACT = {
     submitLabel:        'Invia messaggio',
   },
 }
+
+/* ─── AR (pagina /ar, quella del QR) ─────────────────────────────────────── */
+
+export const AR = {
+  /** Indirizzo pubblico: e' quello codificato nel QR (scripts/build-ar.mjs). */
+  url:     'https://artismi.it/ar',
+  /** Modello preparato apposta per l'AR: 40 cm, a terra. Si rigenera con `node scripts/build-ar.mjs`. */
+  model:   '/ar/logo.glb',
+  alt:     'Il logo Artismi in 3D, color ghiaccio',
+  label:   'Realtà aumentata',
+  heading: 'Il logo, a casa tua.',
+  lead:    'Inquadra il pavimento o un tavolo: il logo Artismi compare lì, a grandezza vera. Giragli intorno, avvicinati, fagli una foto.',
+  button:  'Mettilo nella stanza',
+  hint:    'Trascina per girarlo. Serve un telefono con fotocamera: iPhone con iOS 12 o più, Android con ARCore.',
+  /** Mostrato quando il dispositivo non puo' aprire l'AR (computer, telefono senza ARCore). */
+  qrTitle: 'Aprilo dal telefono',
+  qrText:  'Inquadra il codice con la fotocamera del telefono.',
+  qrDownload: 'Scarica il QR da stampare',
+  back:    'Torna al sito',
+}
