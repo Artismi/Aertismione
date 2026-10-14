@@ -17,7 +17,9 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Center, Environment, Float, Lightformer, useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { AR } from '@/config/content'
-import { createLogoGlass, createLogoEdges, applyLogoHologram } from '@/components/canvas/logoHologram'
+import {
+  createLogoGlass, createLogoEdges, applyLogoHologram, createLogoBackdrop, homePoolView,
+} from '@/components/canvas/logoHologram'
 import { causticsVertexShader, causticsFragmentShader } from '@/components/canvas/CausticsPlane'
 import styles from './ar.module.css'
 
@@ -26,8 +28,8 @@ const SITE_SCALE = 7.2
 const SITE_WIDTH = 0.4 * SITE_SCALE
 /** Opacita' del contorno: quella che LogoModel usa in cima alla home. */
 const EDGE_OPACITY = 0.32
-/** Vetro piu' coprente che in home: sul fondo scuro della stanza deve restare bianco, non grigio. */
-const GLASS = { edgeAlpha: 0.9, faceAlpha: 1, color: '#ffe2ec', emissive: '#f2b3cb' }
+/** Il fov della camera, uguale a quello della home. */
+const FOV = 35
 
 /**
  * L'ambiente della home, da riflettere: la piscina rosa di CausticsPlane
@@ -64,10 +66,14 @@ function HomeAmbience() {
 
 function Hologram({ spin }: { spin: React.RefObject<number> }) {
   const { scene } = useGLTF(AR.model)
-  const { viewport } = useThree()
+  const { viewport, gl, size } = useThree()
   const rotatingRef = useRef<THREE.Group>(null)
   const timeRef = useRef(0)
-  const glass = useMemo(() => createLogoGlass(GLASS), [])
+  // Il vetro della home, con la piscina della home registrata dentro: dove in
+  // home si vede lo sfondo rosa in trasparenza, qui si vede lo stesso sfondo
+  // invece della stanza.
+  const backdrop = useMemo(() => createLogoBackdrop(), [])
+  const glass = useMemo(() => createLogoGlass({ backdrop }), [backdrop])
 
   useEffect(() => {
     const edges = createLogoEdges()
@@ -77,6 +83,10 @@ function Hologram({ spin }: { spin: React.RefObject<number> }) {
   }, [scene, glass])
 
   useFrame((_, delta) => {
+    backdrop.u_time.value += delta
+    gl.getDrawingBufferSize(backdrop.u_res.value)
+    homePoolView(FOV, size.width / size.height, backdrop.u_view.value)
+
     if (!rotatingRef.current) return
     // Lo stesso dondolio della home, piu' quanto lo si e' girato col dito.
     timeRef.current += delta * 0.4
@@ -159,7 +169,7 @@ export function HologramCamera() {
         <>
           <Canvas
             className={styles.canvas}
-            camera={{ position: [0, 0, 6], fov: 35 }}
+            camera={{ position: [0, 0, 6], fov: FOV }}
             dpr={[1, 1.5]}
             gl={{ antialias: true, alpha: true }}
           >

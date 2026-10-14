@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { causticsChunk } from './CausticsPlane'
 
 /**
  * Il materiale "ologramma" del logo: vetro ghiaccio con Fresnel sull'alpha e
@@ -11,13 +12,50 @@ import * as THREE from 'three'
  * faceAlpha: opacita' del fronte.
  * In home 0.18 e 0.92: sul fondo rosa il vetro sottile e' quello che si vuole.
  * Sulla fotocamera, con un fondo scuro, lo spessore trasparente diventa grigio.
- * color / emissive: la tinta del vetro (in home ghiaccio, in /ar un po' rosata).
+ * color / emissive: la tinta del vetro.
+ * backdrop: la piscina della home "registrata" nel vetro. Dove il vetro e'
+ * trasparente invece della scena dietro (in /ar la fotocamera) si vede la
+ * piscina, mescolata esattamente come il browser mescola il vetro della home
+ * sopra CausticsPlane. Il vetro diventa cosi' opaco ma identico alla home.
  */
+/** Uniform della piscina registrata nel vetro: chi li crea li aggiorna a ogni fotogramma. */
+export type LogoBackdrop = {
+    u_time: { value: number }
+    /** Dimensione del disegno in pixel reali (gl_FragCoord). */
+    u_res:  { value: THREE.Vector2 }
+    /** Quanta parte del piano 16x10 della home entra nello schermo, in x e y. */
+    u_view: { value: THREE.Vector2 }
+}
+
+export function createLogoBackdrop(): LogoBackdrop {
+    return {
+        u_time: { value: 0 },
+        u_res:  { value: new THREE.Vector2(1, 1) },
+        u_view: { value: new THREE.Vector2(1, 1) },
+    }
+}
+
+/**
+ * In home il piano 16x10 sta a 7,5 unita' dalla camera: con questo fov e
+ * questo rapporto di schermo, quanta parte se ne vede.
+ */
+export function homePoolView(fovDeg: number, aspect: number, out: THREE.Vector2) {
+    const visibleH = 2 * 7.5 * Math.tan(THREE.MathUtils.degToRad(fovDeg) / 2)
+    return out.set((visibleH * aspect) / 16, visibleH / 10)
+}
+
 export function createLogoGlass({
     edgeAlpha = 0.18,
     faceAlpha = 0.92,
     color = '#eef5ff',
     emissive = '#c8e8ff',
+    backdrop,
+}: {
+    edgeAlpha?: number
+    faceAlpha?: number
+    color?: string
+    emissive?: string
+    backdrop?: LogoBackdrop
 } = {}) {
     const mat = new THREE.MeshPhysicalMaterial({
         color: new THREE.Color(color),
@@ -45,10 +83,26 @@ export function createLogoGlass({
             // fronte: faceAlpha opaco + riflettente | bordi: edgeAlpha
             diffuseColor.a *= ${edgeAlpha.toFixed(3)} + NdotV * NdotV * NdotV * ${(faceAlpha - edgeAlpha).toFixed(3)};`
         )
+
+        if (!backdrop) return
+        Object.assign(shader.uniforms, backdrop)
+        shader.fragmentShader = shader.fragmentShader
+            .replace('void main() {', `
+            uniform float u_time;
+            uniform vec2  u_res;
+            uniform vec2  u_view;
+            ${causticsChunk}
+            void main() {`)
+            .replace('#include <colorspace_fragment>', `#include <colorspace_fragment>
+            // Il punto della piscina che in home sta dietro questo pixel.
+            vec2 sUv = gl_FragCoord.xy / u_res;
+            vec3 pool = causticsColor(0.5 + (sUv - 0.5) * u_view, u_time, u_res, 0.0);
+            // Come la fusione alpha del browser: vetro sopra piscina.
+            gl_FragColor = vec4(mix(pool, gl_FragColor.rgb, gl_FragColor.a), 1.0);`)
     }
     // Il testo di onBeforeCompile e' uguale per ogni opacita': senza chiave three
     // riuserebbe lo shader compilato con i valori di un altro vetro.
-    mat.customProgramCacheKey = () => `logo-glass-${edgeAlpha}-${faceAlpha}`
+    mat.customProgramCacheKey = () => `logo-glass-${edgeAlpha}-${faceAlpha}-${backdrop ? 'pool' : 'clear'}`
 
     return mat
 }
