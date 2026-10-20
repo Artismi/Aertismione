@@ -991,16 +991,8 @@ export function PortfolioSection() {
 
   return (
     <div ref={sectionRef} className={styles.section}>
-      <div className="container">
-        <span className="accent-bar" />
-        <h2 className={styles.heading}>{PROGETTI.heading}</h2>
-        <p className={styles.intro}>
-          {PROGETTI.intro}{' '}
-          <em className={styles.introDesktop} data-show={phase === 'open' ? 'true' : undefined}>
-            Clicca per saltare — trascina la pallina per spararla come una bilia.
-          </em>
-        </p>
-      </div>
+      {/* Niente titolo a vista: la sezione e' il piano di lavoro. Il titolo resta per chi legge con lo screen reader */}
+      <h2 className={styles.srOnly}>{PROGETTI.heading}</h2>
 
       <div ref={wrapperRef} className={styles.stage} data-phase={phase} data-world-stage>
         {/* Il tavolo in 3D sta nel mondo dietro la pagina (Table3D fa un portale su body):
@@ -1060,6 +1052,9 @@ export function PortfolioSection() {
         <button type="button" className={styles.folderClose} onClick={closeFolder} tabIndex={phase === 'open' ? 0 : -1}>
           {PROGETTI.folderClose} ✕
         </button>
+        <p className={styles.mapHint} aria-hidden={phase !== 'open'}>
+          Clicca per saltare — trascina la pallina per spararla come una bilia.
+        </p>
 
       </div>
 

@@ -6,9 +6,10 @@
  * Vecchio; superato il bordo, lo sfondo e il resto del sito.
  *
  * E' un <Canvas> fisso dietro tutta la pagina (portale su body, z-index -1).
- * La camera guarda il banco dall'alto, in piano, e lo fa seguire al riquadro
- * della sezione Progetti: il banco sale dritto da sotto con lo scroll, si
- * ferma al centro con la sezione, poi esce in alto come il resto della pagina. Frameloop "demand": disegna solo quando la camera o un
+ * La camera guarda il banco in prospettiva, dritta (bordo orizzontale), e lo
+ * fa seguire al riquadro della sezione Progetti: il banco sale dritto da sotto
+ * con lo scroll, si ferma al centro con la sezione, poi esce in alto come il
+ * resto della pagina. Sopra e sotto c'e' solo lo sfondo rosa. Frameloop "demand": disegna solo quando la camera o un
  * oggetto si muove. I clic arrivano dalla pagina (eventSource = body).
  * Le fasi (chiuso, scivola, si apre...) le decide PortfolioSection.
  */
@@ -53,17 +54,16 @@ const TEX = '/progetti/tex'
 
 type Images = { logo: HTMLImageElement | null; paper: HTMLImageElement | null; metal: HTMLImageElement | null }
 
-/* ── Camera: dall'alto, in piano; il banco sale dritto da sotto seguendo lo scroll ── */
+/* ── Camera: il banco in prospettiva, inquadrato dritto; sale da sotto con lo scroll ── */
 
 const V = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z)
-const DOWN_UP = new THREE.Vector3(0, 0, -1) // guardando in giu', l'alto dello schermo e' -z
 
 function Rig({ phase, mobile, stage, look }: {
   phase: TablePhase; mobile: boolean; stage: Props['stage']; look: MutableRefObject<THREE.Vector3>
 }) {
   const { camera, size, invalidate } = useThree()
   const mouse = useRef(new THREE.Vector2())
-  const to = useRef(new THREE.Vector3())
+  const v = useRef({ pos: new THREE.Vector3(), lk: new THREE.Vector3(), up: new THREE.Vector3(), fwd: new THREE.Vector3(), right: new THREE.Vector3() })
   useEffect(() => { invalidate() }, [phase, mobile, size, invalidate])
   // lo scroll muove il banco, il mouse lo sposta appena: si ridisegna solo allora
   useEffect(() => {
@@ -81,42 +81,51 @@ function Rig({ phase, mobile, stage, look }: {
     const cam = camera as THREE.PerspectiveCamera
     const vw = size.width, vh = size.height, aspect = vw / Math.max(1, vh)
     const r = stage.current?.getBoundingClientRect()
-    const tan = Math.tan(THREE.MathUtils.degToRad(cam.fov / 2)) * 2
+    const stageAspect = r && r.height > 0 ? r.width / r.height : aspect
+    const t = v.current
 
-    // quello che deve stare nel riquadro della sezione: fascicolo e Game Boy (con un po' d'aria)
-    const content = mobile ? { x: 0.15, z: 0.35, w: 3.4, d: 6.4 } : { x: 0.3, z: 0.05, w: 7.0, d: 4.4 }
-    const sw = r?.width || vw, sh = r?.height || vh
-    // altezza della camera: il contenuto riempie il riquadro, non lo schermo
-    const height = Math.max(content.d * (vh / sh), (content.w * (vw / sw)) / aspect) / tan
-    const viewH = height * tan // quanto mondo copre l'altezza dello schermo
+    // l'inquadratura di lavoro, in prospettiva e dritta (camera e punto guardato
+    // sulla stessa x: il bordo del banco resta orizzontale), a misura del riquadro
+    if (mobile) {
+      const k = Math.max(1, 0.62 / stageAspect) * (aspect < stageAspect ? stageAspect / aspect : 1)
+      t.pos.copy(V(0, 7.6 * k, 4.6 * k)); t.lk.copy(V(0, 0, 0.35))
+    } else {
+      const k = Math.max(1, 2.15 / stageAspect) * (r ? vh / r.height : 1) * 0.92
+      t.pos.copy(V(0.15, 5.4 * k, 4.9 * k)); t.lk.copy(V(0.15, 0, 0.25))
+    }
 
-    let px: number, pz: number, py = height
     const top = !mobile && phase !== 'closed' && phase !== 'returning' && phase !== 'list'
     if (top) {
-      // il fascicolo aperto (2 × larghezza) sta tutto nell'inquadratura
-      py = Math.max((FD + 0.4) / tan, (FW * 2 + 0.5) / aspect / tan)
-      px = 0; pz = 0
-    } else {
-      // il banco segue il riquadro della sezione come il resto della pagina:
-      // centro del riquadro sotto il centro dello schermo = banco sotto, e cosi' via
-      const cy = r ? r.top + r.height / 2 : vh * 3
-      const cx = r ? r.left + r.width / 2 : vw / 2
-      pz = content.z - ((cy - vh / 2) / vh) * viewH
-      px = content.x - ((cx - vw / 2) / vw) * viewH * aspect
-      // il mouse sposta di pochissimo, per dare profondita'
-      px += mouse.current.x * 0.06; pz += mouse.current.y * 0.04
+      // dall'alto, con il fascicolo aperto (2 × larghezza) che sta tutto nell'inquadratura
+      const tt = Math.tan(THREE.MathUtils.degToRad(cam.fov / 2)) * 2
+      const h = Math.max((FD + 0.4) / tt, (FW * 2 + 0.5) / aspect / tt)
+      t.pos.set(0, h, 0.001); t.lk.set(0, 0, 0)
+    } else if (r) {
+      // il banco segue il riquadro della sezione: si sposta la camera lungo il suo
+      // «alto» e la sua «destra», senza girarla. Riquadro sotto il centro = banco sotto.
+      t.fwd.subVectors(t.lk, t.pos)
+      const dist = t.fwd.length()
+      t.fwd.normalize()
+      t.right.crossVectors(t.fwd, V(0, 1, 0)).normalize()
+      t.up.crossVectors(t.right, t.fwd).normalize()
+      const viewH = 2 * dist * Math.tan(THREE.MathUtils.degToRad(cam.fov / 2))
+      const dy = ((r.top + r.height / 2) - vh / 2) / vh * viewH
+      const dx = ((r.left + r.width / 2) - vw / 2) / vw * viewH * aspect
+      // il mouse sposta di pochissimo, solo per dare profondita'
+      const sx = -dx + mouse.current.x * 0.08, sy = dy - mouse.current.y * 0.05
+      t.pos.addScaledVector(t.right, sx).addScaledVector(t.up, sy)
+      t.lk.addScaledVector(t.right, sx).addScaledVector(t.up, sy)
     }
-    to.current.set(px, py, pz)
 
     let moving = false
+    // seguendo lo scroll si va quasi alla lettera (lo scroll e' gia' morbido); le aperture sono smorzate
+    const k = top || phase === 'returning' || phase === 'closing' ? 5 : 14
     for (const ax of ['x', 'y', 'z'] as const) {
-      // sul banco si segue lo scroll alla lettera (lo scroll e' gia' morbido); le aperture sono smorzate
-      const k = top || phase === 'returning' || phase === 'closing' ? 5 : 14
-      cam.position[ax] = damp(cam.position[ax], to.current[ax], k, dt)
-      if (Math.abs(cam.position[ax] - to.current[ax]) > EPS) moving = true
+      cam.position[ax] = damp(cam.position[ax], t.pos[ax], k, dt)
+      look.current[ax] = damp(look.current[ax], t.lk[ax], k, dt)
+      if (Math.abs(cam.position[ax] - t.pos[ax]) > EPS) moving = true
     }
-    look.current.set(cam.position.x, 0, cam.position.z - 0.0001)
-    cam.up.copy(DOWN_UP)
+    cam.up.set(0, 1, 0)
     cam.lookAt(look.current)
     if (moving) invalidate()
   })
@@ -129,9 +138,8 @@ function Focus({ grab, dof, look }: { grab: boolean; dof: MutableRefObject<Depth
   useFrame(({ camera }) => {
     const e = dof.current
     if (!e) return
-    // dall'alto: a fuoco il piano del banco, o la console quando sale in mano
-    want.current.copy(look.current)
-    if (grab) want.current.y = camera.position.y * 0.38
+    if (grab) want.current.copy(camera.position).lerp(new THREE.Vector3(0.25, 0, 0.7), 0.6)
+    else want.current.copy(look.current)
     e.target?.copy(want.current)
   })
   return null
@@ -273,7 +281,7 @@ export default function Table3D(props: Props) {
         frameloop="demand"
         shadows="soft"
         dpr={[1, 1.5]}
-        camera={{ fov: 30, position: [0.3, 14, 60], near: 0.1, far: 200 }}
+        camera={{ fov: 30, position: [0.15, 40, 30], near: 0.1, far: 200 }}
         gl={{ antialias: false, alpha: false, powerPreference: 'high-performance' }}
         eventSource={document.body}
         eventPrefix="client"

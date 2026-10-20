@@ -10,19 +10,15 @@
   background: transparent;
 }
 
-.heading {
-  font-size: clamp(2rem, 4vw, 3.5rem);
-  margin-bottom: 1.25rem;
-  color: var(--color-text);
-}
-
-.intro {
-  font-family: var(--font-body);
-  font-size: 1.0625rem;
-  line-height: 1.7;
-  color: var(--color-body);
-  max-width: 600px;
-  margin-bottom: 2.5rem;
+/* il titolo della sezione c'e' solo per gli screen reader: a vista c'e' il piano di lavoro */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 /* ── Il tavolo: fascicolo + console (in 3D, vedi Table3D) ───────── */
@@ -398,12 +394,27 @@
    sulla mappa; altrove si socchiude e sotto compare l'elenco di schede. Le
    cartelline della mappa sono grandi 154px: su un telefono si sovrapporrebbero,
    e la fionda al tocco e' pressoche' ingiocabile. */
-.introDesktop { display: none; }
-.introDesktop[data-show='true'] { display: inline; }
+.mapHint {
+  position: absolute;
+  z-index: 4;
+  left: 16px;
+  bottom: 12px;
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.stage[data-phase='open'] .mapHint { opacity: 0.7; }
 
 @media (max-width: 899px), (pointer: coarse) {
   .canvas, .legend, .folderClose { display: none; }
-  .introDesktop[data-show='true'] { display: none; }
+  .mapHint { display: none; }
 
   .hitFolder  { left: 15%; top: 4%; width: 70%; height: 52%; }
   .hitConsole { left: 25%; right: auto; top: 62%; width: 50%; height: 34%; }
@@ -414,10 +425,6 @@
 
 @media (max-width: 768px) {
 
-  .intro {
-    font-size: 0.9375rem;
-    margin-bottom: 1.5rem;
-  }
 
   .legend {
     gap: 4px 12px;
