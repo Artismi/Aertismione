@@ -71,6 +71,10 @@ const ZONE_JITTER = PROJECTS.map((p) => {
 })
 
 /** Le anteprime che spuntano dal fascicolo chiuso */
+// Da telefono il tabellone e' in verticale (il fascicolo aperto si guarda girato
+// di 90°): le stesse cartelline, con le coordinate scambiate
+const PROJECTS_TALL: Project[] = PROJECTS.map((p) => ({ ...p, mapX: p.mapY, mapY: p.mapX }))
+
 const THUMBS = PROJECTS
   .map((p) => (p as { thumb?: string }).thumb)
   .filter((t): t is string => Boolean(t))
@@ -108,7 +112,7 @@ function drawBackground(ctx: CanvasRenderingContext2D, w: number, h: number, rev
   }
 }
 
-function drawMapDecorations(ctx: CanvasRenderingContext2D, w: number, h: number) {
+function drawMapDecorations(ctx: CanvasRenderingContext2D, w: number, h: number, touch: boolean) {
   const cx = w-44, cy = 44, r = 14
   ctx.strokeStyle = 'rgba(242,237,228,0.30)'; ctx.lineWidth = 1.2
   ctx.beginPath(); ctx.moveTo(cx, cy-r); ctx.lineTo(cx, cy+r); ctx.stroke()
@@ -130,7 +134,9 @@ function drawMapDecorations(ctx: CanvasRenderingContext2D, w: number, h: number)
   // le istruzioni sono stampate sul tabellone, come su un gioco da tavolo
   ctx.font = '600 11px "JetBrains Mono",monospace'
   ctx.fillStyle = 'rgba(242,237,228,0.5)'; ctx.textAlign = 'right'
-  ctx.fillText('CLICCA PER SALTARE — TRASCINA LA PALLINA PER SPARARLA COME UNA BILIA', w-18, h-14)
+  ctx.fillText(touch
+    ? 'TOCCA PER SALTARE — TRASCINA LA PALLINA PER SPARARLA'
+    : 'CLICCA PER SALTARE — TRASCINA LA PALLINA PER SPARARLA COME UNA BILIA', w-18, h-14)
 }
 
 function drawZone(ctx: CanvasRenderingContext2D, p: Project, jitter: number[], w: number, h: number) {
@@ -549,6 +555,7 @@ export function PortfolioSection() {
   const inViewRef     = useRef(false)
   const openRef       = useRef(false)
   const desktopRef    = useRef(false)
+  const projRef       = useRef<Project[]>(PROJECTS)   // le cartelline, nel verso del tabellone
   const timersRef     = useRef<number[]>([])
   const tableRef      = useRef<TableApi | null>(null)   // il tabellone nel 3D: texture e punto sotto il mouse
   const [desktop, setDesktop] = useState(true)
@@ -569,14 +576,19 @@ export function PortfolioSection() {
     const canvas=canvasRef.current, wrapper=wrapperRef.current
     if (!canvas||!wrapper) return
     const wrapperEl = wrapper
-    // il tabellone ha misura fissa: e' la texture dentro il fascicolo
+    // il tabellone ha misura fissa: e' la texture dentro il fascicolo. Da telefono
+    // lo si disegna in verticale (MAP_H × MAP_W) e ruotato nella texture (vedi loop)
     canvas.width=MAP_W*MAP_SCALE; canvas.height=MAP_H*MAP_SCALE
-    sizeRef.current={w:MAP_W,h:MAP_H}
-    ballRef.current.x=MAP_W/2; ballRef.current.y=MAP_H/2
     function resize() {
       const w=wrapperEl.clientWidth
-      desktopRef.current = window.matchMedia('(min-width: 900px) and (pointer: fine)').matches
-      setDesktop(desktopRef.current)
+      const desk = window.matchMedia('(min-width: 900px) and (pointer: fine)').matches
+      if (desk !== desktopRef.current || sizeRef.current.w === 0) {
+        desktopRef.current = desk
+        sizeRef.current = desk ? {w:MAP_W,h:MAP_H} : {w:MAP_H,h:MAP_W}
+        projRef.current = desk ? PROJECTS : PROJECTS_TALL
+        ballRef.current.x=sizeRef.current.w/2; ballRef.current.y=sizeRef.current.h/2
+      }
+      setDesktop(desk)
       // il riquadro del tavolo; da telefono e' in verticale: fascicolo sopra, console sotto
       wrapperEl.style.height = desktopRef.current
         ? `${Math.min(620, Math.max(380, Math.round(w * 0.54)))}px`
@@ -594,14 +606,6 @@ export function PortfolioSection() {
   }, [])
 
   useEffect(() => {
-    // Da telefono la mappa non viene nemmeno disegnata: le cartelline si
-    // sovrappongono su schermi stretti e la fionda e' ingiocabile al tocco.
-    // Li' si usa l'elenco sotto, che il CSS mostra al posto del canvas.
-    // Solo schermo largo con mouse. Su telefono le cartelline si
-    // sovrappongono e la fionda al tocco e' ingiocabile, in qualunque
-    // orientamento: li' si usa l'elenco di schede.
-    if (!window.matchMedia('(min-width: 900px) and (pointer: fine)').matches) return
-
     const canvas=canvasRef.current; if (!canvas) return
     const canvasLoop = canvas
     startTimeRef.current=performance.now()
@@ -612,7 +616,11 @@ export function PortfolioSection() {
       const {w,h}=sizeRef.current
       if (w===0) { rafRef.current=requestAnimationFrame(loop); return }
 
-      ctx.setTransform(MAP_SCALE,0,0,MAP_SCALE,0,0)
+      const PROJ=projRef.current, desk=desktopRef.current
+      // da telefono il tabellone si disegna in verticale e si ruota nella texture:
+      // (x, y) del disegno → (y, MAP_H - x) del canvas, che resta orizzontale
+      if (desk) ctx.setTransform(MAP_SCALE,0,0,MAP_SCALE,0,0)
+      else ctx.setTransform(0,-MAP_SCALE,MAP_SCALE,0,0,MAP_H*MAP_SCALE)
       const time=now-startTimeRef.current
       const ball=ballRef.current
 
@@ -646,7 +654,7 @@ export function PortfolioSection() {
         if (t>=1) {
           ball.x=js.toX; ball.y=js.toY
           js.scaleX=1.6; js.scaleY=0.50; js.landed=true
-          const proj=PROJECTS.find(p=>p.id===js.projectId)
+          const proj=PROJ.find(p=>p.id===js.projectId)
           if (proj) {
             for (let i=0; i<12; i++) {
               const a=(i/12)*Math.PI*2+Math.random()*0.4, spd=2.5+Math.random()*5
@@ -689,7 +697,7 @@ export function PortfolioSection() {
         } else if (trailRef.current.length>0) { trailRef.current.shift() }
 
         if (now - collisionCooldownRef.current > 900) {
-          for (const p of PROJECTS) {
+          for (const p of PROJ) {
             const d=Math.hypot(ball.x-p.mapX*w, ball.y-p.mapY*h)
             if (d < FOLDER_HIT_R) {
               collisionCooldownRef.current=now
@@ -721,14 +729,14 @@ export function PortfolioSection() {
       // la fodera scura del fascicolo: il tabellone e' stampato li' sopra
       ctx.fillStyle='#1E1B24'; ctx.fillRect(0,0,w,h)
       drawBackground(ctx,w,h,gridRevealRef.current)
-      for (let i=0;i<PROJECTS.length;i++) drawZone(ctx,PROJECTS[i],ZONE_JITTER[i],w,h)
-      drawPaths(ctx,PROJECTS,w,h)
-      for (const p of PROJECTS) drawFolder(ctx,p,w,h,time,hoveredRef.current===p.id)
+      for (let i=0;i<PROJ.length;i++) drawZone(ctx,PROJ[i],ZONE_JITTER[i],w,h)
+      drawPaths(ctx,PROJ,w,h)
+      for (const p of PROJ) drawFolder(ctx,p,w,h,time,hoveredRef.current===p.id)
       drawTrail(ctx,trailRef.current)
       drawParticles(ctx,particlesRef.current)
       if (isDraggingRef.current) drawSlingshot(ctx, ball, dragOriginRef.current, w, h)
       drawBall(ctx,ball,jumpRef.current)
-      drawMapDecorations(ctx,w,h)
+      drawMapDecorations(ctx,w,h,!desk)
       tableRef.current?.refresh()
 
       rafRef.current=requestAnimationFrame(loop)
@@ -781,7 +789,6 @@ export function PortfolioSection() {
   function openFolder() {
     if (phase === 'list') { setPhase('closed'); return }
     if (phase !== 'closed') return
-    if (!desktopRef.current) { setPhase('list'); return }
     setPhase('sliding')
     later(() => setPhase('opening'), SLIDE_MS)
     later(() => setPhase('open'), SLIDE_MS + COVER_MS)
@@ -830,7 +837,7 @@ export function PortfolioSection() {
     const {w,h}=sizeRef.current; if(w===0) return
 
     let clicked: Project|null=null, minD=Infinity
-    for (const p of PROJECTS) {
+    for (const p of projRef.current) {
       const d=Math.hypot(lx-p.mapX*w, ly-p.mapY*h)
       if (d<FOLDER_HIT_R&&d<minD) {minD=d;clicked=p}
     }
@@ -869,10 +876,20 @@ export function PortfolioSection() {
     if (phase !== 'open') return
     const body = document.body
 
+    // da telefono il tabellone e' girato: vedi la rotazione nel loop
+    const desk = desktopRef.current
     function toMap(e: PointerEvent) {
       const p = tableRef.current?.toBoard(e.clientX, e.clientY)
-      return p ? { lx: p.u*MAP_W, ly: p.v*MAP_H, inside: p.inside } : null
+      if (!p) return null
+      return desk
+        ? { lx: p.u*MAP_W, ly: p.v*MAP_H, inside: p.inside }
+        : { lx: (1-p.v)*MAP_H, ly: p.u*MAP_W, inside: p.inside }
     }
+
+    // da telefono, a fascicolo aperto, il dito gioca: la pagina sta ferma
+    const html = document.documentElement
+    const prev = { overflow: html.style.overflow, touch: html.style.touchAction }
+    if (!desk) { html.style.overflow = 'hidden'; html.style.touchAction = 'none' }
     // pulsanti, link e menu della pagina restano loro
     function ours(e: PointerEvent) {
       const t = e.target as Element | null
@@ -885,7 +902,7 @@ export function PortfolioSection() {
       const p = toMap(e); if (!p?.inside) return
       pressed = true
       const ball = ballRef.current
-      if (Math.hypot(p.lx-ball.x, p.ly-ball.y) < BALL_R+16) {
+      if (Math.hypot(p.lx-ball.x, p.ly-ball.y) < BALL_R+(desk ? 16 : 40)) {
         isDraggingRef.current = true
         dragOriginRef.current = { x: ball.x, y: ball.y }
         dragPosRef.current = { x: p.lx, y: p.ly }
@@ -898,8 +915,9 @@ export function PortfolioSection() {
       if (isDraggingRef.current) { dragPosRef.current = { x: p.lx, y: p.ly }; return }
       hoveredRef.current = null
       if (!p.inside || !ours(e)) { body.style.cursor = ''; return }
-      for (const pr of PROJECTS) {
-        if (Math.hypot(p.lx-pr.mapX*MAP_W, p.ly-pr.mapY*MAP_H) < FOLDER_HIT_R) { hoveredRef.current = pr.id; break }
+      const {w,h} = sizeRef.current
+      for (const pr of projRef.current) {
+        if (Math.hypot(p.lx-pr.mapX*w, p.ly-pr.mapY*h) < FOLDER_HIT_R) { hoveredRef.current = pr.id; break }
       }
       const ball = ballRef.current
       body.style.cursor = Math.hypot(p.lx-ball.x, p.ly-ball.y) < BALL_R+12 ? 'grab' : hoveredRef.current ? 'pointer' : 'crosshair'
@@ -922,6 +940,7 @@ export function PortfolioSection() {
       isDraggingRef.current = false
       hoveredRef.current = null
       body.style.cursor = ''
+      html.style.overflow = prev.overflow; html.style.touchAction = prev.touch
     }
   }, [phase])
 

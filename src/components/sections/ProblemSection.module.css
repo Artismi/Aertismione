@@ -2,6 +2,9 @@
   padding: var(--section-py) 0;
   position: relative;
   z-index: 1; /* CRITICAL: Forces this section's background to render ON TOP of the 3D Canvas (z=0) */
+  /* i blocchi entrano dai lati: prima di entrare non devono allargare la pagina
+     (da telefono allargavano anche il mondo 3D, che usciva dallo schermo) */
+  overflow-x: clip;
 }
 
 /* Il velo continua quello dell'Hero e sfuma in fondo: sotto arriva il banco */

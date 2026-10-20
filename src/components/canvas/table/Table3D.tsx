@@ -25,7 +25,7 @@ import { ToneMappingMode } from 'postprocessing'
 import * as THREE from 'three'
 import { loadImage } from './textures'
 import { Bench } from './Bench'
-import { Folder3D, FW, FD, BW, BD, BOARD_Y } from './Folder3D'
+import { Folder3D, FW, FD, BW, BD, BOARD_Y, MOBILE_Z } from './Folder3D'
 import { Console3D } from './Console3D'
 import { WorldBackdrop } from './WorldBackdrop'
 import { LogoModel } from '../LogoModel'
@@ -88,7 +88,7 @@ function Rig({ phase, mobile, stage, look, logo }: {
   const mouse = useRef(new THREE.Vector2())
   const v = useRef({
     pos: new THREE.Vector3(), lk: new THREE.Vector3(), up: new THREE.Vector3(), fwd: new THREE.Vector3(),
-    right: new THREE.Vector3(), m: new THREE.Matrix4(),
+    right: new THREE.Vector3(), m: new THREE.Matrix4(), camUp: new THREE.Vector3(0, 1, 0),
   })
   useEffect(() => { invalidate() }, [phase, mobile, size, invalidate])
   // lo scroll muove il mondo, il mouse lo sposta appena: si ridisegna solo allora
@@ -136,8 +136,14 @@ function Rig({ phase, mobile, stage, look, logo }: {
       }
     }
 
-    const top = !mobile && phase !== 'closed' && phase !== 'returning' && phase !== 'list'
-    if (top) {
+    const top = phase !== 'closed' && phase !== 'returning' && phase !== 'list'
+    if (top && mobile) {
+      // da telefono il fascicolo aperto si guarda girato di 90°: il lato lungo in
+      // verticale, cosi' riempie lo schermo (in alto c'e' la pagina di sinistra)
+      const tt = Math.tan(THREE.MathUtils.degToRad(cam.fov / 2)) * 2
+      const h = Math.max((FW * 2 + 0.4) / tt, (FD + 0.25) / aspect / tt)
+      t.pos.set(0, h, MOBILE_Z); t.lk.set(0, 0, MOBILE_Z)
+    } else if (top) {
       // dall'alto, con il fascicolo aperto (2 × larghezza) che sta tutto nell'inquadratura
       const tt = Math.tan(THREE.MathUtils.degToRad(cam.fov / 2)) * 2
       const h = Math.max((FD + 0.4) / tt, (FW * 2 + 0.5) / aspect / tt)
@@ -155,13 +161,18 @@ function Rig({ phase, mobile, stage, look, logo }: {
 
     let moving = false
     // seguendo lo scroll si va quasi alla lettera (lo scroll e' gia' morbido); le aperture sono smorzate
-    const k = top || phase === 'returning' || phase === 'closing' ? 5 : 16
+    const k = top || phase === 'returning' ? 5 : 16
     for (const ax of ['x', 'y', 'z'] as const) {
       cam.position[ax] = damp(cam.position[ax], t.pos[ax], k, dt)
       look.current[ax] = damp(look.current[ax], t.lk[ax], k, dt)
-      if (Math.abs(cam.position[ax] - t.pos[ax]) > EPS) moving = true
+      // si ridisegna finche' arrivano sia la camera sia il punto guardato
+      if (Math.abs(cam.position[ax] - t.pos[ax]) > EPS || Math.abs(look.current[ax] - t.lk[ax]) > EPS) moving = true
     }
-    cam.up.set(0, 1, 0)
+    // l'«alto» della camera gira piano verso quello voluto (da telefono, col fascicolo aperto, -x)
+    const wantUp = top && mobile ? V(-1, 0, 0) : V(0, 1, 0)
+    for (const ax of ['x', 'y', 'z'] as const) t.camUp[ax] = damp(t.camUp[ax], wantUp[ax], k, dt)
+    if (t.camUp.distanceTo(wantUp) > EPS) moving = true
+    cam.up.copy(t.camUp).normalize()
     cam.lookAt(look.current)
     if (moving) invalidate()
   })
@@ -172,7 +183,7 @@ function Rig({ phase, mobile, stage, look, logo }: {
  * Il tabellone: il canvas della bilia diventa la stampa della tavola stesa sul
  * fascicolo aperto, e il mouse si riporta dallo schermo al piano della tavola.
  */
-function useBoard(board: Props['board'], api: Props['api']) {
+function useBoard(board: Props['board'], api: Props['api'], mobile: boolean) {
   const { camera, gl, invalidate } = useThree()
   const tex = useMemo(() => {
     const c = board.current
@@ -188,14 +199,15 @@ function useBoard(board: Props['board'], api: Props['api']) {
     const ray = new THREE.Raycaster()
     const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -BOARD_Y)
     const hit = new THREE.Vector3(), ndc = new THREE.Vector2()
+    const center = mobile ? MOBILE_Z : 0
     api.current = {
       toBoard: (cx, cy) => {
         const r = gl.domElement.getBoundingClientRect()
         ndc.set((cx - r.left) / r.width * 2 - 1, -((cy - r.top) / r.height) * 2 + 1)
         ray.setFromCamera(ndc, camera)
         if (!ray.ray.intersectPlane(plane, hit)) return null
-        // da aperto il tabellone e' centrato nell'origine
-        const u = hit.x / BW + 0.5, v = hit.z / BD + 0.5
+        // da aperto il tabellone e' centrato in x = 0, z = center
+        const u = hit.x / BW + 0.5, v = (hit.z - center) / BD + 0.5
         return { u, v, inside: u >= 0 && u <= 1 && v >= 0 && v <= 1 }
       },
       refresh: () => {
@@ -205,7 +217,7 @@ function useBoard(board: Props['board'], api: Props['api']) {
       },
     }
     return () => { api.current = null }
-  }, [api, camera, gl, invalidate, tex])
+  }, [api, camera, gl, invalidate, tex, mobile])
 
   return tex
 }
@@ -215,7 +227,7 @@ function Table(props: Props & { images: Images }) {
   const { phase, grab, mobile } = props
   const [hFolder, setHFolder] = useState(false)
   const [hConsole, setHConsole] = useState(false)
-  const board = useBoard(props.board, props.api)
+  const board = useBoard(props.board, props.api, mobile)
   // rugosita' fotografiche (CC0): carta, metallo spazzolato, plastica
   const [paperRough, metalRough, plasticRough] = useLoader(THREE.TextureLoader, [
     `${TEX}/paper_rough.webp`, `${TEX}/metal_rough.webp`, `${TEX}/plastic_rough.webp`,

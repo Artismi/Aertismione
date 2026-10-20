@@ -6,6 +6,8 @@
   padding: var(--section-py) 0;
   position: relative;
   z-index: 1; /* CRITICAL: Forces this section's background to render ON TOP of the 3D Canvas (z=0) */
+  /* quello che entra dai lati non allarga la pagina (vedi ProblemSection) */
+  overflow-x: clip;
 }
 
 .section::before {

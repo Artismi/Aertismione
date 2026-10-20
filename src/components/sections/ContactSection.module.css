@@ -3,6 +3,8 @@
   z-index: 10;
   padding: var(--section-py) 0;
   color: var(--color-text);
+  /* quello che entra dai lati non allarga la pagina (vedi ProblemSection) */
+  overflow-x: clip;
 }
 
 /* Il velo entra sfumando dal mondo (sopra c'e' Chi sono, trasparente) e resta fino in fondo */

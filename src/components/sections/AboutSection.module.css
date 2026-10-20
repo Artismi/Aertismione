@@ -10,6 +10,8 @@
   flex-direction: column;
   justify-content: center;
   padding: clamp(60px, 8vw, 100px) clamp(24px, 5.5vw, 72px);
+  /* quello che entra dai lati non allarga la pagina (vedi ProblemSection) */
+  overflow-x: clip;
 }
 
 /* ── Card bio — max 420px, ancorata a sinistra ──────────── */

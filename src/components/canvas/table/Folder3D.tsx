@@ -38,6 +38,8 @@ export const HIT_MAT = new THREE.MeshBasicMaterial({ colorWrite: false, depthWri
 export const BW = FW * 2 - 0.14, BD = FD - 0.12
 const BOARD_T = 0.008
 export const BOARD_Y = 0.074
+/** da telefono il fascicolo sta piu' in fondo (sopra la console): da aperto e' centrato in z = MOBILE_Z */
+export const MOBILE_Z = -1.05
 
 function folderShape(withTab: boolean) {
   const w = FW / 2, d = FD / 2, r = 0.05, rr = 0.09
@@ -195,7 +197,7 @@ export function Folder3D({ phase, mobile, hovered, thumbs, count, label, logo, p
 
   useFrame((_, dt) => {
     const away = phase === 'sliding' || phase === 'opening' || phase === 'open' || phase === 'closing'
-    const pos = mobile ? [0, 0, -1.05] : away ? [FW / 2, 0, 0] : [-1.55, 0, 0.05]
+    const pos = mobile ? (away ? [FW / 2, 0, MOBILE_Z] : [0, 0, MOBILE_Z]) : away ? [FW / 2, 0, 0] : [-1.55, 0, 0.05]
     const rotY = mobile || away ? 0 : 0.07
     const cover = phase === 'opening' || phase === 'open' ? Math.PI : phase === 'list' ? 1.95 : 0
     const restful = phase === 'closed'
@@ -234,7 +236,7 @@ export function Folder3D({ phase, mobile, hovered, thumbs, count, label, logo, p
   const top = FT + 0.0065 // appena sopra la faccia del cartoncino (che e' un po' imbarcata)
 
   return (
-    <group ref={group} position={mobile ? [0, 0, -1.05] : [-1.55, 0, 0.05]} rotation={[0, mobile ? 0 : 0.07, 0]}>
+    <group ref={group} position={mobile ? [0, 0, MOBILE_Z] : [-1.55, 0, 0.05]} rotation={[0, mobile ? 0 : 0.07, 0]}>
       {/* il tabellone: si stende sul fascicolo aperto, sopra la piega */}
       {boardTop && (
         <mesh ref={boardRef} position={[-FW / 2, BOARD_Y - BOARD_T / 2, 0]} visible={false}
