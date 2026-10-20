@@ -7,17 +7,24 @@ import { RawBtn } from '@/components/ui/RawBtn'
 
 const EXPO: Transition = { duration: 0.95, ease: [0.16, 1, 0.3, 1] }
 
-/* Ogni linea del titolo esce dal basso del suo contenitore clip */
-function MaskLine({ text, delay, accent }: { text: string; delay: number; accent?: boolean }) {
+/** *parola* → la parola nel colore d'accento */
+function accent(text: string) {
+  return text.split(/\*([^*]+)\*/).map((part, i) =>
+    i % 2 ? <em key={i} className={styles.accent}>{part}</em> : part)
+}
+
+/* Ogni riga del titolo esce dal basso del suo contenitore clip */
+function MaskLine({ text, delay }: { text: string; delay: number }) {
   return (
     <span className={styles.maskWrap}>
       <motion.span
-        className={accent ? styles.lineAccent : styles.line}
-        dangerouslySetInnerHTML={{ __html: text.replace(/\n/g, '<br />') }}
+        className={styles.line}
         initial={{ y: '112%' }}
         animate={{ y: '0%' }}
         transition={{ ...EXPO, delay } satisfies Transition}
-      />
+      >
+        {accent(text)}
+      </motion.span>
     </span>
   )
 }
@@ -28,8 +35,8 @@ export function HeroSection() {
       {/* 40vh breather space for the logo exclusively */}
       <div className={styles.firstViewport} aria-hidden="true" />
 
-      {/* Testo protetto dall'overlay viola 0.85 */}
-      <div className={styles.secondViewport}>
+      {/* Testo protetto dal velo viola; e' anche il punto «Visione» del menu */}
+      <div id="visione" className={styles.secondViewport}>
 
         {/* Eyebrow + disponibilità */}
         <motion.div
@@ -48,34 +55,25 @@ export function HeroSection() {
           </span>
         </motion.div>
 
-        {/* Dark lines — z-index: -1, behind the 3D canvas/logo */}
-        <div className={styles.titleDark} aria-hidden="true">
-          {HERO.lines.map((line, i) =>
-            i !== HERO.accentLineIndex
-              ? <MaskLine key={i} text={line} delay={0.2 + i * 0.14} />
-              : null
-          )}
-        </div>
-
-        {/* Accent / pink line — z-index: 1, in front of the 3D canvas/logo */}
-        <h1 className={styles.titleAccent}>
-          <MaskLine
-            text={HERO.lines[HERO.accentLineIndex]}
-            delay={0.2 + HERO.accentLineIndex * 0.14}
-            accent
-          />
+        {/* il blocco unico: una frase, cosa ottieni, tre garanzie */}
+        <h1 className={styles.title}>
+          {HERO.claim.map((line, i) => <MaskLine key={i} text={line} delay={0.2 + i * 0.14} />)}
         </h1>
 
-        {/* Subtitle + CTA */}
         <motion.div
           className={styles.bottom}
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: 'easeOut' as const, delay: 0.9 } satisfies Transition}
+          transition={{ duration: 0.8, ease: 'easeOut' as const, delay: 0.7 } satisfies Transition}
         >
           <div className={styles.subtitleBlock}>
             <div className={styles.subtitleBar} />
-            <p className={styles.subtitle}>{HERO.subtitle}</p>
+            <div>
+              <p className={styles.subtitle}>{HERO.line}</p>
+              <ul className={styles.points}>
+                {HERO.points.map((p) => <li key={p}>{p}</li>)}
+              </ul>
+            </div>
           </div>
 
           <div className={styles.ctas}>
@@ -84,7 +82,7 @@ export function HeroSection() {
                 key={cta.href}
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 1.0 + i * 0.1 } satisfies Transition}
+                transition={{ duration: 0.5, delay: 0.8 + i * 0.1 } satisfies Transition}
               >
                 <RawBtn
                   href={cta.href}

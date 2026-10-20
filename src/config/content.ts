@@ -39,35 +39,18 @@ export const NAV = {
 
 export const HERO = {
   /**
-   * 3 frasi separate — 3 movimenti: affermazione → problema → invito.
-   * Non comprimere in una riga sola.
+   * Sotto il logo, un blocco solo che si legge in un colpo d'occhio.
+   * claim: due battute, la parola fra *asterischi* va nel colore d'accento ·
+   * line: cosa ottieni, in una riga · points: tre garanzie, due parole ciascuna.
    */
-  lines: [
-    'La tua attività è unica.',
-    'Merita di non sembrare\nuna tra le tante.',
-    'Costruiamo insieme qualcosa\nche ti somiglia davvero.',
-  ],
-  accentLineIndex: 2,
-  subtitle: 'Artismi completa la tua attività con la narrazione che le manca.',
+  claim:  ['Prima ti ascolto.', 'Poi ti faccio *riconoscere*.'],
+  line:   "Un metodo chiaro, dall'identità della tua attività a tutto ciò che comunica.",
+  points: ['Progettato con te', 'Coerente ovunque', 'Resta tuo'],
   ctas: [
     { label: 'Scopri i servizi', href: '#servizi',  variant: 'primary'   },
     { label: 'Scrivimi',         href: '#contatti', variant: 'secondary' },
   ],
   scrollHint: 'Scorri',
-}
-
-/* ─── VISIONE (il metodo, in una riga) ───────────────────────────────────── */
-
-/**
- * Tra l'apertura e il banco: una frase sola, che si legge in un colpo d'occhio.
- * claim: due battute, la parola fra *asterischi* va nel colore d'accento ·
- * line: cosa ottieni, in una riga · points: tre garanzie, due parole ciascuna.
- */
-export const VISION = {
-  eyebrow: 'Come lavoro',
-  claim:   ['Prima ti ascolto.', 'Poi ti faccio *riconoscere*.'],
-  line:    "Un metodo chiaro, dall'identità della tua attività a tutto ciò che comunica.",
-  points:  ['Progettato con te', 'Coerente ovunque', 'Resta tuo'],
 }
 
 /* ─── SERVICES ───────────────────────────────────────────────────────────── */
