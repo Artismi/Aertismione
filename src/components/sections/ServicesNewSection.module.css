@@ -85,9 +85,9 @@
 }
 
 /* ── Il collage ──────────────────────────────────────────────
-   Gli oggetti di carta sul velo viola, nei colori di prima: l'ambra
-   e il viola. Ognuno appena storto, con la sua ombra; sul computer il
-   testo e' tutto in vista. */
+   Gli oggetti di carta sul velo viola, in ambra e viola. Ogni carta
+   si legge in tre colpi: la foto di un lavoro vero, numero e titolo,
+   una frase breve. Sotto, piu' piccoli, i dettagli. */
 
 .board {
   --ink: #1A1A1A;
@@ -147,58 +147,145 @@
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* ── pezzi comuni: codice, titolo, attacco, bottone ───────── */
+/* ── la gerarchia del testo ──────────────────────────────────
+   1 numero e titolo · 2 la frase breve · 3 l'attacco · 4 i dettagli */
 
 .code {
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.66rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
+.kickerRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+/* il numero grande, solo il contorno: si vede da lontano e non pesa */
+.num {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(3rem, 4.6vw, 4.6rem);
+  line-height: 0.78;
+  letter-spacing: -0.04em;
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--ink);
+}
+.kicker {
+  padding: 5px 10px 4px;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  transform: rotate(-2deg);
+}
+
 .title {
   font-family: var(--font-display);
-  font-weight: 700;
-  font-size: clamp(1.7rem, 2.6vw, 2.5rem);
-  line-height: 0.92;
-  letter-spacing: -0.025em;
+  font-weight: 800;
+  font-size: clamp(2rem, 3vw, 2.9rem);
+  line-height: 0.9;
+  letter-spacing: -0.035em;
+  margin: 14px 0 0;
+  text-wrap: balance;
+}
+
+/* la frase breve: cosa e', in quattro parole, evidenziata */
+.hook {
   margin: 10px 0 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(1.05rem, 1.3vw, 1.2rem);
+  line-height: 1.45;
+}
+.hook span {
+  background: linear-gradient(transparent 55%, rgba(200,134,10,0.45) 55%, rgba(200,134,10,0.45) 92%, transparent 92%);
+  -webkit-box-decoration-break: clone;
+          box-decoration-break: clone;
 }
 
 .lead {
   font-family: var(--font-body);
-  font-size: var(--type-body);
+  font-size: 0.98rem;
   line-height: 1.5;
-  margin: 12px 0 0;
-  max-width: 34ch;
+  margin: 10px 0 0;
+  max-width: 36ch;
+  opacity: 0.85;
 }
 
+/* le etichette dei gruppi di dettagli */
+.label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 26px 0 10px;
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.label::after { content: ''; flex: 1; height: 1.5px; background: currentColor; opacity: 0.8; }
+
 .cta {
-  margin-top: 22px;
+  margin-top: 24px;
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 16px;
+  padding: 12px 18px;
   border: 0;
   border-radius: var(--radius-btn);
   background: var(--amber);
   color: var(--ink);
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.74rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   white-space: nowrap;
   cursor: pointer;
-  transition: background 0.2s ease;
+  box-shadow: 0 3px 0 var(--amber-dark);
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 .cta::after { content: '→'; transition: transform 0.2s ease; }
-.cta:hover { background: #dd9612; }
+.cta:hover { background: #dd9612; transform: translateY(-1px); box-shadow: 0 4px 0 var(--amber-dark); }
 .cta:hover::after { transform: translateX(4px); }
 .cta:focus-visible { outline: 2px solid var(--plum); outline-offset: 3px; }
 
 /* sul computer si legge tutto: il bottone per aprire serve solo al telefono */
 .peek { display: none; }
+
+/* ── la foto stampata: bordo bianco, didascalia, appena storta ── */
+
+.photo {
+  position: relative;
+  margin: 0;
+  padding: 8px 8px 0;
+  background: #fbf8f2;
+  box-shadow: 0 12px 22px -10px rgba(0,0,0,0.55), 0 2px 4px rgba(0,0,0,0.2);
+}
+.photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: var(--ar, auto);
+  object-fit: cover;
+}
+.photo figcaption {
+  padding: 7px 2px 8px;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #4a4440;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* nastro adesivo semitrasparente */
 .tape {
@@ -215,7 +302,7 @@
 .folder {
   background-color: var(--kraft);
   padding: clamp(26px, 3.2vw, 40px);
-  padding-top: clamp(30px, 3.6vw, 42px);
+  padding-top: clamp(30px, 3.4vw, 40px);
   transform: rotate(-1.2deg);
   display: flex;
   flex-direction: column;
@@ -235,45 +322,28 @@
   color: var(--ink);
   clip-path: polygon(8% 0, 92% 0, 100% 100%, 0 100%);
 }
-.folderHead {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 18px;
-}
-.folderHead > div { display: grid; gap: 8px; justify-items: start; }
-/* le lettere cerchiate, come il monogramma della cartellina */
-.rings { display: flex; gap: 2px; }
-.rings i {
+.folderTop {
   display: grid;
-  place-items: center;
-  width: 26px;
-  height: 26px;
-  border: 1.5px solid var(--ink);
-  border-radius: 50%;
-  font-family: var(--font-display);
-  font-style: normal;
-  font-weight: 700;
-  font-size: 0.82rem;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: clamp(18px, 2.4vw, 32px);
+  align-items: start;
 }
-.folderNo {
-  font-family: var(--font-display);
-  font-size: clamp(2.6rem, 4vw, 3.6rem);
-  line-height: 0.8;
-  opacity: 0.85;
-}
+.folderPhoto { transform: rotate(3deg); margin-right: -8px; }
+.folderPhoto img { --ar: 632 / 382; }
 
 /* il foglio dei passi, fermato con la graffetta */
 .steps {
   position: relative;
   list-style: none;
-  margin: 22px 0 0;
-  padding: 26px 22px 18px;
+  margin: 0;
+  padding: 22px 22px 14px;
   background: var(--paper);
   counter-reset: step;
   box-shadow: 0 8px 18px -8px rgba(0,0,0,0.35);
-  transform: rotate(0.8deg);
+  transform: rotate(0.6deg);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 24px;
 }
 .step {
   counter-increment: step;
@@ -283,10 +353,10 @@
   padding: 10px 0;
   border-top: 1px dashed rgba(26,26,26,0.22);
   font-family: var(--font-body);
-  font-size: 0.92rem;
+  font-size: 0.88rem;
   line-height: 1.45;
 }
-.step:first-of-type { border-top: 0; }
+.step:nth-of-type(-n+2) { border-top: 0; }
 .step::before {
   content: counter(step, decimal-leading-zero);
   grid-row: span 2;
@@ -302,7 +372,7 @@
 .stepName {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 1.02rem;
+  font-size: 1.04rem;
 }
 .clip {
   position: absolute;
@@ -313,21 +383,20 @@
   z-index: 3;
 }
 
-/* in fondo alla cartellina: il bottone a sinistra, il post-it a destra */
+/* in fondo alla cartellina: la foto dell'esito e il post-it */
 .folderFoot {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 20px;
-  margin-top: 24px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: center;
+  margin-top: 26px;
 }
-.folderFoot .cta { margin-top: 0; flex: none; }
+.resultPhoto { transform: rotate(-2.4deg); }
 
 /* il post-it viola con il valore che non si vede */
 .sticky {
   position: relative;
   margin: 0;
-  max-width: 300px;
   padding: 22px 20px 18px;
   background: var(--plum);
   color: var(--paper);
@@ -362,18 +431,22 @@
 }
 .strip {
   background-color: var(--amber);
-  padding: 46px clamp(22px, 2.6vw, 30px) 28px;
+  padding: 42px clamp(20px, 2.4vw, 28px) 28px;
   transform: rotate(1.4deg);
   transform-origin: 50% 0;
   display: flex;
   flex-direction: column;
 }
+.strip .kicker { background: var(--plum); }
+.strip .hook span { background: linear-gradient(transparent 52%, rgba(242,237,228,0.6) 52%, rgba(242,237,228,0.6) 90%, transparent 90%); }
+.stripPhoto { margin-bottom: 22px; transform: rotate(-2deg); }
+.stripPhoto img { --ar: 4 / 3; }
 .checks {
   list-style: none;
-  margin: 20px 0 0;
+  margin: 0;
   padding: 0;
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 /* ogni voce e' un riquadro di carta con la casella a destra */
 .check {
@@ -381,10 +454,10 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px 12px;
+  padding: 9px 12px;
   background: var(--paper);
   font-family: var(--font-body);
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   box-shadow: 0 2px 0 rgba(0,0,0,0.12);
 }
 .check::after {
@@ -402,7 +475,7 @@
   gap: 14px 12px;
   margin-top: 22px;
 }
-.stripFoot .cta { margin-top: 0; background: var(--ink); color: var(--amber); }
+.stripFoot .cta { margin-top: 0; background: var(--ink); color: var(--amber); box-shadow: 0 3px 0 #000; }
 .stripFoot .cta:hover { background: #000; }
 /* l'etichetta ovale, come un adesivo col nome */
 .oval {
@@ -445,67 +518,95 @@
 }
 .sheetBody {
   position: relative;
-  padding: clamp(26px, 3.4vw, 42px);
-  padding-top: clamp(30px, 3.6vw, 44px);
+  padding: clamp(26px, 3.4vw, 40px);
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
 }
-.sheetType {
-  display: inline-block;
-  margin-bottom: 0;
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  opacity: 0.7;
-}
-.sheetTitle { font-size: clamp(2.2rem, 3.6vw, 3.4rem); }
-.sheetBody .more { align-self: stretch; }
-.sheetCols {
+.sheetTop {
   display: grid;
-  grid-template-columns: 1fr 1.25fr;
-  gap: clamp(20px, 3vw, 40px);
-  margin-top: 26px;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: clamp(22px, 3vw, 40px);
+  align-items: start;
 }
-.colLabel {
-  display: block;
-  padding-bottom: 8px;
-  margin-bottom: 4px;
-  border-bottom: 1.5px solid var(--ink);
-  font-family: var(--font-mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+.sheetText { position: relative; }
+/* le foto a ventaglio: gli interni grandi, logo e orari sopra */
+.fan { position: relative; padding-bottom: 70px; }
+.fanMain { transform: rotate(-2.4deg); }
+.fanMain img { --ar: 560 / 616; }
+.fanSmall {
+  position: absolute;
+  width: 46%;
+  padding: 6px 6px 0;
 }
+.fanSmall figcaption { font-size: 0.54rem; padding: 5px 2px 6px; }
+.fanSmall:nth-of-type(2) { right: -14px; bottom: 6px; transform: rotate(5deg); }
+.fanSmall:nth-of-type(3) { left: -12px; bottom: -4px; width: 40%; transform: rotate(-6deg); }
+.fanSmall img { --ar: 1; }
 .core {
   list-style: none;
   margin: 0;
   padding: 0;
   counter-reset: core;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 20px;
 }
 .core li {
   counter-increment: core;
   display: flex;
   justify-content: space-between;
-  padding: 8px 0;
+  gap: 8px;
+  padding: 7px 0;
   border-bottom: 1px solid rgba(26,26,26,0.15);
   font-family: var(--font-body);
-  font-size: 0.95rem;
+  font-size: 0.92rem;
 }
 .core li::after {
   content: counter(core, decimal-leading-zero);
   font-family: var(--font-mono);
-  font-size: 0.66rem;
+  font-size: 0.64rem;
   opacity: 0.55;
 }
-.adds {
+/* il pack: dall'illustrazione madre, tutto quello che ne deriva */
+.pack {
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  border: 1.5px solid var(--ink);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  background: rgba(200,134,10,0.12);
+}
+.pack b {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-right: 6px;
+  color: var(--amber-dark);
+}
+.sheetCols {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: clamp(20px, 3vw, 40px);
+}
+/* nello spazio dell'attivita': pieni, sono la parte che si vede di piu' */
+.space, .adds {
   list-style: none;
-  margin: 12px 0 0;
+  margin: 0;
   padding: 0;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+.space li {
+  padding: 7px 14px;
+  background: var(--plum);
+  color: var(--paper);
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.92rem;
 }
 .adds li {
   padding: 6px 12px 6px 10px;
@@ -524,7 +625,7 @@
   font-style: italic;
 }
 .sheetNote {
-  margin: 26px 0 0;
+  margin: 22px 0 0;
   padding: 14px 18px;
   background: var(--kraft);
   font-family: var(--font-body);
@@ -535,10 +636,10 @@
 /* il timbro tondo del "più richiesto" */
 .stamp {
   position: absolute;
-  top: 22px;
-  right: 26px;
-  width: 104px;
-  height: 104px;
+  top: -12px;
+  right: -6px;
+  width: 96px;
+  height: 96px;
   border-radius: 50%;
   border: 2px solid var(--plum);
   color: var(--plum);
@@ -546,7 +647,7 @@
   place-items: center;
   text-align: center;
   font-family: var(--font-mono);
-  font-size: 0.62rem;
+  font-size: 0.58rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   line-height: 1.5;
@@ -571,18 +672,18 @@
 }
 .tag {
   background-color: var(--paper);
-  padding: 58px clamp(20px, 2.4vw, 28px) 28px 48px;
+  padding: 50px clamp(20px, 2.4vw, 28px) 28px 46px;
   transform: rotate(2.4deg);
   transform-origin: 50% 0;
   display: flex;
   flex-direction: column;
-  clip-path: polygon(14% 0, 86% 0, 100% 7%, 100% 100%, 0 100%, 0 7%);
+  clip-path: polygon(14% 0, 86% 0, 100% 6%, 100% 100%, 0 100%, 0 6%);
 }
 /* il foro rinforzato */
 .tag::before {
   content: '';
   position: absolute;
-  top: 18px;
+  top: 16px;
   left: 50%;
   width: 18px;
   height: 18px;
@@ -594,31 +695,25 @@
 /* la scritta in verticale lungo il bordo */
 .side {
   position: absolute;
-  left: 16px;
-  top: 64px;
+  left: 15px;
+  top: 60px;
   writing-mode: vertical-rl;
   transform: rotate(180deg);
-  font-size: 0.6rem;
+  font-size: 0.58rem;
   opacity: 0.6;
   white-space: nowrap;
 }
-.tagTop {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.star { color: var(--amber); font-size: 1.6rem; line-height: 1; }
+.tagPhoto { margin-bottom: 20px; transform: rotate(-1.6deg); }
+.tagPhoto img { --ar: 1; }
 .week {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 4px;
-  margin: 18px 0 6px;
-  padding: 10px 0;
-  border-top: 1.5px solid var(--ink);
+  padding: 8px 0;
   border-bottom: 1.5px solid var(--ink);
   text-align: center;
   font-family: var(--font-mono);
-  font-size: 0.66rem;
+  font-size: 0.64rem;
 }
 .week span { display: grid; gap: 6px; justify-items: center; }
 .week i {
@@ -630,7 +725,7 @@
 .week i[data-on='true'] { background: var(--amber); border-color: var(--amber-dark); }
 .tagList {
   list-style: none;
-  margin: 8px 0 0;
+  margin: 6px 0 0;
   padding: 0;
 }
 .tagList li {
@@ -640,21 +735,21 @@
   padding: 7px 0;
   border-bottom: 1px dashed rgba(26,26,26,0.25);
   font-family: var(--font-body);
-  font-size: 0.95rem;
+  font-size: 0.92rem;
 }
 .tagList li::after { content: '○'; font-family: var(--font-mono); font-size: 0.7rem; opacity: 0.6; }
 
 /* ── la coppia di adesivi tondi ───────────────────────────── */
 
 .stickers {
+  /* sull'angolo in basso a destra del foglio, accanto al bottone */
   grid-column: 9 / 13;
-  grid-row: 2;
-  align-self: end;
-  justify-self: center;
+  grid-row: 4;
+  justify-self: end;
   position: relative;
   z-index: 3;
   display: flex;
-  margin-bottom: 8px;
+  margin: -96px -18px 0 0;
   pointer-events: none;
 }
 .round {
@@ -690,80 +785,73 @@
 }
 .round[data-k='b'] .roundCenter { color: var(--paper); }
 
-/* ── Tra telefono e computer: il collage a due colonne ────── */
+/* ── Tra telefono e computer ──────────────────────────────── */
 
-@media (max-width: 1100px) and (min-width: 901px) {
+@media (max-width: 1180px) and (min-width: 901px) {
   .slot[data-kind='folder'] { grid-column: 1 / 8; }
   .slot[data-kind='tag']    { grid-column: 8 / 13; }
-  .stickers                 { grid-column: 8 / 13; }
   .slot[data-kind='strip']  { grid-column: 1 / 6; }
   .slot[data-kind='sheet']  { grid-column: 6 / 13; }
-  .sheetCols { grid-template-columns: 1fr; }
+  .sheetTop, .sheetCols, .steps { grid-template-columns: 1fr; }
+  .step:nth-of-type(2) { border-top: 1px dashed rgba(26,26,26,0.22); }
+  .fan { max-width: 360px; }
 }
 
-/* ── Telefono: il collage intero, in piccolo ─────────────────
-   Le carte stanno tutte insieme, sovrapposte appena; ognuna mostra
-   codice, titolo e attacco. Toccata, viene davanti e si apre tutta. */
+/* ── Telefono: le carte insieme, a due a due ─────────────────
+   Ogni carta mostra la foto, numero e titolo, la frase breve.
+   Toccata, si apre a tutta larghezza con tutti i dettagli. */
 
 @media (max-width: 900px) {
   .board {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 12px;
     max-width: 560px;
-    padding: 8px 16px 0;
+    padding: 8px 14px 0;
   }
   .topBand { padding: 9px 14px; font-size: 0.58rem; }
   /* sul telefono resta il codice: a destra passa lo spago */
   .topBand span[data-i='1'], .topBand span[data-i='2'] { display: none; }
 
-  /* tutte nella stessa cella: si sovrappongono come sul tavolo */
-  .slot[data-kind], .stickers { grid-column: 1; grid-row: 2; justify-self: start; align-self: start; }
-  /* si toccano solo sui bordi, dove non c'e' testo */
-  .slot[data-kind='folder'] { width: 56%; margin-top: 34px; }
-  .slot[data-kind='tag']    { width: 47%; margin: -6px 0 0 53%; }
-  .slot[data-kind='strip']  { width: 50%; margin-top: 290px; }
-  .slot[data-kind='sheet']  { width: 54%; margin: 318px 0 0 46%; }
-  .stickers { margin: 556px 0 0 34%; }
-  .round { width: 84px; height: 84px; }
+  .slot[data-kind='folder'] { grid-column: 1; grid-row: 2; margin-top: 34px; }
+  .slot[data-kind='tag']    { grid-column: 2; grid-row: 2; margin-top: -6px; }
+  .slot[data-kind='strip']  { grid-column: 1; grid-row: 3; margin-top: 26px; }
+  .slot[data-kind='sheet']  { grid-column: 2; grid-row: 3; margin-top: 44px; }
+  .stickers { grid-column: 1 / -1; grid-row: 4; justify-self: center; margin: 28px 0 0; }
+  .round { width: 92px; height: 92px; }
   .round[data-k='b'] { margin-left: -16px; }
 
-  /* nel collage le carte sono piccole: solo codice, titolo e attacco */
+  /* nella griglia: foto, numero e titolo, la frase breve */
   .slot:not([data-open]) .more,
+  .slot:not([data-open]) .lead,
   .slot:not([data-open]) .side,
   .slot:not([data-open]) .stamp,
-  .slot:not([data-open]) .rings,
-  .slot:not([data-open]) .folderNo { display: none; }
-  .slot:not([data-open]) .title { font-size: 1.12rem; line-height: 0.98; margin-top: 6px; }
-  .slot:not([data-open]) .sheetTitle { font-size: 1.4rem; }
-  .slot:not([data-open]) .lead {
-    font-size: 0.76rem;
-    line-height: 1.35;
-    margin-top: 8px;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  .slot:not([data-open]) .code { font-size: 0.54rem; letter-spacing: 0.08em; }
-  .slot:not([data-open]) .folder { padding: 18px 24px 16px 16px; }
-  .slot:not([data-open]) .folder::before { padding: 6px 14px 4px; font-size: 0.54rem; left: 12px; }
-  .slot:not([data-open]) .folderHead { margin-bottom: 6px; }
-  .slot:not([data-open]) .folderNo { font-size: 1.8rem; }
-  .slot:not([data-open]) .strip { padding: 34px 14px 16px; }
+  .slot:not([data-open]) .photo figcaption { display: none; }
+  .slot:not([data-open]) .photo { padding: 5px; }
+  .slot:not([data-open]) .num { font-size: 2rem; -webkit-text-stroke-width: 1px; }
+  .slot:not([data-open]) .kicker { font-size: 0.5rem; padding: 4px 6px 3px; letter-spacing: 0.1em; }
+  .slot:not([data-open]) .kickerRow { gap: 8px; margin-top: 12px; }
+  .slot:not([data-open]) .title { font-size: 1.22rem; line-height: 0.95; margin-top: 8px; }
+  .slot:not([data-open]) .hook { font-size: 0.8rem; line-height: 1.4; margin-top: 6px; }
+  .slot:not([data-open]) .folder { padding: 14px 12px 14px; }
+  .slot:not([data-open]) .folder::before { padding: 6px 12px 4px; font-size: 0.52rem; left: 10px; }
+  .slot:not([data-open]) .folderTop { display: flex; flex-direction: column-reverse; gap: 0; }
+  .slot:not([data-open]) .folderPhoto { transform: rotate(2deg); margin: 0; }
   .slot:not([data-open]) .stripWrap { padding-top: 22px; }
   .slot:not([data-open]) .stripClip { width: 46px; height: 42px; margin-left: -23px; }
-  .slot:not([data-open]) .sheetBody { padding: 16px 14px 16px 22px; }
-  .slot:not([data-open]) .band { padding: 7px 10px 7px 54px; font-size: 0.5rem; }
+  .slot:not([data-open]) .strip { padding: 30px 12px 14px; }
+  .slot:not([data-open]) .stripPhoto { margin-bottom: 0; }
+  .slot:not([data-open]) .sheetBody { padding: 14px 12px; }
+  .slot:not([data-open]) .sheetTop { display: block; }
+  .slot:not([data-open]) .fan { padding-bottom: 0; }
+  .slot:not([data-open]) .band { padding: 7px 10px 7px 46px; font-size: 0.5rem; }
   .slot:not([data-open]) .band span + span { display: none; }
-  .slot:not([data-open]) .sheetTape { width: 56px; height: 18px; left: -10px; top: -6px; }
+  .slot:not([data-open]) .sheetTape { width: 48px; height: 16px; left: -8px; top: -6px; }
   .slot:not([data-open]) .sheetClip { width: 16px; height: 46px; top: -18px; right: 12%; }
   .slot:not([data-open]) .tagWrap { padding-top: 54px; }
   .slot:not([data-open]) .string { height: 92px; top: -16px; }
-  .slot:not([data-open]) .tag { padding: 40px 14px 16px; }
+  .slot:not([data-open]) .tag { padding: 36px 12px 14px; }
   .slot:not([data-open]) .tag::before { top: 12px; width: 14px; height: 14px; margin-left: -7px; box-shadow: 0 0 0 4px var(--kraft); }
-  .slot:not([data-open]) .star { font-size: 1.1rem; }
-  .slot:not([data-open]) .week { margin: 10px 0 0; padding: 6px 0; font-size: 0.5rem; gap: 2px; }
-  .slot:not([data-open]) .week span { gap: 3px; }
-  .slot:not([data-open]) .week i { width: 6px; height: 6px; border-width: 1px; }
+  .slot:not([data-open]) .tagPhoto { margin-bottom: 0; }
   .slot:not([data-open]) { cursor: pointer; }
 
   /* il bottone per aprire: un'etichetta piccola in fondo alla carta */
@@ -788,10 +876,10 @@
   .peek::after { content: '+'; font-size: 0.8rem; line-height: 1; }
   .peek:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 
-  /* la carta aperta: davanti a tutto, a piena larghezza, dritta */
-  .slot[data-open] { width: 100%; margin: 34px 0 0; z-index: 10; }
+  /* la carta aperta: a piena larghezza, dritta; le altre si fanno da parte */
   .board[data-open] .slot:not([data-open]),
-  .board[data-open] .stickers { visibility: hidden; }
+  .board[data-open] .stickers { display: none; }
+  .slot[data-open] { grid-column: 1 / -1; grid-row: 2; margin: 34px 0 0; z-index: 10; }
   .slot[data-open] .folder,
   .slot[data-open] .strip,
   .slot[data-open] .sheet,
@@ -807,35 +895,24 @@
     color: var(--paper);
   }
   .slot[data-open] .peek::after { content: '✕'; font-size: 0.6rem; }
-  .slot[data-open] .folderNo,
-  .slot[data-open] .star { visibility: hidden; }
   .slot[data-open] .tagWrap { padding-top: 0; }
   .slot[data-open] .string { display: none; }
   .slot[data-open] .tag { clip-path: none; padding-top: 52px; }
   .slot[data-open] .tag::before { display: none; }
-  .slot[data-open] .sheet .peek { top: 10px; }
   .slot[data-open] .sheetTape { left: -6px; }
+  .slot[data-open] .band span + span { display: none; }
 
   /* la carta aperta, su schermo stretto */
-  .sheetCols { grid-template-columns: 1fr; }
-  .folderFoot { flex-direction: column-reverse; align-items: stretch; gap: 26px; }
-  .folderFoot .cta { align-self: flex-start; }
-  .sticky { margin-left: 8px; }
-  .sheetBody { display: block; }
-  .stamp {
-    position: relative;
-    float: right;
-    top: auto;
-    right: auto;
-    width: 78px;
-    height: 78px;
-    margin: 30px -4px 8px 10px;
-    font-size: 0.5rem;
-  }
-  .sheetBody .cta { display: inline-flex; }
+  .folderTop, .sheetTop, .sheetCols, .steps, .folderFoot { grid-template-columns: 1fr; }
+  .step:nth-of-type(2) { border-top: 1px dashed rgba(26,26,26,0.22); }
+  .folderTop { gap: 22px; }
+  .slot[data-open] .folderPhoto { margin: 0 6px; }
+  .core { grid-template-columns: 1fr; }
+  .stamp { top: -6px; right: 0; width: 78px; height: 78px; font-size: 0.5rem; }
+  /* il titolo lascia l'angolo al timbro */
+  .slot[data-open] .sheetText .title { padding-right: 84px; }
+  .fan { margin: 0 8px; }
   .band { padding: 9px 14px 9px 64px; font-size: 0.56rem; letter-spacing: 0.06em; white-space: nowrap; gap: 10px; }
-  .slot[data-open] .band span + span { display: none; }
-  .stripFoot { flex-wrap: wrap; }
 }
 
 @media (prefers-reduced-motion: reduce) {

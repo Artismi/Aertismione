@@ -7,9 +7,10 @@
  * (social), la striscia ambra pinzata con le caselle (stampe e gadget) e il
  * foglio con la graffetta (identita'). I contenuti sono in SERVICES (content.ts).
  *
- * Sul computer tutto il testo e' in vista. Sul telefono il collage resta
- * intero e piccolo: ogni carta mostra codice, titolo e attacco; toccandola
- * viene davanti e si apre tutta, con il bottone del preventivo.
+ * Ogni carta si legge in tre colpi: la foto di un lavoro vero, il numero col
+ * titolo, una frase breve. Sotto i dettagli. Sul computer tutto e' in vista;
+ * sul telefono le carte stanno insieme a due a due e mostrano foto, titolo e
+ * frase: toccandone una si apre tutta, con il bottone del preventivo.
  */
 
 import { useEffect, useRef, useState } from 'react'
@@ -20,12 +21,17 @@ import { useConfiguratorStore } from '@/stores/useConfiguratorStore'
 
 const vp = { once: true, margin: '-60px' }
 
+type Img = { src: string; w: number; h: number; alt: string; caption: string }
+
 type Card = {
   id: string
   kind: 'folder' | 'strip' | 'sheet' | 'tag'
   code: string
+  kicker: string
   label: string
+  hook: string
   lead: string
+  images: Img[]
   tab?: string
   type?: string
   featured?: boolean
@@ -33,6 +39,9 @@ type Card = {
   items?: string[]
   sticker?: string
   core?: string[]
+  pack?: { label: string; text: string }
+  spaceLabel?: string
+  space?: string[]
   addLabel?: string
   adds?: string[]
   variants?: string
@@ -64,6 +73,32 @@ function Peek({ open, onToggle }: { open: boolean; onToggle: () => void }) {
     >
       {open ? 'Chiudi' : 'Leggi tutto'}
     </button>
+  )
+}
+
+/** una foto stampata, col bordo bianco e la didascalia sotto */
+function Photo({ img, className = '' }: { img: Img; className?: string }) {
+  return (
+    <figure className={`${styles.photo} ${className}`}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={img.src} width={img.w} height={img.h} alt={img.alt} loading="lazy" decoding="async" />
+      <figcaption>{img.caption}</figcaption>
+    </figure>
+  )
+}
+
+/** numero grande, etichetta, titolo e la frase breve: quello che si legge per primo */
+function Head({ c, n }: { c: Card; n: string }) {
+  return (
+    <>
+      <div className={styles.kickerRow}>
+        <span className={styles.num} aria-hidden="true">{n}</span>
+        <span className={styles.kicker}>{c.kicker}</span>
+      </div>
+      <h3 className={styles.title}>{c.label}</h3>
+      <p className={styles.hook}><span>{c.hook}</span></p>
+      <p className={styles.lead}>{c.lead}</p>
+    </>
   )
 }
 
@@ -123,20 +158,18 @@ function Stickers() {
   )
 }
 
-function Folder({ c, n, peek }: { c: Card; n: string; peek: React.ReactNode }) {
+type Props = { c: Card; n: string; peek: React.ReactNode }
+
+function Folder({ c, n, peek }: Props) {
+  const [lab, result] = c.images
   return (
     <article className={`${styles.paper} ${styles.folder}`} data-tab={c.tab}>
-      <div className={styles.folderHead}>
-        <div>
-          <span className={styles.rings} aria-hidden="true"><i>A</i><i>R</i><i>T</i></span>
-          <span className={styles.code}>Archivio n.{n}</span>
-        </div>
-        <span className={styles.folderNo} aria-hidden="true">{n}</span>
+      <div className={styles.folderTop}>
+        <div className={styles.folderText}><Head c={c} n={n} /></div>
+        <Photo img={lab} className={styles.folderPhoto} />
       </div>
-      <span className={styles.code}>{c.code} · Artismi</span>
-      <h3 className={styles.title}>{c.label}</h3>
-      <p className={styles.lead}>{c.lead}</p>
       <div className={styles.more}>
+        <span className={styles.label}>Come funziona</span>
         <ol className={styles.steps}>
           <Clip className={styles.clip} />
           {c.steps!.map((s) => (
@@ -147,7 +180,7 @@ function Folder({ c, n, peek }: { c: Card; n: string; peek: React.ReactNode }) {
           ))}
         </ol>
         <div className={styles.folderFoot}>
-          <Cta />
+          {result && <Photo img={result} className={styles.resultPhoto} />}
           {c.note && (
             <p className={styles.sticky}>
               <span className={styles.tape} aria-hidden="true" />
@@ -156,21 +189,22 @@ function Folder({ c, n, peek }: { c: Card; n: string; peek: React.ReactNode }) {
             </p>
           )}
         </div>
+        <Cta />
       </div>
       {peek}
     </article>
   )
 }
 
-function Strip({ c, peek }: { c: Card; peek: React.ReactNode }) {
+function Strip({ c, n, peek }: Props) {
   return (
     <div className={styles.stripWrap}>
       <Binder className={styles.stripClip} />
       <article className={`${styles.paper} ${styles.strip}`}>
-        <span className={styles.code}>{c.code} · Spunta i preferiti</span>
-        <h3 className={styles.title}>{c.label}</h3>
-        <p className={styles.lead}>{c.lead}</p>
+        <Photo img={c.images[0]} className={styles.stripPhoto} />
+        <Head c={c} n={n} />
         <div className={styles.more}>
+          <span className={styles.label}>Spunta i preferiti</span>
           <ul className={styles.checks}>
             {c.items!.map((it) => <li key={it} className={styles.check}>{it}</li>)}
           </ul>
@@ -185,7 +219,8 @@ function Strip({ c, peek }: { c: Card; peek: React.ReactNode }) {
   )
 }
 
-function Sheet({ c, peek }: { c: Card; peek: React.ReactNode }) {
+function Sheet({ c, n, peek }: Props) {
+  const [main, ...rest] = c.images
   return (
     <article className={`${styles.paper} ${styles.sheet}`}>
       <span className={`${styles.tape} ${styles.sheetTape}`} aria-hidden="true" />
@@ -195,26 +230,43 @@ function Sheet({ c, peek }: { c: Card; peek: React.ReactNode }) {
         <span>{c.type} ✦</span>
       </div>
       <div className={styles.sheetBody}>
-        {c.featured && <span className={styles.stamp}>✦<br />Più<br />richiesto</span>}
-        <span className={styles.sheetType}>Percorso completo</span>
-        <h3 className={`${styles.title} ${styles.sheetTitle}`}>{c.label}</h3>
-        <p className={styles.lead}>{c.lead}</p>
-        <div className={styles.more}>
-          <div className={styles.sheetCols}>
-            <div>
-              <span className={styles.colLabel}>Il cuore</span>
+        <div className={styles.sheetTop}>
+          <div className={styles.fan}>
+            <Photo img={main} className={styles.fanMain} />
+            {rest.map((img) => <Photo key={img.src} img={img} className={`${styles.fanSmall} ${styles.more}`} />)}
+          </div>
+          <div className={styles.sheetText}>
+            {c.featured && <span className={styles.stamp}>✦<br />Più<br />richiesto</span>}
+            <Head c={c} n={n} />
+            <div className={styles.more}>
+              <span className={styles.label}>Il cuore</span>
               <ul className={styles.core}>
                 {c.core!.map((it) => <li key={it}>{it}</li>)}
               </ul>
+              {c.pack && (
+                <p className={styles.pack}>
+                  <b>{c.pack.label}</b> {c.pack.text}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className={styles.more}>
+          <div className={styles.sheetCols}>
+            <div>
+              <span className={styles.label}>{c.spaceLabel}</span>
+              <ul className={styles.space}>
+                {c.space!.map((it) => <li key={it}>{it}</li>)}
+              </ul>
             </div>
             <div>
-              <span className={styles.colLabel}>{c.addLabel}</span>
+              <span className={styles.label}>{c.addLabel}</span>
               <ul className={styles.adds}>
                 {c.adds!.map((it) => <li key={it}>{it}</li>)}
               </ul>
-              {c.variants && <p className={styles.variants}>{c.variants}</p>}
             </div>
           </div>
+          {c.variants && <p className={styles.variants}>{c.variants}</p>}
           {c.note && <p className={styles.sheetNote}>{c.note}</p>}
           <Cta />
         </div>
@@ -224,22 +276,19 @@ function Sheet({ c, peek }: { c: Card; peek: React.ReactNode }) {
   )
 }
 
-function Tag({ c, peek }: { c: Card; peek: React.ReactNode }) {
+function Tag({ c, n, peek }: Props) {
   return (
     <div className={styles.tagWrap}>
       <Twine className={styles.string} />
       <article className={`${styles.paper} ${styles.tag}`}>
         <span className={`${styles.code} ${styles.side}`} aria-hidden="true">Artismi · una settimana tipo · {c.type}</span>
-        <div className={styles.tagTop}>
-          <span className={styles.code}>{c.code}</span>
-          <span className={styles.star} aria-hidden="true">✳</span>
-        </div>
-        <h3 className={styles.title}>{c.label}</h3>
-        <p className={styles.lead}>{c.lead}</p>
-        <div className={styles.week} aria-hidden="true">
-          {c.week!.map((d, i) => <span key={i}>{d}<i data-on={POSTS[i]} /></span>)}
-        </div>
+        <Photo img={c.images[0]} className={styles.tagPhoto} />
+        <Head c={c} n={n} />
         <div className={styles.more}>
+          <span className={styles.label}>Una settimana tipo</span>
+          <div className={styles.week} aria-hidden="true">
+            {c.week!.map((d, i) => <span key={i}>{d}<i data-on={POSTS[i]} /></span>)}
+          </div>
           <ul className={styles.tagList}>
             {c.items!.map((it) => <li key={it}>{it}</li>)}
           </ul>
@@ -295,6 +344,7 @@ export function ServicesNewSection() {
 
         {cards.map((c, idx) => {
           const isOpen = open === c.id
+          const n = `0${idx + 1}`
           const peek = <Peek open={isOpen} onToggle={() => setOpen(isOpen ? null : c.id)} />
           return (
             <motion.div
@@ -308,10 +358,10 @@ export function ServicesNewSection() {
               viewport={vp}
               transition={{ duration: 0.8, ease: [0.2, 0.8, 0.2, 1], delay: (idx % 2) * 0.12 }}
             >
-              {c.kind === 'folder' && <Folder c={c} n={`0${idx + 1}`} peek={peek} />}
-              {c.kind === 'strip' && <Strip c={c} peek={peek} />}
-              {c.kind === 'sheet' && <Sheet c={c} peek={peek} />}
-              {c.kind === 'tag' && <Tag c={c} peek={peek} />}
+              {c.kind === 'folder' && <Folder c={c} n={n} peek={peek} />}
+              {c.kind === 'strip' && <Strip c={c} n={n} peek={peek} />}
+              {c.kind === 'sheet' && <Sheet c={c} n={n} peek={peek} />}
+              {c.kind === 'tag' && <Tag c={c} n={n} peek={peek} />}
             </motion.div>
           )
         })}
