@@ -324,6 +324,54 @@ function Budget({ stage, table, composer }: {
   return null
 }
 
+/**
+ * Il banco si prepara prima di entrare: i programmi della scheda video e le
+ * immagini (legno, carta, metallo...) si caricano ora, a pezzi, mentre il banco
+ * e' ancora fuori schermo. Altrimenti si preparavano tutti insieme nel primo
+ * fotogramma in cui il banco compare, e lo scroll scattava proprio li'.
+ */
+function Warmup({ table, ready }: { table: RefObject<THREE.Group | null>; ready: boolean }) {
+  const { gl, scene, camera } = useThree()
+  const done = useRef(false)
+  useEffect(() => {
+    if (!ready || done.current) return
+    let alive = true
+    const idle = (cb: () => void) => {
+      if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(cb, { timeout: 1500 })
+      else window.setTimeout(cb, 60)
+    }
+    // il banco monta i suoi pezzi (Suspense) un attimo dopo le immagini: si aspetta che ci siano
+    let t = 0, tries = 0
+    const attempt = () => idle(async () => {
+      const g = table.current
+      if (!alive || !g) return
+      if (g.children.length === 0) { if (++tries < 20) t = window.setTimeout(attempt, 500); return }
+      done.current = true
+      const was = g.visible
+      g.visible = true
+      const job = gl.compileAsync(scene, camera)   // traversata subito, compilazione in parallelo
+      g.visible = was
+      await job.catch(() => {})
+      const texs = new Set<THREE.Texture>()
+      g.traverse((o) => {
+        const m = (o as THREE.Mesh).material
+        for (const mat of Array.isArray(m) ? m : m ? [m] : []) {
+          for (const v of Object.values(mat)) if (v && (v as THREE.Texture).isTexture) texs.add(v as THREE.Texture)
+        }
+      })
+      // una immagine per volta, quando il browser e' libero
+      for (const tx of texs) {
+        if (!alive) return
+        await new Promise<void>((ok) => idle(ok))
+        gl.initTexture(tx)
+      }
+    })
+    t = window.setTimeout(attempt, 800)
+    return () => { alive = false; window.clearTimeout(t) }
+  }, [ready, gl, scene, camera, table])
+  return null
+}
+
 function World(props: Props & { images: Images | null }) {
   const { mobile } = props
   const look = useRef(new THREE.Vector3(0, 0, 0))
@@ -370,11 +418,12 @@ function World(props: Props & { images: Images | null }) {
         {props.images && <Suspense fallback={null}><Table {...props} images={props.images} /></Suspense>}
       </group>
       <Budget stage={props.stage} table={table} composer={composer} />
+      <Warmup table={table} ready={!!props.images} />
 
       {/* come in un render: occlusione negli angoli e vignettatura. Niente grana qui:
           sgranava il logo (la grana del sito e' gia' sopra tutta la pagina) */}
       {/* niente messa a fuoco: costava piu' di tutto il resto e faceva scattare lo scroll */}
-      <EffectComposer ref={composer} multisampling={mobile ? 0 : 4}>
+      <EffectComposer ref={composer} multisampling={mobile ? 0 : 2}>
         <N8AO aoRadius={0.5} distanceFalloff={0.5} intensity={3.5} quality={mobile ? 'low' : 'medium'} halfRes />
         <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
         <Vignette offset={0.25} darkness={0.55} />

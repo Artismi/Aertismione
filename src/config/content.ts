@@ -142,6 +142,7 @@ export const PROGETTI = {
     path:  '/gioco/index.html',   // lo stesso gioco, dall'indirizzo del sito
     page:  '/porto-vecchio',      // la pagina del sito con il gioco
     back:  'Torna al tavolo',
+    close: 'Esci',
     loading: 'Porto Vecchio sta arrivando…',
     screen: '/progetti/porto-vecchio-lancio.webp', // la schermata di lancio del gioco, sullo schermo del Game Boy
     // Quello che il gioco scarica partendo (~18 MB): il sito lo prende in sottofondo,

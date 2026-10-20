@@ -12,6 +12,8 @@ import styles from './PortfolioSection.module.css'
 import { PORTFOLIO, PROGETTI } from '@/config/content'
 import dynamic from 'next/dynamic'
 import type { TableApi } from '@/components/canvas/table/Table3D'
+import { consoleScreen } from '@/components/canvas/table/Console3D'
+import { GameBoy, gameWarmable, type Rect } from '@/components/ui/GameBoy'
 
 // Il tavolo in 3D si carica solo nel browser, a parte dal resto della pagina
 const Table3D = dynamic(() => import('@/components/canvas/table/Table3D'), { ssr: false })
@@ -811,25 +813,69 @@ export function PortfolioSection() {
     return () => window.removeEventListener('keydown', onKey)
   })
 
-  // Il gioco ha una pagina sua, nel sito: la console si prende in mano, si accende
-  // e si passa li'. Sopra il 3D della home era troppo lento.
-  useEffect(() => { router.prefetch(PROGETTI.game.page) }, [router])
-  useGamePreload()
+  // Il gioco si apre dentro il Game Boy, qui sulla home (vedi GameBoy): la console
+  // si prende in mano, viene davanti alla camera, e dal suo schermo nasce il gioco.
+  // Da computer il gioco e' gia' partito in sottofondo, nascosto: arriva al menu subito.
+  const [warm, setWarm] = useState(false)
+  const [gameOn, setGameOn] = useState(false)      // il gioco e' montato (anche nascosto)
+  const [gameFrom, setGameFrom] = useState<Rect | null>(null)
+  const [gameKey, setGameKey] = useState(0)
 
-  function grabGamepad() {
-    if (grab) return
-    setGrab(true)
-    later(() => routerRef.current.push(PROGETTI.game.page), OPEN_MS)
+  useEffect(() => {
+    if (!gameWarmable()) return
+    setWarm(true)
+    // finito di caricare il sito, quando il browser e' libero
+    let t = 0
+    const start = () => { t = window.setTimeout(() => {
+      const go = () => setGameOn(true)
+      if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(go, { timeout: 4000 })
+      else go()
+    }, 2500) }
+    if (document.readyState === 'complete') start()
+    else window.addEventListener('load', start, { once: true })
+    return () => { window.clearTimeout(t); window.removeEventListener('load', start) }
+  }, [])
+  useGamePreload(!warm)
+
+  function centerRect(): Rect {
+    const w = window.innerWidth, h = window.innerHeight
+    return { top: h * 0.35, left: w * 0.35, width: w * 0.3, height: h * 0.3 }
   }
 
-  // Vecchio link diretto (/#porto-vecchio): si va subito alla pagina del gioco
+  function grabGamepad() {
+    if (grab || gameFrom) return
+    setGrab(true)
+    setGameOn(true)
+    later(() => setGameFrom(consoleScreen.rect ?? centerRect()), OPEN_MS)
+  }
+
+  function closeGame() {
+    setGameFrom(null)
+    // lo schermo torna sulla console, poi il coperchio si richiude
+    later(() => setGrab(false), 120)
+    if (window.location.hash === `#${PROGETTI.game.id}`) {
+      history.replaceState(null, '', window.location.pathname + window.location.search)
+    }
+    // il gioco si rimonta da capo (si ferma, musica compresa); da computer riparte in sottofondo
+    if (warm) setGameKey((k) => k + 1)
+    else setGameOn(false)
+  }
+
+  // Link diretto (/#porto-vecchio): si arriva al tavolo e il Game Boy arriva subito in mano
   useEffect(() => {
     function fromHash() {
-      if (window.location.hash === `#${PROGETTI.game.id}`) routerRef.current.replace(PROGETTI.game.page)
+      if (window.location.hash !== `#${PROGETTI.game.id}`) return
+      const el = wrapperRef.current
+      el?.scrollIntoView({ block: 'center', behavior: 'instant' })
+      window.setTimeout(() => {
+        el?.scrollIntoView({ block: 'center', behavior: 'instant' })
+        grabGamepad()
+      }, 400)
     }
     fromHash()
     window.addEventListener('hashchange', fromHash)
     return () => window.removeEventListener('hashchange', fromHash)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   function jumpToPoint(lx: number, ly: number) {
@@ -999,6 +1045,8 @@ export function PortfolioSection() {
 
       </div>
 
+      {gameOn && <GameBoy key={gameKey} from={gameFrom} onClose={closeGame} warm={warm} />}
+
       <div className={styles.mobileGrid} data-show={phase === 'list' ? 'true' : undefined}>
         {PROJECTS.map(p=>(
           <button key={p.id} type="button" className={styles.mobileCard}
@@ -1027,8 +1075,9 @@ export function PortfolioSection() {
  * risente e, aprendo il gioco, i file arrivano dalla cache.
  * Niente con il risparmio dati o la rete lenta.
  */
-function useGamePreload() {
+function useGamePreload(on: boolean) {
   useEffect(() => {
+    if (!on) return
     const net = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection
     if (net?.saveData || /(^|-)2g$/.test(net?.effectiveType ?? '')) return
     const base = PROGETTI.game.path.replace(/[^/]*$/, '')
@@ -1053,5 +1102,5 @@ function useGamePreload() {
     if (document.readyState === 'complete') start()
     else window.addEventListener('load', start, { once: true })
     return () => { ctrl.abort(); window.clearTimeout(timer); window.removeEventListener('load', start) }
-  }, [])
+  }, [on])
 }

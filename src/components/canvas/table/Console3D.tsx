@@ -26,6 +26,16 @@ const HINGE_Z = -CD / 2 + 0.04
 const LID_D = CD - 0.04
 const SCREEN = { w: 0.6, h: 0.4 }
 const damp = THREE.MathUtils.damp
+
+/**
+ * Dove sta lo schermo del Game Boy sulla pagina, in pixel: da li' nasce il gioco
+ * a tutto schermo. Lo aggiorna Console3D a ogni fotogramma.
+ */
+export const consoleScreen: { rect: { top: number; left: number; width: number; height: number } | null } = { rect: null }
+
+// coperchio aperto in mano: di quanto girare la console perche' lo schermo guardi dritto la camera
+const GRAB_LID = -2.05
+const GRAB_TILT = Math.atan2(-Math.cos(GRAB_LID), -Math.sin(GRAB_LID))
 const EPS = 0.0005
 const FLAT: [number, number, number] = [-Math.PI / 2, 0, 0]
 const UNDER: [number, number, number] = [Math.PI / 2, 0, 0] // faccia interna del coperchio
@@ -189,6 +199,12 @@ export function Console3D({ phase, mobile, grab, hovered, game, logo, plasticRou
   const home = mobile ? [0.3, 0, 1.75] : [2.15, 0, 0.4]
   const homeRy = mobile ? -0.3 : -0.4
   const tmp = useMemo(() => new THREE.Vector3(), [])
+  const screen = useRef<THREE.Mesh>(null!)
+  const k = useMemo(() => ({
+    q: new THREE.Quaternion(), tilt: new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), GRAB_TILT),
+    pq: new THREE.Quaternion(), fwd: new THREE.Vector3(), want: new THREE.Vector3(), at: new THREE.Vector3(),
+    corner: new THREE.Vector3(),
+  }), [])
 
   useFrame((state, dt) => {
     const away = !mobile && phase !== 'closed' && phase !== 'returning' && phase !== 'list'
@@ -196,11 +212,22 @@ export function Console3D({ phase, mobile, grab, hovered, game, logo, plasticRou
     let tx = away ? 6.5 : home[0], ty = 0, tz = away ? 0.8 : home[2]
     let rx = 0, ry = homeRy, sc = mobile ? 1.1 : 1.25
     if (grab) {
-      // presa in mano: si avvicina a chi guarda, base inclinata e schermo verso di noi
-      tmp.copy(state.camera.position).lerp(new THREE.Vector3(0.25, 0, 0.7), 0.6)
-      tx = tmp.x; ty = tmp.y - 0.25; tz = tmp.z
-      rx = -0.15; ry = 0; sc = mobile ? 0.85 : 0.95
-    } else if (restful && hovered) {
+      // presa in mano: la console viene davanti alla camera, con lo schermo dritto verso chi guarda,
+      // grande quanto basta perche' lo schermo occupi piu' di meta' dell'altezza
+      const cam = state.camera as THREE.PerspectiveCamera
+      const g = group.current
+      const s = mobile ? 0.85 : 0.95
+      const d = (SCREEN.h * s) / (0.58 * 2 * Math.tan(THREE.MathUtils.degToRad(cam.fov / 2)))
+      cam.getWorldDirection(k.fwd)
+      k.want.copy(cam.position).addScaledVector(k.fwd, d)
+      // dove sta adesso lo schermo, rispetto al centro della console: la si sposta di quella differenza
+      screen.current.getWorldPosition(k.at)
+      g.parent!.worldToLocal(k.want); g.parent!.worldToLocal(k.at)
+      tx = g.position.x + (k.want.x - k.at.x); ty = g.position.y + (k.want.y - k.at.y); tz = g.position.z + (k.want.z - k.at.z)
+      g.parent!.getWorldQuaternion(k.pq)
+      k.q.copy(k.pq).invert().multiply(cam.quaternion).multiply(k.tilt)
+      sc = s
+        } else if (restful && hovered) {
       ty = 0.12; rx = -0.05
     }
 
@@ -214,11 +241,17 @@ export function Console3D({ phase, mobile, grab, hovered, game, logo, plasticRou
     g.position.x = step(g.position.x, tx, 6)
     g.position.y = step(g.position.y, ty, 7)
     g.position.z = step(g.position.z, tz, 6)
-    g.rotation.x = step(g.rotation.x, rx, 6)
-    g.rotation.y = step(g.rotation.y, ry, 6)
+    if (grab) {
+      g.quaternion.slerp(k.q, 1 - Math.exp(-6 * dt))
+      if (g.quaternion.angleTo(k.q) > 0.001) moving = true
+    } else {
+      g.rotation.x = step(g.rotation.x, rx, 6)
+      g.rotation.y = step(g.rotation.y, ry, 6)
+      g.rotation.z = step(g.rotation.z, 0, 6)
+    }
     g.scale.setScalar(step(g.scale.x, sc, 6))
     // sul banco sta aperta (si vedono tasti e schermo spento); in mano si apre del tutto
-    lid.current.rotation.x = step(lid.current.rotation.x, grab ? -2.05 : away ? 0 : -1.8, 5)
+    lid.current.rotation.x = step(lid.current.rotation.x, grab ? GRAB_LID : away ? 0 : -1.8, 5)
     // accensione: logo Artismi, poi la schermata di lancio
     if (boot.current < BOOT_SECONDS) {
       boot.current = Math.min(BOOT_SECONDS, boot.current + Math.min(dt, 0.05))
@@ -230,6 +263,17 @@ export function Console3D({ phase, mobile, grab, hovered, game, logo, plasticRou
     screenMat.color.setScalar(power.current)
     mats.led.color.set('#ff4d5e')
     if (moving) invalidate()
+
+    // il rettangolo dello schermo sulla pagina (per il gioco che nasce da li')
+    const sz = state.size
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity
+    for (const [cx, cy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+      k.corner.set(cx * SCREEN.w / 2, cy * SCREEN.h / 2, 0)
+      screen.current.localToWorld(k.corner).project(state.camera)
+      const px = (k.corner.x + 1) / 2 * sz.width, py = (1 - k.corner.y) / 2 * sz.height
+      x0 = Math.min(x0, px); x1 = Math.max(x1, px); y0 = Math.min(y0, py); y1 = Math.max(y1, py)
+    }
+    consoleScreen.rect = { left: x0, top: y0, width: x1 - x0, height: y1 - y0 }
   })
 
   const over = (e: ThreeEvent<PointerEvent>) => { e.stopPropagation(); onPointer(true) }
@@ -337,7 +381,7 @@ export function Console3D({ phase, mobile, grab, hovered, game, logo, plasticRou
           </mesh>
           {/* cornice rosa spessa, LCD incassato dentro la finestra, vetro sopra; LED */}
           <mesh geometry={geo.bezel} position={[0, 0, LID_D * 0.5]} rotation={UNDER} material={mats.bezel} castShadow receiveShadow />
-          <mesh position={[0, -0.002, LID_D * 0.5 + 0.05]} rotation={UNDER} material={screenMat}>
+          <mesh ref={screen} position={[0, -0.002, LID_D * 0.5 + 0.05]} rotation={UNDER} material={screenMat}>
             <planeGeometry args={[SCREEN.w, SCREEN.h]} />
           </mesh>
           <mesh position={[0, -0.0092, LID_D * 0.5 + 0.05]} rotation={UNDER} material={mats.glass}>
