@@ -3,12 +3,13 @@
 /**
  * Servizi: la griglia a colonne, una per servizio, separate da filetti; la
  * colonna del percorso piu' richiesto e' viola, col badge ambra. Solo
- * tipografia e colore, tutto il testo in vista, niente prezzi. Ogni colonna:
- * cos'e' e per chi, le voci con una spiegazione breve, cosa ricevi, un esempio vero.
+ * tipografia e colore, niente prezzi. Ogni colonna si legge d'un fiato:
+ * titolo, la promessa (a cosa serve, in una frase), poche righe su cosa
+ * succede e cosa ottieni, un lavoro vero.
  * I contenuti sono in SERVICES.cards (content.ts).
  *
- * Sul telefono le colonne diventano una griglia due per due con tipo, titolo e
- * frase: toccandone una si apre a tutta larghezza, e le altre restano li'.
+ * Sul telefono le colonne diventano una griglia due per due con titolo e
+ * promessa: toccandone una si apre a tutta larghezza, e le altre restano li'.
  */
 
 import { useState } from 'react'
@@ -19,18 +20,14 @@ import { useConfiguratorStore } from '@/stores/useConfiguratorStore'
 
 const vp = { once: true, margin: '-60px' }
 
-type Row = { name: string; text: string }
 type Card = {
   id: string
   type: string
   label: string
-  hook: string
-  forWho: string
+  promise: string
+  text: string
+  proof: string
   featured?: boolean
-  groups: { label?: string; items: Row[] }[]
-  more?: string
-  result: string
-  example: string
 }
 
 const cards = SERVICES.cards as Card[]
@@ -75,16 +72,17 @@ export function ServicesNewSection() {
             >
               <div className={styles.blockHead}>
                 <span className={styles.blockIdx} aria-hidden="true">0{idx + 1}</span>
-
-                {c.featured && (
-                  <span className={styles.badge}>✦ Più richiesto</span>
-                )}
-
+                {c.featured && <span className={styles.badge}>✦ Più richiesto</span>}
                 <span className={styles.blockType}>{c.type}</span>
                 <h3 className={styles.blockTitle}>{c.label}</h3>
-                <p className={styles.blockHook}>{c.hook}</p>
-                <p className={styles.forWho}><span>Per chi</span> {c.forWho}</p>
+              </div>
 
+              <div className={styles.blockBody}>
+                <p className={styles.promise}>{c.promise}</p>
+                <div className={styles.more}>
+                  <p className={styles.text}>{c.text}</p>
+                  <p className={styles.proof}><span>Già fatto per</span> {c.proof}</p>
+                </div>
                 <button
                   type="button"
                   className={styles.peek}
@@ -95,36 +93,13 @@ export function ServicesNewSection() {
                 </button>
               </div>
 
-              <div className={styles.more}>
-                <div className={styles.groups}>
-                {c.groups.map((g, gi) => (
-                  <ul key={gi} className={styles.list}>
-                    {g.label && <li className={styles.groupLabel}>{g.label}</li>}
-                    {g.items.map((it) => (
-                      <li key={it.name} className={styles.item}>
-                        <span className={styles.itemName}>{it.name}</span>
-                        <span className={styles.itemText}>{it.text}</span>
-                      </li>
-                    ))}
-                  </ul>
-                ))}
-                </div>
-
-                {c.more && <p className={styles.extra}>{c.more}</p>}
-
-                <div className={styles.outcome}>
-                  <p className={styles.result}><span>Cosa ricevi</span>{c.result}</p>
-                  <p className={styles.example}><span>Esempio</span>{c.example}</p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => useConfiguratorStore.getState().openModal()}
-                  className={styles.blockCta}
-                >
-                  {SERVICES.cta}
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => useConfiguratorStore.getState().openModal()}
+                className={styles.blockCta}
+              >
+                {SERVICES.cta}
+              </button>
             </motion.div>
           )
         })}
