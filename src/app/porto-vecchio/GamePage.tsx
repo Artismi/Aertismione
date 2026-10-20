@@ -25,19 +25,48 @@ export function GamePage() {
   // prima che la pagina potesse accorgersene, e restava nascosto
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
+  const [ready, setReady] = useState(false)
   const [pct, setPct] = useState(0)
-  const ready = loaded && pct >= 100
+  // a che punto e' il gioco (0..1): lo dice lui con postMessage ('carico', 'pronto')
+  const real = useRef(0)
+  const talks = useRef(false)
 
-  // contatore come quello della home: sale da solo, si ferma a 95 finche' il gioco non e' pronto
+  // Un caricamento solo: questo resta finche' il menu del gioco non e' disegnato
+  // (il gioco lo dice), cosi' sotto non si vede il suo "Carico il porto…"
   useEffect(() => {
-    const id = window.setInterval(() => setPct((p) => loaded ? Math.min(100, p + 8) : Math.min(95, p + 1.2)), 35)
-    return () => window.clearInterval(id)
+    function onMsg(e: MessageEvent) {
+      if (e.source !== frameRef.current?.contentWindow || !e.data || typeof e.data.pv !== 'string') return
+      talks.current = true
+      if (typeof e.data.p === 'number') real.current = Math.max(real.current, e.data.p)
+      if (e.data.pv === 'pronto') setReady(true)
+    }
+    window.addEventListener('message', onMsg)
+    return () => window.removeEventListener('message', onMsg)
+  }, [])
+
+  // Una versione del gioco che non parla: basta la pagina caricata.
+  // E se il messaggio non arrivasse mai, dopo un po' si mostra comunque.
+  useEffect(() => {
+    if (!loaded) return
+    const t = window.setTimeout(() => setReady(true), talks.current ? 30000 : 300)
+    return () => window.clearTimeout(t)
   }, [loaded])
+
+  // Il contatore segue il caricamento vero e intanto non sta mai fermo:
+  // avanza piano da solo verso 90, poi corre a 100 quando il gioco e' pronto
+  useEffect(() => {
+    const id = window.setInterval(() => setPct((p) => {
+      if (ready) return Math.min(100, p + 6)
+      return Math.min(97, Math.max(p + (90 - p) * 0.02, real.current * 100))
+    }), 40)
+    return () => window.clearInterval(id)
+  }, [ready])
+  const shown = ready && pct >= 100
 
   // i tasti arrivano al gioco solo se il riquadro ha il fuoco
   useEffect(() => {
-    if (ready) frameRef.current?.focus()
-  }, [ready])
+    if (shown) frameRef.current?.focus()
+  }, [shown])
 
   // si torna al tavolo da cui si e' partiti; arrivando da un link, alla home
   function back() {
@@ -67,7 +96,7 @@ export function GamePage() {
 
       <div className={styles.stage}>
         {/* il caricamento della home del sito: griglia, logo Artismi, percentuale */}
-        <div className={`${pre.overlay} ${styles.loading}`} data-hidden={ready ? 'true' : undefined} aria-hidden={ready}>
+        <div className={`${pre.overlay} ${styles.loading}`} data-hidden={shown ? 'true' : undefined} aria-hidden={shown}>
           <MatrixGrid />
           <div className={pre.hud}>
             <img className={styles.logo} src="/artismi-logo.png" alt="" />
@@ -83,7 +112,7 @@ export function GamePage() {
         {mounted && <iframe
           ref={frameRef}
           className={styles.frame}
-          data-loaded={ready ? 'true' : undefined}
+          data-loaded={shown ? 'true' : undefined}
           src={game.path}
           title={game.title}
           allow="fullscreen; autoplay; gamepad"

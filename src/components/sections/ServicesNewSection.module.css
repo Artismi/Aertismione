@@ -68,7 +68,7 @@
   color: var(--color-text);
   line-height: 0.9;
   margin: 0;
-  letter-spacing: 0.04em;
+  letter-spacing: -0.02em; /* titoli stretti, come h1 */
 }
 
 .headingAccent {
@@ -159,7 +159,7 @@
 .blockTitle {
   font-family: var(--font-condensed);
   font-size: clamp(1.4rem, 2.2vw, 1.8rem);
-  letter-spacing: 0.05em;
+  letter-spacing: -0.02em; /* titoli stretti, come h1 */
   text-transform: uppercase;
   color: var(--color-text);
   line-height: 1;

@@ -93,7 +93,7 @@
   font-family: var(--font-display);
   font-size: clamp(2rem, 4vw, 3rem);
   font-weight: 400;
-  letter-spacing: 0.04em;
+  letter-spacing: -0.02em; /* titoli stretti, come h1 */
   text-transform: uppercase;
   color: var(--color-text);
   line-height: 0.95;
