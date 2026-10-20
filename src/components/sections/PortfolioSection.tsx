@@ -9,7 +9,13 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import styles from './PortfolioSection.module.css'
-import { PORTFOLIO } from '@/config/content'
+import { PORTFOLIO, PROGETTI } from '@/config/content'
+import { GameOverlay, type Rect } from '@/components/ui/GameOverlay'
+import dynamic from 'next/dynamic'
+import type { TableApi } from '@/components/canvas/table/Table3D'
+
+// Il tavolo in 3D si carica solo nel browser, a parte dal resto della pagina
+const Table3D = dynamic(() => import('@/components/canvas/table/Table3D'), { ssr: false })
 
 /* â”€â”€â”€ Costanti â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
@@ -30,7 +36,22 @@ interface JumpState {
   startTime: number; duration: number; arcHeight: number
   scaleX: number; scaleY: number; arcNorm: number
   landed: boolean; projectId: string
+  /** Velocita' da dare alla pallina dopo l'atterraggio (uscita dalla piega) */
+  thenVx?: number; thenVy?: number
 }
+
+/**
+ * Il tavolo: la cartellina si apre in piu' tempi.
+ * closed → sliding (scivola a destra) → opening (la copertina si apre a sinistra)
+ * → open (dentro c'e' la mappa) → closing → returning → closed.
+ * Da telefono basta socchiuderla: 'list' mostra l'elenco di schede.
+ */
+type Phase = 'closed' | 'sliding' | 'opening' | 'open' | 'closing' | 'returning' | 'list'
+
+const SLIDE_MS = 650
+const COVER_MS = 800
+const FADE_MS  = 280
+const OPEN_MS  = 1150 // coperchio alzato e schermo acceso
 
 interface Particle { x: number; y: number; vx: number; vy: number; r: number; alpha: number; color: string }
 
@@ -42,6 +63,12 @@ const ZONE_JITTER = PROJECTS.map((p) => {
   const seed = p.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
   return Array.from({ length: 9 }, (_, i) => 0.68 + ((seed * (i+1) * 137 + 41) % 100) / 175)
 })
+
+/** Le anteprime che spuntano dal fascicolo chiuso */
+const THUMBS = PROJECTS
+  .map((p) => (p as { thumb?: string }).thumb)
+  .filter((t): t is string => Boolean(t))
+  .slice(0, 4)
 
 const PATH_PAIRS: [number, number][] = [
   [0,2],[2,4],[4,6],[6,8],[8,0],
@@ -520,6 +547,15 @@ export function PortfolioSection() {
   const startTimeRef  = useRef(0)
   const gridRevealRef = useRef(0)
   const inViewRef     = useRef(false)
+  const openRef       = useRef(false)
+  const desktopRef    = useRef(false)
+  const timersRef     = useRef<number[]>([])
+  const tableRef      = useRef<TableApi | null>(null)   // da qui si legge dove sta lo schermo della console
+  const [desktop, setDesktop] = useState(true)
+
+  const [phase, setPhase] = useState<Phase>('closed')
+  const [grab, setGrab]   = useState(false)
+  const [game, setGame]   = useState<Rect | null>(null)
 
   const isDraggingRef       = useRef(false)
   const dragPosRef          = useRef({ x: 0, y: 0 })
@@ -545,6 +581,11 @@ export function PortfolioSection() {
         : Math.min(620, Math.max(380, Math.round(w * 0.54)))
       canvasEl.width=w*dpr; canvasEl.height=h*dpr
       canvasEl.style.width=`${w}px`; canvasEl.style.height=`${h}px`
+      // Il tavolo e' alto quanto la mappa: aperto, il fascicolo la contiene tutta
+      desktopRef.current = window.matchMedia('(min-width: 900px) and (pointer: fine)').matches
+      setDesktop(desktopRef.current)
+      // da telefono il tavolo e' in verticale: fascicolo sopra, console sotto
+      wrapperEl.style.height = desktopRef.current ? `${h}px` : `${Math.round(Math.min(720, Math.max(520, w * 1.45)))}px`
       sizeRef.current={w,h}
       const b=ballRef.current
       if (b.x===0&&b.y===0) { b.x=w/2; b.y=h/2 }
@@ -585,14 +626,17 @@ export function PortfolioSection() {
       const time=now-startTimeRef.current
       const ball=ballRef.current
 
-      gridRevealRef.current+=(( inViewRef.current?1:0)-gridRevealRef.current)*0.03
+      // La mappa si vede solo a fascicolo aperto: entra piano, esce svelta
+      const visible = inViewRef.current && openRef.current
+      gridRevealRef.current+=((visible?1:0)-gridRevealRef.current)*(visible?0.06:0.2)
       canvasLoop.style.opacity=Math.max(0, gridRevealRef.current).toFixed(3)
 
-      // Sezione fuori schermo: si salta tutto il disegno. Prima la mappa
-      // continuava a ridisegnare cartelline, ombre, scia e particelle 60 volte
-      // al secondo anche mentre si guardava tutt'altra parte del sito: era una
-      // tassa costante che faceva scattare 3D, cursore e video.
-      if (!inViewRef.current && gridRevealRef.current < 0.02) {
+      // Sezione fuori schermo o fascicolo chiuso: si salta tutto il disegno.
+      // Prima la mappa continuava a ridisegnare cartelline, ombre, scia e
+      // particelle 60 volte al secondo anche mentre si guardava tutt'altra
+      // parte del sito: era una tassa costante che faceva scattare 3D,
+      // cursore e video.
+      if (!visible && gridRevealRef.current < 0.02) {
         rafRef.current = requestAnimationFrame(loop)
         return
       }
@@ -630,6 +674,7 @@ export function PortfolioSection() {
             setTimeout(()=>{
               jumpRef.current=null
               if (proj) routerRef.current.push(`/portfolio/${proj.id}`)
+              else if (js.thenVx !== undefined) { ball.vx=js.thenVx; ball.vy=js.thenVy ?? 0 }
             }, 340)
           }, 120)
         }
@@ -700,6 +745,110 @@ export function PortfolioSection() {
 
     rafRef.current=requestAnimationFrame(loop)
     return ()=>{ if(rafRef.current) cancelAnimationFrame(rafRef.current) }
+  }, [])
+
+  /* ── Il tavolo: cartellina e gamepad ── */
+
+  function later(fn: () => void, ms: number) {
+    timersRef.current.push(window.setTimeout(fn, ms))
+  }
+
+  useEffect(() => () => { timersRef.current.forEach(clearTimeout) }, [])
+
+  // La pallina era rimasta pizzicata nella piega: aperto il fascicolo, salta fuori
+  function popBall() {
+    const {w,h}=sizeRef.current; if (w===0) return
+    const ball=ballRef.current, now=performance.now()
+    const sx=w/2, sy=h*0.42
+    ball.x=sx; ball.y=sy; ball.vx=0; ball.vy=0; trailRef.current=[]
+    collisionCooldownRef.current=now+800
+    const fire=['#FF55E0','#CC44FF','#FF99EE','#E8A8BF']
+    for (let i=0;i<14;i++) {
+      const a=Math.PI+(Math.random()-0.5)*1.6, sp=1.5+Math.random()*4
+      particlesRef.current.push({x:sx,y:sy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1.5,r:1.2+Math.random()*2.5,alpha:0.9,color:fire[i%fire.length]})
+    }
+    jumpRef.current={
+      fromX:sx, fromY:sy, toX:w*0.3, toY:h*0.58,
+      startTime:now, duration:640, arcHeight:120,
+      scaleX:0.6, scaleY:1.5, arcNorm:0,
+      landed:false, projectId:'', thenVx:-3.4, thenVy:0.8,
+    }
+  }
+
+  useEffect(() => {
+    openRef.current = phase === 'open'
+    if (phase === 'open') popBall()
+  }, [phase])
+
+  /** Il tavolo e' al centro dello schermo (la camera del mondo e' sul banco) */
+  function atTable() {
+    const r = wrapperRef.current?.getBoundingClientRect()
+    if (!r) return false
+    return Math.abs(r.top + r.height / 2 - window.innerHeight / 2) < window.innerHeight * 0.3
+  }
+
+  function openFolder() {
+    if (phase === 'list') { setPhase('closed'); return }
+    if (phase !== 'closed') return
+    if (!desktopRef.current) { setPhase('list'); return }
+    setPhase('sliding')
+    later(() => setPhase('opening'), SLIDE_MS)
+    later(() => setPhase('open'), SLIDE_MS + COVER_MS)
+  }
+
+  function closeFolder() {
+    if (phase === 'list') { setPhase('closed'); return }
+    if (phase !== 'open') return
+    const ball=ballRef.current; ball.vx=0; ball.vy=0; jumpRef.current=null
+    hoveredRef.current=null
+    setPhase('closing')
+    later(() => setPhase('returning'), FADE_MS + COVER_MS)
+    later(() => setPhase('closed'), FADE_MS + COVER_MS + SLIDE_MS)
+  }
+
+  useEffect(() => {
+    if (phase !== 'open') return
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape' && !game) closeFolder() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
+
+  // La console si prende in mano e si apre; poi lo schermo si allarga a tutto schermo
+  function screenRect(): Rect | null {
+    return tableRef.current?.screenRect() ?? null
+  }
+
+  function grabGamepad() {
+    if (grab || game) return
+    setGrab(true)
+    later(() => setGame(screenRect()), OPEN_MS)
+  }
+
+  function closeGame() {
+    setGame(null)
+    // lo schermo si spegne, poi il coperchio si richiude
+    later(() => setGrab(false), 250)
+    if (window.location.hash === `#${PROGETTI.game.id}`) {
+      history.replaceState(null, '', window.location.pathname + window.location.search)
+    }
+  }
+
+  // Link diretto (artismi.it/porto-vecchio → /#porto-vecchio): si arriva al
+  // tavolo e il gamepad arriva subito in mano
+  useEffect(() => {
+    function fromHash() {
+      if (window.location.hash !== `#${PROGETTI.game.id}`) return
+      const el = document.getElementById(PROGETTI.game.id)
+      el?.scrollIntoView({ block: 'center', behavior: 'instant' })
+      window.setTimeout(() => {
+        el?.scrollIntoView({ block: 'center', behavior: 'instant' })
+        setGrab(true)
+        window.setTimeout(() => setGame(screenRect()), OPEN_MS)
+      }, 250)
+    }
+    fromHash()
+    window.addEventListener('hashchange', fromHash)
+    return () => window.removeEventListener('hashchange', fromHash)
   }, [])
 
   function jumpToPoint(lx: number, ly: number) {
@@ -842,19 +991,51 @@ export function PortfolioSection() {
 
   return (
     <div ref={sectionRef} className={styles.section}>
-      <div className="container">
-        <span className="accent-bar" />
-        <h2 className={styles.heading}>Portfolio</h2>
-        <p className={styles.intro}>
-          Ogni progetto è un territorio.{' '}
-          <em className={styles.introDesktop}>
-            Clicca per saltare — trascina la pallina per spararla come una bilia.
-          </em>
-          <em className={styles.introMobile}>Tocca un progetto per aprirlo.</em>
-        </p>
-      </div>
+      {/* Niente titolo a vista: la sezione e' il piano di lavoro. Il titolo resta per chi legge con lo screen reader */}
+      <h2 className={styles.srOnly}>{PROGETTI.heading}</h2>
 
-      <div ref={wrapperRef} className={styles.canvasWrapper}>
+      <div ref={wrapperRef} className={styles.stage} data-phase={phase} data-world-stage>
+        {/* Il tavolo in 3D sta nel mondo dietro la pagina (Table3D fa un portale su body):
+            qui resta il riquadro che lo inquadra. I clic sul 3D arrivano da tutta la
+            pagina, quindi contano solo quando il tavolo e' davvero sullo schermo. */}
+        <Table3D
+          phase={phase}
+          grab={grab}
+          mobile={!desktop}
+          thumbs={THUMBS}
+          count={PROJECTS.length}
+          folderLabel={PROGETTI.folderLabel}
+          folderHint={PROGETTI.folderHint}
+          game={PROGETTI.game}
+          onFolder={() => { if (atTable()) openFolder() }}
+          onConsole={() => { if (atTable()) grabGamepad() }}
+          api={tableRef}
+          stage={wrapperRef}
+        />
+
+        {/* Il fascicolo aperto, in piano: sotto la mappa */}
+        <div className={styles.spread} aria-hidden="true" />
+
+        {/* Gli stessi comandi da tastiera e per chi usa un lettore di schermo */}
+        <button
+          type="button"
+          className={`${styles.hit} ${styles.hitFolder}`}
+          onClick={openFolder}
+          aria-expanded={phase === 'open' || phase === 'list'}
+          tabIndex={phase === 'closed' || phase === 'list' ? 0 : -1}
+        >
+          {phase === 'list' ? PROGETTI.folderClose : PROGETTI.folderHint}
+        </button>
+        <button
+          id={PROGETTI.game.id}
+          type="button"
+          className={`${styles.hit} ${styles.hitConsole}`}
+          onClick={grabGamepad}
+          tabIndex={phase === 'closed' || phase === 'list' ? 0 : -1}
+        >
+          {PROGETTI.game.title} — {PROGETTI.game.hint}
+        </button>
+
         <canvas
           ref={canvasRef}
           className={styles.canvas}
@@ -867,16 +1048,25 @@ export function PortfolioSection() {
           onTouchEnd={handleTouchEnd}
           style={{ touchAction: 'none' }}
         />
-        <div className={styles.legend}>
-          {PROJECTS.map(p=>(
-            <span key={p.id} className={styles.legendItem} style={{'--lc':p.accent} as React.CSSProperties}>
-              <span className={styles.legendDot}/>{p.title}
-            </span>
-          ))}
-        </div>
+
+        <button type="button" className={styles.folderClose} onClick={closeFolder} tabIndex={phase === 'open' ? 0 : -1}>
+          {PROGETTI.folderClose} ✕
+        </button>
+        <p className={styles.mapHint} aria-hidden={phase !== 'open'}>
+          Clicca per saltare — trascina la pallina per spararla come una bilia.
+        </p>
+
       </div>
 
-      <div className={styles.mobileGrid}>
+      <div className={styles.legend} data-show={phase === 'open' ? 'true' : undefined}>
+        {PROJECTS.map(p=>(
+          <span key={p.id} className={styles.legendItem} style={{'--lc':p.accent} as React.CSSProperties}>
+            <span className={styles.legendDot}/>{p.title}
+          </span>
+        ))}
+      </div>
+
+      <div className={styles.mobileGrid} data-show={phase === 'list' ? 'true' : undefined}>
         {PROJECTS.map(p=>(
           <button key={p.id} type="button" className={styles.mobileCard}
             style={{'--ca':p.accent} as React.CSSProperties}
@@ -894,6 +1084,7 @@ export function PortfolioSection() {
         ))}
       </div>
 
+      {game && <GameOverlay from={game} onClose={closeGame} />}
     </div>
   )
 }

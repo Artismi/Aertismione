@@ -28,7 +28,7 @@ export const NAV = {
     { href: '#visione',    label: 'Visione' },
     { href: '#servizi',    label: 'Servizi' },
     { href: '#preventivo', label: 'Preventivo' }, // Aggiunto link configuratore
-    { href: '#portfolio',  label: 'Portfolio' },
+    { href: '#portfolio',  label: 'Progetti' },
     { href: '#chi-sono',   label: 'Chi Sono' },
     { href: '#contatti',   label: 'Contatti' },
   ],
@@ -116,6 +116,43 @@ export const SERVICES = {
     },
   ],
   footerNote: "Tutti i prezzi sono indicativi — ogni progetto è un'altra storia. Materiali di stampa e produzione sempre a parte.",
+}
+
+/* ─── CAPITOLI ───────────────────────────────────────────────────────────── */
+
+/** L'indice editoriale fisso della home: un capitolo per sezione, nell'ordine della discesa */
+export const CHAPTERS = [
+  { id: 'hero',      label: 'Aria' },
+  { id: 'visione',   label: 'Visione' },
+  { id: 'portfolio', label: 'Il banco' },
+  { id: 'servizi',   label: 'Servizi' },
+  { id: 'chi-sono',  label: 'Chi sono' },
+  { id: 'contatti',  label: 'Contatti' },
+]
+
+/* ─── PROGETTI ───────────────────────────────────────────────────────────── */
+
+/**
+ * Il tavolo della sezione Progetti: la cartellina del portfolio e il gamepad
+ * di Porto Vecchio. Il gioco vive sul suo sito (url) e si carica solo quando
+ * qualcuno prende in mano il gamepad: fino ad allora non pesa sul portfolio.
+ * Il link da condividere e' artismi.it/porto-vecchio (vedi next.config.mjs).
+ */
+export const PROGETTI = {
+  heading: 'Progetti',
+  intro:   'Sul tavolo ci sono due cose: il fascicolo con i lavori e un gioco. Prendi quello che vuoi.',
+  folderLabel: 'Progetti',
+  folderHint:  'Apri il fascicolo',
+  folderClose: 'Chiudi il fascicolo',
+  game: {
+    id:    'porto-vecchio',
+    title: 'Porto Vecchio',
+    hint:  'Videogioco · aprila',
+    url:   'https://porto-vecchio.vercel.app/v7/',
+    screen: '/progetti/porto-vecchio-lancio.webp', // la schermata di lancio del gioco, sullo schermo del Game Boy
+    close: 'Esci dal gioco',
+    loading: 'Porto Vecchio sta arrivando…',
+  },
 }
 
 /* ─── PORTFOLIO ──────────────────────────────────────────────────────────── */

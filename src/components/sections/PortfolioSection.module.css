@@ -6,48 +6,124 @@
   padding: var(--section-py) 0;
   position: relative;
   z-index: 1; /* CRITICAL: Establishes stacking context over the fixed Canvas */
-  background: rgba(16, 15, 19, 0.90); /* grafite neutro, meno viola */
+  /* niente fondo: dietro c'e' il mondo 3D, e qui la camera e' sul banco */
+  background: transparent;
 }
 
-.heading {
-  font-size: clamp(2rem, 4vw, 3.5rem);
-  margin-bottom: 1.25rem;
-  color: var(--color-text);
+/* il titolo della sezione c'e' solo per gli screen reader: a vista c'e' il piano di lavoro */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
-.intro {
-  font-family: var(--font-body);
-  font-size: 1.0625rem;
-  line-height: 1.7;
-  color: var(--color-body);
-  max-width: 600px;
-  margin-bottom: 2.5rem;
-}
+/* ── Il tavolo: fascicolo + console (in 3D, vedi Table3D) ───────── */
 
-/* ── Canvas wrapper — nessun box, il canvas respira ──────────────── */
-
-.canvasWrapper {
-  /* Canvas edge-to-edge — la mappa è tutta la sezione */
-  padding: 0;
+.stage {
+  position: relative;
   width: 100%;
+  min-height: 380px;
+  perspective: 2400px;
 }
 
 .canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
   display: block;
   width: 100%;
-  /* Nessun border, border-radius, box-shadow —
-     il campo non è imprigionato in un box */
   background: transparent;
   cursor: crosshair;
-  /* L'opacity è gestita via JS in base allo scroll (IntersectionObserver).
-     Parte da 0 e si svela mentre la sezione entra nel viewport. */
+  /* L'opacity e' gestita via JS: la mappa compare solo a fascicolo aperto */
   opacity: 0;
+  pointer-events: none;
   will-change: opacity;
+}
+
+.stage[data-phase='open'] .canvas { pointer-events: auto; }
+
+/* Fuori dalla fase aperta la mappa sparisce subito, prima che la copertina si chiuda
+   (vince sull'opacity scritta dal JS, che a scatti puo' restare indietro) */
+.stage:not([data-phase='open']) .canvas {
+  opacity: 0 !important;
+  transition: opacity 0.25s ease;
+}
+
+/* Il fascicolo aperto in piano: fodera scura e piega al centro, sotto la mappa */
+.spread {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background:
+    linear-gradient(90deg, transparent calc(50% - 40px), rgba(0, 0, 0, 0.45) 50%, transparent calc(50% + 40px)),
+    #1E1B24;
+  border: 1px solid rgba(176, 122, 71, 0.6);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.stage[data-phase='open'] .spread {
+  opacity: 1;
+  transition: opacity 0.35s ease;
+}
+
+/* Comandi invisibili sopra gli oggetti: tastiera, lettori di schermo, link diretto */
+.hit {
+  position: absolute;
+  z-index: 0;
+  opacity: 0;
+  pointer-events: none;
+  background: none;
+  border: 0;
+  color: transparent;
+  font-size: 1px;
+}
+
+.hit:focus-visible {
+  opacity: 1;
+  z-index: 5;
+  outline: 2px solid var(--color-accent);
+  outline-offset: 4px;
+}
+
+.hitFolder  { left: 8%; top: 8%; width: 36%; height: 84%; }
+.hitConsole { right: 6%; top: 25%; width: 26%; height: 50%; }
+
+.folderClose {
+  position: absolute;
+  z-index: 4;
+  top: 12px;
+  right: 16px;
+  padding: 8px 12px;
+  background: rgba(16, 15, 19, 0.85);
+  border: 1px solid rgba(242, 237, 228, 0.25);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, background 0.15s, color 0.15s;
+}
+
+.stage[data-phase='open'] .folderClose { opacity: 1; pointer-events: auto; }
+
+.folderClose:hover {
+  background: var(--color-text);
+  color: #1A1A1A;
 }
 
 /* ── Legenda ─────────────────────────────────────────────────────── */
 
 .legend {
+  opacity: 0;
+  transition: opacity 0.4s ease;
   display: flex;
   flex-wrap: wrap;
   gap: 6px 18px;
@@ -73,6 +149,8 @@
   background: var(--lc, #C4622D);
   flex-shrink: 0;
 }
+
+.legend[data-show='true'] { opacity: 1; }
 
 /* ── Mobile: griglia card ────────────────────────────────────────── */
 
@@ -312,24 +390,41 @@
 
 /* ── Responsive ──────────────────────────────────────────────────────── */
 
-/* Su schermo largo con mouse si gioca sulla mappa; altrove si legge l'elenco.
-   Le cartelline sono grandi 154px: su un telefono si sovrapporrebbero, e la
-   fionda al tocco e' pressoche' ingiocabile. */
-.introMobile { display: none; }
+/* Su schermo largo con mouse il fascicolo si apre sul tavolo e dentro si gioca
+   sulla mappa; altrove si socchiude e sotto compare l'elenco di schede. Le
+   cartelline della mappa sono grandi 154px: su un telefono si sovrapporrebbero,
+   e la fionda al tocco e' pressoche' ingiocabile. */
+.mapHint {
+  position: absolute;
+  z-index: 4;
+  left: 16px;
+  bottom: 12px;
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.stage[data-phase='open'] .mapHint { opacity: 0.7; }
 
 @media (max-width: 899px), (pointer: coarse) {
-  .canvasWrapper { display: none; }
-  .mobileGrid { display: flex; }
-  .introDesktop { display: none; }
-  .introMobile { display: inline; }
+  .canvas, .legend, .folderClose { display: none; }
+  .mapHint { display: none; }
+
+  .hitFolder  { left: 15%; top: 4%; width: 70%; height: 52%; }
+  .hitConsole { left: 25%; right: auto; top: 62%; width: 50%; height: 34%; }
+
+  .mobileGrid { padding-top: 32px; }
+  .mobileGrid[data-show='true'] { display: flex; }
 }
 
 @media (max-width: 768px) {
 
-  .intro {
-    font-size: 0.9375rem;
-    margin-bottom: 1.5rem;
-  }
 
   .legend {
     gap: 4px 12px;

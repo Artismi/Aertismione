@@ -1,0 +1,25 @@
+/* il mondo sta dietro tutta la pagina: sotto il logo e sotto le sezioni */
+.world {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.label {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.3rem, 2.2vw, 2rem);
+  white-space: nowrap;
+  color: #F4ECFF;
+  text-shadow: 0 2px 0 #1A1A1A;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.3s ease, transform 0.4s var(--ease-expo);
+}
+
+.label[data-show='true'] {
+  opacity: 1;
+  transform: none;
+}
