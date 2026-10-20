@@ -21,7 +21,7 @@ import { createPortal } from 'react-dom'
 import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber'
 import { Environment } from '@react-three/drei'
 import { EffectComposer, N8AO, Vignette, Noise, ToneMapping } from '@react-three/postprocessing'
-import { ToneMappingMode } from 'postprocessing'
+import { ToneMappingMode, type EffectComposer as Composer } from 'postprocessing'
 import * as THREE from 'three'
 import { loadImage } from './textures'
 import { Bench } from './Bench'
@@ -274,10 +274,62 @@ function Table(props: Props & { images: Images }) {
   )
 }
 
+/* ── Risparmio: il lavoro pesante solo quando serve ── */
+
+/**
+ * Per gran parte della pagina il mondo e' solo il fondale rosa: banco e logo
+ * sono fuori schermo. Allora il banco non si disegna e l'occlusione (N8AO) si
+ * ferma, tanto il fondale copre tutto. L'ombra del sole si ricalcola solo
+ * quando qualcosa sul banco si muove, non a ogni fotogramma.
+ */
+function Budget({ stage, table, composer }: {
+  stage: RefObject<HTMLDivElement | null>
+  table: RefObject<THREE.Group | null>
+  composer: RefObject<Composer | null>
+}) {
+  const gl = useThree((s) => s.gl)
+  const was = useRef<boolean | null>(null)
+  const sig = useRef(0)
+
+  useEffect(() => {
+    gl.shadowMap.autoUpdate = false
+    gl.shadowMap.needsUpdate = true
+    return () => { gl.shadowMap.autoUpdate = true }
+  }, [gl])
+
+  // dopo le animazioni (priorita' 0), prima del composer (1)
+  useFrame(() => {
+    const vh = window.innerHeight
+    const r = stage.current?.getBoundingClientRect()
+    const onTable = !!r && r.bottom > -60 && r.top < vh + 60
+    const onLogo = window.scrollY < vh * 1.3
+    const g = table.current
+    if (g) g.visible = onTable
+    composer.current?.passes.forEach((p) => {
+      if ('configuration' in p) p.enabled = onTable || onLogo // N8AOPostPass
+    })
+
+    if (!onTable || !g) { was.current = onTable; return }
+    g.updateMatrixWorld()
+    let k = 0
+    g.traverse((o) => {
+      if (!(o as THREE.Mesh).isMesh || !o.castShadow) return
+      const m = o.matrixWorld.elements
+      k += m[12] * 1.31 + m[13] * 1.73 + m[14] * 2.11 + m[0] * 0.37 + m[1] * 0.53 + m[2] * 0.71 + m[4] * 0.97 + m[6] * 1.19 + m[9] * 1.43
+    })
+    if (was.current !== onTable || Math.abs(k - sig.current) > 1e-5) gl.shadowMap.needsUpdate = true
+    sig.current = k
+    was.current = onTable
+  }, 0.5)
+  return null
+}
+
 function World(props: Props & { images: Images | null }) {
   const { mobile } = props
   const look = useRef(new THREE.Vector3(0, 0, 0))
   const logo = useRef<THREE.Group>(null)
+  const table = useRef<THREE.Group>(null)
+  const composer = useRef<Composer>(null)
 
   return (
     <>
@@ -313,11 +365,14 @@ function World(props: Props & { images: Images | null }) {
         </Suspense>
       </group>
 
-      {props.images && <Suspense fallback={null}><Table {...props} images={props.images} /></Suspense>}
+      <group ref={table}>
+        {props.images && <Suspense fallback={null}><Table {...props} images={props.images} /></Suspense>}
+      </group>
+      <Budget stage={props.stage} table={table} composer={composer} />
 
       {/* come in un render: occlusione negli angoli, grana, vignettatura */}
       {/* niente messa a fuoco: costava piu' di tutto il resto e faceva scattare lo scroll */}
-      <EffectComposer multisampling={mobile ? 0 : 2}>
+      <EffectComposer ref={composer} multisampling={mobile ? 0 : 2}>
         <N8AO aoRadius={0.5} distanceFalloff={0.5} intensity={3.5} quality={mobile ? 'low' : 'medium'} halfRes />
         <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
         <Vignette offset={0.25} darkness={0.55} />

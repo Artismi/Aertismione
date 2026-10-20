@@ -9,7 +9,6 @@ import { PortfolioSection } from '@/components/sections/PortfolioSection'
 import { ContactSection } from '@/components/sections/ContactSection'
 import { AboutSection } from '@/components/sections/AboutSection'
 import { SmoothScroll } from '@/components/ui/SmoothScroll'
-import { Chapters } from '@/components/ui/Chapters'
 
 /**
  * La discesa nel mondo 3D (Table3D, dietro la pagina), con lo scroll morbido:
@@ -19,7 +18,6 @@ import { Chapters } from '@/components/ui/Chapters'
  *  Servizi, Chi sono,    → la camera scende oltre il bordo, il banco esce in alto:
  *  Contatti                 resta lo sfondo rosa e il sito continua come prima
  *
- * Chapters e' l'indice editoriale dei capitoli, fisso sul bordo.
  */
 export default function Home() {
   return (
@@ -27,7 +25,6 @@ export default function Home() {
       <SmoothScroll />
       <Preloader />
       <Navbar />
-      <Chapters />
       <ConfiguratorModal />
       <SceneLoader />
 
