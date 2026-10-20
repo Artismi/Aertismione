@@ -118,6 +118,18 @@ export const SERVICES = {
   footerNote: "Tutti i prezzi sono indicativi — ogni progetto è un'altra storia. Materiali di stampa e produzione sempre a parte.",
 }
 
+/* ─── CAPITOLI ───────────────────────────────────────────────────────────── */
+
+/** L'indice editoriale fisso della home: un capitolo per sezione, nell'ordine della discesa */
+export const CHAPTERS = [
+  { id: 'hero',      label: 'Aria' },
+  { id: 'visione',   label: 'Visione' },
+  { id: 'portfolio', label: 'Il banco' },
+  { id: 'servizi',   label: 'Servizi' },
+  { id: 'chi-sono',  label: 'Chi sono' },
+  { id: 'contatti',  label: 'Contatti' },
+]
+
 /* ─── PROGETTI ───────────────────────────────────────────────────────────── */
 
 /**

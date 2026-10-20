@@ -25,7 +25,6 @@ import { loadImage } from './textures'
 import { Bench, FLOOR_Y } from './Bench'
 import { Folder3D, FW, FD } from './Folder3D'
 import { Console3D } from './Console3D'
-import { Avatar3D } from './Avatar3D'
 import styles from './Table3D.module.css'
 
 export type TablePhase = 'closed' | 'sliding' | 'opening' | 'open' | 'closing' | 'returning' | 'list'
@@ -54,22 +53,47 @@ const TEX = '/progetti/tex'
 
 type Images = { logo: HTMLImageElement | null; paper: HTMLImageElement | null; metal: HTMLImageElement | null }
 
-/* ── Camera: dall'aria al banco, poi sotto il piano; dall'alto sul fascicolo aperto ── */
+/* ── Camera: una gru sola, dall'aria al banco e sotto il piano ── */
 
 const smooth = (t: number) => t * t * (3 - 2 * t)
 const clamp01 = (t: number) => Math.min(1, Math.max(0, t))
 const V = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z)
 
+/** Un punto chiave della discesa: u = dove sta il tavolo rispetto al centro dello schermo (in schermate) */
+type Key = { u: number; pos: THREE.Vector3; look: THREE.Vector3; fov: number; free: number }
+
+/** Da u al parametro della curva (i punti chiave sono in ordine di u decrescente) */
+function curveParam(keys: Key[], u: number) {
+  if (u >= keys[0].u) return 0
+  const n = keys.length
+  if (u <= keys[n - 1].u) return 1
+  for (let i = 0; i < n - 1; i++) {
+    const a = keys[i], b = keys[i + 1]
+    if (u <= a.u && u >= b.u) {
+      const f = smooth((a.u - u) / (a.u - b.u))
+      return (i + f) / (n - 1)
+    }
+  }
+  return 1
+}
+
 function Rig({ phase, mobile, stage, look }: {
   phase: TablePhase; mobile: boolean; stage: Props['stage']; look: MutableRefObject<THREE.Vector3>
 }) {
   const { camera, size, invalidate } = useThree()
+  const mouse = useRef(new THREE.Vector2())
+  const tmp = useRef({ pos: new THREE.Vector3(), lk: new THREE.Vector3(), right: new THREE.Vector3(), up: new THREE.Vector3() })
   useEffect(() => { invalidate() }, [phase, mobile, size, invalidate])
-  // lo scroll muove la camera: si ridisegna solo quando si scorre
+  // lo scroll muove la gru, il mouse la sposta appena: si ridisegna solo allora
   useEffect(() => {
     const on = () => invalidate()
+    const move = (e: PointerEvent) => {
+      mouse.current.set(e.clientX / window.innerWidth * 2 - 1, e.clientY / window.innerHeight * 2 - 1)
+      invalidate()
+    }
     window.addEventListener('scroll', on, { passive: true })
-    return () => window.removeEventListener('scroll', on)
+    window.addEventListener('pointermove', move, { passive: true })
+    return () => { window.removeEventListener('scroll', on); window.removeEventListener('pointermove', move) }
   }, [invalidate])
 
   useFrame((_, dt) => {
@@ -90,34 +114,54 @@ function Rig({ phase, mobile, stage, look }: {
       const k = Math.max(1, 2.15 / stageAspect) * (r ? vh / r.height : 1) * 0.92
       work = V(0.1, 5.4 * k, 4.9 * k); workLook = V(0.15, 0, 0.25)
     }
-    // in aria, sopra: si guarda avanti, il tavolo e' molto piu' in basso
-    const air = V(0, 34, 14), airLook = V(0, 31, -20)
-    // sotto il piano, nell'ombra tra le gambe; scorrendo ancora ci si sposta di lato
-    const deep = clamp01((-u - 1.5) / 4)
-    const under = V(0.5 + deep * 5, FLOOR_Y + 3.6, 17 - deep * 2), underLook = V(deep * 3.5, FLOOR_Y + 3.2, 0)
 
-    let to: THREE.Vector3, lk: THREE.Vector3
+    // la discesa: aria, gru che gira di lato, avvicinamento, banco, bordo, sotto il piano
+    const keys: Key[] = [
+      { u: 2.6, pos: V(0, 34, 16), look: V(0, 31, -20), fov: 38, free: 0.5 },
+      { u: 1.3, pos: V(3.2, 19, 16), look: V(1, 6, -4), fov: 35, free: 0.4 },
+      { u: 0.5, pos: work.clone().lerp(V(1.6, 10, 10), 0.6), look: workLook.clone().lerp(V(0.4, 0.4, 0), 0.5), fov: 32, free: 0.25 },
+      { u: 0, pos: work, look: workLook, fov: 30, free: 0.1 },
+      { u: -0.3, pos: work, look: workLook, fov: 30, free: 0.1 },
+      { u: -0.95, pos: V(0.8, 1.6, 13), look: V(0, -2.4, 0), fov: 33, free: 0.3 },
+      { u: -1.7, pos: V(0.5, FLOOR_Y + 3.6, 17), look: V(0, FLOOR_Y + 3.2, 0), fov: 36, free: 0.45 },
+      { u: -5.5, pos: V(6, FLOOR_Y + 3.3, 15), look: V(3.5, FLOOR_Y + 3, 0), fov: 36, free: 0.45 },
+    ]
+
+    const t = tmp.current
+    let fov = 30, free = 0.1, roll = 0
     const top = !mobile && phase !== 'closed' && phase !== 'returning' && phase !== 'list'
     if (top) {
       // dall'alto, con il fascicolo aperto (2 × larghezza) che sta tutto nell'inquadratura
-      const t = Math.tan(THREE.MathUtils.degToRad(cam.fov / 2)) * 2
-      const h = Math.max((FD + 0.4) / t, (FW * 2 + 0.5) / aspect / t)
-      to = V(0, h, 0.001); lk = V(0, 0, 0)
-    } else if (u > 0) {
-      const t = smooth(clamp01(u / 1.8))
-      to = work.clone().lerp(air, t); lk = workLook.clone().lerp(airLook, t)
+      const tt = Math.tan(THREE.MathUtils.degToRad(30 / 2)) * 2
+      const h = Math.max((FD + 0.4) / tt, (FW * 2 + 0.5) / aspect / tt)
+      t.pos.set(0, h, 0.001); t.lk.set(0, 0, 0); free = 0
     } else {
-      const t = smooth(clamp01((-u - 0.35) / 1.1))
-      to = work.clone().lerp(under, t); lk = workLook.clone().lerp(underLook, t)
+      const c = curveParam(keys, u)
+      const posCurve = new THREE.CatmullRomCurve3(keys.map((k) => k.pos), false, 'centripetal')
+      const lookCurve = new THREE.CatmullRomCurve3(keys.map((k) => k.look), false, 'centripetal')
+      posCurve.getPoint(c, t.pos); lookCurve.getPoint(c, t.lk)
+      const f = c * (keys.length - 1), i = Math.min(keys.length - 2, Math.floor(f)), w = f - i
+      fov = keys[i].fov + (keys[i + 1].fov - keys[i].fov) * w
+      free = keys[i].free + (keys[i + 1].free - keys[i].free) * w
+      // in discesa la gru si inclina appena, poi si raddrizza sul banco
+      roll = Math.sin(Math.PI * clamp01((u - 0.2) / 2.2)) * 0.035
     }
+
+    // il mouse sposta la camera di poco, di lato e in alto (meno sul banco)
+    t.right.set(1, 0, 0).applyQuaternion(cam.quaternion)
+    t.up.set(0, 1, 0).applyQuaternion(cam.quaternion)
+    t.pos.addScaledVector(t.right, mouse.current.x * free).addScaledVector(t.up, -mouse.current.y * free * 0.6)
 
     let moving = false
     for (const ax of ['x', 'y', 'z'] as const) {
-      camera.position[ax] = damp(camera.position[ax], to[ax], 6, dt)
-      look.current[ax] = damp(look.current[ax], lk[ax], 6, dt)
-      if (Math.abs(camera.position[ax] - to[ax]) > EPS) moving = true
+      cam.position[ax] = damp(cam.position[ax], t.pos[ax], 4, dt)
+      look.current[ax] = damp(look.current[ax], t.lk[ax], 4, dt)
+      if (Math.abs(cam.position[ax] - t.pos[ax]) > EPS) moving = true
     }
-    camera.lookAt(look.current)
+    const nf = damp(cam.fov, fov, 4, dt)
+    if (Math.abs(nf - cam.fov) > 0.001) { cam.fov = nf; cam.updateProjectionMatrix(); moving = true }
+    cam.lookAt(look.current)
+    cam.rotateZ(roll)
     if (moving) invalidate()
   })
   return null
@@ -187,7 +231,7 @@ function Table(props: Props & { images: Images }) {
   )
 }
 
-function World(props: Props & { images: Images | null; past: boolean }) {
+function World(props: Props & { images: Images | null }) {
   const { grab, mobile } = props
   const dof = useRef<DepthOfFieldEffect | null>(null)
   const look = useRef(new THREE.Vector3(0, 31, -20))
@@ -220,8 +264,6 @@ function World(props: Props & { images: Images | null; past: boolean }) {
       <directionalLight position={[5, 4, 4]} intensity={0.45} color="#dfe8ff" />
 
       {props.images && <Suspense fallback={null}><Table {...props} images={props.images} /></Suspense>}
-      {/* in fondo, sotto il tavolo accanto a «Chi sono»: l'avatar (si carica solo arrivati li') */}
-      {props.past && <Suspense fallback={null}><Avatar3D position={[5.2, 0, 0.4]} /></Suspense>}
 
       {/* come in un render: occlusione negli angoli, messa a fuoco, grana, vignettatura */}
       <Focus grab={grab} dof={dof} look={look} />
@@ -240,18 +282,16 @@ export default function Table3D(props: Props) {
   // Il tavolo (texture, logo, font) si carica solo avvicinandosi alla sezione:
   // in cima alla pagina basta l'aria dello studio
   const [near, setNear] = useState(false)
-  const [past, setPast] = useState(false)
   useEffect(() => {
-    if (near && past) return
+    if (near) return
     const check = () => {
       const r = props.stage.current?.getBoundingClientRect()
       if (r && r.top < window.innerHeight * 2.5) setNear(true)
-      if (r && r.bottom < window.innerHeight * 0.2) setPast(true)
     }
     check()
     window.addEventListener('scroll', check, { passive: true })
     return () => window.removeEventListener('scroll', check)
-  }, [near, past, props.stage])
+  }, [near, props.stage])
 
   // Le scritte sono disegnate con i font del sito e il logo: si aspetta che siano pronti
   const [images, setImages] = useState<Images | null>(null)
@@ -281,7 +321,7 @@ export default function Table3D(props: Props) {
         eventPrefix="client"
       >
         <color attach="background" args={['#2a1f17']} />
-        <World {...props} images={images} past={past} />
+        <World {...props} images={images} />
       </Canvas>
     </div>,
     document.body,

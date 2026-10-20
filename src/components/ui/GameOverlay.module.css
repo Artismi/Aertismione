@@ -30,6 +30,9 @@
 
 .frame[data-loaded='true'] { opacity: 1; }
 
+/* Lenis spegne i clic sugli iframe mentre la pagina scorre: il gioco deve riceverli sempre */
+:global(.lenis) .frame { pointer-events: auto; }
+
 /* il caricamento usa l'aspetto di quello della home (Preloader.module.css):
    qui lo si tiene dentro l'overlay invece che fisso sulla pagina */
 .overlay .loading {
