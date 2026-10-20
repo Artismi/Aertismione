@@ -3,7 +3,8 @@
 /**
  * Servizi: la griglia a colonne, una per servizio, separate da filetti; la
  * colonna del percorso piu' richiesto e' viola, col badge ambra. Solo
- * tipografia e colore, tutto il testo in vista, niente prezzi.
+ * tipografia e colore, tutto il testo in vista, niente prezzi. Ogni colonna:
+ * cos'e' e per chi, le voci con una spiegazione breve, cosa ricevi, un esempio vero.
  * I contenuti sono in SERVICES.cards (content.ts).
  *
  * Sul telefono le colonne diventano una griglia due per due con tipo, titolo e
@@ -18,15 +19,18 @@ import { useConfiguratorStore } from '@/stores/useConfiguratorStore'
 
 const vp = { once: true, margin: '-60px' }
 
-type Row = string | { name: string; text: string }
+type Row = { name: string; text: string }
 type Card = {
   id: string
   type: string
   label: string
   hook: string
+  forWho: string
   featured?: boolean
   groups: { label?: string; items: Row[] }[]
-  note?: string
+  more?: string
+  result: string
+  example: string
 }
 
 const cards = SERVICES.cards as Card[]
@@ -70,7 +74,7 @@ export function ServicesNewSection() {
               transition={{ duration: 0.7, ease: 'easeOut' as const, delay: idx * 0.12 }}
             >
               <div className={styles.blockHead}>
-                <span className={styles.blockIdx}>0{idx + 1}</span>
+                <span className={styles.blockIdx} aria-hidden="true">0{idx + 1}</span>
 
                 {c.featured && (
                   <span className={styles.badge}>✦ Più richiesto</span>
@@ -79,6 +83,7 @@ export function ServicesNewSection() {
                 <span className={styles.blockType}>{c.type}</span>
                 <h3 className={styles.blockTitle}>{c.label}</h3>
                 <p className={styles.blockHook}>{c.hook}</p>
+                <p className={styles.forWho}><span>Per chi</span> {c.forWho}</p>
 
                 <button
                   type="button"
@@ -91,22 +96,26 @@ export function ServicesNewSection() {
               </div>
 
               <div className={styles.more}>
+                <div className={styles.groups}>
                 {c.groups.map((g, gi) => (
                   <ul key={gi} className={styles.list}>
                     {g.label && <li className={styles.groupLabel}>{g.label}</li>}
                     {g.items.map((it) => (
-                      <li key={typeof it === 'string' ? it : it.name} className={styles.item}>
-                        {typeof it === 'string'
-                          ? <span className={styles.itemName}>{it}</span>
-                          : <span className={styles.itemName}><b>{it.name}</b> {it.text}</span>}
+                      <li key={it.name} className={styles.item}>
+                        <span className={styles.itemName}>{it.name}</span>
+                        <span className={styles.itemText}>{it.text}</span>
                       </li>
                     ))}
                   </ul>
                 ))}
+                </div>
 
-                {c.note && (
-                  <p className={styles.blockNote}>{c.note}</p>
-                )}
+                {c.more && <p className={styles.extra}>{c.more}</p>}
+
+                <div className={styles.outcome}>
+                  <p className={styles.result}><span>Cosa ricevi</span>{c.result}</p>
+                  <p className={styles.example}><span>Esempio</span>{c.example}</p>
+                </div>
 
                 <button
                   type="button"

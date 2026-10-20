@@ -84,56 +84,91 @@ export const SERVICES = {
   cta: 'Chiedi un preventivo',
   /*
    * I quattro servizi, una colonna ciascuno. Tutto il testo e' in vista, i prezzi no.
-   * type e' l'etichetta sopra il titolo, hook la frase sotto; groups le righe
-   * dell'elenco (con un'etichetta quando servono piu' gruppi); note la riga in fondo.
+   * type: l'etichetta sopra il titolo · hook: cos'e', in una frase · forWho: per chi
+   * groups: le righe (nome + spiegazione breve), con un'etichetta se i gruppi sono piu' d'uno
+   * more: una riga di extra · result: cosa ricevi · example: un lavoro vero · note: in fondo
    */
   cards: [
     {
-      id:    'partecipata',
-      type:  'Laboratori',
-      label: 'Progettazione partecipata',
-      hook:  'Un progetto costruito con le persone che lo vivranno, dalla prima domanda all\'oggetto finito.',
+      id:     'partecipata',
+      type:   'Su progetto',
+      label:  'Progettazione partecipata',
+      hook:   'Progettare insieme alle persone che useranno il risultato: abitanti, soci, studenti, clienti.',
+      forWho: 'Enti, associazioni, comunità, scuole',
       groups: [
         { items: [
-          { name: 'Scrittura',        text: 'il percorso, le domande, gli obiettivi, su misura del gruppo e del luogo' },
-          { name: 'Organizzazione',   text: 'tempi, spazi, materiali, inviti: chi partecipa e come' },
-          { name: 'Conduzione',       text: 'i laboratori progettuali, dal vivo, facilitati da me' },
-          { name: 'Concretizzazione', text: 'un esito unico e usabile, che cambia col contesto: un oggetto, uno spazio, una guida, un\'identità' },
+          { name: 'Scrittura',      text: 'obiettivi, domande e percorso, su misura del gruppo' },
+          { name: 'Organizzazione', text: 'chi invitare, dove, quando, con quali materiali' },
+          { name: 'Conduzione',     text: 'i laboratori dal vivo, facilitati da me' },
+          { name: 'Risultato',      text: 'un esito concreto e usabile: un oggetto, uno spazio, una guida' },
         ] },
       ],
-      note:  'E poi c\'è quello che non si vede: relazioni, fiducia, un gruppo che si riconosce nel risultato.',
+      result:  'Un risultato concreto, costruito insieme, e un gruppo che lo sente suo.',
+      example: 'Mulini, Ecomuseo Terra del Castelmagno: interviste, un workshop di tre giorni e una striscia illustrata di 6 m installata in valle.',
     },
     {
-      id:    'stampe',
-      type:  'Su misura',
-      label: 'Illustrazioni, stampe e gadget',
-      hook:  'Disegnati a mano, prodotti su misura, fatti per essere usati.',
+      id:     'stampe',
+      type:   'Una tantum',
+      label:  'Illustrazioni, stampe e gadget',
+      hook:   'Disegni fatti a mano, trasformati in oggetti da usare, vendere o regalare.',
+      forWho: 'Attività, eventi, band, associazioni',
       groups: [
-        { items: ['Illustrazioni su commissione', 'Poster e stampe', 'Spille su misura', 'Adesivi', 'Magliette e felpe', 'Shopper, toppe, cartoline'] },
+        { items: [
+          { name: 'Illustrazioni su commissione', text: 'per un luogo, un prodotto, un\'occasione' },
+          { name: 'Poster e stampe',              text: 'locandine, stampe d\'arte, edizioni limitate' },
+          { name: 'Spille e adesivi',             text: 'forme e misure su misura' },
+          { name: 'Magliette e felpe',            text: 'grafiche per lo staff, gli eventi, il merch' },
+          { name: 'Shopper, toppe, cartoline',    text: 'piccoli oggetti da regalare o vendere' },
+        ] },
       ],
+      result:  'Disegni originali e file pronti per la stampa.',
+      example: 'Bicicleria, ciclofficina: adesivi e grafiche per le magliette, con i suoi personaggi.',
     },
     {
       id:       'identita',
-      type:     'Per la tua attività',
+      type:     'Percorso completo',
       label:    'Identità completa',
       featured: true,
-      hook:     'Il racconto della tua attività diventa un sistema: riconoscibile, coerente, tuo. Fin dentro il negozio.',
+      hook:     'Tutto quello che serve perché la tua attività si riconosca al primo sguardo, dal logo ai muri del negozio.',
+      forWho:   'Negozi, locali, botteghe, piccole imprese',
       groups: [
-        { label: 'Il cuore', items: ['Nome e racconto', 'Logo', 'Illustrazione madre', 'Colori e caratteri', 'Tono di voce', 'Manuale d\'uso'] },
-        { label: 'Il pack', items: ['Illustrazioni derivate e applicazioni pronte all\'uso'] },
-        { label: 'Nello spazio dell\'attività', items: ['Murales, interni, vetrina, insegna'] },
-        { label: 'Si aggiunge quando serve', items: ['Menu e listini, biglietti, packaging, divise, segnaletica, sito, kit social'] },
+        { label: 'Il cuore', items: [
+          { name: 'Nome e racconto',       text: 'chi sei, in poche parole che restano' },
+          { name: 'Logo',                  text: 'il segno che ti firma ovunque' },
+          { name: 'Illustrazione madre',   text: 'il disegno principale da cui nasce tutto il resto' },
+          { name: 'Colori, caratteri, tono', text: 'le regole per parlare sempre allo stesso modo' },
+          { name: 'Manuale d\'uso',        text: 'come usare tutto, anche senza di me' },
+        ] },
+        { label: 'Il pack', items: [
+          { name: 'Illustrazioni derivate', text: 'nate dall\'illustrazione madre: dettagli, personaggi, motivi' },
+          { name: 'Applicazioni pronte',    text: 'biglietti, menu, post, cartelli: file già fatti' },
+        ] },
+        { label: 'Nello spazio dell\'attività', items: [
+          { name: 'Murales e interni', text: 'l\'illustrazione sulle pareti del locale' },
+          { name: 'Vetrina e insegna', text: 'come ti vedono da fuori' },
+        ] },
       ],
-      note:     'Il sistema è tuo: trasferibile, autonomo, applicabile da chiunque. Ogni lavoro successivo parte da qui e costa meno.',
+      more:    'Su richiesta: packaging, divise, segnaletica, sito, kit social.',
+      result:  'Il sistema completo e il pack di file, tuoi: ogni lavoro dopo costa meno, perché parte da qui.',
+      example: 'Bicicleria: logo, personaggi, cartello degli orari, striscione illustrato in officina.',
     },
     {
-      id:    'social',
-      type:  'Al mese',
-      label: 'Gestione social',
-      hook:  'I tuoi canali parlano la lingua della tua identità, ogni settimana.',
+      id:     'social',
+      type:   'Al mese',
+      label:  'Gestione social',
+      hook:   'Racconto la tua attività sui social ogni settimana, con la voce e le illustrazioni della tua identità.',
+      forWho: 'Chi ha un\'identità e vuole farla vivere',
       groups: [
-        { items: ['Piano editoriale', 'Contenuti illustrati e foto', 'Pubblicazione', 'Risposte e community', 'Report del mese'] },
+        { items: [
+          { name: 'Piano editoriale', text: 'cosa pubblicare e quando, mese per mese' },
+          { name: 'Contenuti',        text: 'illustrazioni, grafiche e foto su misura' },
+          { name: 'Pubblicazione',    text: 'post e storie, con testi e orari giusti' },
+          { name: 'Community',        text: 'risposte a commenti e messaggi' },
+          { name: 'Report',           text: 'cosa ha funzionato, ogni mese' },
+        ] },
       ],
+      result:  'Canali sempre vivi e riconoscibili, senza pensarci tu.',
+      example: 'Bicicleria: post e locandine per gli eventi, come l\'Aperidivo.',
     },
   ],
   footerNote: "Tutti i prezzi sono indicativi — ogni progetto è un'altra storia. Materiali di stampa e produzione sempre a parte.",
