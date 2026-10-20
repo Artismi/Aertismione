@@ -59,6 +59,8 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  /* lo spazio che prima dava la nota sopra */
+  margin-top: 2rem;
 }
 
 .directBtn {
