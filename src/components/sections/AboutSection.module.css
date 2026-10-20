@@ -25,11 +25,10 @@
   /* Pannello rosa-violetto galleggiante — come da richiesta */
   background: linear-gradient(
     148deg,
-    rgba(60, 20, 70, 0.65) 0%,
-    rgba(30, 10, 40, 0.85) 100%
+    rgba(60, 20, 70, 0.88) 0%,
+    rgba(30, 10, 40, 0.95) 100%
   );
-  backdrop-filter: blur(32px) saturate(160%) brightness(0.95);
-  -webkit-backdrop-filter: blur(32px) saturate(160%) brightness(0.95);
+  /* niente sfocatura dello sfondo: sopra il mondo 3D costava a ogni fotogramma */
 
   /* Bordi luminosi del viola-rosato */
   border-top:    1.5px solid rgba(232, 168, 191, 0.35);
