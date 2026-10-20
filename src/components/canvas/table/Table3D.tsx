@@ -3,13 +3,12 @@
 /**
  * Table3D — il mondo dietro la home: in alto l'aria dello studio, al centro il
  * banco da lavoro con il fascicolo del portfolio e il Game Boy di Porto
- * Vecchio, sotto il piano l'ombra tra le gambe del tavolo, dove sta il resto
- * del sito.
+ * Vecchio; superato il bordo, lo sfondo e il resto del sito.
  *
  * E' un <Canvas> fisso dietro tutta la pagina (portale su body, z-index -1).
  * La camera segue lo scroll rispetto al tavolo della sezione Progetti: scende
- * dall'aria, si ferma sul banco quando la sezione e' al centro, poi passa
- * sotto il piano. Frameloop "demand": disegna solo quando la camera o un
+ * dall'aria, si ferma sul banco quando la sezione e' al centro, poi scende
+ * oltre il bordo e il banco esce in alto. Frameloop "demand": disegna solo quando la camera o un
  * oggetto si muove. I clic arrivano dalla pagina (eventSource = body).
  * Le fasi (chiuso, scivola, si apre...) le decide PortfolioSection.
  */
@@ -22,9 +21,10 @@ import { EffectComposer, N8AO, DepthOfField, Vignette, Noise, ToneMapping } from
 import { ToneMappingMode, type DepthOfFieldEffect } from 'postprocessing'
 import * as THREE from 'three'
 import { loadImage } from './textures'
-import { Bench, FLOOR_Y } from './Bench'
+import { Bench } from './Bench'
 import { Folder3D, FW, FD } from './Folder3D'
 import { Console3D } from './Console3D'
+import { WorldBackdrop } from './WorldBackdrop'
 import styles from './Table3D.module.css'
 
 export type TablePhase = 'closed' | 'sliding' | 'opening' | 'open' | 'closing' | 'returning' | 'list'
@@ -115,16 +115,17 @@ function Rig({ phase, mobile, stage, look }: {
       work = V(0.1, 5.4 * k, 4.9 * k); workLook = V(0.15, 0, 0.25)
     }
 
-    // la discesa: aria, gru che gira di lato, avvicinamento, banco, bordo, sotto il piano
+    // la discesa: aria, gru che gira di lato, avvicinamento, banco; poi la camera scende
+    // oltre il bordo e il banco esce in alto: resta lo sfondo, e il resto del sito
+    const below = (v: THREE.Vector3) => v.clone().add(V(0, -12, 0))
     const keys: Key[] = [
       { u: 2.6, pos: V(0, 34, 16), look: V(0, 31, -20), fov: 38, free: 0.5 },
       { u: 1.3, pos: V(3.2, 19, 16), look: V(1, 6, -4), fov: 35, free: 0.4 },
       { u: 0.5, pos: work.clone().lerp(V(1.6, 10, 10), 0.6), look: workLook.clone().lerp(V(0.4, 0.4, 0), 0.5), fov: 32, free: 0.25 },
       { u: 0, pos: work, look: workLook, fov: 30, free: 0.1 },
       { u: -0.3, pos: work, look: workLook, fov: 30, free: 0.1 },
-      { u: -0.95, pos: V(0.8, 1.6, 13), look: V(0, -2.4, 0), fov: 33, free: 0.3 },
-      { u: -1.7, pos: V(0.5, FLOOR_Y + 3.6, 17), look: V(0, FLOOR_Y + 3.2, 0), fov: 36, free: 0.45 },
-      { u: -5.5, pos: V(6, FLOOR_Y + 3.3, 15), look: V(3.5, FLOOR_Y + 3, 0), fov: 36, free: 0.45 },
+      { u: -1.1, pos: below(work), look: below(workLook), fov: 32, free: 0.2 },
+      { u: -6, pos: below(work).add(V(0, -2, 0)), look: below(workLook).add(V(0, -2, 0)), fov: 32, free: 0.2 },
     ]
 
     const t = tmp.current
@@ -239,12 +240,11 @@ function World(props: Props & { images: Images | null }) {
   return (
     <>
       <Rig phase={props.phase} mobile={mobile} stage={props.stage} look={look} />
-      <fog attach="fog" args={['#2a1f17', 28, 80]} />
 
-      {/* luce e sfondo: lo studio fotografico (HDR CC0 di Poly Haven), sfocato come un cielo caldo,
-          piu' una lampada da banco calda che fa l'ombra del tavolo sul pavimento */}
+      {/* luce: lo studio fotografico (HDR CC0 di Poly Haven) e una lampada da banco calda
+          che fa l'ombra del tavolo sul pavimento */}
       <Suspense fallback={null}>
-        <Environment files={`${TEX}/studio.hdr`} environmentIntensity={1.35} background backgroundBlurriness={0.45} backgroundIntensity={0.55} />
+        <Environment files={`${TEX}/studio.hdr`} environmentIntensity={1.35} />
       </Suspense>
       <ambientLight intensity={0.2} />
       <directionalLight
@@ -273,6 +273,8 @@ function World(props: Props & { images: Images | null }) {
         <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
         <Vignette offset={0.25} darkness={0.55} />
         <Noise opacity={0.035} />
+        {/* il fondale: la piscina rosata, dietro al tavolo e alle cose che ha sopra */}
+        <WorldBackdrop />
       </EffectComposer>
     </>
   )

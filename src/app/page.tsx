@@ -16,8 +16,8 @@ import { Chapters } from '@/components/ui/Chapters'
  *
  *  Hero, Visione         → in aria, con il logo e lo shader rosa
  *  Progetti              → la camera scende e si ferma sul banco da lavoro
- *  Servizi, Chi sono,    → sotto il piano del tavolo, nell'ombra tra le gambe
- *  Contatti
+ *  Servizi, Chi sono,    → la camera scende oltre il bordo, il banco esce in alto:
+ *  Contatti                 resta lo sfondo rosa e il sito continua come prima
  *
  * Chapters e' l'indice editoriale dei capitoli, fisso sul bordo.
  */

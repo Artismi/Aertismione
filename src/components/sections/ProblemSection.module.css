@@ -2,7 +2,7 @@
   padding: var(--section-py) 0;
   position: relative;
   z-index: 1; /* CRITICAL: Forces this section's background to render ON TOP of the 3D Canvas (z=0) */
-  background: rgba(30, 22, 16, 0.6);
+  background: rgba(18, 8, 28, 0.80);
 }
 
 .grid {

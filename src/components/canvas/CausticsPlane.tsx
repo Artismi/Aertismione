@@ -19,7 +19,7 @@ const vertexShader = /* glsl */`
 // si biforcano e si fondono nei punti sella — esattamente i filamenti
 // di luce sul fondo di una piscina.
 // Un solo campo → UN'unica famiglia di curve, senza caos da sovrapposizione.
-const fragmentShader = /* glsl */`
+export const causticsFragment = /* glsl */`
   uniform float u_time;
   uniform float u_fade;
   uniform float u_white; // 0 = rosa hero, 1 = bianco about
@@ -183,18 +183,7 @@ export function CausticsPlane() {
     }
 
     // Hero a piena opacità rosa, about più presente ai bordi
-    // Sotto c'e' il mondo 3D (il tavolo dei Progetti): il rosa lo vela e gli da' il colore,
-    // piu' leggero quando il banco e' al centro dello schermo, cosi' si legge
-    const stage = document.querySelector('[data-world-stage]')
-    let veil = 1
-    if (stage) {
-      const r = stage.getBoundingClientRect(), vh = window.innerHeight
-      const u = (r.top + r.height / 2 - vh / 2) / vh
-      veil = u > 0
-        ? 0.38 + 0.52 * ss(0, 1.6, u)
-        : 0.38 + 0.2 * ss(0.35, 1.4, -u)
-    }
-    const fade = Math.max(f1 * 1.0, f2 * 0.78) * veil
+    const fade = Math.max(f1 * 1.0, f2 * 0.78)
     uniforms.u_fade.value  = fade
     // u_white: 0 nell'hero, 1 nella sezione about (transizione morbida)
     uniforms.u_white.value = f2 > 0.01 ? Math.min(1, f2 / 0.4) : 0
@@ -207,7 +196,7 @@ export function CausticsPlane() {
       <shaderMaterial
         ref={matRef}
         vertexShader={vertexShader}
-        fragmentShader={fragmentShader}
+        fragmentShader={causticsFragment}
         uniforms={uniforms}
         transparent
         depthWrite={false}

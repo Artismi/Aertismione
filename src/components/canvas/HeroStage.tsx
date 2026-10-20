@@ -6,7 +6,6 @@ import { Environment } from '@react-three/drei'
 import { useStore } from '../../stores/useStore'
 
 import { LogoModel } from './LogoModel'
-import { CausticsPlane } from './CausticsPlane'
 import { AvatarParticles } from './AvatarParticles'
 import { BackgroundModel } from './BackgroundModel'
 import type { AvatarTarget } from './AvatarParticles'
@@ -49,9 +48,8 @@ export function HeroStage({ onTrackedPoints }: HeroStageProps = {}) {
 
     return (
         <group ref={groupRef}>
-            {/* Background caustics — piscina rosata: sta sopra il mondo dietro la pagina
-                (Table3D) e lo colora di rosa, piu' leggera sul tavolo dei Progetti */}
-            <CausticsPlane />
+            {/* La piscina rosata ora e' il fondale del mondo dietro la pagina (Table3D,
+                WorldBackdrop): sta dietro al tavolo e alle cose che ha sopra */}
 
             {/* STAGE 1: Logo — co-located at y=0 */}
             <LogoModel position={[0, 0, 0]} />

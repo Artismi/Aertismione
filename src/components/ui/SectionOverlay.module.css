@@ -11,7 +11,7 @@
   overscroll-behavior: contain;
   z-index: 50;
 
-  background: rgba(30, 22, 16, 0.72);
+  background: rgba(18, 8, 28, 0.96);
   backdrop-filter: blur(20px) saturate(1.4);
   border-color: rgba(232, 168, 191, 0.18);
 
