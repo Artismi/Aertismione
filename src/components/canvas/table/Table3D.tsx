@@ -378,7 +378,7 @@ function World(props: Props & { images: Images | null }) {
         <Vignette offset={0.25} darkness={0.55} />
         <Noise opacity={0.035} />
         {/* il fondale: la piscina rosata, dietro al tavolo e alle cose che ha sopra */}
-        <WorldBackdrop />
+        <WorldBackdrop mobile={mobile} />
       </EffectComposer>
     </>
   )

@@ -814,6 +814,7 @@ export function PortfolioSection() {
   // Il gioco ha una pagina sua, nel sito: la console si prende in mano, si accende
   // e si passa li'. Sopra il 3D della home era troppo lento.
   useEffect(() => { router.prefetch(PROGETTI.game.page) }, [router])
+  useGamePreload()
 
   function grabGamepad() {
     if (grab) return
@@ -1017,4 +1018,40 @@ export function PortfolioSection() {
       </div>
     </div>
   )
+}
+
+/**
+ * Porto Vecchio si carica in sottofondo, dopo il sito: si aspetta che la pagina
+ * abbia finito (e il banco 3D abbia avuto il suo tempo), poi un file alla volta,
+ * a bassa priorita', solo quando il browser e' libero. Cosi' il sito non ne
+ * risente e, aprendo il gioco, i file arrivano dalla cache.
+ * Niente con il risparmio dati o la rete lenta.
+ */
+function useGamePreload() {
+  useEffect(() => {
+    const net = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection
+    if (net?.saveData || /(^|-)2g$/.test(net?.effectiveType ?? '')) return
+    const base = PROGETTI.game.path.replace(/[^/]*$/, '')
+    const ctrl = new AbortController()
+    const idle = (cb: () => void) => {
+      if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(cb, { timeout: 3000 })
+      else window.setTimeout(cb, 200)   // Safari non ce l'ha
+    }
+    let timer = 0
+
+    async function run() {
+      for (const file of PROGETTI.game.preload) {
+        if (ctrl.signal.aborted) return
+        await new Promise<void>((ok) => idle(ok))
+        try {
+          const res = await fetch(base + file, { signal: ctrl.signal, priority: 'low' } as RequestInit)
+          await res.arrayBuffer()   // letto fino in fondo, cosi' resta in cache
+        } catch { if (ctrl.signal.aborted) return }
+      }
+    }
+    function start() { timer = window.setTimeout(run, 4000) }
+    if (document.readyState === 'complete') start()
+    else window.addEventListener('load', start, { once: true })
+    return () => { ctrl.abort(); window.clearTimeout(timer); window.removeEventListener('load', start) }
+  }, [])
 }

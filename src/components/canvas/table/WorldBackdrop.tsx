@@ -35,6 +35,7 @@ const fragment = causticsFragment
   uniform mat4 u_invProj;
   uniform mat4 u_camWorld;
   uniform vec2 u_bench;   // meta' larghezza e meta' profondita' del piano del banco
+  uniform vec2 u_band;    // quanto e' larga la sfumatura sui lati e davanti/dietro
   void mainImage(const in vec4 inputColor, const in vec2 uv, const in float depth, out vec4 outputColor) {
     float a = u_res.x / u_res.y;
     vec2 vUv = 0.5 + (uv - 0.5) * vec2(0.2957 * a, 0.473) + vec2(0.0, u_scroll);
@@ -48,7 +49,7 @@ const fragment = causticsFragment
     vec3 p = (u_camWorld * vec4(v.xyz / v.w, 1.0)).xyz;
     float k = 1.0;
     if (p.y < 0.7) {
-      float e = min((u_bench.x - abs(p.x)) / 2.2, (u_bench.y - abs(p.z)) / 1.1);
+      float e = min((u_bench.x - abs(p.x)) / u_band.x, (u_bench.y - abs(p.z)) / u_band.y);
       k = smoothstep(0.0, 1.0, e);
     }
     if (k >= 1.0) { outputColor = inputColor; return; }
@@ -70,13 +71,14 @@ class BackdropEffect extends Effect {
         ['u_invProj', new THREE.Uniform(new THREE.Matrix4())],
         ['u_camWorld', new THREE.Uniform(new THREE.Matrix4())],
         ['u_bench', new THREE.Uniform(new THREE.Vector2(BENCH.w / 2, BENCH.d / 2))],
+        ['u_band', new THREE.Uniform(new THREE.Vector2(2.2, 1.1))],
       ]),
     })
   }
 }
 
 /** Va messo dentro <EffectComposer>, per ultimo */
-export function WorldBackdrop() {
+export function WorldBackdrop({ mobile = false }: { mobile?: boolean }) {
   const invalidate = useThree((s) => s.invalidate)
   const effect = useMemo(() => new BackdropEffect(), [])
 
@@ -94,6 +96,9 @@ export function WorldBackdrop() {
     ;(u.get('u_camWorld')!.value as THREE.Matrix4).copy(camera.matrixWorld)
     u.get('u_time')!.value += Math.min(delta, 0.1)
     ;(u.get('u_res')!.value as THREE.Vector2).set(size.width, size.height)
+    // da telefono la camera e' vicina e il banco riempie lo schermo: una fascia
+    // larga come sul computer coprirebbe di rosa il fascicolo e il Game Boy
+    ;(u.get('u_band')!.value as THREE.Vector2).set(mobile ? 0.8 : 2.2, mobile ? 0.3 : 1.1)
     // l'acqua scorre con la pagina, piu' piano del mondo: e' lontana
     u.get('u_scroll')!.value = window.scrollY / Math.max(1, size.height) * 0.12
   }, 0.6) // dopo Rig e Budget, prima del composer

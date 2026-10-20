@@ -145,6 +145,18 @@ export const PROGETTI = {
     back:  'Torna al tavolo',
     loading: 'Porto Vecchio sta arrivando…',
     screen: '/progetti/porto-vecchio-lancio.webp', // la schermata di lancio del gioco, sullo schermo del Game Boy
+    // Quello che il gioco scarica partendo (~18 MB): il sito lo prende in sottofondo,
+    // finito di caricare se stesso, cosi' aprendo il gioco arriva dalla cache.
+    // Se il gioco cambia i suoi file, quelli che mancano qui si scaricano all'apertura.
+    preload: [
+      'index.html',
+      ...['s_Radio', 's_PropaneTank', 't_Crate', 's_Bonfire_Fire', 's_WoodLog', 't_Pallet', 's_Backpack',
+        't_SackTrench_Small', 't_Pipes', 't_CardboardBoxes_1', 't_ExplodingBarrel', 't_Debris_Tires',
+        't_GasTank', 't_TrashContainer'].map((n) => `assets/mj/${n}.glb`),
+      ...['rurban', 'grave', 'bkit', 'food', 'arcade', 'train', 'urbano', 'stazione', 'urban', 'casa',
+        'garage', 'natura', 'tortura'].map((n) => `assets/mk/kit_${n}.glb`),
+      'assets/mc/Casual_2.glb', 'assets/mc/Casual.glb',
+    ],
   },
 }
 
