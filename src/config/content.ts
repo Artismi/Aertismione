@@ -84,7 +84,7 @@ export const SERVICES = {
   cta: 'Chiedi un preventivo',
   /*
    * Le quattro carte sul tavolo dei Servizi: ognuna e' un oggetto di carta diverso
-   * (cartellina, cartellino appeso, foglio, scheda), tutto il testo e' in vista.
+   * (cartellina, striscia pinzata, foglio, cartellino appeso), tutto il testo e' in vista.
    * kind decide l'oggetto; l'ordine e' quello in cui si leggono.
    */
   cards: [
@@ -105,7 +105,7 @@ export const SERVICES = {
     },
     {
       id:    'stampe',
-      kind:  'tag',
+      kind:  'strip',
       code:  'STP-02',
       label: 'Illustrazioni, stampe e gadget',
       lead:  'Disegnati a mano, prodotti su misura, fatti per essere usati.',
@@ -128,7 +128,7 @@ export const SERVICES = {
     },
     {
       id:    'social',
-      kind:  'card',
+      kind:  'tag',
       code:  'SOC-04',
       label: 'Gestione social',
       type:  'Al mese',
@@ -137,6 +137,12 @@ export const SERVICES = {
       week:  ['L', 'M', 'M', 'G', 'V', 'S', 'D'],
     },
   ],
+  // la fascia ambra in cima al collage
+  band: ['Artismi-(Servizi)-(04)', 'Quattro modi di lavorare insieme', 'Fatto a mano'],
+  // la coppia di adesivi tondi: il testo che gira e quello al centro
+  stickers: { ring: 'Artismi ✦ Servizi ✦ Fatto a mano ✦ ', center: 'Qual è il tuo preferito?' },
+  // la riga in fondo al collage
+  collect: ['Scegli', 'quello che', 'ti serve.'],
   footerNote: "Tutti i prezzi sono indicativi — ogni progetto è un'altra storia. Materiali di stampa e produzione sempre a parte.",
 }
 

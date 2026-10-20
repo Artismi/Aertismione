@@ -84,35 +84,60 @@
   text-align: right;
 }
 
-/* ── Il tavolo delle carte ───────────────────────────────────
-   Quattro oggetti di carta diversi sul velo viola: cartellina,
-   cartellino appeso, foglio con la pinza, scheda a righe.
-   Ognuno appena storto, con la sua ombra; il testo sempre in vista. */
+/* ── Il collage ──────────────────────────────────────────────
+   Gli oggetti di carta sul velo viola, nei colori di prima: l'ambra
+   e il viola. Ognuno appena storto, con la sua ombra; sul computer il
+   testo e' tutto in vista. */
 
 .board {
   --ink: #1A1A1A;
   --paper: #F2EDE4;
   --kraft: #D7B68C;
   --kraft-dark: #C29C6E;
-  --pink: #E8A8BF;
-  --ice: #9DD4EE;
+  --amber: #C8860A;
+  --amber-dark: #9c6806;
   --plum: #35144E;
   position: relative;
   z-index: 1;
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: clamp(40px, 5vw, 64px) clamp(24px, 3vw, 40px);
+  column-gap: clamp(20px, 2.4vw, 32px);
   align-items: start;
   max-width: var(--content-max);
-  margin: 0 auto clamp(40px, 6vw, 72px);
-  padding: 24px clamp(24px, 6vw, 80px) 0;
+  margin: 0 auto clamp(48px, 6vw, 80px);
+  padding: 8px clamp(24px, 6vw, 80px) 0;
 }
 
+/* la fascia ambra in cima, con i codici; sotto, una striscia di carta */
+.topBand {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 11px 20px;
+  background: var(--amber);
+  color: var(--ink);
+  box-shadow: 0 10px 22px -10px rgba(0,0,0,0.6);
+}
+.topBand::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 4%;
+  right: 12%;
+  height: 18px;
+  background: rgba(242,237,228,0.16);
+}
+.topBand span { white-space: nowrap; }
+
 .slot { position: relative; }
-.slot[data-kind='folder'] { grid-column: 1 / 8;  grid-row: 1; }
-.slot[data-kind='tag']    { grid-column: 8 / 13; grid-row: 1; margin-top: 56px; }
-.slot[data-kind='sheet']  { grid-column: 5 / 13; grid-row: 2; }
-.slot[data-kind='card']   { grid-column: 1 / 5;  grid-row: 2; margin-top: 72px; }
+.slot[data-kind='folder'] { grid-column: 1 / 8;  grid-row: 2; margin-top: 34px; z-index: 2; }
+.slot[data-kind='tag']    { grid-column: 9 / 13; grid-row: 2; margin-top: -8px; z-index: 3; }
+.slot[data-kind='strip']  { grid-column: 1 / 5;  grid-row: 3; margin-top: 72px; z-index: 3; }
+.slot[data-kind='sheet']  { grid-column: 5 / 13; grid-row: 3; margin-top: 48px; z-index: 2; }
 
 /* la carta: grana leggerissima e ombra portata sul velo */
 .paper {
@@ -137,7 +162,7 @@
   font-size: clamp(1.7rem, 2.6vw, 2.5rem);
   line-height: 0.92;
   letter-spacing: -0.025em;
-  margin: 0;
+  margin: 10px 0 0;
 }
 
 .lead {
@@ -150,44 +175,47 @@
 
 .cta {
   margin-top: 22px;
-  align-self: flex-start;
   display: inline-flex;
   align-items: center;
   gap: 10px;
   padding: 10px 16px;
   border: 0;
   border-radius: var(--radius-btn);
-  background: var(--ink);
-  color: var(--pink);
+  background: var(--amber);
+  color: var(--ink);
   font-family: var(--font-mono);
   font-size: 0.72rem;
+  font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+  white-space: nowrap;
   cursor: pointer;
-  transition: transform 0.2s ease, background 0.2s ease;
+  transition: background 0.2s ease;
 }
 .cta::after { content: '→'; transition: transform 0.2s ease; }
-.cta:hover { background: #000; }
+.cta:hover { background: #dd9612; }
 .cta:hover::after { transform: translateX(4px); }
-.cta:focus-visible { outline: 2px solid var(--ice); outline-offset: 3px; }
+.cta:focus-visible { outline: 2px solid var(--plum); outline-offset: 3px; }
+
+/* sul computer si legge tutto: il bottone per aprire serve solo al telefono */
+.peek { display: none; }
 
 /* nastro adesivo semitrasparente */
 .tape {
   position: absolute;
   width: 92px;
   height: 26px;
-  background: rgba(232, 168, 191, 0.78);
+  background: rgba(200, 134, 10, 0.72);
   box-shadow: 0 1px 2px rgba(0,0,0,0.15);
-  mix-blend-mode: multiply;
   z-index: 3;
 }
 
-/* ── 01 · la cartellina (progettazione partecipata) ────────── */
+/* ── 01 · la cartellina kraft (progettazione partecipata) ── */
 
 .folder {
   background-color: var(--kraft);
   padding: clamp(26px, 3.2vw, 40px);
-  padding-top: clamp(34px, 4vw, 48px);
+  padding-top: clamp(30px, 3.6vw, 42px);
   transform: rotate(-1.2deg);
   display: flex;
   flex-direction: column;
@@ -210,9 +238,24 @@
 .folderHead {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: flex-start;
   gap: 12px;
-  margin-bottom: 14px;
+  margin-bottom: 18px;
+}
+.folderHead > div { display: grid; gap: 8px; justify-items: start; }
+/* le lettere cerchiate, come il monogramma della cartellina */
+.rings { display: flex; gap: 2px; }
+.rings i {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1.5px solid var(--ink);
+  border-radius: 50%;
+  font-family: var(--font-display);
+  font-style: normal;
+  font-weight: 700;
+  font-size: 0.82rem;
 }
 .folderNo {
   font-family: var(--font-display);
@@ -280,13 +323,14 @@
 }
 .folderFoot .cta { margin-top: 0; flex: none; }
 
-/* il post-it rosa con il valore che non si vede */
+/* il post-it viola con il valore che non si vede */
 .sticky {
   position: relative;
   margin: 0;
   max-width: 300px;
   padding: 22px 20px 18px;
-  background: var(--pink);
+  background: var(--plum);
+  color: var(--paper);
   font-family: var(--font-body);
   font-size: 0.9rem;
   line-height: 1.45;
@@ -301,94 +345,79 @@
   font-size: 0.64rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+  color: var(--amber);
 }
 
-/* ── 02 · il cartellino appeso (illustrazioni, stampe, gadget) ── */
+/* ── 02 · la striscia ambra pinzata (stampe e gadget) ──────── */
 
-.tagWrap { position: relative; padding-top: 70px; }
-.string {
+.stripWrap { position: relative; padding-top: 30px; }
+.stripClip {
   position: absolute;
   top: 0;
   left: 50%;
-  width: 90px;
-  height: 96px;
-  transform: translateX(-50%);
-  z-index: 2;
-  overflow: visible;
+  width: 64px;
+  height: 58px;
+  margin-left: -32px;
+  z-index: 4;
 }
-.tag {
-  background-color: var(--pink);
-  padding: 58px clamp(22px, 2.6vw, 32px) 30px;
-  transform: rotate(1.6deg);
+.strip {
+  background-color: var(--amber);
+  padding: 46px clamp(22px, 2.6vw, 30px) 28px;
+  transform: rotate(1.4deg);
   transform-origin: 50% 0;
   display: flex;
   flex-direction: column;
-  clip-path: polygon(14% 0, 86% 0, 100% 7%, 100% 100%, 0 100%, 0 7%);
-}
-/* il foro rinforzato */
-.tag::before {
-  content: '';
-  position: absolute;
-  top: 18px;
-  left: 50%;
-  width: 18px;
-  height: 18px;
-  margin-left: -9px;
-  border-radius: 50%;
-  background: #1c0f27;
-  box-shadow: 0 0 0 5px var(--paper);
 }
 .checks {
   list-style: none;
   margin: 20px 0 0;
   padding: 0;
-  border-top: 1.5px solid var(--ink);
+  display: grid;
+  gap: 8px;
 }
+/* ogni voce e' un riquadro di carta con la casella a destra */
 .check {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
-  padding: 9px 0;
-  border-bottom: 1px solid rgba(26,26,26,0.25);
+  padding: 10px 12px;
+  background: var(--paper);
   font-family: var(--font-body);
   font-size: 0.95rem;
+  box-shadow: 0 2px 0 rgba(0,0,0,0.12);
 }
-.check::before {
-  content: '✓';
+.check::after {
+  content: '';
   flex: none;
-  display: grid;
-  place-items: center;
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
   border: 1.5px solid var(--ink);
-  background: var(--paper);
-  font-size: 0.75rem;
-  line-height: 1;
 }
-/* l'adesivo tondo, un po' fuori dal bordo */
-.sticker {
-  position: absolute;
-  right: -20px;
-  bottom: -26px;
-  width: 92px;
-  height: 92px;
+.stripFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px 12px;
+  margin-top: 22px;
+}
+.stripFoot .cta { margin-top: 0; background: var(--ink); color: var(--amber); }
+.stripFoot .cta:hover { background: #000; }
+/* l'etichetta ovale, come un adesivo col nome */
+.oval {
+  flex: none;
+  padding: 8px 16px;
+  border: 1.5px solid var(--ink);
   border-radius: 50%;
-  display: grid;
-  place-items: center;
-  text-align: center;
-  background: var(--ice);
-  color: var(--ink);
+  background: var(--paper);
   font-family: var(--font-display);
   font-weight: 700;
   font-size: 0.86rem;
-  line-height: 1;
-  transform: rotate(-12deg);
-  box-shadow: 0 0 0 4px var(--paper), 0 10px 18px -6px rgba(0,0,0,0.45);
-  z-index: 4;
+  transform: rotate(-6deg);
 }
-.sticker span { display: block; font-size: 1.3rem; }
 
-/* ── 03 · il foglio grande con la pinza (identità completa) ── */
+/* ── 03 · il foglio con la graffetta (identita' completa) ─── */
 
 .sheet {
   background-color: var(--paper);
@@ -396,14 +425,23 @@
   display: flex;
   flex-direction: column;
 }
+.sheetTape { top: -10px; left: -18px; transform: rotate(-12deg); }
+.sheetClip {
+  position: absolute;
+  top: -24px;
+  right: 46%;
+  width: 22px;
+  height: 64px;
+  z-index: 3;
+}
 .band {
   display: flex;
   justify-content: space-between;
   gap: 16px;
-  /* a sinistra lascia il posto alla pinza */
-  padding: 10px clamp(22px, 3vw, 36px) 10px 124px;
+  /* a sinistra lascia il posto al nastro */
+  padding: 10px clamp(22px, 3vw, 36px) 10px 96px;
   background: var(--plum);
-  color: var(--pink);
+  color: var(--amber);
 }
 .sheetBody {
   position: relative;
@@ -411,10 +449,11 @@
   padding-top: clamp(30px, 3.6vw, 44px);
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
 }
 .sheetType {
   display: inline-block;
-  margin-bottom: 10px;
+  margin-bottom: 0;
   font-family: var(--font-mono);
   font-size: 0.68rem;
   letter-spacing: 0.12em;
@@ -422,6 +461,7 @@
   opacity: 0.7;
 }
 .sheetTitle { font-size: clamp(2.2rem, 3.6vw, 3.4rem); }
+.sheetBody .more { align-self: stretch; }
 .sheetCols {
   display: grid;
   grid-template-columns: 1fr 1.25fr;
@@ -475,7 +515,7 @@
   font-size: 0.86rem;
   white-space: nowrap;
 }
-.adds li::before { content: '+ '; font-family: var(--font-mono); color: #9b3c64; }
+.adds li::before { content: '+ '; font-family: var(--font-mono); color: var(--amber-dark); }
 .variants {
   margin: 16px 0 0;
   font-family: var(--font-body);
@@ -492,15 +532,6 @@
   line-height: 1.45;
   transform: rotate(-0.8deg);
 }
-/* la pinza nera in alto a sinistra */
-.binder {
-  position: absolute;
-  top: -26px;
-  left: 42px;
-  width: 64px;
-  height: 58px;
-  z-index: 3;
-}
 /* il timbro tondo del "più richiesto" */
 .stamp {
   position: absolute;
@@ -509,41 +540,74 @@
   width: 104px;
   height: 104px;
   border-radius: 50%;
-  border: 2px solid #9b3c64;
-  color: #9b3c64;
+  border: 2px solid var(--plum);
+  color: var(--plum);
   display: grid;
   place-items: center;
   text-align: center;
   font-family: var(--font-mono);
   font-size: 0.62rem;
+  font-weight: 700;
   letter-spacing: 0.12em;
   line-height: 1.5;
   text-transform: uppercase;
   transform: rotate(14deg);
-  box-shadow: inset 0 0 0 5px var(--paper), inset 0 0 0 6.5px #9b3c64;
+  box-shadow: inset 0 0 0 5px var(--paper), inset 0 0 0 6.5px var(--plum);
   opacity: 0.85;
 }
 
-/* ── 04 · la scheda a righe (gestione social) ─────────────── */
+/* ── 04 · il cartellino crema appeso (gestione social) ───── */
 
-.card {
-  background-color: var(--ice);
-  background-image:
-    repeating-linear-gradient(to bottom, transparent 0 31px, rgba(26,26,26,0.12) 31px 32px);
-  padding: clamp(30px, 3vw, 38px) clamp(22px, 2.6vw, 30px) clamp(24px, 3vw, 32px);
-  transform: rotate(-1.8deg);
+.tagWrap { position: relative; padding-top: 70px; }
+.string {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  width: 90px;
+  height: 116px;
+  transform: translateX(-50%);
+  z-index: 2;
+  overflow: visible;
+}
+.tag {
+  background-color: var(--paper);
+  padding: 58px clamp(20px, 2.4vw, 28px) 28px 48px;
+  transform: rotate(2.4deg);
+  transform-origin: 50% 0;
   display: flex;
   flex-direction: column;
-  /* il bordo alto strappato dal blocco: dentini */
-  -webkit-mask: radial-gradient(circle 5px at 50% 0, transparent 98%, #000) top / 16px 100% repeat-x;
-          mask: radial-gradient(circle 5px at 50% 0, transparent 98%, #000) top / 16px 100% repeat-x;
+  clip-path: polygon(14% 0, 86% 0, 100% 7%, 100% 100%, 0 100%, 0 7%);
 }
-.cardTop {
+/* il foro rinforzato */
+.tag::before {
+  content: '';
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  margin-left: -9px;
+  border-radius: 50%;
+  background: #1c0f27;
+  box-shadow: 0 0 0 5px var(--kraft);
+}
+/* la scritta in verticale lungo il bordo */
+.side {
+  position: absolute;
+  left: 16px;
+  top: 64px;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 0.6rem;
+  opacity: 0.6;
+  white-space: nowrap;
+}
+.tagTop {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 14px;
+  align-items: center;
 }
+.star { color: var(--amber); font-size: 1.6rem; line-height: 1; }
 .week {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -563,40 +627,200 @@
   border-radius: 50%;
   border: 1.5px solid var(--ink);
 }
-.week i[data-on='true'] { background: var(--ink); }
-.cardList {
+.week i[data-on='true'] { background: var(--amber); border-color: var(--amber-dark); }
+.tagList {
   list-style: none;
   margin: 8px 0 0;
   padding: 0;
 }
-.cardList li {
-  padding: 6px 0;
+.tagList li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px dashed rgba(26,26,26,0.25);
   font-family: var(--font-body);
   font-size: 0.95rem;
-  line-height: 20px;
 }
-.cardList li::before { content: '— '; font-family: var(--font-mono); }
+.tagList li::after { content: '○'; font-family: var(--font-mono); font-size: 0.7rem; opacity: 0.6; }
 
-/* ── Tablet e telefono: una carta sotto l'altra ───────────── */
+/* ── la coppia di adesivi tondi ───────────────────────────── */
+
+.stickers {
+  grid-column: 9 / 13;
+  grid-row: 2;
+  align-self: end;
+  justify-self: center;
+  position: relative;
+  z-index: 3;
+  display: flex;
+  margin-bottom: 8px;
+  pointer-events: none;
+}
+.round {
+  width: 128px;
+  height: 128px;
+  filter: drop-shadow(0 8px 10px rgba(0,0,0,0.45));
+}
+.round circle { fill: var(--amber); }
+.round[data-k='a'] { transform: rotate(-14deg); }
+.round[data-k='b'] { margin-left: -22px; transform: rotate(168deg); }
+.round[data-k='b'] circle { fill: var(--plum); }
+.ringText {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  fill: var(--ink);
+}
+.round[data-k='b'] .ringText { fill: var(--amber); }
+.roundCenter {
+  margin: 0;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.round[data-k='b'] .roundCenter { color: var(--paper); }
+
+/* ── Tra telefono e computer: il collage a due colonne ────── */
+
+@media (max-width: 1100px) and (min-width: 901px) {
+  .slot[data-kind='folder'] { grid-column: 1 / 8; }
+  .slot[data-kind='tag']    { grid-column: 8 / 13; }
+  .stickers                 { grid-column: 8 / 13; }
+  .slot[data-kind='strip']  { grid-column: 1 / 6; }
+  .slot[data-kind='sheet']  { grid-column: 6 / 13; }
+  .sheetCols { grid-template-columns: 1fr; }
+}
+
+/* ── Telefono: il collage intero, in piccolo ─────────────────
+   Le carte stanno tutte insieme, sovrapposte appena; ognuna mostra
+   codice, titolo e attacco. Toccata, viene davanti e si apre tutta. */
 
 @media (max-width: 900px) {
   .board {
-    grid-template-columns: 1fr;
-    gap: 56px;
-    padding: 24px clamp(18px, 5vw, 40px) 0;
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 560px;
+    padding: 8px 16px 0;
   }
-  .slot[data-kind] { grid-column: 1; grid-row: auto; margin-top: 0; }
-  .slot[data-kind='tag'] { padding: 0 6%; }
+  .topBand { padding: 9px 14px; font-size: 0.58rem; }
+  /* sul telefono resta il codice: a destra passa lo spago */
+  .topBand span[data-i='1'], .topBand span[data-i='2'] { display: none; }
+
+  /* tutte nella stessa cella: si sovrappongono come sul tavolo */
+  .slot[data-kind], .stickers { grid-column: 1; grid-row: 2; justify-self: start; align-self: start; }
+  /* si toccano solo sui bordi, dove non c'e' testo */
+  .slot[data-kind='folder'] { width: 56%; margin-top: 34px; }
+  .slot[data-kind='tag']    { width: 47%; margin: -6px 0 0 53%; }
+  .slot[data-kind='strip']  { width: 50%; margin-top: 290px; }
+  .slot[data-kind='sheet']  { width: 54%; margin: 318px 0 0 46%; }
+  .stickers { margin: 556px 0 0 34%; }
+  .round { width: 84px; height: 84px; }
+  .round[data-k='b'] { margin-left: -16px; }
+
+  /* nel collage le carte sono piccole: solo codice, titolo e attacco */
+  .slot:not([data-open]) .more,
+  .slot:not([data-open]) .side,
+  .slot:not([data-open]) .stamp,
+  .slot:not([data-open]) .rings,
+  .slot:not([data-open]) .folderNo { display: none; }
+  .slot:not([data-open]) .title { font-size: 1.12rem; line-height: 0.98; margin-top: 6px; }
+  .slot:not([data-open]) .sheetTitle { font-size: 1.4rem; }
+  .slot:not([data-open]) .lead {
+    font-size: 0.76rem;
+    line-height: 1.35;
+    margin-top: 8px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .slot:not([data-open]) .code { font-size: 0.54rem; letter-spacing: 0.08em; }
+  .slot:not([data-open]) .folder { padding: 18px 24px 16px 16px; }
+  .slot:not([data-open]) .folder::before { padding: 6px 14px 4px; font-size: 0.54rem; left: 12px; }
+  .slot:not([data-open]) .folderHead { margin-bottom: 6px; }
+  .slot:not([data-open]) .folderNo { font-size: 1.8rem; }
+  .slot:not([data-open]) .strip { padding: 34px 14px 16px; }
+  .slot:not([data-open]) .stripWrap { padding-top: 22px; }
+  .slot:not([data-open]) .stripClip { width: 46px; height: 42px; margin-left: -23px; }
+  .slot:not([data-open]) .sheetBody { padding: 16px 14px 16px 22px; }
+  .slot:not([data-open]) .band { padding: 7px 10px 7px 54px; font-size: 0.5rem; }
+  .slot:not([data-open]) .band span + span { display: none; }
+  .slot:not([data-open]) .sheetTape { width: 56px; height: 18px; left: -10px; top: -6px; }
+  .slot:not([data-open]) .sheetClip { width: 16px; height: 46px; top: -18px; right: 12%; }
+  .slot:not([data-open]) .tagWrap { padding-top: 54px; }
+  .slot:not([data-open]) .string { height: 92px; top: -16px; }
+  .slot:not([data-open]) .tag { padding: 40px 14px 16px; }
+  .slot:not([data-open]) .tag::before { top: 12px; width: 14px; height: 14px; margin-left: -7px; box-shadow: 0 0 0 4px var(--kraft); }
+  .slot:not([data-open]) .star { font-size: 1.1rem; }
+  .slot:not([data-open]) .week { margin: 10px 0 0; padding: 6px 0; font-size: 0.5rem; gap: 2px; }
+  .slot:not([data-open]) .week span { gap: 3px; }
+  .slot:not([data-open]) .week i { width: 6px; height: 6px; border-width: 1px; }
+  .slot:not([data-open]) { cursor: pointer; }
+
+  /* il bottone per aprire: un'etichetta piccola in fondo alla carta */
+  .peek {
+    display: inline-flex;
+    align-self: flex-start;
+    align-items: center;
+    gap: 6px;
+    margin-top: 12px;
+    padding: 5px 9px;
+    border: 1.5px solid currentColor;
+    border-radius: 999px;
+    background: transparent;
+    color: inherit;
+    font-family: var(--font-mono);
+    font-size: 0.56rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .peek::after { content: '+'; font-size: 0.8rem; line-height: 1; }
+  .peek:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+
+  /* la carta aperta: davanti a tutto, a piena larghezza, dritta */
+  .slot[data-open] { width: 100%; margin: 34px 0 0; z-index: 10; }
+  .board[data-open] .slot:not([data-open]),
+  .board[data-open] .stickers { visibility: hidden; }
+  .slot[data-open] .folder,
+  .slot[data-open] .strip,
+  .slot[data-open] .sheet,
+  .slot[data-open] .tag { transform: none; }
+  .slot[data-open] .peek {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    margin: 0;
+    z-index: 5;
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--paper);
+  }
+  .slot[data-open] .peek::after { content: '✕'; font-size: 0.6rem; }
+  .slot[data-open] .folderNo,
+  .slot[data-open] .star { visibility: hidden; }
+  .slot[data-open] .tagWrap { padding-top: 0; }
+  .slot[data-open] .string { display: none; }
+  .slot[data-open] .tag { clip-path: none; padding-top: 52px; }
+  .slot[data-open] .tag::before { display: none; }
+  .slot[data-open] .sheet .peek { top: 10px; }
+  .slot[data-open] .sheetTape { left: -6px; }
+
+  /* la carta aperta, su schermo stretto */
   .sheetCols { grid-template-columns: 1fr; }
-  .folder { transform: rotate(-0.8deg); }
-  .tag { transform: rotate(1.2deg); }
-  .card { transform: rotate(-1deg); }
-  .sticker { right: -6px; bottom: -30px; width: 84px; height: 84px; }
-  /* il bottone sopra, il post-it sotto */
   .folderFoot { flex-direction: column-reverse; align-items: stretch; gap: 26px; }
   .folderFoot .cta { align-self: flex-start; }
   .sticky { margin-left: 8px; }
-  /* il timbro entra nel testo: il titolo gli gira intorno */
   .sheetBody { display: block; }
   .stamp {
     position: relative;
@@ -605,13 +829,13 @@
     right: auto;
     width: 78px;
     height: 78px;
-    margin: -6px -4px 8px 10px;
+    margin: 30px -4px 8px 10px;
     font-size: 0.5rem;
   }
   .sheetBody .cta { display: inline-flex; }
-  /* la fascia su una riga sola: pinza piu' piccola, codice piu' stretto */
-  .binder { left: 16px; width: 50px; height: 46px; top: -20px; }
-  .band { padding: 9px 14px 9px 78px; font-size: 0.56rem; letter-spacing: 0.06em; white-space: nowrap; gap: 10px; }
+  .band { padding: 9px 14px 9px 64px; font-size: 0.56rem; letter-spacing: 0.06em; white-space: nowrap; gap: 10px; }
+  .slot[data-open] .band span + span { display: none; }
+  .stripFoot { flex-wrap: wrap; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -637,16 +861,21 @@
   color: var(--color-muted);
 }
 
-.gridFooterStar {
-  font-size: 0.6rem;
-  color: var(--color-accent);
-  font-family: sans-serif;
+/* "Scegli * quello che ( ti serve. )", come la riga in fondo al collage */
+.collect {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(0.9rem, 1.3vw, 1.05rem);
+  color: var(--color-text);
   white-space: nowrap;
 }
+.collect b { color: var(--color-amber); }
+.collect u { text-underline-offset: 3px; text-decoration-thickness: 1.5px; }
 
 /* ── Responsive ──────────────────────────────────────────── */
 
 @media (max-width: 900px) {
+  .gridFooter { flex-direction: column; align-items: flex-start; }
   .sectionHeader {
     flex-direction: column;
     align-items: flex-start;
