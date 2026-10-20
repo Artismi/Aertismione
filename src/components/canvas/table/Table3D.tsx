@@ -425,6 +425,9 @@ export default function Table3D(props: Props) {
         dpr={[1, 1.5]}
         camera={{ fov: 30, position: [0.15, 40, 30], near: 0.1, far: 200 }}
         gl={{ antialias: false, alpha: false, powerPreference: 'high-performance' }}
+        // la plastica trasparente del Game Boy ridisegna la scena dietro di se':
+        // a meta' risoluzione, sotto un guscio satinato non si vede la differenza
+        onCreated={({ gl }) => { gl.transmissionResolutionScale = 0.5 }}
         eventSource={document.body}
         eventPrefix="client"
       >

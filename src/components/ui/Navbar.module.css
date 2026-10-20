@@ -8,9 +8,9 @@
 }
 
 .nav.scrolled {
-  background: rgba(242, 224, 232, 0.82);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  /* niente sfocatura dello sfondo: sopra il mondo 3D, che si ridisegna a ogni
+     fotogramma, il browser doveva risfocarla di continuo e lo scroll scattava */
+  background: rgba(242, 224, 232, 0.95);
   border-bottom: 1px solid rgba(232, 168, 191, 0.45);
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.18);
 }

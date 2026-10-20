@@ -139,8 +139,11 @@ export function Console3D({ phase, mobile, grab, hovered, game, logo, plasticRou
   const mats = useMemo(() => ({
     // plastica rosa trasparente e satinata: niente bagliore, solo luce che passa
     shell: new THREE.MeshPhysicalMaterial({
-      color: '#f9dde5', transmission: 0.9, thickness: 0.35, roughness: 0.22, ior: 1.47,
-      attenuationColor: new THREE.Color('#ec9fb5'), attenuationDistance: 0.8,
+      // spessore sottile: con uno spessore grosso la rifrazione spostava cio' che sta dietro
+      // e i tasti A/B ricomparivano, sfalsati, sulla scheda dentro. Il rosa resta lo stesso
+      // (attenuazione nella stessa proporzione dello spessore)
+      color: '#f9dde5', transmission: 0.9, thickness: 0.03, roughness: 0.22, ior: 1.47,
+      attenuationColor: new THREE.Color('#ec9fb5'), attenuationDistance: 0.8 * 0.03 / 0.35,
       clearcoat: 0.3, clearcoatRoughness: 0.3, roughnessMap: plasticRough,
     }),
     // la giuntura tra i due gusci, una riga scura tutt'attorno
