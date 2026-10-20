@@ -1,15 +1,15 @@
 'use client'
 
 /**
- * Table3D — il mondo dietro la home: in alto l'aria dello studio, al centro il
- * banco da lavoro con il fascicolo del portfolio e il Game Boy di Porto
- * Vecchio; superato il bordo, lo sfondo e il resto del sito.
+ * Table3D — il mondo della home, uno solo: il logo di vetro sospeso in aria e,
+ * piu' giu', il banco da lavoro con il fascicolo del portfolio e il Game Boy di
+ * Porto Vecchio, tutto dentro la piscina rosa.
  *
  * E' un <Canvas> fisso dietro tutta la pagina (portale su body, z-index -1).
- * La camera guarda il banco in prospettiva, dritta (bordo orizzontale), e lo
- * fa seguire al riquadro della sezione Progetti: il banco sale dritto da sotto
- * con lo scroll, si ferma al centro con la sezione, poi esce in alto come il
- * resto della pagina. Sopra e sotto c'e' solo lo sfondo rosa. Frameloop "demand": disegna solo quando la camera o un
+ * Il mondo scorre con la pagina (vedi Rig): il logo sta nella prima schermata,
+ * il banco nel riquadro della sezione Progetti, e ognuno entra ed esce con la
+ * sua sezione. Lo sfondo rosa e la luce sono gli stessi per tutto.
+ * Frameloop "demand": disegna solo quando la camera o un
  * oggetto si muove. I clic arrivano dalla pagina (eventSource = body).
  * Le fasi (chiuso, scivola, si apre...) le decide PortfolioSection.
  * Il tabellone della bilia lo disegna PortfolioSection su un canvas 2D: qui
@@ -20,14 +20,15 @@ import { Suspense, useEffect, useMemo, useRef, useState, type MutableRefObject, 
 import { createPortal } from 'react-dom'
 import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber'
 import { Environment } from '@react-three/drei'
-import { EffectComposer, N8AO, DepthOfField, Vignette, Noise, ToneMapping } from '@react-three/postprocessing'
-import { ToneMappingMode, type DepthOfFieldEffect } from 'postprocessing'
+import { EffectComposer, N8AO, Vignette, Noise, ToneMapping } from '@react-three/postprocessing'
+import { ToneMappingMode } from 'postprocessing'
 import * as THREE from 'three'
 import { loadImage } from './textures'
 import { Bench } from './Bench'
 import { Folder3D, FW, FD, BW, BD, BOARD_Y } from './Folder3D'
 import { Console3D } from './Console3D'
 import { WorldBackdrop } from './WorldBackdrop'
+import { LogoModel } from '../LogoModel'
 import styles from './Table3D.module.css'
 
 export type TablePhase = 'closed' | 'sliding' | 'opening' | 'open' | 'closing' | 'returning' | 'list'
@@ -64,18 +65,33 @@ const TEX = '/progetti/tex'
 
 type Images = { logo: HTMLImageElement | null; paper: HTMLImageElement | null; metal: HTMLImageElement | null }
 
-/* ── Camera: il banco in prospettiva, inquadrato dritto; sale da sotto con lo scroll ── */
+/* ── Camera: il mondo scorre con la pagina ── */
 
 const V = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z)
 
-function Rig({ phase, mobile, stage, look }: {
+/** dove sta il logo nella prima schermata, in frazione dell'altezza dello schermo */
+const LOGO_AT = 0.45
+
+/**
+ * La camera guarda il banco sempre dalla stessa angolazione e scorre con la
+ * pagina, lungo il suo «alto»: il mondo e' fermo rispetto alla pagina, come se
+ * fosse disegnato sotto. Il banco sta nel riquadro della sezione Progetti e il
+ * logo in cima, all'altezza della prima schermata: ognuno entra ed esce con la
+ * sua sezione e non compare altrove. Il logo e' nello stesso spazio del banco,
+ * girato verso la camera.
+ */
+function Rig({ phase, mobile, stage, look, logo }: {
   phase: TablePhase; mobile: boolean; stage: Props['stage']; look: MutableRefObject<THREE.Vector3>
+  logo: RefObject<THREE.Group | null>
 }) {
   const { camera, size, invalidate } = useThree()
   const mouse = useRef(new THREE.Vector2())
-  const v = useRef({ pos: new THREE.Vector3(), lk: new THREE.Vector3(), up: new THREE.Vector3(), fwd: new THREE.Vector3(), right: new THREE.Vector3() })
+  const v = useRef({
+    pos: new THREE.Vector3(), lk: new THREE.Vector3(), up: new THREE.Vector3(), fwd: new THREE.Vector3(),
+    right: new THREE.Vector3(), m: new THREE.Matrix4(),
+  })
   useEffect(() => { invalidate() }, [phase, mobile, size, invalidate])
-  // lo scroll muove il banco, il mouse lo sposta appena: si ridisegna solo allora
+  // lo scroll muove il mondo, il mouse lo sposta appena: si ridisegna solo allora
   useEffect(() => {
     const on = () => invalidate()
     const move = (e: PointerEvent) => {
@@ -94,14 +110,30 @@ function Rig({ phase, mobile, stage, look }: {
     const stageAspect = r && r.height > 0 ? r.width / r.height : aspect
     const t = v.current
 
-    // l'inquadratura di lavoro, in prospettiva e dritta (camera e punto guardato
-    // sulla stessa x: il bordo del banco resta orizzontale), a misura del riquadro
+    // l'inquadratura di lavoro, in prospettiva e dritta, a misura del riquadro
     if (mobile) {
       const k = Math.max(1, 0.62 / stageAspect) * (aspect < stageAspect ? stageAspect / aspect : 1)
-      t.pos.copy(V(0, 7.6 * k, 4.6 * k)); t.lk.copy(V(0, 0, 0.35))
+      t.pos.set(0, 7.6 * k, 4.6 * k); t.lk.set(0, 0, 0.35)
     } else {
       const k = Math.max(1, 2.15 / stageAspect) * (r ? vh / r.height : 1) * 0.92
-      t.pos.copy(V(0.15, 5.4 * k, 4.9 * k)); t.lk.copy(V(0.15, 0, 0.25))
+      t.pos.set(0.15, 5.4 * k, 4.9 * k); t.lk.set(0.15, 0, 0.25)
+    }
+    t.fwd.subVectors(t.lk, t.pos)
+    const dist = t.fwd.length()
+    t.fwd.normalize()
+    t.right.crossVectors(t.fwd, V(0, 1, 0)).normalize()
+    t.up.crossVectors(t.right, t.fwd).normalize()
+    // quanto e' alto lo schermo, nel mondo, alla distanza del banco
+    const viewH = 2 * dist * Math.tan(THREE.MathUtils.degToRad(cam.fov / 2))
+
+    if (r) {
+      // il logo: in cima alla pagina, nello stesso spazio del banco, girato verso la camera
+      const g = logo.current
+      if (g) {
+        const fromStage = ((r.top + r.height / 2) - (vh * LOGO_AT - window.scrollY)) / vh * viewH
+        g.position.copy(t.lk).addScaledVector(t.up, fromStage).addScaledVector(t.right, -((r.left + r.width / 2) - vw / 2) / vh * viewH)
+        g.quaternion.setFromRotationMatrix(t.m.lookAt(t.pos, t.lk, t.up))
+      }
     }
 
     const top = !mobile && phase !== 'closed' && phase !== 'returning' && phase !== 'list'
@@ -113,12 +145,6 @@ function Rig({ phase, mobile, stage, look }: {
     } else if (r) {
       // il banco segue il riquadro della sezione: si sposta la camera lungo il suo
       // «alto» e la sua «destra», senza girarla. Riquadro sotto il centro = banco sotto.
-      t.fwd.subVectors(t.lk, t.pos)
-      const dist = t.fwd.length()
-      t.fwd.normalize()
-      t.right.crossVectors(t.fwd, V(0, 1, 0)).normalize()
-      t.up.crossVectors(t.right, t.fwd).normalize()
-      const viewH = 2 * dist * Math.tan(THREE.MathUtils.degToRad(cam.fov / 2))
       const dy = ((r.top + r.height / 2) - vh / 2) / vh * viewH
       const dx = ((r.left + r.width / 2) - vw / 2) / vw * viewH * aspect
       // il mouse sposta di pochissimo, solo per dare profondita'
@@ -129,7 +155,7 @@ function Rig({ phase, mobile, stage, look }: {
 
     let moving = false
     // seguendo lo scroll si va quasi alla lettera (lo scroll e' gia' morbido); le aperture sono smorzate
-    const k = top || phase === 'returning' || phase === 'closing' ? 5 : 14
+    const k = top || phase === 'returning' || phase === 'closing' ? 5 : 16
     for (const ax of ['x', 'y', 'z'] as const) {
       cam.position[ax] = damp(cam.position[ax], t.pos[ax], k, dt)
       look.current[ax] = damp(look.current[ax], t.lk[ax], k, dt)
@@ -142,59 +168,39 @@ function Rig({ phase, mobile, stage, look }: {
   return null
 }
 
-/** Messa a fuoco come in una foto: dove guarda la camera, o sulla console quando e' in mano */
-function Focus({ grab, dof, look }: { grab: boolean; dof: MutableRefObject<DepthOfFieldEffect | null>; look: MutableRefObject<THREE.Vector3> }) {
-  const want = useRef(new THREE.Vector3())
-  useFrame(({ camera }) => {
-    const e = dof.current
-    if (!e) return
-    if (grab) want.current.copy(camera.position).lerp(new THREE.Vector3(0.25, 0, 0.7), 0.6)
-    else want.current.copy(look.current)
-    e.target?.copy(want.current)
-  })
-  return null
-}
-
 /**
- * Il tabellone: il canvas della bilia diventa una texture (meta' per pagina) e il
- * mouse si riporta dallo schermo al piano del fascicolo aperto.
+ * Il tabellone: il canvas della bilia diventa la stampa della tavola stesa sul
+ * fascicolo aperto, e il mouse si riporta dallo schermo al piano della tavola.
  */
 function useBoard(board: Props['board'], api: Props['api']) {
   const { camera, gl, invalidate } = useThree()
   const tex = useMemo(() => {
     const c = board.current
     if (!c) return null
-    const left = new THREE.CanvasTexture(c)
-    left.colorSpace = THREE.SRGBColorSpace
-    left.anisotropy = 8
-    left.repeat.set(0.5, 1)
-    const right = left.clone()
-    right.offset.set(0.5, 0)
-    return { left, right }
+    const t = new THREE.CanvasTexture(c)
+    t.colorSpace = THREE.SRGBColorSpace
+    t.anisotropy = 8
+    return t
   }, [board])
-  useEffect(() => () => { tex?.left.dispose(); tex?.right.dispose() }, [tex])
+  useEffect(() => () => { tex?.dispose() }, [tex])
 
   useEffect(() => {
     const ray = new THREE.Raycaster()
     const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -BOARD_Y)
     const hit = new THREE.Vector3(), ndc = new THREE.Vector2()
-    // da aperto il fascicolo sta con la piega in x = 0: meta' sinistra e meta' destra,
-    // con il dorso in mezzo (sul tabellone non c'e': si salta da una pagina all'altra)
-    const x0 = -FW / 2 - BW / 2, x1 = FW / 2 - BW / 2
     api.current = {
       toBoard: (cx, cy) => {
         const r = gl.domElement.getBoundingClientRect()
         ndc.set((cx - r.left) / r.width * 2 - 1, -((cy - r.top) / r.height) * 2 + 1)
         ray.setFromCamera(ndc, camera)
         if (!ray.ray.intersectPlane(plane, hit)) return null
-        const u = hit.x < 0 ? Math.min(0.5, (hit.x - x0) / BW / 2) : 0.5 + Math.max(0, hit.x - x1) / BW / 2
-        const v = (hit.z + BD / 2) / BD
+        // da aperto il tabellone e' centrato nell'origine
+        const u = hit.x / BW + 0.5, v = hit.z / BD + 0.5
         return { u, v, inside: u >= 0 && u <= 1 && v >= 0 && v <= 1 }
       },
       refresh: () => {
         if (!tex) return
-        tex.left.needsUpdate = true
-        tex.right.needsUpdate = true
+        tex.needsUpdate = true
         invalidate()
       },
     }
@@ -257,13 +263,13 @@ function Table(props: Props & { images: Images }) {
 }
 
 function World(props: Props & { images: Images | null }) {
-  const { grab, mobile } = props
-  const dof = useRef<DepthOfFieldEffect | null>(null)
+  const { mobile } = props
   const look = useRef(new THREE.Vector3(0, 0, 0))
+  const logo = useRef<THREE.Group>(null)
 
   return (
     <>
-      <Rig phase={props.phase} mobile={mobile} stage={props.stage} look={look} />
+      <Rig phase={props.phase} mobile={mobile} stage={props.stage} look={look} logo={logo} />
 
       {/* luce: lo studio fotografico (HDR CC0 di Poly Haven) e una lampada da banco calda
           che fa l'ombra del tavolo sul pavimento */}
@@ -276,7 +282,7 @@ function World(props: Props & { images: Images | null }) {
         intensity={3.2}
         color="#fff1df"
         castShadow
-        shadow-mapSize={[2048, 2048]}
+        shadow-mapSize={[1024, 1024]}
         shadow-camera-left={-11}
         shadow-camera-right={11}
         shadow-camera-top={9}
@@ -287,13 +293,20 @@ function World(props: Props & { images: Images | null }) {
       />
       <directionalLight position={[5, 4, 4]} intensity={0.45} color="#dfe8ff" />
 
+      {/* il logo di vetro, in cima al mondo (Rig lo mette all'altezza della prima schermata):
+          si carica subito, e' la prima cosa che si vede */}
+      <group ref={logo}>
+        <Suspense fallback={null}>
+          <LogoModel inWorld scale={mobile ? 0.75 : 1} />
+        </Suspense>
+      </group>
+
       {props.images && <Suspense fallback={null}><Table {...props} images={props.images} /></Suspense>}
 
-      {/* come in un render: occlusione negli angoli, messa a fuoco, grana, vignettatura */}
-      <Focus grab={grab} dof={dof} look={look} />
-      <EffectComposer multisampling={mobile ? 0 : 4}>
-        <N8AO aoRadius={0.5} distanceFalloff={0.5} intensity={3.5} quality={mobile ? 'low' : 'medium'} halfRes={mobile} />
-        <DepthOfField ref={dof} target={[0.3, 0, 0.3]} worldFocusRange={6} bokehScale={mobile ? 1.5 : 2.5} />
+      {/* come in un render: occlusione negli angoli, grana, vignettatura */}
+      {/* niente messa a fuoco: costava piu' di tutto il resto e faceva scattare lo scroll */}
+      <EffectComposer multisampling={mobile ? 0 : 2}>
+        <N8AO aoRadius={0.5} distanceFalloff={0.5} intensity={3.5} quality={mobile ? 'low' : 'medium'} halfRes />
         <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
         <Vignette offset={0.25} darkness={0.55} />
         <Noise opacity={0.035} />
@@ -305,8 +318,8 @@ function World(props: Props & { images: Images | null }) {
 }
 
 export default function Table3D(props: Props) {
-  // Il tavolo (texture, logo, font) si carica solo avvicinandosi alla sezione:
-  // in cima alla pagina basta l'aria dello studio
+  // Il banco (texture, scritte, font) si carica avvicinandosi alla sezione, o
+  // appena la pagina e' pronta: in cima basta il logo nell'aria
   const [near, setNear] = useState(false)
   useEffect(() => {
     if (near) return
@@ -315,8 +328,10 @@ export default function Table3D(props: Props) {
       if (r && r.top < window.innerHeight * 2.5) setNear(true)
     }
     check()
+    // la camera vede il banco gia' dalla seconda sezione: lo si carica comunque appena la pagina e' ferma
+    const idle = window.setTimeout(() => setNear(true), 2500)
     window.addEventListener('scroll', check, { passive: true })
-    return () => window.removeEventListener('scroll', check)
+    return () => { window.clearTimeout(idle); window.removeEventListener('scroll', check) }
   }, [near, props.stage])
 
   // Le scritte sono disegnate con i font del sito e il logo: si aspetta che siano pronti

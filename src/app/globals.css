@@ -7,6 +7,10 @@
   /* --- Palette: Notte d'Inchiostro --- */
   /* Viola bordeaux quasi nero — la carta diventa testo, il rosa diventa luce */
   --color-bg: rgba(18, 8, 28, 0.94);
+  /* Il velo dietro i testi della home: il mondo 3D resta visibile sotto, e
+     ai bordi delle sezioni il velo sfuma, cosi' non ci sono stacchi netti */
+  --veil: rgba(28, 14, 26, 0.58);
+  --veil-0: rgba(28, 14, 26, 0);
   /* Viola-bordeaux — semi-trasparente per mostrare 3D */
   --color-bg-alt: rgba(26, 14, 40, 0.97);
   /* Sezioni alternate — viola leggermente più aperto */

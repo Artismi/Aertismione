@@ -2,20 +2,17 @@
   position: relative;
   z-index: 10;
   padding: var(--section-py) 0;
-  background: rgba(18, 8, 28, 0.88);
   color: var(--color-text);
 }
 
-/* Barra di transizione superiore — sfuma morbidamente l'uscita dalla transparent AboutSection */
+/* Il velo entra sfumando dal mondo (sopra c'e' Chi sono, trasparente) e resta fino in fondo */
 .section::before {
   content: '';
   position: absolute;
-  top: -150px;
-  left: 0;
-  right: 0;
-  height: 150px;
-  background: linear-gradient(to bottom, transparent, rgba(18, 8, 28, 0.88));
+  inset: -22vh 0 0;
+  z-index: -1;
   pointer-events: none;
+  background: linear-gradient(to bottom, var(--veil-0) 0%, var(--veil) 22vh, var(--veil) 100%);
 }
 
 /* Override accent-bar on dark background */

@@ -23,11 +23,13 @@ const FOLDER_HIT_R  = 74   // raggio collisione/hover cartellina
 const FRICTION      = 0.972
 const MIN_SPEED     = 0.07
 const MAX_LAUNCH    = 38
-// Il tabellone e' stampato dentro il fascicolo 3D: misura fissa, con le stesse
-// proporzioni delle due pagine aperte (2 × BW : BD in Folder3D)
+// Il tabellone e' la tavola stesa sul fascicolo 3D aperto: misura fissa, con le
+// stesse proporzioni della tavola (BW : BD in Folder3D)
 const MAP_W         = 1200
-const MAP_H         = 787
-const MAP_SCALE     = 1.5  // pixel del canvas per unita' del tabellone: la texture resta nitida
+const MAP_H         = 775
+// pixel del canvas per unita' del tabellone: la texture si ricarica a ogni
+// fotogramma, piu' grande farebbe scattare il 3D
+const MAP_SCALE     = 1
 
 /* â”€â”€â”€ Tipi â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
@@ -802,25 +804,20 @@ export function PortfolioSection() {
     return () => window.removeEventListener('keydown', onKey)
   })
 
-  // Il gioco gira sul suo sito: la console si prende in mano, si accende e si parte.
-  // Dentro il sito, sopra il 3D della home, era troppo lento.
+  // Il gioco ha una pagina sua, nel sito: la console si prende in mano, si accende
+  // e si passa li'. Sopra il 3D della home era troppo lento.
+  useEffect(() => { router.prefetch(PROGETTI.game.page) }, [router])
+
   function grabGamepad() {
     if (grab) return
     setGrab(true)
-    later(() => window.location.assign(PROGETTI.game.url), OPEN_MS)
+    later(() => routerRef.current.push(PROGETTI.game.page), OPEN_MS)
   }
 
-  // Tornando indietro dal gioco la pagina puo' riapparire com'era: console di nuovo sul tavolo
-  useEffect(() => {
-    function onShow(e: PageTransitionEvent) { if (e.persisted) setGrab(false) }
-    window.addEventListener('pageshow', onShow)
-    return () => window.removeEventListener('pageshow', onShow)
-  }, [])
-
-  // Vecchio link diretto (/#porto-vecchio): si va subito al gioco
+  // Vecchio link diretto (/#porto-vecchio): si va subito alla pagina del gioco
   useEffect(() => {
     function fromHash() {
-      if (window.location.hash === `#${PROGETTI.game.id}`) window.location.replace(PROGETTI.game.url)
+      if (window.location.hash === `#${PROGETTI.game.id}`) routerRef.current.replace(PROGETTI.game.page)
     }
     fromHash()
     window.addEventListener('hashchange', fromHash)

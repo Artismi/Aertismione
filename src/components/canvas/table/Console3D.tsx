@@ -18,6 +18,7 @@ import { RoundedBox, Html } from '@react-three/drei'
 import * as THREE from 'three'
 import { pcbTexture, faceTexture, bezelTexture, screenTexture, BOOT_SECONDS } from './textures'
 import type { TablePhase } from './Table3D'
+import { HIT_MAT } from './Folder3D'
 import styles from './Table3D.module.css'
 
 const CW = 1.0, CD = 0.98, BH = 0.115, LH = 0.1, CR = 0.05
@@ -235,7 +236,11 @@ export function Console3D({ phase, mobile, grab, hovered, game, logo, plasticRou
 
   return (
     <group ref={group} position={home as [number, number, number]} rotation={[0, homeRy, 0]} scale={mobile ? 1.1 : 1.25}>
-      <group onPointerOver={over} onPointerOut={out} onClick={click}>
+      {/* per il mouse: la base e il coperchio alzato, in una scatola sola */}
+      <mesh position={[0, 0.45, 0]} material={HIT_MAT} onPointerOver={over} onPointerOut={out} onClick={click}>
+        <boxGeometry args={[CW + 0.06, 0.9, CD + 0.06]} />
+      </mesh>
+      <group>
         {/* ── Base ── */}
         <RoundedBox args={[CW, BH, CD]} radius={CR} smoothness={6} position={[0, BH / 2, 0]} material={mats.shell} castShadow receiveShadow />
         <mesh geometry={geo.seamBase} position={[0, BH * 0.45, 0]} material={mats.seam} />

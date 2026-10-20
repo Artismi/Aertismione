@@ -17,8 +17,12 @@ const TEX = '/progetti/tex'
 
 const FLAT: [number, number, number] = [-Math.PI / 2, 0, 0]
 
-/** il piano: largo, poco profondo verso il fondo (z = centro del piano) */
-export const BENCH = { w: 18, d: 6.6, h: 0.4, z: 0.7 }
+/**
+ * il piano: largo, e profondo appena quanto serve (z = centro del piano). Il
+ * mondo scorre con la pagina: piu' profondo, il bordo davanti sporgerebbe sotto
+ * la sezione Progetti, in mezzo ai Servizi.
+ */
+export const BENCH = { w: 18, d: 5.0, h: 0.4, z: 0 }
 
 export function Bench({ mobile, metal, metalRough }: { mobile: boolean; metal: HTMLImageElement | null; metalRough: THREE.Texture }) {
   // da telefono le versioni da 1K: pesano un quarto
@@ -72,7 +76,7 @@ export function Bench({ mobile, metal, metalRough }: { mobile: boolean; metal: H
         <boxGeometry args={[BENCH.w, BENCH.h, BENCH.d]} />
       </mesh>
       <mesh position={[0, 0.0008, 0]} rotation={FLAT} material={mats.stains} receiveShadow>
-        <planeGeometry args={[10, 5.56]} />
+        <planeGeometry args={[10, BENCH.d - 0.1]} />
       </mesh>
       </group>
 
