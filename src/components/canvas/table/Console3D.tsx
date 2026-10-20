@@ -12,12 +12,13 @@
  * accende; da li' PortfolioSection allarga il gioco a tutto schermo.
  */
 
-import { useEffect, useMemo, useRef, type MutableRefObject } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import { RoundedBox, Html } from '@react-three/drei'
 import * as THREE from 'three'
 import { pcbTexture, faceTexture, bezelTexture, screenTexture, BOOT_SECONDS } from './textures'
-import type { TablePhase, TableApi } from './Table3D'
+import type { TablePhase } from './Table3D'
+import { HIT_MAT } from './Folder3D'
 import styles from './Table3D.module.css'
 
 const CW = 1.0, CD = 0.98, BH = 0.115, LH = 0.1, CR = 0.05
@@ -101,17 +102,16 @@ function domeGeometry(r: number, h: number) {
 }
 
 
-export function Console3D({ phase, mobile, grab, hovered, game, logo, plasticRough, metalRough, onPointer, onClick, api }: {
+export function Console3D({ phase, mobile, grab, hovered, game, logo, plasticRough, metalRough, onPointer, onClick }: {
   phase: TablePhase; mobile: boolean; grab: boolean; hovered: boolean
   logo: HTMLImageElement | null; plasticRough: THREE.Texture; metalRough: THREE.Texture
   game: { title: string; hint: string; screen: string }
-  onPointer: (h: boolean) => void; onClick: () => void; api: MutableRefObject<TableApi | null>
+  onPointer: (h: boolean) => void; onClick: () => void
 }) {
   const group = useRef<THREE.Group>(null!)
   const lid = useRef<THREE.Group>(null!)
-  const screen = useRef<THREE.Mesh>(null!)
   const power = useRef(0)
-  const { camera, gl, invalidate } = useThree()
+  const invalidate = useThree((s) => s.invalidate)
 
   const geo = useMemo(() => ({
     cross: crossGeometry(),
@@ -183,26 +183,6 @@ export function Console3D({ phase, mobile, grab, hovered, game, logo, plasticRou
 
   useEffect(() => { invalidate() }, [phase, hovered, grab, mobile, invalidate])
 
-  // Il rettangolo dello schermo sulla pagina: da li' parte il gioco a tutto schermo
-  useEffect(() => {
-    api.current = {
-      screenRect: () => {
-        const m = screen.current
-        if (!m) return null
-        const r = gl.domElement.getBoundingClientRect()
-        let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity
-        const hw = SCREEN.w / 2, hh = SCREEN.h / 2
-        for (const [x, y] of [[-hw, -hh], [hw, -hh], [hw, hh], [-hw, hh]]) {
-          const v = m.localToWorld(new THREE.Vector3(x, y, 0)).project(camera)
-          const px = r.left + (v.x + 1) / 2 * r.width, py = r.top + (1 - v.y) / 2 * r.height
-          x0 = Math.min(x0, px); x1 = Math.max(x1, px); y0 = Math.min(y0, py); y1 = Math.max(y1, py)
-        }
-        return { top: y0, left: x0, width: x1 - x0, height: y1 - y0 }
-      },
-    }
-    return () => { api.current = null }
-  }, [api, camera, gl])
-
   const home = mobile ? [0.3, 0, 1.75] : [2.15, 0, 0.4]
   const homeRy = mobile ? -0.3 : -0.4
   const tmp = useMemo(() => new THREE.Vector3(), [])
@@ -256,7 +236,11 @@ export function Console3D({ phase, mobile, grab, hovered, game, logo, plasticRou
 
   return (
     <group ref={group} position={home as [number, number, number]} rotation={[0, homeRy, 0]} scale={mobile ? 1.1 : 1.25}>
-      <group onPointerOver={over} onPointerOut={out} onClick={click}>
+      {/* per il mouse: la base e il coperchio alzato, in una scatola sola */}
+      <mesh position={[0, 0.45, 0]} material={HIT_MAT} onPointerOver={over} onPointerOut={out} onClick={click}>
+        <boxGeometry args={[CW + 0.06, 0.9, CD + 0.06]} />
+      </mesh>
+      <group>
         {/* ── Base ── */}
         <RoundedBox args={[CW, BH, CD]} radius={CR} smoothness={6} position={[0, BH / 2, 0]} material={mats.shell} castShadow receiveShadow />
         <mesh geometry={geo.seamBase} position={[0, BH * 0.45, 0]} material={mats.seam} />
@@ -350,7 +334,7 @@ export function Console3D({ phase, mobile, grab, hovered, game, logo, plasticRou
           </mesh>
           {/* cornice rosa spessa, LCD incassato dentro la finestra, vetro sopra; LED */}
           <mesh geometry={geo.bezel} position={[0, 0, LID_D * 0.5]} rotation={UNDER} material={mats.bezel} castShadow receiveShadow />
-          <mesh ref={screen} position={[0, -0.002, LID_D * 0.5 + 0.05]} rotation={UNDER} material={screenMat}>
+          <mesh position={[0, -0.002, LID_D * 0.5 + 0.05]} rotation={UNDER} material={screenMat}>
             <planeGeometry args={[SCREEN.w, SCREEN.h]} />
           </mesh>
           <mesh position={[0, -0.0092, LID_D * 0.5 + 0.05]} rotation={UNDER} material={mats.glass}>

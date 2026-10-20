@@ -23,6 +23,24 @@ const damp = THREE.MathUtils.damp
 const EPS = 0.0005
 const FLAT: [number, number, number] = [-Math.PI / 2, 0, 0]
 
+/**
+ * Per il mouse: una scatola semplice che non si disegna. Il puntatore la
+ * interroga a ogni movimento; interrogare il modello vero (migliaia di
+ * triangoli) faceva scattare il 3D.
+ */
+export const HIT_MAT = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false })
+
+/**
+ * Il tabellone della bilia: una tavola sola, piatta, stesa sul fascicolo aperto
+ * sopra le due pagine (niente piega in mezzo). BW × BD; da aperto e' centrata in
+ * x = 0, z = 0, e la faccia stampata e' a BOARD_Y.
+ */
+export const BW = FW * 2 - 0.14, BD = FD - 0.12
+const BOARD_T = 0.008
+export const BOARD_Y = 0.074
+/** da telefono il fascicolo sta piu' in fondo (sopra la console): da aperto e' centrato in z = MOBILE_Z */
+export const MOBILE_Z = -1.05
+
 function folderShape(withTab: boolean) {
   const w = FW / 2, d = FD / 2, r = 0.05, rr = 0.09
   const s = new THREE.Shape()
@@ -96,8 +114,10 @@ function binderGeometries() {
   return { body, lever: lever(-1) }
 }
 
-export function Folder3D({ phase, mobile, hovered, thumbs, count, label, logo, paper, paperRough, metalRough, onPointer, onClick }: {
+export function Folder3D({ phase, mobile, hovered, thumbs, count, label, logo, paper, paperRough, metalRough, board, onPointer, onClick }: {
   phase: TablePhase; mobile: boolean; hovered: boolean; thumbs: string[]; count: number; label: string
+  /** la stampa del tabellone */
+  board: THREE.Texture | null
   logo: HTMLImageElement | null; paper: HTMLImageElement | null; paperRough: THREE.Texture; metalRough: THREE.Texture
   onPointer: (h: boolean) => void; onClick: () => void
 }) {
@@ -105,6 +125,7 @@ export function Folder3D({ phase, mobile, hovered, thumbs, count, label, logo, p
   const lift = useRef<THREE.Group>(null!)
   const pivot = useRef<THREE.Group>(null!)
   const cards = useRef<THREE.Group>(null!)
+  const boardRef = useRef<THREE.Mesh>(null)
   const invalidate = useThree((s) => s.invalidate)
 
   const geo = useMemo(() => ({
@@ -147,8 +168,14 @@ export function Folder3D({ phase, mobile, hovered, thumbs, count, label, logo, p
     const stamp = new THREE.MeshStandardMaterial({ map: tex.stamp, transparent: true, opacity: 0, roughness: 1, depthWrite: false, color: '#C9365A' })
     const paper = new THREE.MeshStandardMaterial({ color: '#F2EDE4', roughness: 0.9 })
     const pages = new THREE.MeshStandardMaterial({ map: tex.pages, roughness: 0.9 })
-    return { cover, back, lining, stamp, paper, pages }
+    const boardSide = new THREE.MeshStandardMaterial({ color: '#141216', roughness: 0.8, transparent: true, opacity: 0 })
+    return { cover, back, lining, stamp, paper, pages, boardSide }
   }, [tex, paperRough])
+
+  const boardTop = useMemo(() => board
+    ? new THREE.MeshStandardMaterial({ map: board, roughness: 0.8, transparent: true, opacity: 0 })
+    : null, [board])
+  useEffect(() => () => { boardTop?.dispose() }, [boardTop])
 
   const cardTex = useMemo(() => {
     const loader = new THREE.TextureLoader()
@@ -170,7 +197,7 @@ export function Folder3D({ phase, mobile, hovered, thumbs, count, label, logo, p
 
   useFrame((_, dt) => {
     const away = phase === 'sliding' || phase === 'opening' || phase === 'open' || phase === 'closing'
-    const pos = mobile ? [0, 0, -1.05] : away ? [FW / 2, 0, 0] : [-1.55, 0, 0.05]
+    const pos = mobile ? (away ? [FW / 2, 0, MOBILE_Z] : [0, 0, MOBILE_Z]) : away ? [FW / 2, 0, 0] : [-1.55, 0, 0.05]
     const rotY = mobile || away ? 0 : 0.07
     const cover = phase === 'opening' || phase === 'open' ? Math.PI : phase === 'list' ? 1.95 : 0
     const restful = phase === 'closed'
@@ -192,6 +219,14 @@ export function Folder3D({ phase, mobile, hovered, thumbs, count, label, logo, p
     cards.current.position.z = step(cards.current.position.z, on ? -0.13 : 0, 9)
     mats.cover.emissiveIntensity = step(mats.cover.emissiveIntensity, on ? 0.05 : 0, 9)
     mats.stamp.opacity = step(mats.stamp.opacity, on ? 0.9 : 0, 9)
+    // il tabellone compare a fascicolo aperto e sparisce subito quando si richiude
+    const b = boardRef.current
+    if (b && boardTop) {
+      const o = step(boardTop.opacity, phase === 'open' ? 1 : 0, phase === 'open' ? 7 : 14)
+      boardTop.opacity = mats.boardSide.opacity = o
+      b.visible = o > 0.002
+      b.position.y = BOARD_Y - BOARD_T / 2 + (1 - o) * 0.06
+    }
     if (moving) invalidate()
   })
 
@@ -201,8 +236,20 @@ export function Folder3D({ phase, mobile, hovered, thumbs, count, label, logo, p
   const top = FT + 0.0065 // appena sopra la faccia del cartoncino (che e' un po' imbarcata)
 
   return (
-    <group ref={group} position={mobile ? [0, 0, -1.05] : [-1.55, 0, 0.05]} rotation={[0, mobile ? 0 : 0.07, 0]}>
-      <group ref={lift} onPointerOver={over} onPointerOut={out} onClick={click}>
+    <group ref={group} position={mobile ? [0, 0, MOBILE_Z] : [-1.55, 0, 0.05]} rotation={[0, mobile ? 0 : 0.07, 0]}>
+      {/* il tabellone: si stende sul fascicolo aperto, sopra la piega */}
+      {boardTop && (
+        <mesh ref={boardRef} position={[-FW / 2, BOARD_Y - BOARD_T / 2, 0]} visible={false}
+          material={[mats.boardSide, mats.boardSide, boardTop, mats.boardSide, mats.boardSide, mats.boardSide]}
+          castShadow receiveShadow>
+          <boxGeometry args={[BW, BOARD_T, BD]} />
+        </mesh>
+      )}
+
+      <group ref={lift}>
+        <mesh position={[0.06, 0.08, 0]} material={HIT_MAT} onPointerOver={over} onPointerOut={out} onClick={click}>
+          <boxGeometry args={[FW + 0.3, 0.16, FD + 0.1]} />
+        </mesh>
         {/* retro con la linguetta */}
         <mesh geometry={geo.back} material={mats.back} rotation={FLAT} castShadow receiveShadow />
         <mesh position={[FW / 2 + 0.115, top + 0.0005, -0.75]} rotation={FLAT} receiveShadow>
@@ -244,7 +291,6 @@ export function Folder3D({ phase, mobile, hovered, thumbs, count, label, logo, p
             <mesh position={[0, -0.0035, 0]} rotation={[Math.PI / 2, 0, 0]} material={mats.lining}>
               <planeGeometry args={[FW - 0.06, FD - 0.06]} />
             </mesh>
-
             {/* l'etichetta grande «Portfolio», storta, sopra la scritta stampata */}
             <mesh position={[0.08, top, 0.12]} rotation={[-Math.PI / 2, 0, 0.045]} receiveShadow>
               <planeGeometry args={[1.86, 0.93]} />

@@ -10,7 +10,6 @@ import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import styles from './PortfolioSection.module.css'
 import { PORTFOLIO, PROGETTI } from '@/config/content'
-import { GameOverlay, type Rect } from '@/components/ui/GameOverlay'
 import dynamic from 'next/dynamic'
 import type { TableApi } from '@/components/canvas/table/Table3D'
 
@@ -24,6 +23,13 @@ const FOLDER_HIT_R  = 74   // raggio collisione/hover cartellina
 const FRICTION      = 0.972
 const MIN_SPEED     = 0.07
 const MAX_LAUNCH    = 38
+// Il tabellone e' la tavola stesa sul fascicolo 3D aperto: misura fissa, con le
+// stesse proporzioni della tavola (BW : BD in Folder3D)
+const MAP_W         = 1200
+const MAP_H         = 775
+// pixel del canvas per unita' del tabellone: la texture si ricarica a ogni
+// fotogramma, piu' grande farebbe scattare il 3D
+const MAP_SCALE     = 1
 
 /* â”€â”€â”€ Tipi â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
@@ -65,6 +71,10 @@ const ZONE_JITTER = PROJECTS.map((p) => {
 })
 
 /** Le anteprime che spuntano dal fascicolo chiuso */
+// Da telefono il tabellone e' in verticale (il fascicolo aperto si guarda girato
+// di 90°): le stesse cartelline, con le coordinate scambiate
+const PROJECTS_TALL: Project[] = PROJECTS.map((p) => ({ ...p, mapX: p.mapY, mapY: p.mapX }))
+
 const THUMBS = PROJECTS
   .map((p) => (p as { thumb?: string }).thumb)
   .filter((t): t is string => Boolean(t))
@@ -81,16 +91,6 @@ const PATH_PAIRS: [number, number][] = [
 function hexToRgb(hex: string): [number, number, number] {
   const h = hex.replace('#', '')
   return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)]
-}
-
-function getCanvasPos(e: React.MouseEvent<HTMLCanvasElement>): { lx: number; ly: number } {
-  const rect = e.currentTarget.getBoundingClientRect()
-  return { lx: e.clientX - rect.left, ly: e.clientY - rect.top }
-}
-
-function getTouchCanvasPos(e: React.TouchEvent<HTMLCanvasElement>, touch: React.Touch): { lx: number; ly: number } {
-  const rect = e.currentTarget.getBoundingClientRect()
-  return { lx: touch.clientX - rect.left, ly: touch.clientY - rect.top }
 }
 
 /* â”€â”€â”€ Disegno: sfondo con hex dots + reveal radiale â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
@@ -112,7 +112,7 @@ function drawBackground(ctx: CanvasRenderingContext2D, w: number, h: number, rev
   }
 }
 
-function drawMapDecorations(ctx: CanvasRenderingContext2D, w: number, h: number) {
+function drawMapDecorations(ctx: CanvasRenderingContext2D, w: number, h: number, touch: boolean) {
   const cx = w-44, cy = 44, r = 14
   ctx.strokeStyle = 'rgba(242,237,228,0.30)'; ctx.lineWidth = 1.2
   ctx.beginPath(); ctx.moveTo(cx, cy-r); ctx.lineTo(cx, cy+r); ctx.stroke()
@@ -131,6 +131,12 @@ function drawMapDecorations(ctx: CanvasRenderingContext2D, w: number, h: number)
   ctx.font = '600 7.5px "JetBrains Mono",monospace'
   ctx.fillStyle = 'rgba(242,237,228,0.25)'; ctx.textAlign = 'left'
   ctx.fillText('ARTISMI STUDIO', 14, h-12)
+  // le istruzioni sono stampate sul tabellone, come su un gioco da tavolo
+  ctx.font = '600 11px "JetBrains Mono",monospace'
+  ctx.fillStyle = 'rgba(242,237,228,0.5)'; ctx.textAlign = 'right'
+  ctx.fillText(touch
+    ? 'TOCCA PER SALTARE — TRASCINA LA PALLINA PER SPARARLA'
+    : 'CLICCA PER SALTARE — TRASCINA LA PALLINA PER SPARARLA COME UNA BILIA', w-18, h-14)
 }
 
 function drawZone(ctx: CanvasRenderingContext2D, p: Project, jitter: number[], w: number, h: number) {
@@ -549,20 +555,18 @@ export function PortfolioSection() {
   const inViewRef     = useRef(false)
   const openRef       = useRef(false)
   const desktopRef    = useRef(false)
+  const projRef       = useRef<Project[]>(PROJECTS)   // le cartelline, nel verso del tabellone
   const timersRef     = useRef<number[]>([])
-  const tableRef      = useRef<TableApi | null>(null)   // da qui si legge dove sta lo schermo della console
+  const tableRef      = useRef<TableApi | null>(null)   // il tabellone nel 3D: texture e punto sotto il mouse
   const [desktop, setDesktop] = useState(true)
 
   const [phase, setPhase] = useState<Phase>('closed')
   const [grab, setGrab]   = useState(false)
-  const [game, setGame]   = useState<Rect | null>(null)
 
   const isDraggingRef       = useRef(false)
   const dragPosRef          = useRef({ x: 0, y: 0 })
   const dragOriginRef       = useRef({ x: 0, y: 0 })
   const collisionCooldownRef = useRef(0)
-  const winMoveRef = useRef<((e: MouseEvent) => void) | null>(null)
-  const winUpRef   = useRef<((e: MouseEvent) => void) | null>(null)
 
   const router = useRouter()
   const routerRef = useRef(router)
@@ -571,25 +575,24 @@ export function PortfolioSection() {
   useEffect(() => {
     const canvas=canvasRef.current, wrapper=wrapperRef.current
     if (!canvas||!wrapper) return
-    const canvasEl = canvas, wrapperEl = wrapper
+    const wrapperEl = wrapper
+    // il tabellone ha misura fissa: e' la texture dentro il fascicolo. Da telefono
+    // lo si disegna in verticale (MAP_H × MAP_W) e ruotato nella texture (vedi loop)
+    canvas.width=MAP_W*MAP_SCALE; canvas.height=MAP_H*MAP_SCALE
     function resize() {
-      const dpr=window.devicePixelRatio||1, w=wrapperEl.clientWidth
-      // On narrow screens give more vertical room so the ball playground is playable
-      const isMobile = w < 768
-      const h = isMobile
-        ? Math.min(700, Math.max(480, Math.round(w * 0.78)))
-        : Math.min(620, Math.max(380, Math.round(w * 0.54)))
-      canvasEl.width=w*dpr; canvasEl.height=h*dpr
-      canvasEl.style.width=`${w}px`; canvasEl.style.height=`${h}px`
-      // Il tavolo e' alto quanto la mappa: aperto, il fascicolo la contiene tutta
-      desktopRef.current = window.matchMedia('(min-width: 900px) and (pointer: fine)').matches
-      setDesktop(desktopRef.current)
-      // da telefono il tavolo e' in verticale: fascicolo sopra, console sotto
-      wrapperEl.style.height = desktopRef.current ? `${h}px` : `${Math.round(Math.min(720, Math.max(520, w * 1.45)))}px`
-      sizeRef.current={w,h}
-      const b=ballRef.current
-      if (b.x===0&&b.y===0) { b.x=w/2; b.y=h/2 }
-      else { b.x=Math.min(Math.max(b.x,BALL_R+2),w-BALL_R-2); b.y=Math.min(Math.max(b.y,BALL_R+2),h-BALL_R-2) }
+      const w=wrapperEl.clientWidth
+      const desk = window.matchMedia('(min-width: 900px) and (pointer: fine)').matches
+      if (desk !== desktopRef.current || sizeRef.current.w === 0) {
+        desktopRef.current = desk
+        sizeRef.current = desk ? {w:MAP_W,h:MAP_H} : {w:MAP_H,h:MAP_W}
+        projRef.current = desk ? PROJECTS : PROJECTS_TALL
+        ballRef.current.x=sizeRef.current.w/2; ballRef.current.y=sizeRef.current.h/2
+      }
+      setDesktop(desk)
+      // il riquadro del tavolo; da telefono e' in verticale: fascicolo sopra, console sotto
+      wrapperEl.style.height = desktopRef.current
+        ? `${Math.min(620, Math.max(380, Math.round(w * 0.54)))}px`
+        : `${Math.round(Math.min(720, Math.max(520, w * 1.45)))}px`
     }
     resize()
     const ro=new ResizeObserver(resize); ro.observe(wrapper)
@@ -603,14 +606,6 @@ export function PortfolioSection() {
   }, [])
 
   useEffect(() => {
-    // Da telefono la mappa non viene nemmeno disegnata: le cartelline si
-    // sovrappongono su schermi stretti e la fionda e' ingiocabile al tocco.
-    // Li' si usa l'elenco sotto, che il CSS mostra al posto del canvas.
-    // Solo schermo largo con mouse. Su telefono le cartelline si
-    // sovrappongono e la fionda al tocco e' ingiocabile, in qualunque
-    // orientamento: li' si usa l'elenco di schede.
-    if (!window.matchMedia('(min-width: 900px) and (pointer: fine)').matches) return
-
     const canvas=canvasRef.current; if (!canvas) return
     const canvasLoop = canvas
     startTimeRef.current=performance.now()
@@ -621,15 +616,17 @@ export function PortfolioSection() {
       const {w,h}=sizeRef.current
       if (w===0) { rafRef.current=requestAnimationFrame(loop); return }
 
-      const dpr=window.devicePixelRatio||1
-      ctx.setTransform(dpr,0,0,dpr,0,0)
+      const PROJ=projRef.current, desk=desktopRef.current
+      // da telefono il tabellone si disegna in verticale e si ruota nella texture:
+      // (x, y) del disegno → (y, MAP_H - x) del canvas, che resta orizzontale
+      if (desk) ctx.setTransform(MAP_SCALE,0,0,MAP_SCALE,0,0)
+      else ctx.setTransform(0,-MAP_SCALE,MAP_SCALE,0,0,MAP_H*MAP_SCALE)
       const time=now-startTimeRef.current
       const ball=ballRef.current
 
       // La mappa si vede solo a fascicolo aperto: entra piano, esce svelta
       const visible = inViewRef.current && openRef.current
       gridRevealRef.current+=((visible?1:0)-gridRevealRef.current)*(visible?0.06:0.2)
-      canvasLoop.style.opacity=Math.max(0, gridRevealRef.current).toFixed(3)
 
       // Sezione fuori schermo o fascicolo chiuso: si salta tutto il disegno.
       // Prima la mappa continuava a ridisegnare cartelline, ombre, scia e
@@ -657,7 +654,7 @@ export function PortfolioSection() {
         if (t>=1) {
           ball.x=js.toX; ball.y=js.toY
           js.scaleX=1.6; js.scaleY=0.50; js.landed=true
-          const proj=PROJECTS.find(p=>p.id===js.projectId)
+          const proj=PROJ.find(p=>p.id===js.projectId)
           if (proj) {
             for (let i=0; i<12; i++) {
               const a=(i/12)*Math.PI*2+Math.random()*0.4, spd=2.5+Math.random()*5
@@ -700,7 +697,7 @@ export function PortfolioSection() {
         } else if (trailRef.current.length>0) { trailRef.current.shift() }
 
         if (now - collisionCooldownRef.current > 900) {
-          for (const p of PROJECTS) {
+          for (const p of PROJ) {
             const d=Math.hypot(ball.x-p.mapX*w, ball.y-p.mapY*h)
             if (d < FOLDER_HIT_R) {
               collisionCooldownRef.current=now
@@ -729,16 +726,18 @@ export function PortfolioSection() {
       }
       particlesRef.current=alive
 
-      ctx.clearRect(0,0,w,h)
+      // la fodera scura del fascicolo: il tabellone e' stampato li' sopra
+      ctx.fillStyle='#1E1B24'; ctx.fillRect(0,0,w,h)
       drawBackground(ctx,w,h,gridRevealRef.current)
-      for (let i=0;i<PROJECTS.length;i++) drawZone(ctx,PROJECTS[i],ZONE_JITTER[i],w,h)
-      drawPaths(ctx,PROJECTS,w,h)
-      for (const p of PROJECTS) drawFolder(ctx,p,w,h,time,hoveredRef.current===p.id)
+      for (let i=0;i<PROJ.length;i++) drawZone(ctx,PROJ[i],ZONE_JITTER[i],w,h)
+      drawPaths(ctx,PROJ,w,h)
+      for (const p of PROJ) drawFolder(ctx,p,w,h,time,hoveredRef.current===p.id)
       drawTrail(ctx,trailRef.current)
       drawParticles(ctx,particlesRef.current)
       if (isDraggingRef.current) drawSlingshot(ctx, ball, dragOriginRef.current, w, h)
       drawBall(ctx,ball,jumpRef.current)
-      drawMapDecorations(ctx,w,h)
+      drawMapDecorations(ctx,w,h,!desk)
+      tableRef.current?.refresh()
 
       rafRef.current=requestAnimationFrame(loop)
     }
@@ -790,7 +789,6 @@ export function PortfolioSection() {
   function openFolder() {
     if (phase === 'list') { setPhase('closed'); return }
     if (phase !== 'closed') return
-    if (!desktopRef.current) { setPhase('list'); return }
     setPhase('sliding')
     later(() => setPhase('opening'), SLIDE_MS)
     later(() => setPhase('open'), SLIDE_MS + COVER_MS)
@@ -808,43 +806,25 @@ export function PortfolioSection() {
 
   useEffect(() => {
     if (phase !== 'open') return
-    function onKey(e: KeyboardEvent) { if (e.key === 'Escape' && !game) closeFolder() }
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') closeFolder() }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   })
 
-  // La console si prende in mano e si apre; poi lo schermo si allarga a tutto schermo
-  function screenRect(): Rect | null {
-    return tableRef.current?.screenRect() ?? null
-  }
+  // Il gioco ha una pagina sua, nel sito: la console si prende in mano, si accende
+  // e si passa li'. Sopra il 3D della home era troppo lento.
+  useEffect(() => { router.prefetch(PROGETTI.game.page) }, [router])
 
   function grabGamepad() {
-    if (grab || game) return
+    if (grab) return
     setGrab(true)
-    later(() => setGame(screenRect()), OPEN_MS)
+    later(() => routerRef.current.push(PROGETTI.game.page), OPEN_MS)
   }
 
-  function closeGame() {
-    setGame(null)
-    // lo schermo si spegne, poi il coperchio si richiude
-    later(() => setGrab(false), 250)
-    if (window.location.hash === `#${PROGETTI.game.id}`) {
-      history.replaceState(null, '', window.location.pathname + window.location.search)
-    }
-  }
-
-  // Link diretto (artismi.it/porto-vecchio → /#porto-vecchio): si arriva al
-  // tavolo e il gamepad arriva subito in mano
+  // Vecchio link diretto (/#porto-vecchio): si va subito alla pagina del gioco
   useEffect(() => {
     function fromHash() {
-      if (window.location.hash !== `#${PROGETTI.game.id}`) return
-      const el = document.getElementById(PROGETTI.game.id)
-      el?.scrollIntoView({ block: 'center', behavior: 'instant' })
-      window.setTimeout(() => {
-        el?.scrollIntoView({ block: 'center', behavior: 'instant' })
-        setGrab(true)
-        window.setTimeout(() => setGame(screenRect()), OPEN_MS)
-      }, 250)
+      if (window.location.hash === `#${PROGETTI.game.id}`) routerRef.current.replace(PROGETTI.game.page)
     }
     fromHash()
     window.addEventListener('hashchange', fromHash)
@@ -857,7 +837,7 @@ export function PortfolioSection() {
     const {w,h}=sizeRef.current; if(w===0) return
 
     let clicked: Project|null=null, minD=Infinity
-    for (const p of PROJECTS) {
+    for (const p of projRef.current) {
       const d=Math.hypot(lx-p.mapX*w, ly-p.mapY*h)
       if (d<FOLDER_HIT_R&&d<minD) {minD=d;clicked=p}
     }
@@ -888,106 +868,81 @@ export function PortfolioSection() {
       const spd=Math.min(dist*0.22, MAX_LAUNCH)
       ball.vx=(dx/dist)*spd; ball.vy=(dy/dist)*spd
     } else { ball.vx=0; ball.vy=0 }
-    if (canvasRef.current) canvasRef.current.style.cursor='crosshair'
-    if (winMoveRef.current) { window.removeEventListener('mousemove',winMoveRef.current); winMoveRef.current=null }
-    if (winUpRef.current)   { window.removeEventListener('mouseup',winUpRef.current);   winUpRef.current=null }
   }
 
-  function handleMouseDown(e: React.MouseEvent<HTMLCanvasElement>) {
-    const {lx,ly}=getCanvasPos(e)
-    const ball=ballRef.current
-    if (Math.hypot(lx-ball.x, ly-ball.y) < BALL_R+14) {
-      isDraggingRef.current=true
-      dragOriginRef.current={x:ball.x, y:ball.y}
-      dragPosRef.current={x:lx,y:ly}
-      jumpRef.current=null
-      e.currentTarget.style.cursor='grabbing'
+  /* ── Mouse e dita sul tabellone: dallo schermo al fascicolo 3D ── */
 
-      const canvas=canvasRef.current
-      winMoveRef.current=(ev:MouseEvent)=>{
-        if (!canvas) return
-        const rect=canvas.getBoundingClientRect()
-        dragPosRef.current={x:ev.clientX-rect.left, y:ev.clientY-rect.top}
-      }
-      winUpRef.current=()=>fireSlingshot()
-      window.addEventListener('mousemove',winMoveRef.current)
-      window.addEventListener('mouseup',winUpRef.current)
-    }
-  }
+  useEffect(() => {
+    if (phase !== 'open') return
+    const body = document.body
 
-  function handleMouseMove(e: React.MouseEvent<HTMLCanvasElement>) {
-    const {lx,ly}=getCanvasPos(e)
-    const {w,h}=sizeRef.current
-    const ball=ballRef.current
-
-    if (isDraggingRef.current) {
-      dragPosRef.current={x:lx,y:ly}
-      e.currentTarget.style.cursor='grabbing'
-      return
+    // da telefono il tabellone e' girato: vedi la rotazione nel loop
+    const desk = desktopRef.current
+    function toMap(e: PointerEvent) {
+      const p = tableRef.current?.toBoard(e.clientX, e.clientY)
+      if (!p) return null
+      return desk
+        ? { lx: p.u*MAP_W, ly: p.v*MAP_H, inside: p.inside }
+        : { lx: (1-p.v)*MAP_H, ly: p.u*MAP_W, inside: p.inside }
     }
 
-    const onBall=Math.hypot(lx-ball.x, ly-ball.y)<BALL_R+10
-    hoveredRef.current=null
-    for (const p of PROJECTS) {
-      if (Math.hypot(lx-p.mapX*w, ly-p.mapY*h)<FOLDER_HIT_R) {hoveredRef.current=p.id;break}
+    // da telefono, a fascicolo aperto, il dito gioca: la pagina sta ferma
+    const html = document.documentElement
+    const prev = { overflow: html.style.overflow, touch: html.style.touchAction }
+    if (!desk) { html.style.overflow = 'hidden'; html.style.touchAction = 'none' }
+    // pulsanti, link e menu della pagina restano loro
+    function ours(e: PointerEvent) {
+      const t = e.target as Element | null
+      return !t?.closest?.('a, button, input, textarea, select, nav, header, [role="dialog"]')
     }
-    e.currentTarget.style.cursor=onBall?'grab':hoveredRef.current?'pointer':'crosshair'
-  }
 
-  function handleMouseUp(e: React.MouseEvent<HTMLCanvasElement>) {
-    if (isDraggingRef.current) {
-      fireSlingshot(); return
-    }
-    const {lx,ly}=getCanvasPos(e)
-    jumpToPoint(lx, ly)
-  }
-
-  function handleMouseLeave() {
-    hoveredRef.current=null
-    if (!isDraggingRef.current && canvasRef.current) canvasRef.current.style.cursor='crosshair'
-  }
-
-  /* ── Touch handlers (mirror mouse logic for mobile) ── */
-
-  function handleTouchStart(e: React.TouchEvent<HTMLCanvasElement>) {
-    if (e.touches.length === 0) return
-    e.preventDefault()
-    const touch = e.touches[0]
-    const {lx,ly} = getTouchCanvasPos(e, touch)
-    const ball = ballRef.current
-    if (Math.hypot(lx-ball.x, ly-ball.y) < BALL_R+20) {
-      isDraggingRef.current = true
-      dragOriginRef.current = {x: ball.x, y: ball.y}
-      dragPosRef.current = {x: lx, y: ly}
-      jumpRef.current = null
-    }
-  }
-
-  function handleTouchMove(e: React.TouchEvent<HTMLCanvasElement>) {
-    if (!isDraggingRef.current || e.touches.length === 0) return
-    e.preventDefault()
-    const touch = e.touches[0]
-    const {lx,ly} = getTouchCanvasPos(e, touch)
-    dragPosRef.current = {x: lx, y: ly}
-  }
-
-  function handleTouchEnd(e: React.TouchEvent<HTMLCanvasElement>) {
-    e.preventDefault()
-    if (isDraggingRef.current) {
-      fireSlingshot()
-    } else {
-      // Tap: jump to tapped point
-      const touch = e.changedTouches[0]
-      if (touch) {
-        const rect = canvasRef.current?.getBoundingClientRect()
-        if (rect) {
-          const lx = touch.clientX - rect.left
-          const ly = touch.clientY - rect.top
-          jumpToPoint(lx, ly)
-        }
+    let pressed = false
+    function down(e: PointerEvent) {
+      if (e.button !== 0 || !ours(e)) return
+      const p = toMap(e); if (!p?.inside) return
+      pressed = true
+      const ball = ballRef.current
+      if (Math.hypot(p.lx-ball.x, p.ly-ball.y) < BALL_R+(desk ? 16 : 40)) {
+        isDraggingRef.current = true
+        dragOriginRef.current = { x: ball.x, y: ball.y }
+        dragPosRef.current = { x: p.lx, y: p.ly }
+        jumpRef.current = null
+        body.style.cursor = 'grabbing'
       }
     }
-  }
+    function move(e: PointerEvent) {
+      const p = toMap(e); if (!p) return
+      if (isDraggingRef.current) { dragPosRef.current = { x: p.lx, y: p.ly }; return }
+      hoveredRef.current = null
+      if (!p.inside || !ours(e)) { body.style.cursor = ''; return }
+      const {w,h} = sizeRef.current
+      for (const pr of projRef.current) {
+        if (Math.hypot(p.lx-pr.mapX*w, p.ly-pr.mapY*h) < FOLDER_HIT_R) { hoveredRef.current = pr.id; break }
+      }
+      const ball = ballRef.current
+      body.style.cursor = Math.hypot(p.lx-ball.x, p.ly-ball.y) < BALL_R+12 ? 'grab' : hoveredRef.current ? 'pointer' : 'crosshair'
+    }
+    function up(e: PointerEvent) {
+      if (isDraggingRef.current) { fireSlingshot(); body.style.cursor = 'grab'; pressed = false; return }
+      if (!pressed) return
+      pressed = false
+      const p = toMap(e)
+      if (p?.inside) jumpToPoint(p.lx, p.ly)
+    }
+
+    window.addEventListener('pointerdown', down)
+    window.addEventListener('pointermove', move, { passive: true })
+    window.addEventListener('pointerup', up)
+    return () => {
+      window.removeEventListener('pointerdown', down)
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', up)
+      isDraggingRef.current = false
+      hoveredRef.current = null
+      body.style.cursor = ''
+      html.style.overflow = prev.overflow; html.style.touchAction = prev.touch
+    }
+  }, [phase])
 
   return (
     <div ref={sectionRef} className={styles.section}>
@@ -1010,11 +965,9 @@ export function PortfolioSection() {
           onFolder={() => { if (atTable()) openFolder() }}
           onConsole={() => { if (atTable()) grabGamepad() }}
           api={tableRef}
+          board={canvasRef}
           stage={wrapperRef}
         />
-
-        {/* Il fascicolo aperto, in piano: sotto la mappa */}
-        <div className={styles.spread} aria-hidden="true" />
 
         {/* Gli stessi comandi da tastiera e per chi usa un lettore di schermo */}
         <button
@@ -1036,34 +989,13 @@ export function PortfolioSection() {
           {PROGETTI.game.title} — {PROGETTI.game.hint}
         </button>
 
-        <canvas
-          ref={canvasRef}
-          className={styles.canvas}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseLeave}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          style={{ touchAction: 'none' }}
-        />
+        {/* il tabellone si disegna qui ma si vede nel 3D, stampato dentro il fascicolo */}
+        <canvas ref={canvasRef} className={styles.canvas} aria-hidden="true" />
 
         <button type="button" className={styles.folderClose} onClick={closeFolder} tabIndex={phase === 'open' ? 0 : -1}>
           {PROGETTI.folderClose} ✕
         </button>
-        <p className={styles.mapHint} aria-hidden={phase !== 'open'}>
-          Clicca per saltare — trascina la pallina per spararla come una bilia.
-        </p>
 
-      </div>
-
-      <div className={styles.legend} data-show={phase === 'open' ? 'true' : undefined}>
-        {PROJECTS.map(p=>(
-          <span key={p.id} className={styles.legendItem} style={{'--lc':p.accent} as React.CSSProperties}>
-            <span className={styles.legendDot}/>{p.title}
-          </span>
-        ))}
       </div>
 
       <div className={styles.mobileGrid} data-show={phase === 'list' ? 'true' : undefined}>
@@ -1083,8 +1015,6 @@ export function PortfolioSection() {
           </button>
         ))}
       </div>
-
-      {game && <GameOverlay from={game} onClose={closeGame} />}
     </div>
   )
 }

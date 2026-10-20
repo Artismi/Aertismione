@@ -7,6 +7,10 @@
   /* --- Palette: Notte d'Inchiostro --- */
   /* Viola bordeaux quasi nero — la carta diventa testo, il rosa diventa luce */
   --color-bg: rgba(18, 8, 28, 0.94);
+  /* Il velo dietro i testi della home: il mondo 3D resta visibile sotto, e
+     ai bordi delle sezioni il velo sfuma, cosi' non ci sono stacchi netti */
+  --veil: rgba(28, 14, 26, 0.58);
+  --veil-0: rgba(28, 14, 26, 0);
   /* Viola-bordeaux — semi-trasparente per mostrare 3D */
   --color-bg-alt: rgba(26, 14, 40, 0.97);
   /* Sezioni alternate — viola leggermente più aperto */
@@ -73,6 +77,11 @@
 
 html {
   scroll-behavior: smooth;
+  /* Niente scorrimento di lato: gli elementi che entrano da destra (animazioni,
+     la striscia delle competenze) allargavano la pagina, e da telefono anche il
+     mondo 3D, che usciva dallo schermo. clip, e non hidden: non crea un
+     contenitore di scroll, e lo scroll della pagina resta quello di sempre */
+  overflow-x: clip;
   /* Niente magnetismo: in home lo scroll ha l'inerzia di Lenis (SmoothScroll)
      e il mondo 3D lo segue; lo scatto verso le sezioni lo spezzava */
 }
@@ -86,7 +95,7 @@ body {
   color: var(--color-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
+  overflow-x: clip;
   /* Cursore nascosto su desktop per custom cursor */
   cursor: none;
 }

@@ -10,6 +10,8 @@
   flex-direction: column;
   justify-content: center;
   padding: clamp(60px, 8vw, 100px) clamp(24px, 5.5vw, 72px);
+  /* quello che entra dai lati non allarga la pagina (vedi ProblemSection) */
+  overflow-x: clip;
 }
 
 /* ── Card bio — max 420px, ancorata a sinistra ──────────── */
@@ -219,17 +221,3 @@
   .section { padding-bottom: 80px; }
 }
 
-/* ── Fallback Immagine al posto del 3D ─────────────────────── */
-.bgImage {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  background-image: url("/images/chi-sono-bg.webp");
-  background-size: cover;
-  background-position: center;
-  background-color: transparent;
-  z-index: -1; 
-  /* Opacità per blendare con il resto del layout, modificare a piacere */
-  opacity: 0.9;
-}

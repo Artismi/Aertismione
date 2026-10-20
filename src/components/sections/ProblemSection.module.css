@@ -2,7 +2,24 @@
   padding: var(--section-py) 0;
   position: relative;
   z-index: 1; /* CRITICAL: Forces this section's background to render ON TOP of the 3D Canvas (z=0) */
-  background: rgba(18, 8, 28, 0.80);
+  /* i blocchi entrano dai lati: prima di entrare non devono allargare la pagina
+     (da telefono allargavano anche il mondo 3D, che usciva dallo schermo) */
+  overflow-x: clip;
+}
+
+/* Il velo continua quello dell'Hero e sfuma in fondo: sotto arriva il banco */
+.section::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 -1px;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    var(--veil) 0%,
+    var(--veil) calc(100% - 30vh),
+    var(--veil-0) 100%
+  );
 }
 
 .grid {

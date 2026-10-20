@@ -15,7 +15,9 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { usePathname } from 'next/navigation'
 import { useStore } from '@/stores/useStore'
+import { PROGETTI } from '@/config/content'
 import styles from './Ambience.module.css'
 
 /** Traccia di casa. Basta sostituire il file per cambiare musica. */
@@ -102,6 +104,16 @@ export function Ambience() {
 
   useEffect(() => () => { if (fadeRef.current) window.clearInterval(fadeRef.current) }, [])
 
+  // Nella pagina del gioco la musica tace (il gioco ha la sua) e il pulsante
+  // non copre il gioco; tornando al sito riprende se era accesa
+  const inGame = usePathname() === PROGETTI.game.page
+  useEffect(() => {
+    const el = audioRef.current
+    if (!el || !playing) return
+    if (inGame) el.pause()
+    else el.play().catch(() => { /* serve un gesto */ })
+  }, [inGame, playing])
+
   if (!available) return null
 
   return (
@@ -114,7 +126,7 @@ export function Ambience() {
         onError={() => setAvailable(false)}
       />
 
-      <button
+      {!inGame && <button
         type="button"
         className={styles.toggle}
         data-playing={playing ? 'true' : undefined}
@@ -127,7 +139,7 @@ export function Ambience() {
           <i /><i /><i /><i />
         </span>
         <span className={styles.label}>{playing ? 'musica' : 'silenzio'}</span>
-      </button>
+      </button>}
     </>
   )
 }

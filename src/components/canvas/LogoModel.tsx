@@ -10,7 +10,12 @@ const occluderMat = new THREE.MeshBasicMaterial({
     side: THREE.FrontSide,
 })
 
-export function LogoModel(props: any) {
+/**
+ * inWorld: il logo e' un oggetto del mondo della home (Table3D), sospeso in aria
+ * sopra il banco. Li' non svanisce con lo scroll e non serve proteggere i testi:
+ * e' la camera che si muove.
+ */
+export function LogoModel({ inWorld = false, ...props }: any) {
     const { scene } = useGLTF('/models/logo.glb')
     const rotatingRef = useRef<THREE.Group>(null)
     const groupRef = useRef<THREE.Group>(null)
@@ -121,6 +126,8 @@ export function LogoModel(props: any) {
 
         // Il logo resta staticamente ben inquadrato al centro dello schermo.
         // Essendo il Canvas fisso, l'interfaccia HTML scrollando gli passerà naturalmente sopra.
+        if (inWorld) return
+
         if (groupRef.current) {
             const targetY = -0.2 // Altezza perfetta al centro
             const lerpFactor = Math.min(1, delta * 6.5)
@@ -147,12 +154,16 @@ export function LogoModel(props: any) {
     return (
         <group ref={groupRef} {...props} rotation-y={Math.PI}>
             {/* Occluder planes — proteggono le sezioni testo */}
-            <mesh position={[0, -6, -0.5]} renderOrder={0} material={occluderMat}>
-                <planeGeometry args={[18, 6]} />
-            </mesh>
-            <mesh position={[0, -12, -0.5]} renderOrder={0} material={occluderMat}>
-                <planeGeometry args={[18, 7]} />
-            </mesh>
+            {!inWorld && (
+                <>
+                    <mesh position={[0, -6, -0.5]} renderOrder={0} material={occluderMat}>
+                        <planeGeometry args={[18, 6]} />
+                    </mesh>
+                    <mesh position={[0, -12, -0.5]} renderOrder={0} material={occluderMat}>
+                        <planeGeometry args={[18, 7]} />
+                    </mesh>
+                </>
+            )}
 
             <Center>
                 <Float speed={3} rotationIntensity={0} floatIntensity={0.3}>

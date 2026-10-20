@@ -18,11 +18,16 @@ const nextConfig = {
       },
     ],
   },
-  // Link da condividere per il gioco: porta al tavolo dei Progetti con il
-  // gamepad gia' in mano (lo gestisce PortfolioSection leggendo l'ancora).
-  async redirects() {
+  // Porto Vecchio vive sul suo sito, ma si gioca dall'indirizzo di questo:
+  // /gioco/* arriva da porto-vecchio.vercel.app/v7/*, e le due chiamate del
+  // gioco alla sua api vanno al suo sito. La pagina /porto-vecchio lo mostra
+  // con la barra del sito (deve restare allineato a PROGETTI.game in content.ts).
+  async rewrites() {
+    const GAME = 'https://porto-vecchio.vercel.app'
     return [
-      { source: '/porto-vecchio', destination: '/#porto-vecchio', permanent: false },
+      { source: '/gioco/:path*', destination: `${GAME}/v7/:path*` },
+      { source: '/api/mente', destination: `${GAME}/api/mente` },
+      { source: '/api/status', destination: `${GAME}/api/status` },
     ]
   },
   eslint: {
