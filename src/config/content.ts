@@ -83,73 +83,59 @@ export const SERVICES = {
   savingsNote: "Se hai già un'identità visiva fatta con Artismi, ogni lavoro successivo costa meno — perché partiamo da qualcosa che esiste già.",
   cta: 'Chiedi un preventivo',
   /*
-   * Le quattro carte sul tavolo dei Servizi, ognuna con la sua icona disegnata.
-   * hook e' la frase breve sotto il titolo; lead la spiegazione; il resto i dettagli.
-   * kind decide l'oggetto; l'ordine e' quello in cui si leggono.
+   * I quattro servizi, una colonna ciascuno. Tutto il testo e' in vista, i prezzi no.
+   * type e' l'etichetta sopra il titolo, hook la frase sotto; groups le righe
+   * dell'elenco (con un'etichetta quando servono piu' gruppi); note la riga in fondo.
    */
   cards: [
     {
       id:    'partecipata',
-      kind:  'folder',
-      code:  'LAB-01',
-      kicker: 'Laboratori',
+      type:  'Laboratori',
       label: 'Progettazione partecipata',
-      hook:  'Laboratori con chi vivrà il progetto',
-      lead:  'Un progetto costruito con le persone che lo vivranno, dalla prima domanda all\'oggetto finito.',
-      steps: [
-        { name: 'Scrittura',       text: 'il percorso, le domande, gli obiettivi: su misura del gruppo e del luogo.' },
-        { name: 'Organizzazione',  text: 'tempi, spazi, materiali, inviti: chi partecipa e come.' },
-        { name: 'Conduzione',      text: 'i laboratori progettuali, dal vivo, facilitati da me.' },
-        { name: 'Concretizzazione', text: 'un esito unico e usabile, che cambia col contesto: un oggetto, uno spazio, una guida, un\'identità.' },
+      hook:  'Un progetto costruito con le persone che lo vivranno, dalla prima domanda all\'oggetto finito.',
+      groups: [
+        { items: [
+          { name: 'Scrittura',        text: 'il percorso, le domande, gli obiettivi, su misura del gruppo e del luogo' },
+          { name: 'Organizzazione',   text: 'tempi, spazi, materiali, inviti: chi partecipa e come' },
+          { name: 'Conduzione',       text: 'i laboratori progettuali, dal vivo, facilitati da me' },
+          { name: 'Concretizzazione', text: 'un esito unico e usabile, che cambia col contesto: un oggetto, uno spazio, una guida, un\'identità' },
+        ] },
       ],
       note:  'E poi c\'è quello che non si vede: relazioni, fiducia, un gruppo che si riconosce nel risultato.',
     },
     {
       id:    'stampe',
-      kind:  'strip',
-      code:  'STP-02',
-      kicker: 'Stampe e gadget',
+      type:  'Su misura',
       label: 'Illustrazioni, stampe e gadget',
-      hook:  'Spille, adesivi, magliette, poster',
-      lead:  'Disegnati a mano, prodotti su misura, fatti per essere usati.',
-      items: ['Illustrazioni su commissione', 'Poster e stampe', 'Spille su misura', 'Adesivi', 'Magliette e felpe', 'Shopper, toppe, cartoline'],
+      hook:  'Disegnati a mano, prodotti su misura, fatti per essere usati.',
+      groups: [
+        { items: ['Illustrazioni su commissione', 'Poster e stampe', 'Spille su misura', 'Adesivi', 'Magliette e felpe', 'Shopper, toppe, cartoline'] },
+      ],
     },
     {
       id:       'identita',
-      kind:     'sheet',
-      code:     'ID-03',
-      kicker:   'Identità',
-      label:    'Identità completa',
       type:     'Per la tua attività',
+      label:    'Identità completa',
       featured: true,
-      hook:     'Dal logo ai muri del negozio',
-      lead:     'Il racconto della tua attività diventa un sistema: riconoscibile, coerente, tuo. Fin dentro il negozio.',
-      core:     ['Nome e racconto', 'Logo', 'Illustrazione madre', 'Colori e caratteri', 'Tono di voce', 'Manuale d\'uso'],
-      pack:     { label: 'Il pack', text: 'Dall\'illustrazione madre nascono le illustrazioni derivate e le applicazioni pronte all\'uso: un pack da usare dove vuoi.' },
-      spaceLabel: 'Nello spazio dell\'attività',
-      space:    ['Murales', 'Interni', 'Vetrina', 'Insegna'],
-      addLabel: 'Si aggiunge quando serve',
-      adds:     ['Menu e listini', 'Biglietti', 'Packaging', 'Divise', 'Segnaletica', 'Sito', 'Kit social'],
-      variants: 'Declinazioni: stagioni, eventi, nuovi prodotti, nuove sedi.',
+      hook:     'Il racconto della tua attività diventa un sistema: riconoscibile, coerente, tuo. Fin dentro il negozio.',
+      groups: [
+        { label: 'Il cuore', items: ['Nome e racconto', 'Logo', 'Illustrazione madre', 'Colori e caratteri', 'Tono di voce', 'Manuale d\'uso'] },
+        { label: 'Il pack', items: ['Illustrazioni derivate e applicazioni pronte all\'uso'] },
+        { label: 'Nello spazio dell\'attività', items: ['Murales, interni, vetrina, insegna'] },
+        { label: 'Si aggiunge quando serve', items: ['Menu e listini, biglietti, packaging, divise, segnaletica, sito, kit social'] },
+      ],
       note:     'Il sistema è tuo: trasferibile, autonomo, applicabile da chiunque. Ogni lavoro successivo parte da qui e costa meno.',
     },
     {
       id:    'social',
-      kind:  'tag',
-      code:  'SOC-04',
-      kicker: 'Social',
-      label: 'Gestione social',
       type:  'Al mese',
-      hook:  'Post e storie, ogni settimana',
-      lead:  'I tuoi canali parlano la lingua della tua identità, ogni settimana.',
-      items: ['Piano editoriale', 'Contenuti illustrati e foto', 'Pubblicazione', 'Risposte e community', 'Report del mese'],
-      week:  ['L', 'M', 'M', 'G', 'V', 'S', 'D'],
+      label: 'Gestione social',
+      hook:  'I tuoi canali parlano la lingua della tua identità, ogni settimana.',
+      groups: [
+        { items: ['Piano editoriale', 'Contenuti illustrati e foto', 'Pubblicazione', 'Risposte e community', 'Report del mese'] },
+      ],
     },
   ],
-  // la riga dei codici in cima alle carte
-  band: ['Artismi-(Servizi)-(04)', 'Quattro modi di lavorare insieme', 'Fatto a mano'],
-  // la riga in fondo al collage
-  collect: ['Scegli', 'quello che', 'ti serve.'],
   footerNote: "Tutti i prezzi sono indicativi — ogni progetto è un'altra storia. Materiali di stampa e produzione sempre a parte.",
 }
 
