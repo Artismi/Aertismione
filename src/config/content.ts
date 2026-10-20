@@ -83,8 +83,8 @@ export const SERVICES = {
   savingsNote: "Se hai già un'identità visiva fatta con Artismi, ogni lavoro successivo costa meno — perché partiamo da qualcosa che esiste già.",
   cta: 'Chiedi un preventivo',
   /*
-   * Le quattro carte sul tavolo dei Servizi: ognuna e' un oggetto di carta diverso
-   * (cartellina, striscia pinzata, foglio, cartellino appeso), tutto il testo e' in vista.
+   * Le quattro carte sul tavolo dei Servizi, ognuna con la sua icona disegnata.
+   * hook e' la frase breve sotto il titolo; lead la spiegazione; il resto i dettagli.
    * kind decide l'oggetto; l'ordine e' quello in cui si leggono.
    */
   cards: [
@@ -92,15 +92,10 @@ export const SERVICES = {
       id:    'partecipata',
       kind:  'folder',
       code:  'LAB-01',
-      tab:   'Laboratori',
       kicker: 'Laboratori',
       label: 'Progettazione partecipata',
       hook:  'Laboratori con chi vivrà il progetto',
       lead:  'Un progetto costruito con le persone che lo vivranno, dalla prima domanda all\'oggetto finito.',
-      images: [
-        { src: '/servizi/laboratorio.webp', w: 632, h: 382, alt: 'Il gruppo del workshop di civic design a Borgata Combetta', caption: 'Workshop · Borgata Combetta' },
-        { src: '/servizi/striscia.webp',    w: 620, h: 331, alt: 'Un tratto della striscia illustrata sui mulini, installata in valle', caption: "L'esito: una striscia di 6 m" },
-      ],
       steps: [
         { name: 'Scrittura',       text: 'il percorso, le domande, gli obiettivi: su misura del gruppo e del luogo.' },
         { name: 'Organizzazione',  text: 'tempi, spazi, materiali, inviti: chi partecipa e come.' },
@@ -117,11 +112,7 @@ export const SERVICES = {
       label: 'Illustrazioni, stampe e gadget',
       hook:  'Spille, adesivi, magliette, poster',
       lead:  'Disegnati a mano, prodotti su misura, fatti per essere usati.',
-      images: [
-        { src: '/servizi/gadget.webp', w: 760, h: 847, alt: 'Adesivi e toppe della Bicicleria sparsi su un tavolo di legno', caption: 'Bicicleria · adesivi e toppe' },
-      ],
       items: ['Illustrazioni su commissione', 'Poster e stampe', 'Spille su misura', 'Adesivi', 'Magliette e felpe', 'Shopper, toppe, cartoline'],
-      sticker: 'Su misura',
     },
     {
       id:       'identita',
@@ -133,11 +124,6 @@ export const SERVICES = {
       featured: true,
       hook:     'Dal logo ai muri del negozio',
       lead:     'Il racconto della tua attività diventa un sistema: riconoscibile, coerente, tuo. Fin dentro il negozio.',
-      images: [
-        { src: '/servizi/interni.webp',  w: 560, h: 616, alt: 'Lo striscione illustrato rosa appeso nella ciclofficina Bicicleria, tra ruote e telai', caption: 'Bicicleria · interni' },
-        { src: '/servizi/identita.webp', w: 760, h: 760, alt: 'Il logo della ciclofficina Bicicleria, colorato su fondo nero', caption: 'Il logo' },
-        { src: '/servizi/orario.webp',   w: 480, h: 501, alt: 'Il cartello illustrato degli orari della Bicicleria', caption: 'Il cartello degli orari' },
-      ],
       core:     ['Nome e racconto', 'Logo', 'Illustrazione madre', 'Colori e caratteri', 'Tono di voce', 'Manuale d\'uso'],
       pack:     { label: 'Il pack', text: 'Dall\'illustrazione madre nascono le illustrazioni derivate e le applicazioni pronte all\'uso: un pack da usare dove vuoi.' },
       spaceLabel: 'Nello spazio dell\'attività',
@@ -156,17 +142,12 @@ export const SERVICES = {
       type:  'Al mese',
       hook:  'Post e storie, ogni settimana',
       lead:  'I tuoi canali parlano la lingua della tua identità, ogni settimana.',
-      images: [
-        { src: '/servizi/social.webp', w: 760, h: 760, alt: 'Il post illustrato per l\'Aperidivo della Bicicleria', caption: 'Bicicleria · post evento' },
-      ],
       items: ['Piano editoriale', 'Contenuti illustrati e foto', 'Pubblicazione', 'Risposte e community', 'Report del mese'],
       week:  ['L', 'M', 'M', 'G', 'V', 'S', 'D'],
     },
   ],
-  // la fascia ambra in cima al collage
+  // la riga dei codici in cima alle carte
   band: ['Artismi-(Servizi)-(04)', 'Quattro modi di lavorare insieme', 'Fatto a mano'],
-  // la coppia di adesivi tondi: il testo che gira e quello al centro
-  stickers: { ring: 'Artismi ✦ Servizi ✦ Fatto a mano ✦ ', center: 'Qual è il tuo preferito?' },
   // la riga in fondo al collage
   collect: ['Scegli', 'quello che', 'ti serve.'],
   footerNote: "Tutti i prezzi sono indicativi — ogni progetto è un'altra storia. Materiali di stampa e produzione sempre a parte.",

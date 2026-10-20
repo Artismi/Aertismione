@@ -1,16 +1,14 @@
 'use client'
 
 /**
- * Servizi: un collage di carta sul velo viola, nei colori dell'ambra e del
- * viola. In cima la fascia ambra con il codice; sotto la cartellina kraft
- * (progettazione partecipata), il cartellino crema appeso allo spago
- * (social), la striscia ambra pinzata con le caselle (stampe e gadget) e il
- * foglio con la graffetta (identita'). I contenuti sono in SERVICES (content.ts).
+ * Servizi: quattro carte sul velo viola, appena storte e sfalsate, in
+ * ambra e viola. Ognuna si legge in tre colpi: l'icona disegnata, numero e
+ * titolo, una frase breve. Sotto, piu' piccoli, spiegazione e dettagli.
+ * I contenuti sono in SERVICES (content.ts).
  *
- * Ogni carta si legge in tre colpi: la foto di un lavoro vero, il numero col
- * titolo, una frase breve. Sotto i dettagli. Sul computer tutto e' in vista;
- * sul telefono le carte stanno insieme a due a due e mostrano foto, titolo e
- * frase: toccandone una si apre tutta, con il bottone del preventivo.
+ * Sul computer tutto e' in vista. Sul telefono le carte stanno insieme a due
+ * a due con icona, titolo e frase: toccandone una si apre tutta, con il
+ * bottone del preventivo.
  */
 
 import { useEffect, useRef, useState } from 'react'
@@ -21,8 +19,6 @@ import { useConfiguratorStore } from '@/stores/useConfiguratorStore'
 
 const vp = { once: true, margin: '-60px' }
 
-type Img = { src: string; w: number; h: number; alt: string; caption: string }
-
 type Card = {
   id: string
   kind: 'folder' | 'strip' | 'sheet' | 'tag'
@@ -31,13 +27,10 @@ type Card = {
   label: string
   hook: string
   lead: string
-  images: Img[]
-  tab?: string
   type?: string
   featured?: boolean
   steps?: { name: string; text: string }[]
   items?: string[]
-  sticker?: string
   core?: string[]
   pack?: { label: string; text: string }
   spaceLabel?: string
@@ -51,7 +44,7 @@ type Card = {
 
 const cards = SERVICES.cards as Card[]
 
-// i giorni con un'uscita, nella settimana tipo del cartellino social
+// i giorni con un'uscita, nella settimana tipo della carta social
 const POSTS = [true, false, true, false, true, true, false]
 
 function Cta() {
@@ -62,7 +55,7 @@ function Cta() {
   )
 }
 
-/** sul telefono: apre la carta dal collage, o la richiude */
+/** sul telefono: apre la carta dalla griglia, o la richiude */
 function Peek({ open, onToggle }: { open: boolean; onToggle: () => void }) {
   return (
     <button
@@ -76,21 +69,97 @@ function Peek({ open, onToggle }: { open: boolean; onToggle: () => void }) {
   )
 }
 
-/** una foto stampata, col bordo bianco e la didascalia sotto */
-function Photo({ img, className = '' }: { img: Img; className?: string }) {
+/* ── Le icone ────────────────────────────────────────────────
+   Tratto d'inchiostro e, sotto, il colore stampato appena fuori
+   registro, come una stampa riso. */
+
+const INK = { fill: 'none', stroke: '#1A1A1A', strokeWidth: 2.2, strokeLinecap: 'round', strokeLinejoin: 'round' } as const
+const AMBER = '#C8860A'
+const PLUM = '#35144E'
+
+/** il laboratorio: la lavagna sul cavalletto coi post-it, e le persone davanti */
+function IconLab() {
   return (
-    <figure className={`${styles.photo} ${className}`}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={img.src} width={img.w} height={img.h} alt={img.alt} loading="lazy" decoding="async" />
-      <figcaption>{img.caption}</figcaption>
-    </figure>
+    <svg viewBox="0 0 120 120" aria-hidden="true">
+      <rect x="26" y="12" width="68" height="50" fill={AMBER} transform="translate(4 4)" />
+      <rect x="26" y="12" width="68" height="50" fill="#F2EDE4" {...{ stroke: '#1A1A1A', strokeWidth: 2.2, strokeLinejoin: 'round' }} />
+      <path d="M40 62 L32 92 M80 62 L88 92 M60 62 V80" {...INK} />
+      <rect x="33" y="19" width="15" height="15" fill={AMBER} transform="rotate(-6 40 26)" />
+      <rect x="53" y="20" width="15" height="15" fill={PLUM} transform="rotate(4 60 27)" />
+      <rect x="73" y="19" width="14" height="14" fill={AMBER} transform="rotate(-3 80 26)" />
+      <path d="M35 45 H85 M35 53 H68" {...INK} strokeWidth={1.6} />
+      <path d="M47 113 Q60 97 73 113" fill={PLUM} transform="translate(3 2)" />
+      <circle cx="30" cy="88" r="7" {...INK} fill="#F2EDE4" />
+      <circle cx="60" cy="90" r="8" {...INK} fill="#F2EDE4" />
+      <circle cx="90" cy="88" r="7" {...INK} fill="#F2EDE4" />
+      <path d="M17 110 Q30 94 43 110 M47 113 Q60 97 73 113 M77 110 Q90 94 103 110" {...INK} />
+    </svg>
   )
 }
 
-/** numero grande, etichetta, titolo e la frase breve: quello che si legge per primo */
+/** la maglietta con la spilla, e un adesivo che si stacca */
+function IconPrint() {
+  const shirt = 'M30 32 L46 24 Q60 33 74 24 L90 32 L101 51 L88 57 L86 98 L34 98 L32 57 L19 51 Z'
+  return (
+    <svg viewBox="0 0 120 120" aria-hidden="true">
+      <path d={shirt} fill={AMBER} transform="translate(4 4)" />
+      <path d={shirt} {...INK} />
+      <path d="M46 24 Q60 40 74 24" {...INK} strokeWidth={1.8} />
+      <circle cx="61" cy="63" r="11" fill={PLUM} />
+      <path d="M61 56 V70 M54 63 H68 M56 58 L66 68 M66 58 L56 68" stroke="#F2EDE4" strokeWidth="1.6" strokeLinecap="round" />
+      <circle cx="98" cy="94" r="13" fill="#F2EDE4" stroke="#1A1A1A" strokeWidth="2.2" />
+      <path d="M107 103 Q100 96 94 106" fill={AMBER} stroke="#1A1A1A" strokeWidth="1.8" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+/** la bottega: insegna, tenda, vetrina con un murale dentro */
+function IconShop() {
+  const awning = 'M18 42 H102 L98 56 Q93 62 88 56 Q83 62 78 56 Q73 62 68 56 Q63 62 58 56 Q53 62 48 56 Q43 62 38 56 Q33 62 28 56 Q23 62 22 56 Z'
+  return (
+    <svg viewBox="0 0 120 120" aria-hidden="true">
+      <path d={awning} fill={AMBER} transform="translate(3 3)" />
+      <rect x="32" y="68" width="34" height="26" fill={PLUM} transform="translate(3 3)" />
+      <path d="M22 56 V100 H98 V56" {...INK} />
+      <path d={awning} {...INK} />
+      <path d="M38 42 V56 M58 42 V56 M78 42 V56" {...INK} strokeWidth={1.6} />
+      <rect x="38" y="20" width="44" height="14" rx="2" {...INK} />
+      <path d="M60 23 V31 M56 27 H64" {...INK} strokeWidth={1.6} />
+      <rect x="32" y="68" width="34" height="26" {...INK} />
+      <path d="M34 88 Q42 78 50 86 T64 82" {...INK} strokeWidth={1.6} />
+      <circle cx="56" cy="76" r="3.5" {...INK} strokeWidth={1.6} />
+      <rect x="74" y="68" width="16" height="32" {...INK} />
+      <circle cx="86" cy="84" r="1.4" fill="#1A1A1A" />
+    </svg>
+  )
+}
+
+/** il telefono con i post della settimana e un cuore che arriva */
+function IconSocial() {
+  return (
+    <svg viewBox="0 0 120 120" aria-hidden="true">
+      <rect x="34" y="14" width="46" height="92" rx="9" fill={AMBER} transform="translate(4 4)" />
+      <rect x="34" y="14" width="46" height="92" rx="9" {...INK} />
+      <path d="M52 21 H62" {...INK} strokeWidth={1.8} />
+      <rect x="40" y="28" width="34" height="30" {...INK} strokeWidth={1.8} />
+      <path d="M41 54 L52 42 L59 50 L64 45 L73 55" {...INK} strokeWidth={1.6} />
+      <circle cx="66" cy="36" r="3" {...INK} strokeWidth={1.6} />
+      {[64, 78].map((y) => [0, 1, 2].map((i) => <rect key={`${y}-${i}`} x={40 + i * 12} y={y} width="10" height="10" {...INK} strokeWidth={1.6} />))}
+      <circle cx="94" cy="30" r="15" fill={PLUM} />
+      <path d="M87 42 L83 52 L93 44" fill={PLUM} />
+      <path d="M94 37 C86 31 87 24 91 24 C93 24 94 26 94 27 C94 26 95 24 97 24 C101 24 102 31 94 37 Z" fill="#F2EDE4" />
+    </svg>
+  )
+}
+
+const ICONS = { folder: IconLab, strip: IconPrint, sheet: IconShop, tag: IconSocial }
+
+/** la testa della carta: icona, numero, titolo, frase breve, spiegazione */
 function Head({ c, n }: { c: Card; n: string }) {
+  const Icon = ICONS[c.kind]
   return (
     <>
+      <div className={styles.icon}><Icon /></div>
       <div className={styles.kickerRow}>
         <span className={styles.num} aria-hidden="true">{n}</span>
         <span className={styles.kicker}>{c.kicker}</span>
@@ -113,82 +182,23 @@ function Clip({ className }: { className: string }) {
   )
 }
 
-/** la pinza nera da ufficio */
-function Binder({ className }: { className: string }) {
-  return (
-    <svg className={className} viewBox="0 0 64 58" aria-hidden="true">
-      <path d="M20 26 C18 10 22 3 32 3 C42 3 46 10 44 26" fill="none" stroke="#b9b6b0" strokeWidth="2.6" />
-      <path d="M24 26 C23 13 26 7 32 7 C38 7 41 13 40 26" fill="none" stroke="#8f8b85" strokeWidth="2" />
-      <path d="M6 24 H58 L52 56 H12 Z" fill="#141016" />
-      <path d="M8 26 H56" stroke="#3a3440" strokeWidth="2" />
-    </svg>
-  )
-}
-
-/** lo spago che tiene il cartellino */
-function Twine({ className }: { className: string }) {
-  return (
-    <svg className={className} viewBox="0 0 90 96" aria-hidden="true">
-      <path d="M45 -40 C40 10 30 40 40 72 C44 84 50 84 48 74" fill="none" stroke="#C8860A" strokeWidth="3" strokeLinecap="round" />
-      <path d="M52 -40 C58 14 60 46 50 72" fill="none" stroke="#9c6806" strokeWidth="3" strokeLinecap="round" />
-    </svg>
-  )
-}
-
-/** la coppia di adesivi tondi, con il testo che gira intorno */
-function Stickers() {
-  const { ring, center } = SERVICES.stickers
-  return (
-    <div className={styles.stickers} aria-hidden="true">
-      {['a', 'b'].map((k) => (
-        <svg key={k} className={styles.round} data-k={k} viewBox="0 0 120 120">
-          <defs>
-            <path id={`ring-${k}`} d="M60 60 m-44 0 a44 44 0 1 1 88 0 a44 44 0 1 1 -88 0" />
-          </defs>
-          <circle cx="60" cy="60" r="58" />
-          <text className={styles.ringText}>
-            <textPath href={`#ring-${k}`}>{ring}{ring}</textPath>
-          </text>
-          <foreignObject x="30" y="34" width="60" height="52">
-            <p className={styles.roundCenter}>{center}</p>
-          </foreignObject>
-        </svg>
-      ))}
-    </div>
-  )
-}
-
 type Props = { c: Card; n: string; peek: React.ReactNode }
 
+/** 01 · la cartellina kraft, con la linguetta come quella del tavolo 3D */
 function Folder({ c, n, peek }: Props) {
-  const [lab, result] = c.images
   return (
-    <article className={`${styles.paper} ${styles.folder}`} data-tab={c.tab}>
-      <div className={styles.folderTop}>
-        <div className={styles.folderText}><Head c={c} n={n} /></div>
-        <Photo img={lab} className={styles.folderPhoto} />
-      </div>
+    <article className={`${styles.paper} ${styles.folder}`} data-tab={c.code}>
+      <Head c={c} n={n} />
       <div className={styles.more}>
         <span className={styles.label}>Come funziona</span>
         <ol className={styles.steps}>
-          <Clip className={styles.clip} />
           {c.steps!.map((s) => (
-            <li key={s.name} className={styles.step}>
-              <span className={styles.stepName}>{s.name}</span>
-              <span>{s.text}</span>
+            <li key={s.name}>
+              <b>{s.name}</b> {s.text}
             </li>
           ))}
         </ol>
-        <div className={styles.folderFoot}>
-          {result && <Photo img={result} className={styles.resultPhoto} />}
-          {c.note && (
-            <p className={styles.sticky}>
-              <span className={styles.tape} aria-hidden="true" />
-              <span className={styles.stickyLabel}>+ valore intangibile</span>
-              {c.note}
-            </p>
-          )}
-        </div>
+        {c.note && <p className={styles.note}>{c.note}</p>}
         <Cta />
       </div>
       {peek}
@@ -196,78 +206,50 @@ function Folder({ c, n, peek }: Props) {
   )
 }
 
+/** 02 · il foglio fermato col nastro */
 function Strip({ c, n, peek }: Props) {
   return (
-    <div className={styles.stripWrap}>
-      <Binder className={styles.stripClip} />
-      <article className={`${styles.paper} ${styles.strip}`}>
-        <Photo img={c.images[0]} className={styles.stripPhoto} />
-        <Head c={c} n={n} />
-        <div className={styles.more}>
-          <span className={styles.label}>Spunta i preferiti</span>
-          <ul className={styles.checks}>
-            {c.items!.map((it) => <li key={it} className={styles.check}>{it}</li>)}
-          </ul>
-          <div className={styles.stripFoot}>
-            <Cta />
-            {c.sticker && <span className={styles.oval}>{c.sticker}</span>}
-          </div>
-        </div>
-        {peek}
-      </article>
-    </div>
+    <article className={`${styles.paper} ${styles.strip}`}>
+      <span className={`${styles.tape} ${styles.stripTape}`} aria-hidden="true" />
+      <Head c={c} n={n} />
+      <div className={styles.more}>
+        <span className={styles.label}>Cosa si fa</span>
+        <ul className={styles.inline}>
+          {c.items!.map((it) => <li key={it}>{it}</li>)}
+        </ul>
+        <Cta />
+      </div>
+      {peek}
+    </article>
   )
 }
 
+/** 03 · il foglio con la fascia viola: il percorso piu' richiesto */
 function Sheet({ c, n, peek }: Props) {
-  const [main, ...rest] = c.images
   return (
     <article className={`${styles.paper} ${styles.sheet}`}>
-      <span className={`${styles.tape} ${styles.sheetTape}`} aria-hidden="true" />
-      <Clip className={styles.sheetClip} />
       <div className={`${styles.band} ${styles.code}`}>
-        <span>Artismi-({c.code})</span>
-        <span>{c.type} ✦</span>
+        <span>{c.type}</span>
+        {c.featured && <span>✦ Il più richiesto</span>}
       </div>
       <div className={styles.sheetBody}>
-        <div className={styles.sheetTop}>
-          <div className={styles.fan}>
-            <Photo img={main} className={styles.fanMain} />
-            {rest.map((img) => <Photo key={img.src} img={img} className={`${styles.fanSmall} ${styles.more}`} />)}
-          </div>
-          <div className={styles.sheetText}>
-            {c.featured && <span className={styles.stamp}>✦<br />Più<br />richiesto</span>}
-            <Head c={c} n={n} />
-            <div className={styles.more}>
-              <span className={styles.label}>Il cuore</span>
-              <ul className={styles.core}>
-                {c.core!.map((it) => <li key={it}>{it}</li>)}
-              </ul>
-              {c.pack && (
-                <p className={styles.pack}>
-                  <b>{c.pack.label}</b> {c.pack.text}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
+        <Head c={c} n={n} />
         <div className={styles.more}>
-          <div className={styles.sheetCols}>
-            <div>
-              <span className={styles.label}>{c.spaceLabel}</span>
-              <ul className={styles.space}>
-                {c.space!.map((it) => <li key={it}>{it}</li>)}
-              </ul>
-            </div>
-            <div>
-              <span className={styles.label}>{c.addLabel}</span>
-              <ul className={styles.adds}>
-                {c.adds!.map((it) => <li key={it}>{it}</li>)}
-              </ul>
-            </div>
-          </div>
-          {c.variants && <p className={styles.variants}>{c.variants}</p>}
-          {c.note && <p className={styles.sheetNote}>{c.note}</p>}
+          <span className={styles.label}>Il cuore</span>
+          <ul className={styles.core}>
+            {c.core!.map((it) => <li key={it}>{it}</li>)}
+          </ul>
+          {c.pack && <p className={styles.note}><b>{c.pack.label}.</b> {c.pack.text}</p>}
+          <span className={styles.label}>{c.spaceLabel}</span>
+          <ul className={styles.space}>
+            {c.space!.map((it) => <li key={it}>{it}</li>)}
+          </ul>
+          <span className={styles.label}>{c.addLabel}</span>
+          <ul className={styles.inline}>
+            {c.adds!.map((it) => <li key={it}>{it}</li>)}
+          </ul>
+          {c.variants && <p className={styles.small}>{c.variants}</p>}
+          {c.note && <p className={styles.small}>{c.note}</p>}
           <Cta />
         </div>
         {peek}
@@ -276,27 +258,24 @@ function Sheet({ c, n, peek }: Props) {
   )
 }
 
+/** 04 · la scheda con la graffetta e la settimana */
 function Tag({ c, n, peek }: Props) {
   return (
-    <div className={styles.tagWrap}>
-      <Twine className={styles.string} />
-      <article className={`${styles.paper} ${styles.tag}`}>
-        <span className={`${styles.code} ${styles.side}`} aria-hidden="true">Artismi · una settimana tipo · {c.type}</span>
-        <Photo img={c.images[0]} className={styles.tagPhoto} />
-        <Head c={c} n={n} />
-        <div className={styles.more}>
-          <span className={styles.label}>Una settimana tipo</span>
-          <div className={styles.week} aria-hidden="true">
-            {c.week!.map((d, i) => <span key={i}>{d}<i data-on={POSTS[i]} /></span>)}
-          </div>
-          <ul className={styles.tagList}>
-            {c.items!.map((it) => <li key={it}>{it}</li>)}
-          </ul>
-          <Cta />
+    <article className={`${styles.paper} ${styles.tag}`}>
+      <Clip className={styles.clip} />
+      <Head c={c} n={n} />
+      <div className={styles.more}>
+        <span className={styles.label}>Una settimana tipo</span>
+        <div className={styles.week} aria-hidden="true">
+          {c.week!.map((d, i) => <span key={i}>{d}<i data-on={POSTS[i]} /></span>)}
         </div>
-        {peek}
-      </article>
-    </div>
+        <ul className={styles.inline}>
+          {c.items!.map((it) => <li key={it}>{it}</li>)}
+        </ul>
+        <Cta />
+      </div>
+      {peek}
+    </article>
   )
 }
 
@@ -307,7 +286,7 @@ export function ServicesNewSection() {
   const [open, setOpen] = useState<string | null>(null)
   const boardRef = useRef<HTMLDivElement>(null)
 
-  // aperta una carta sul telefono, la si legge dall'inizio: il collage torna in cima
+  // aperta una carta sul telefono, la si legge dall'inizio: la griglia torna in cima
   useEffect(() => {
     const board = boardRef.current
     if (!open || !board || board.getBoundingClientRect().top > 0) return
@@ -336,9 +315,9 @@ export function ServicesNewSection() {
         <p className={styles.intro}>{SERVICES.intro}</p>
       </motion.div>
 
-      {/* ── Il collage ─────────────────────────────────────────── */}
+      {/* ── Le carte ───────────────────────────────────────────── */}
       <div ref={boardRef} className={styles.board} data-open={open ?? undefined}>
-        <div className={`${styles.topBand} ${styles.code}`} aria-hidden="true">
+        <div className={`${styles.topLine} ${styles.code}`} aria-hidden="true">
           {SERVICES.band.map((t, i) => <span key={t} data-i={i}>{t}</span>)}
         </div>
 
@@ -365,8 +344,6 @@ export function ServicesNewSection() {
             </motion.div>
           )
         })}
-
-        <Stickers />
       </div>
 
       {/* ── Footer decorativo ──────────────────────────────────── */}
