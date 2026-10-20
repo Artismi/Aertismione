@@ -134,8 +134,8 @@ export const CHAPTERS = [
 
 /**
  * Il tavolo della sezione Progetti: la cartellina del portfolio e il gamepad
- * di Porto Vecchio. Il gioco vive sul suo sito (url) e si carica solo quando
- * qualcuno prende in mano il gamepad: fino ad allora non pesa sul portfolio.
+ * di Porto Vecchio. Il gioco gira sul suo sito (url): preso in mano il gamepad,
+ * la pagina passa li'. Dentro il sito, sopra il 3D della home, era troppo lento.
  * Il link da condividere e' artismi.it/porto-vecchio (vedi next.config.mjs).
  */
 export const PROGETTI = {
@@ -150,8 +150,6 @@ export const PROGETTI = {
     hint:  'Videogioco · aprila',
     url:   'https://porto-vecchio.vercel.app/v7/',
     screen: '/progetti/porto-vecchio-lancio.webp', // la schermata di lancio del gioco, sullo schermo del Game Boy
-    close: 'Esci dal gioco',
-    loading: 'Porto Vecchio sta arrivando…',
   },
 }
 

@@ -23,6 +23,14 @@ const damp = THREE.MathUtils.damp
 const EPS = 0.0005
 const FLAT: [number, number, number] = [-Math.PI / 2, 0, 0]
 
+/**
+ * Il tabellone della bilia, stampato dentro il fascicolo: meta' sull'interno
+ * della copertina, meta' sul primo foglio. BW × BD e' ciascuna meta'; da aperto
+ * il centro della piega sta in x = 0 e il tabellone e' a circa BOARD_Y.
+ */
+export const BW = FW - 0.12, BD = FD - 0.14
+export const BOARD_Y = 0.056
+
 function folderShape(withTab: boolean) {
   const w = FW / 2, d = FD / 2, r = 0.05, rr = 0.09
   const s = new THREE.Shape()
@@ -96,8 +104,10 @@ function binderGeometries() {
   return { body, lever: lever(-1) }
 }
 
-export function Folder3D({ phase, mobile, hovered, thumbs, count, label, logo, paper, paperRough, metalRough, onPointer, onClick }: {
+export function Folder3D({ phase, mobile, hovered, thumbs, count, label, logo, paper, paperRough, metalRough, board, onPointer, onClick }: {
   phase: TablePhase; mobile: boolean; hovered: boolean; thumbs: string[]; count: number; label: string
+  /** le due meta' del tabellone (stessa immagine, inquadrature diverse) */
+  board: { left: THREE.Texture; right: THREE.Texture } | null
   logo: HTMLImageElement | null; paper: HTMLImageElement | null; paperRough: THREE.Texture; metalRough: THREE.Texture
   onPointer: (h: boolean) => void; onClick: () => void
 }) {
@@ -199,6 +209,8 @@ export function Folder3D({ phase, mobile, hovered, thumbs, count, label, logo, p
   const out = () => onPointer(false)
   const click = (e: ThreeEvent<MouseEvent>) => { e.stopPropagation(); onClick() }
   const top = FT + 0.0065 // appena sopra la faccia del cartoncino (che e' un po' imbarcata)
+  // il tabellone si vede solo con il fascicolo in movimento o aperto: chiuso starebbe sotto la copertina
+  const showBoard = !!board && phase !== 'closed' && phase !== 'list'
 
   return (
     <group ref={group} position={mobile ? [0, 0, -1.05] : [-1.55, 0, 0.05]} rotation={[0, mobile ? 0 : 0.07, 0]}>
@@ -237,6 +249,14 @@ export function Folder3D({ phase, mobile, hovered, thumbs, count, label, logo, p
           })}
         </group>
 
+        {/* il tabellone, meta' destra: sul primo foglio, sopra le card */}
+        {board && (
+          <mesh visible={showBoard} position={[0, FT + PAGES_H + 0.0085, 0]} rotation={FLAT} receiveShadow>
+            <planeGeometry args={[BW, BD]} />
+            <meshStandardMaterial map={board.right} roughness={0.85} />
+          </mesh>
+        )}
+
         {/* copertina, incernierata a sinistra */}
         <group ref={pivot} position={[-FW / 2, COVER_Y, 0]}>
           <group position={[FW / 2, 0, 0]}>
@@ -244,6 +264,14 @@ export function Folder3D({ phase, mobile, hovered, thumbs, count, label, logo, p
             <mesh position={[0, -0.0035, 0]} rotation={[Math.PI / 2, 0, 0]} material={mats.lining}>
               <planeGeometry args={[FW - 0.06, FD - 0.06]} />
             </mesh>
+            {/* il tabellone, meta' sinistra: sull'interno della copertina (aperta, guarda in su),
+                staccato quanto basta perche' il cartoncino imbarcato non lo buchi */}
+            {board && (
+              <mesh visible={showBoard} position={[0, -0.009, 0]} rotation={[Math.PI / 2, 0, Math.PI]} receiveShadow>
+                <planeGeometry args={[BW, BD]} />
+                <meshStandardMaterial map={board.left} roughness={0.85} />
+              </mesh>
+            )}
 
             {/* l'etichetta grande «Portfolio», storta, sopra la scritta stampata */}
             <mesh position={[0.08, top, 0.12]} rotation={[-Math.PI / 2, 0, 0.045]} receiveShadow>

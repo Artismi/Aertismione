@@ -18,11 +18,11 @@ const nextConfig = {
       },
     ],
   },
-  // Link da condividere per il gioco: porta al tavolo dei Progetti con il
-  // gamepad gia' in mano (lo gestisce PortfolioSection leggendo l'ancora).
+  // Link da condividere per il gioco: porta dritto al gioco, sul suo sito
+  // (deve restare uguale a PROGETTI.game.url in src/config/content.ts)
   async redirects() {
     return [
-      { source: '/porto-vecchio', destination: '/#porto-vecchio', permanent: false },
+      { source: '/porto-vecchio', destination: 'https://porto-vecchio.vercel.app/v7/', permanent: false },
     ]
   },
   eslint: {

@@ -12,9 +12,11 @@
  * resto della pagina. Sopra e sotto c'e' solo lo sfondo rosa. Frameloop "demand": disegna solo quando la camera o un
  * oggetto si muove. I clic arrivano dalla pagina (eventSource = body).
  * Le fasi (chiuso, scivola, si apre...) le decide PortfolioSection.
+ * Il tabellone della bilia lo disegna PortfolioSection su un canvas 2D: qui
+ * diventa la stampa dentro il fascicolo, e il mouse viene riportato sul tabellone.
  */
 
-import { Suspense, useEffect, useRef, useState, type MutableRefObject, type RefObject } from 'react'
+import { Suspense, useEffect, useMemo, useRef, useState, type MutableRefObject, type RefObject } from 'react'
 import { createPortal } from 'react-dom'
 import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber'
 import { Environment } from '@react-three/drei'
@@ -23,14 +25,20 @@ import { ToneMappingMode, type DepthOfFieldEffect } from 'postprocessing'
 import * as THREE from 'three'
 import { loadImage } from './textures'
 import { Bench } from './Bench'
-import { Folder3D, FW, FD } from './Folder3D'
+import { Folder3D, FW, FD, BW, BD, BOARD_Y } from './Folder3D'
 import { Console3D } from './Console3D'
 import { WorldBackdrop } from './WorldBackdrop'
 import styles from './Table3D.module.css'
 
 export type TablePhase = 'closed' | 'sliding' | 'opening' | 'open' | 'closing' | 'returning' | 'list'
-export type ScreenRect = { top: number; left: number; width: number; height: number }
-export type TableApi = { screenRect: () => ScreenRect | null }
+/** u, v tra 0 e 1 sul tabellone (v = 0 in alto); inside = il punto cade sul fascicolo */
+export type BoardPoint = { u: number; v: number; inside: boolean }
+export type TableApi = {
+  /** dal punto sullo schermo al punto sul tabellone, anche fuori (per tirare la fionda) */
+  toBoard: (clientX: number, clientY: number) => BoardPoint | null
+  /** il canvas del tabellone e' stato ridisegnato */
+  refresh: () => void
+}
 
 type Props = {
   phase: TablePhase
@@ -44,6 +52,8 @@ type Props = {
   onFolder: () => void
   onConsole: () => void
   api: MutableRefObject<TableApi | null>
+  /** il canvas 2D su cui PortfolioSection disegna il tabellone */
+  board: RefObject<HTMLCanvasElement | null>
   /** il riquadro del tavolo nella sezione Progetti: da li' si capisce dove siamo */
   stage: RefObject<HTMLDivElement | null>
 }
@@ -145,11 +155,61 @@ function Focus({ grab, dof, look }: { grab: boolean; dof: MutableRefObject<Depth
   return null
 }
 
+/**
+ * Il tabellone: il canvas della bilia diventa una texture (meta' per pagina) e il
+ * mouse si riporta dallo schermo al piano del fascicolo aperto.
+ */
+function useBoard(board: Props['board'], api: Props['api']) {
+  const { camera, gl, invalidate } = useThree()
+  const tex = useMemo(() => {
+    const c = board.current
+    if (!c) return null
+    const left = new THREE.CanvasTexture(c)
+    left.colorSpace = THREE.SRGBColorSpace
+    left.anisotropy = 8
+    left.repeat.set(0.5, 1)
+    const right = left.clone()
+    right.offset.set(0.5, 0)
+    return { left, right }
+  }, [board])
+  useEffect(() => () => { tex?.left.dispose(); tex?.right.dispose() }, [tex])
+
+  useEffect(() => {
+    const ray = new THREE.Raycaster()
+    const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -BOARD_Y)
+    const hit = new THREE.Vector3(), ndc = new THREE.Vector2()
+    // da aperto il fascicolo sta con la piega in x = 0: meta' sinistra e meta' destra,
+    // con il dorso in mezzo (sul tabellone non c'e': si salta da una pagina all'altra)
+    const x0 = -FW / 2 - BW / 2, x1 = FW / 2 - BW / 2
+    api.current = {
+      toBoard: (cx, cy) => {
+        const r = gl.domElement.getBoundingClientRect()
+        ndc.set((cx - r.left) / r.width * 2 - 1, -((cy - r.top) / r.height) * 2 + 1)
+        ray.setFromCamera(ndc, camera)
+        if (!ray.ray.intersectPlane(plane, hit)) return null
+        const u = hit.x < 0 ? Math.min(0.5, (hit.x - x0) / BW / 2) : 0.5 + Math.max(0, hit.x - x1) / BW / 2
+        const v = (hit.z + BD / 2) / BD
+        return { u, v, inside: u >= 0 && u <= 1 && v >= 0 && v <= 1 }
+      },
+      refresh: () => {
+        if (!tex) return
+        tex.left.needsUpdate = true
+        tex.right.needsUpdate = true
+        invalidate()
+      },
+    }
+    return () => { api.current = null }
+  }, [api, camera, gl, invalidate, tex])
+
+  return tex
+}
+
 /** Gli oggetti del tavolo: si caricano quando ci si avvicina alla sezione */
 function Table(props: Props & { images: Images }) {
   const { phase, grab, mobile } = props
   const [hFolder, setHFolder] = useState(false)
   const [hConsole, setHConsole] = useState(false)
+  const board = useBoard(props.board, props.api)
   // rugosita' fotografiche (CC0): carta, metallo spazzolato, plastica
   const [paperRough, metalRough, plasticRough] = useLoader(THREE.TextureLoader, [
     `${TEX}/paper_rough.webp`, `${TEX}/metal_rough.webp`, `${TEX}/plastic_rough.webp`,
@@ -176,6 +236,7 @@ function Table(props: Props & { images: Images }) {
         paper={props.images.paper}
         paperRough={paperRough}
         metalRough={metalRough}
+        board={board}
         onPointer={setHFolder}
         onClick={props.onFolder}
       />
@@ -190,7 +251,6 @@ function Table(props: Props & { images: Images }) {
         metalRough={metalRough}
         onPointer={setHConsole}
         onClick={props.onConsole}
-        api={props.api}
       />
     </>
   )
