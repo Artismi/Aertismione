@@ -20,8 +20,14 @@ const nextConfig = {
   },
   // Porto Vecchio vive sul suo sito, ma si gioca dall'indirizzo di questo:
   // /gioco/* arriva da porto-vecchio.vercel.app/v7/*, e le due chiamate del
-  // gioco alla sua api vanno al suo sito. La pagina /porto-vecchio lo mostra
-  // con la barra del sito (deve restare allineato a PROGETTI.game in content.ts).
+  // gioco alla sua api vanno al suo sito. Da qui lo usano il telefono e la pagina
+  // /porto-vecchio (deve restare allineato a PROGETTI.game in content.ts).
+  // le illustrazioni erano una raccolta: ora ognuna e' un lavoro a se', sul banco
+  async redirects() {
+    return [
+      { source: '/portfolio/illustrazioni', destination: '/#portfolio', permanent: false },
+    ]
+  },
   async rewrites() {
     const GAME = 'https://porto-vecchio.vercel.app'
     return [

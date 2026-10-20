@@ -21,7 +21,12 @@ const Table3D = dynamic(() => import('@/components/canvas/table/Table3D'), { ssr
 /* â”€â”€â”€ Costanti â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 const BALL_R        = 15
-const FOLDER_HIT_R  = 74   // raggio collisione/hover cartellina
+const FOLDER_HIT_R  = 74   // raggio collisione/hover cartellina (a misura piena)
+
+/** Con tanti lavori le cartelline si stringono: misura in base allo spazio tra una e l'altra */
+function folderScale(w: number, h: number) {
+  return Math.max(0.5, Math.min(1, (Math.min(w, h) * 0.27) / 160))
+}
 const FRICTION      = 0.972
 const MIN_SPEED     = 0.07
 const MAX_LAUNCH    = 38
@@ -142,7 +147,8 @@ function drawMapDecorations(ctx: CanvasRenderingContext2D, w: number, h: number,
 }
 
 function drawZone(ctx: CanvasRenderingContext2D, p: Project, jitter: number[], w: number, h: number) {
-  const cx = p.mapX*w, cy = p.mapY*h, r = Math.min(w,h)*0.155, N = jitter.length
+  // le zone si stringono con il numero dei lavori (erano pensate per sei)
+  const cx = p.mapX*w, cy = p.mapY*h, r = Math.min(w,h)*0.155*Math.min(1, Math.sqrt(6/PROJECTS.length)), N = jitter.length
   const [rr,gg,bb] = hexToRgb(p.accent)
   ctx.beginPath()
   for (let i = 0; i <= N; i++) {
@@ -233,6 +239,7 @@ function drawFolder(ctx: CanvasRenderingContext2D, p: Project, w: number, h: num
   ctx.save()
   ctx.translate(cx, cy+lift)
   ctx.rotate(tilt)
+  const fs = folderScale(w, h); ctx.scale(fs, fs)
 
   // Alone pulsante attorno alla cartellina
   const pulse = 0.5+0.5*Math.sin(time*0.0019+p.mapX*8)
@@ -701,7 +708,7 @@ export function PortfolioSection() {
         if (now - collisionCooldownRef.current > 900) {
           for (const p of PROJ) {
             const d=Math.hypot(ball.x-p.mapX*w, ball.y-p.mapY*h)
-            if (d < FOLDER_HIT_R) {
+            if (d < FOLDER_HIT_R*folderScale(w,h)) {
               collisionCooldownRef.current=now
               const ang=Math.atan2(ball.y-p.mapY*h, ball.x-p.mapX*w)
               ball.vx=Math.cos(ang)*6; ball.vy=Math.sin(ang)*6
@@ -886,7 +893,7 @@ export function PortfolioSection() {
     let clicked: Project|null=null, minD=Infinity
     for (const p of projRef.current) {
       const d=Math.hypot(lx-p.mapX*w, ly-p.mapY*h)
-      if (d<FOLDER_HIT_R&&d<minD) {minD=d;clicked=p}
+      if (d<FOLDER_HIT_R*folderScale(w,h)&&d<minD) {minD=d;clicked=p}
     }
     const tx=clicked?clicked.mapX*w:lx, ty=clicked?clicked.mapY*h:ly
     const dist=Math.hypot(tx-ball.x, ty-ball.y)
@@ -964,7 +971,7 @@ export function PortfolioSection() {
       if (!p.inside || !ours(e)) { body.style.cursor = ''; return }
       const {w,h} = sizeRef.current
       for (const pr of projRef.current) {
-        if (Math.hypot(p.lx-pr.mapX*w, p.ly-pr.mapY*h) < FOLDER_HIT_R) { hoveredRef.current = pr.id; break }
+        if (Math.hypot(p.lx-pr.mapX*w, p.ly-pr.mapY*h) < FOLDER_HIT_R*folderScale(w,h)) { hoveredRef.current = pr.id; break }
       }
       const ball = ballRef.current
       body.style.cursor = Math.hypot(p.lx-ball.x, p.ly-ball.y) < BALL_R+12 ? 'grab' : hoveredRef.current ? 'pointer' : 'crosshair'

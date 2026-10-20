@@ -169,6 +169,7 @@ export const PORTFOLIO = {
   projects: [
     {
       id:       'bicicleria',
+      mapX: 0.12, mapY: 0.20,
       thumb:    '/portfolio/_thumbs/bicicleria.jpg',
       title:    'Bicicleria',
       category: 'Identità visiva completa',
@@ -187,7 +188,6 @@ export const PORTFOLIO = {
           text:  'Nascono dalle componenti meccaniche e dagli attrezzi. Il **piccione** è fuso con una **maglia della catena**: vista di lato, ha già la forma del suo corpo.',
         },
       ],
-      mapX: 0.15, mapY: 0.30,
       accent: '#C4622D',
       links: [
         {
@@ -224,6 +224,7 @@ export const PORTFOLIO = {
 
     {
       id:       'mulini',
+      mapX: 0.37, mapY: 0.20,
       thumb:    '/portfolio/_thumbs/mulini.jpg',
       title:    'Mulini',
       category: 'Illustrazione / Tesi di laurea',
@@ -290,7 +291,6 @@ export const PORTFOLIO = {
         '/portfolio/mulini/tesi/slide-19.jpg',
         '/portfolio/mulini/tesi/slide-09.jpg',
       ],
-      mapX: 0.48, mapY: 0.22,
       accent: '#5B8EA6',
       panoramaStrip: '/portfolio/mulini/strip.png',
       pdfs: [
@@ -323,6 +323,7 @@ export const PORTFOLIO = {
     },
     {
       id:       'torino-invisibile',
+      mapX: 0.62, mapY: 0.20,
       thumb:    '/portfolio/_thumbs/torino-invisibile.jpg',
       title:    'Torino Invisibile',
       category: '3D / Realtà aumentata',
@@ -341,7 +342,6 @@ export const PORTFOLIO = {
           text:  'Progetto di Kaninchen-Haus con la direzione artistica di ConiglioViola, vincitore del bando PNRR Transizione Digitale Organismi Culturali e Creativi, in rete con Museo Nazionale del Cinema, Circolo dei Lettori, DAMS e Accademia Albertina.',
         },
       ],
-      mapX: 0.65, mapY: 0.42,
       accent: '#1A1A2E',
       links: [
         {
@@ -359,136 +359,138 @@ export const PORTFOLIO = {
       ]
     },
     {
-      id:       'illustrazioni',
-      thumb:    '/portfolio/_thumbs/illustrazioni.jpg',
-      title:    'Illustrazioni & Artwork Singoli',
-      category: 'Raccolta / Illustrazione',
-      tagline:  'Copertine per singoli musicali, locandine per eventi, illustrazioni per contest.',
-      mapX: 0.80, mapY: 0.22,
-      accent: '#E8A8BF',
-      subProjects: [
+      id:       'alice',
+      mapX: 0.87, mapY: 0.20,
+      thumb:    '/portfolio/_thumbs/alice.jpg',
+      layout:   'centered',
+      title:    'Alice, un mondo di matti',
+      category: 'Copertina / Illustrazione',
+      tagline:  'Copertina per un singolo di Gcomemarco.',
+      sections: [
         {
-          id:       'alice',
-          layout:   'centered',
-          title:    'Alice, un mondo di matti',
-          category: 'Copertina / Illustrazione',
-          tagline:  'Copertina per un singolo di Gcomemarco.',
-          sections: [
-            {
-              label: 'La richiesta',
-              text:  'Unire Torino, **Alice nel Paese delle Meraviglie** e il **Giardino delle delizie** di Bosch.',
-            },
-            {
-              label: "L'illustrazione",
-              text:  'Ne è nata una città rossa dove palazzi torinesi, castelli e funghi giganti ospitano i personaggi del libro.',
-            },
-          ],
-          accent: '#8B4DA8',
-          mainImage: '/portfolio/alice/hero.png',
-          gallery: [
-            '/portfolio/alice/detail-1.png',
-            '/portfolio/alice/detail-2.png'
-          ]
+          label: 'La richiesta',
+          text:  'Unire Torino, **Alice nel Paese delle Meraviglie** e il **Giardino delle delizie** di Bosch.',
         },
         {
-          id:       'ridi-piangi-balli',
-          layout:   'centered',
-          title:    'Ridi, piangi, balli',
-          category: 'Copertina / Illustrazione',
-          tagline:  'Copertina per un singolo di Gcomemarco.',
-          sections: [
-            {
-              label: "L'illustrazione",
-              text:  'Una sala da ballo sospesa sulla notte, dove convivono chi festeggia, chi si innamora e chi piange da solo.',
-            },
-          ],
-          accent: '#E8A8BF',
-          mainImage: '/portfolio/ridi-piangi-balli/hero.png'
+          label: "L'illustrazione",
+          text:  'Ne è nata una città rossa dove palazzi torinesi, castelli e funghi giganti ospitano i personaggi del libro.',
         },
-        {
-          // Sono due illustrazioni distinte, nate per lo stesso contest.
-          id:        'punk-lattina',
-          title:     "Punk Isn't Dead — Lattina",
-          category:  'Illustrazione',
-          tagline:   'Contest Bonobolabo × Birrificio Mad One, 2024.',
-          accent:    '#1A1A1A',
-          mainImage: '/portfolio/punk/beer.jpg',
-          sections: [
-            {
-              label: 'Il contest',
-              text:  "Contest \"Punk is not dead\", promosso da Bonobolabo e dal birrificio Mad One.",
-            },
-            {
-              label: "L'illustrazione",
-              text:  'Racconta una **riesumazione dello spirito punk**, che per poco rischiava la sussunzione da parte del mercato.',
-            },
-          ],
-        },
-        {
-          id:        'punk-skate',
-          title:     "Punk Isn't Dead — Skate",
-          category:  'Illustrazione',
-          // la tavola e' lunga e stretta: nel piano si mette di lato,
-          // cosi' occupa la riga invece di stringersi in una colonnina
-          sdraiata:  true,
-          tagline:   'Contest Bonobolabo × Birrificio Mad One, 2024.',
-          accent:    '#1A1A1A',
-          mainImage: '/portfolio/punk/skate.jpg',
-          sections: [
-            {
-              label: 'Il contest',
-              text:  "Contest \"Punk is not dead\", promosso da Bonobolabo e dal birrificio Mad One.",
-            },
-            {
-              label: "L'illustrazione",
-              text:  'Ripercorre il **legame tra skate, birra** e lo spirito ribelle della cultura punk.',
-            },
-          ],
-        },
-        {
-          id:       'ciclomeccanica',
-          layout:   'split_light',
-          title:    'Campionati di Ciclomeccanica',
-          category: 'Locandina / Illustrazione',
-          tagline:  'Locandina per il XIV Trofeo Sheldon Brown. Torino, 5 ottobre 2024.',
-          sections: [
-            {
-              label: "L'evento",
-              text:  "La gara tra **ciclofficine popolari** ospitata alle Officine Creative di via Cecchi. In cinque ore le squadre rimettono in strada bici recuperate, che finiscono all'**asta benefica**.",
-            },
-            {
-              label: "L'illustrazione",
-              text:  'I pezzi della bici diventano paesaggio: il telaio attraversa la scena e la **serie sterzo** si trasforma in un UFO che illumina la Mole.',
-            },
-          ],
-          accent: '#7B9E4A',
-          mainImage: '/portfolio/ciclomeccanica/flyer-cover.jpg',
-          pdfs: [
-            {
-              label: 'Volantino Campionati',
-              url:   '/portfolio/ciclomeccanica/flyer.pdf',
-              pages: ['/portfolio/ciclomeccanica/flyer-cover.jpg'],
-            },
-          ]
-        },
-        {
-          id:        'campus-boreale',
-          title:     'Campus Boreale',
-          category:  'Locandina / Illustrazione',
-          tagline:   "Locandina per la prima apertura del Campus, l'aula studio di Borealis.",
-          accent:    '#9DD4EE',
-          mainImage: '/portfolio/locandina-start/hero.jpg',
-          sections: [
-            {
-              label: "L'illustrazione",
-              text:  'Chi legge, chi scrive, chi lavora al computer: tavoli e sedie si staccano dal pavimento e lo studio diventa uno **spazio condiviso e leggero**.',
-            },
-          ],
-        }
+      ],
+      accent: '#8B4DA8',
+      mainImage: '/portfolio/alice/hero.png',
+      gallery: [
+        '/portfolio/alice/detail-1.png',
+        '/portfolio/alice/detail-2.png'
       ]
     },
     {
+      id:       'ridi-piangi-balli',
+      mapX: 0.25, mapY: 0.50,
+      thumb:    '/portfolio/_thumbs/ridi-piangi-balli.jpg',
+      layout:   'centered',
+      title:    'Ridi, piangi, balli',
+      category: 'Copertina / Illustrazione',
+      tagline:  'Copertina per un singolo di Gcomemarco.',
+      sections: [
+        {
+          label: "L'illustrazione",
+          text:  'Una sala da ballo sospesa sulla notte, dove convivono chi festeggia, chi si innamora e chi piange da solo.',
+        },
+      ],
+      accent: '#E8A8BF',
+      mainImage: '/portfolio/ridi-piangi-balli/hero.png'
+    },
+    {
+      // Sono due illustrazioni distinte, nate per lo stesso contest.
+      id:        'punk-lattina',
+      mapX: 0.50, mapY: 0.50,
+      thumb:    '/portfolio/_thumbs/punk-lattina.jpg',
+      title:     "Punk Isn't Dead — Lattina",
+      category:  'Illustrazione',
+      tagline:   'Contest Bonobolabo × Birrificio Mad One, 2024.',
+      accent:    '#E2475E',   // sulla tavola scura il nero non si vedeva
+      mainImage: '/portfolio/punk/beer.jpg',
+      sections: [
+        {
+          label: 'Il contest',
+          text:  "Contest \"Punk is not dead\", promosso da Bonobolabo e dal birrificio Mad One.",
+        },
+        {
+          label: "L'illustrazione",
+          text:  'Racconta una **riesumazione dello spirito punk**, che per poco rischiava la sussunzione da parte del mercato.',
+        },
+      ],
+    },
+    {
+      id:        'punk-skate',
+      mapX: 0.75, mapY: 0.50,
+      thumb:    '/portfolio/_thumbs/punk-skate.jpg',
+      title:     "Punk Isn't Dead — Skate",
+      category:  'Illustrazione',
+      // la tavola e' lunga e stretta: nel piano si mette di lato,
+      // cosi' occupa la riga invece di stringersi in una colonnina
+      sdraiata:  true,
+      tagline:   'Contest Bonobolabo × Birrificio Mad One, 2024.',
+      accent:    '#F2A03D',
+      mainImage: '/portfolio/punk/skate.jpg',
+      sections: [
+        {
+          label: 'Il contest',
+          text:  "Contest \"Punk is not dead\", promosso da Bonobolabo e dal birrificio Mad One.",
+        },
+        {
+          label: "L'illustrazione",
+          text:  'Ripercorre il **legame tra skate, birra** e lo spirito ribelle della cultura punk.',
+        },
+      ],
+    },
+    {
+      id:       'ciclomeccanica',
+      mapX: 0.12, mapY: 0.80,
+      thumb:    '/portfolio/_thumbs/ciclomeccanica.jpg',
+      layout:   'split_light',
+      title:    'Campionati di Ciclomeccanica',
+      category: 'Locandina / Illustrazione',
+      tagline:  'Locandina per il XIV Trofeo Sheldon Brown. Torino, 5 ottobre 2024.',
+      sections: [
+        {
+          label: "L'evento",
+          text:  "La gara tra **ciclofficine popolari** ospitata alle Officine Creative di via Cecchi. In cinque ore le squadre rimettono in strada bici recuperate, che finiscono all'**asta benefica**.",
+        },
+        {
+          label: "L'illustrazione",
+          text:  'I pezzi della bici diventano paesaggio: il telaio attraversa la scena e la **serie sterzo** si trasforma in un UFO che illumina la Mole.',
+        },
+      ],
+      accent: '#7B9E4A',
+      mainImage: '/portfolio/ciclomeccanica/flyer-cover.jpg',
+      pdfs: [
+        {
+          label: 'Volantino Campionati',
+          url:   '/portfolio/ciclomeccanica/flyer.pdf',
+          pages: ['/portfolio/ciclomeccanica/flyer-cover.jpg'],
+        },
+      ]
+    },
+    {
+      id:        'campus-boreale',
+      mapX: 0.37, mapY: 0.80,
+      thumb:    '/portfolio/_thumbs/campus-boreale.jpg',
+      title:     'Campus Boreale',
+      category:  'Locandina / Illustrazione',
+      tagline:   "Locandina per la prima apertura del Campus, l'aula studio di Borealis.",
+      accent:    '#9DD4EE',
+      mainImage: '/portfolio/locandina-start/hero.jpg',
+      sections: [
+        {
+          label: "L'illustrazione",
+          text:  'Chi legge, chi scrive, chi lavora al computer: tavoli e sedie si staccano dal pavimento e lo studio diventa uno **spazio condiviso e leggero**.',
+        },
+      ],
+    },
+    {
       id:       'ecosistema-boreale',
+      mapX: 0.62, mapY: 0.80,
       title:    'Ecosistema Boreale',
       category: 'Illustrazione',
       thumb:    '/portfolio/_thumbs/ecosistema-boreale.jpg',
@@ -507,7 +509,6 @@ export const PORTFOLIO = {
           text:  'In galleria anche il disegno a linea, prima del colore.',
         },
       ],
-      mapX: 0.38, mapY: 0.82,
       accent: '#4A6741',
       mainImage: '/portfolio/ecosistema-boreale/hero.jpg',
       gallery: [
@@ -516,6 +517,7 @@ export const PORTFOLIO = {
     },
     {
       id:       'sperimentazione',
+      mapX: 0.87, mapY: 0.80,
       thumb:    '/portfolio/_thumbs/sperimentazione.jpg',
       title:    'Stamperia',
       category: 'Ricerca personale',
@@ -575,7 +577,6 @@ export const PORTFOLIO = {
         '/portfolio/sperimentazione/video-05.mp4',
         '/portfolio/sperimentazione/video-06.mp4',
       ],
-      mapX: 0.78, mapY: 0.82,
       accent: '#9090A0',
     },
   ],
