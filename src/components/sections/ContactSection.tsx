@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import type { Transition } from 'framer-motion'
 import styles from './ContactSection.module.css'
@@ -7,7 +8,30 @@ import { CONTACT } from '@/config/content'
 
 const vp = { once: true, margin: '0px 0px -150px 0px' }
 
+type SendState = 'idle' | 'sending' | 'done' | 'error'
+
 export function ContactSection() {
+  const [state, setState] = useState<SendState>('idle')
+
+  // si manda senza lasciare la pagina; senza JavaScript resta il POST normale a Formspree
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const form = e.currentTarget
+    setState('sending')
+    try {
+      const res = await fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: { Accept: 'application/json' },
+      })
+      if (!res.ok) throw new Error(String(res.status))
+      form.reset()
+      setState('done')
+    } catch {
+      setState('error')
+    }
+  }
+
   return (
     <div className={styles.section}>
       <div className="container">
@@ -50,6 +74,7 @@ export function ContactSection() {
             className={styles.form}
             action={`https://formspree.io/f/${CONTACT.formspreeId}`}
             method="POST"
+            onSubmit={handleSubmit}
             aria-label="Modulo di contatto"
             initial={{ opacity: 0, x: 40 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -92,14 +117,20 @@ export function ContactSection() {
 
             <motion.button
               type="submit"
+              disabled={state === 'sending'}
               className={styles.submitBtn}
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={vp}
               transition={{ duration: 0.4, delay: 0.55 }}
             >
-              {CONTACT.form.submitLabel}
+              {state === 'sending' ? CONTACT.form.sendingLabel : CONTACT.form.submitLabel}
             </motion.button>
+
+            <p className={styles.formStatus} role="status" aria-live="polite" data-state={state}>
+              {state === 'done' && CONTACT.form.doneLabel}
+              {state === 'error' && CONTACT.form.errorLabel}
+            </p>
           </motion.form>
 
         </div>

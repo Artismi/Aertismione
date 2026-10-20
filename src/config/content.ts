@@ -657,7 +657,7 @@ export const CONTACT = {
     {
       label: 'WhatsApp',
       icon:  'W',
-      href:  'https://wa.me/393195975752',
+      href:  'https://wa.me/393931959752',
       aria:  'Scrivi su WhatsApp',
       /** WhatsApp è il metodo di contatto principale */
       primary: true,
@@ -678,10 +678,15 @@ export const CONTACT = {
   form: {
     fields: [
       { id: 'name',    name: 'name',    type: 'text', label: 'Nome',             placeholder: 'Mario Rossi',                              required: true  },
+      // senza l'email non si puo' rispondere: Formspree la usa come indirizzo di risposta
+      { id: 'email',   name: 'email',   type: 'email', label: 'Email',           placeholder: 'mario@esempio.it',                         required: true  },
       { id: 'project', name: 'project', type: 'text', label: 'Tipo di progetto', placeholder: 'Identità visiva, murale, social media...', required: false },
     ],
     messageLabel:       'Raccontami',
     messagePlaceholder: 'Ho un negozio di bici e vorrei...',
     submitLabel:        'Invia messaggio',
+    sendingLabel:       'Invio in corso…',
+    doneLabel:          'Ricevuto, grazie! Ti rispondo entro 24 ore.',
+    errorLabel:         'Non è partito. Riprova, oppure scrivimi a apizzoglio@gmail.com.',
   },
 }

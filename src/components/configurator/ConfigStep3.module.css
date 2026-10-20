@@ -179,3 +179,17 @@
     gap: 32px;
   }
 }
+
+/* l'avviso se l'invio non e' andato */
+.error {
+  margin: 12px 0 0;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: #9b2c4a;
+}
+
+/* il pannello e' chiaro: i testi senza colore proprio prendono l'inchiostro,
+   non il crema del sito (pensato per il fondo scuro) */
+.step,
+.done { color: #1A1A1A; }
+.field label { color: rgba(26,26,26,0.72); }

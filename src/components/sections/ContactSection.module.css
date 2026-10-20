@@ -158,3 +158,15 @@
 @media (max-width: 768px) {
   .grid { grid-template-columns: 1fr; }
 }
+
+/* l'esito dell'invio, sotto il bottone */
+.formStatus {
+  min-height: 1.4em;
+  margin: 12px 0 0;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+.formStatus[data-state='done'] { color: var(--color-text); }
+.formStatus[data-state='error'] { color: var(--color-warm); }
+.submitBtn:disabled { opacity: 0.6; cursor: progress; }
