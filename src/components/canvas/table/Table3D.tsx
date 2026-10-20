@@ -112,10 +112,12 @@ function Rig({ phase, mobile, stage, look, logo }: {
 
     // l'inquadratura di lavoro, in prospettiva e dritta, a misura del riquadro
     if (mobile) {
-      const k = Math.max(1, 0.62 / stageAspect) * (aspect < stageAspect ? stageAspect / aspect : 1)
+      // un po' piu' larga: fascicolo e Game Boy interi, con aria intorno
+      const k = Math.max(1, 0.62 / stageAspect) * (aspect < stageAspect ? stageAspect / aspect : 1) * 1.14
       t.pos.set(0, 7.6 * k, 4.6 * k); t.lk.set(0, 0, 0.35)
     } else {
-      const k = Math.max(1, 2.15 / stageAspect) * (r ? vh / r.height : 1) * 0.92
+      // stretta sugli oggetti: fascicolo e Game Boy protagonisti, il banco li incornicia
+      const k = Math.max(1, 2.15 / stageAspect) * (r ? vh / r.height : 1) * 0.8
       t.pos.set(0.15, 5.4 * k, 4.9 * k); t.lk.set(0.15, 0, 0.25)
     }
     t.fwd.subVectors(t.lk, t.pos)
@@ -386,12 +388,14 @@ function World(props: Props & { images: Images | null }) {
       {/* luce: lo studio fotografico (HDR CC0 di Poly Haven) e una lampada da banco calda
           che fa l'ombra del tavolo sul pavimento */}
       <Suspense fallback={null}>
-        <Environment files={`${TEX}/studio.hdr`} environmentIntensity={1.35} />
+        <Environment files={`${TEX}/studio.hdr`} environmentIntensity={1.0} />
       </Suspense>
-      <ambientLight intensity={0.2} />
+      <ambientLight intensity={0.12} />
+      {/* la lampada da banco: una pozza di luce calda sugli oggetti, i bordi del banco piu' scuri */}
+      <spotLight position={[-1.6, 6.5, 3.2]} angle={0.62} penumbra={0.85} decay={2} intensity={95} color="#ffd8b0" />
       <directionalLight
         position={[-8, 15, 5]}
-        intensity={3.2}
+        intensity={2.3}
         color="#fff1df"
         castShadow
         shadow-mapSize={[1024, 1024]}

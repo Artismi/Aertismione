@@ -22,7 +22,9 @@ const FLAT: [number, number, number] = [-Math.PI / 2, 0, 0]
  * mondo scorre con la pagina: piu' profondo, il bordo davanti sporgerebbe sotto
  * la sezione Progetti, in mezzo ai Servizi.
  */
-export const BENCH = { w: 18, d: 5.0, h: 0.4, z: 0 }
+// profondo abbastanza da riempire l'inquadratura: la sfumatura nel rosa resta fuori
+// quadro e si vede solo mentre il banco entra ed esce
+export const BENCH = { w: 18, d: 9.0, h: 0.4, z: 0 }
 
 export function Bench({ mobile, metal, metalRough }: { mobile: boolean; metal: HTMLImageElement | null; metalRough: THREE.Texture }) {
   // da telefono le versioni da 1K: pesano un quarto

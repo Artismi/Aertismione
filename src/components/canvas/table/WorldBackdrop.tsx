@@ -127,10 +127,10 @@ export function WorldBackdrop({ mobile = false }: { mobile?: boolean }) {
     waterScale(size.width, size.height, water.u_scale.value)
     // da telefono la camera e' vicina e il banco riempie lo schermo: una fascia
     // larga come sul computer coprirebbe di rosa il fascicolo e il Game Boy
-    ;(u.get('u_band')!.value as THREE.Vector2).set(mobile ? 0.8 : 2.2, mobile ? 0.3 : 1.1)
+    ;(u.get('u_band')!.value as THREE.Vector2).set(mobile ? 1.2 : 2.2, 1.4)
     // e da telefono sfuma solo il banco con il tappetino e il righello (fino a 2 cm): fascicolo e Game Boy
     // arrivano fino al bordo e restano interi
-    u.get('u_top')!.value = mobile ? 0.02 : 0.7
+    u.get('u_top')!.value = 0.7
     // l'acqua scorre con la pagina, piu' piano del mondo: e' lontana
     water.u_scroll.value = window.scrollY / Math.max(1, size.height) * 0.12
   }, 0.6) // dopo Rig e Budget, prima del composer
