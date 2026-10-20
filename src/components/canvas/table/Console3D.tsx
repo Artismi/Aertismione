@@ -214,9 +214,9 @@ export function Console3D({ phase, mobile, grab, hovered, game, logo, plasticRou
     let rx = 0, ry = homeRy, sc = mobile ? 1.1 : 1.25
     if (grab) {
       // presa in mano: si avvicina a chi guarda, base inclinata e schermo verso di noi
-      tmp.copy(state.camera.position).lerp(new THREE.Vector3(0.25, 0, 0.7), 0.6)
-      tx = tmp.x; ty = tmp.y - 0.25; tz = tmp.z
-      rx = -0.15; ry = 0; sc = mobile ? 0.85 : 0.95
+      // presa in mano: sale dritta verso la camera (che guarda dall'alto), schermo in su
+      tx = home[0]; tz = home[2] - 0.4; ty = state.camera.position.y * 0.38
+      rx = 0; ry = 0; sc = mobile ? 0.95 : 1.1
     } else if (restful && hovered) {
       ty = 0.12; rx = -0.05
     }
@@ -234,8 +234,8 @@ export function Console3D({ phase, mobile, grab, hovered, game, logo, plasticRou
     g.rotation.x = step(g.rotation.x, rx, 6)
     g.rotation.y = step(g.rotation.y, ry, 6)
     g.scale.setScalar(step(g.scale.x, sc, 6))
-    // sul banco sta aperta (si vedono tasti e schermo spento); in mano si apre del tutto
-    lid.current.rotation.x = step(lid.current.rotation.x, grab ? -2.05 : away ? 0 : -1.8, 5)
+    // dall'alto il coperchio sta aperto quasi in piano: si vedono tasti e schermo acceso
+    lid.current.rotation.x = step(lid.current.rotation.x, grab ? -2.8 : away ? 0 : -2.95, 5)
     // accensione: logo Artismi, poi la schermata di lancio
     if (boot.current < BOOT_SECONDS) {
       boot.current = Math.min(BOOT_SECONDS, boot.current + Math.min(dt, 0.05))
@@ -331,7 +331,7 @@ export function Console3D({ phase, mobile, grab, hovered, game, logo, plasticRou
         ))}
 
         {/* ── Coperchio ── */}
-        <group ref={lid} position={[0, top + 0.004, HINGE_Z]} rotation={[-1.8, 0, 0]}>
+        <group ref={lid} position={[0, top + 0.004, HINGE_Z]} rotation={[-2.95, 0, 0]}>
           <mesh rotation={[0, 0, Math.PI / 2]} material={mats.shell} castShadow>
             <cylinderGeometry args={[0.046, 0.046, 0.42, 32]} />
           </mesh>

@@ -6,9 +6,9 @@
  * Vecchio; superato il bordo, lo sfondo e il resto del sito.
  *
  * E' un <Canvas> fisso dietro tutta la pagina (portale su body, z-index -1).
- * La camera segue lo scroll rispetto al tavolo della sezione Progetti: scende
- * dall'aria, si ferma sul banco quando la sezione e' al centro, poi scende
- * oltre il bordo e il banco esce in alto. Frameloop "demand": disegna solo quando la camera o un
+ * La camera guarda il banco dall'alto, in piano, e lo fa seguire al riquadro
+ * della sezione Progetti: il banco sale dritto da sotto con lo scroll, si
+ * ferma al centro con la sezione, poi esce in alto come il resto della pagina. Frameloop "demand": disegna solo quando la camera o un
  * oggetto si muove. I clic arrivano dalla pagina (eventSource = body).
  * Le fasi (chiuso, scivola, si apre...) le decide PortfolioSection.
  */
@@ -53,38 +53,19 @@ const TEX = '/progetti/tex'
 
 type Images = { logo: HTMLImageElement | null; paper: HTMLImageElement | null; metal: HTMLImageElement | null }
 
-/* ── Camera: una gru sola, dall'aria al banco e sotto il piano ── */
+/* ── Camera: dall'alto, in piano; il banco sale dritto da sotto seguendo lo scroll ── */
 
-const smooth = (t: number) => t * t * (3 - 2 * t)
-const clamp01 = (t: number) => Math.min(1, Math.max(0, t))
 const V = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z)
-
-/** Un punto chiave della discesa: u = dove sta il tavolo rispetto al centro dello schermo (in schermate) */
-type Key = { u: number; pos: THREE.Vector3; look: THREE.Vector3; fov: number; free: number }
-
-/** Da u al parametro della curva (i punti chiave sono in ordine di u decrescente) */
-function curveParam(keys: Key[], u: number) {
-  if (u >= keys[0].u) return 0
-  const n = keys.length
-  if (u <= keys[n - 1].u) return 1
-  for (let i = 0; i < n - 1; i++) {
-    const a = keys[i], b = keys[i + 1]
-    if (u <= a.u && u >= b.u) {
-      const f = smooth((a.u - u) / (a.u - b.u))
-      return (i + f) / (n - 1)
-    }
-  }
-  return 1
-}
+const DOWN_UP = new THREE.Vector3(0, 0, -1) // guardando in giu', l'alto dello schermo e' -z
 
 function Rig({ phase, mobile, stage, look }: {
   phase: TablePhase; mobile: boolean; stage: Props['stage']; look: MutableRefObject<THREE.Vector3>
 }) {
   const { camera, size, invalidate } = useThree()
   const mouse = useRef(new THREE.Vector2())
-  const tmp = useRef({ pos: new THREE.Vector3(), lk: new THREE.Vector3(), right: new THREE.Vector3(), up: new THREE.Vector3() })
+  const to = useRef(new THREE.Vector3())
   useEffect(() => { invalidate() }, [phase, mobile, size, invalidate])
-  // lo scroll muove la gru, il mouse la sposta appena: si ridisegna solo allora
+  // lo scroll muove il banco, il mouse lo sposta appena: si ridisegna solo allora
   useEffect(() => {
     const on = () => invalidate()
     const move = (e: PointerEvent) => {
@@ -98,71 +79,45 @@ function Rig({ phase, mobile, stage, look }: {
 
   useFrame((_, dt) => {
     const cam = camera as THREE.PerspectiveCamera
-    const aspect = size.width / Math.max(1, size.height)
+    const vw = size.width, vh = size.height, aspect = vw / Math.max(1, vh)
     const r = stage.current?.getBoundingClientRect()
-    const vh = window.innerHeight
-    // u: quanto il tavolo della sezione e' sotto (+) o sopra (-) il centro dello schermo, in schermate
-    const u = r ? (r.top + r.height / 2 - vh / 2) / vh : 3
-    const stageAspect = r && r.height > 0 ? r.width / r.height : aspect
+    const tan = Math.tan(THREE.MathUtils.degToRad(cam.fov / 2)) * 2
 
-    // al banco: l'inquadratura di lavoro, a misura del riquadro della sezione
-    let work: THREE.Vector3, workLook: THREE.Vector3
-    if (mobile) {
-      const k = Math.max(1, 0.62 / stageAspect) * (aspect < stageAspect ? stageAspect / aspect : 1)
-      work = V(0, 7.6 * k, 4.6 * k); workLook = V(0, 0, 0.35)
-    } else {
-      const k = Math.max(1, 2.15 / stageAspect) * (r ? vh / r.height : 1) * 0.92
-      work = V(0.1, 5.4 * k, 4.9 * k); workLook = V(0.15, 0, 0.25)
-    }
+    // quello che deve stare nel riquadro della sezione: fascicolo e Game Boy (con un po' d'aria)
+    const content = mobile ? { x: 0.15, z: 0.35, w: 3.4, d: 6.4 } : { x: 0.3, z: 0.05, w: 7.0, d: 4.4 }
+    const sw = r?.width || vw, sh = r?.height || vh
+    // altezza della camera: il contenuto riempie il riquadro, non lo schermo
+    const height = Math.max(content.d * (vh / sh), (content.w * (vw / sw)) / aspect) / tan
+    const viewH = height * tan // quanto mondo copre l'altezza dello schermo
 
-    // la discesa: aria, gru che gira di lato, avvicinamento, banco; poi la camera scende
-    // oltre il bordo e il banco esce in alto: resta lo sfondo, e il resto del sito
-    const below = (v: THREE.Vector3) => v.clone().add(V(0, -12, 0))
-    const keys: Key[] = [
-      { u: 2.6, pos: V(0, 34, 16), look: V(0, 31, -20), fov: 38, free: 0.5 },
-      { u: 1.3, pos: V(3.2, 19, 16), look: V(1, 6, -4), fov: 35, free: 0.4 },
-      { u: 0.5, pos: work.clone().lerp(V(1.6, 10, 10), 0.6), look: workLook.clone().lerp(V(0.4, 0.4, 0), 0.5), fov: 32, free: 0.25 },
-      { u: 0, pos: work, look: workLook, fov: 30, free: 0.1 },
-      { u: -0.3, pos: work, look: workLook, fov: 30, free: 0.1 },
-      { u: -1.1, pos: below(work), look: below(workLook), fov: 32, free: 0.2 },
-      { u: -6, pos: below(work).add(V(0, -2, 0)), look: below(workLook).add(V(0, -2, 0)), fov: 32, free: 0.2 },
-    ]
-
-    const t = tmp.current
-    let fov = 30, free = 0.1, roll = 0
+    let px: number, pz: number, py = height
     const top = !mobile && phase !== 'closed' && phase !== 'returning' && phase !== 'list'
     if (top) {
-      // dall'alto, con il fascicolo aperto (2 × larghezza) che sta tutto nell'inquadratura
-      const tt = Math.tan(THREE.MathUtils.degToRad(30 / 2)) * 2
-      const h = Math.max((FD + 0.4) / tt, (FW * 2 + 0.5) / aspect / tt)
-      t.pos.set(0, h, 0.001); t.lk.set(0, 0, 0); free = 0
+      // il fascicolo aperto (2 × larghezza) sta tutto nell'inquadratura
+      py = Math.max((FD + 0.4) / tan, (FW * 2 + 0.5) / aspect / tan)
+      px = 0; pz = 0
     } else {
-      const c = curveParam(keys, u)
-      const posCurve = new THREE.CatmullRomCurve3(keys.map((k) => k.pos), false, 'centripetal')
-      const lookCurve = new THREE.CatmullRomCurve3(keys.map((k) => k.look), false, 'centripetal')
-      posCurve.getPoint(c, t.pos); lookCurve.getPoint(c, t.lk)
-      const f = c * (keys.length - 1), i = Math.min(keys.length - 2, Math.floor(f)), w = f - i
-      fov = keys[i].fov + (keys[i + 1].fov - keys[i].fov) * w
-      free = keys[i].free + (keys[i + 1].free - keys[i].free) * w
-      // in discesa la gru si inclina appena, poi si raddrizza sul banco
-      roll = Math.sin(Math.PI * clamp01((u - 0.2) / 2.2)) * 0.035
+      // il banco segue il riquadro della sezione come il resto della pagina:
+      // centro del riquadro sotto il centro dello schermo = banco sotto, e cosi' via
+      const cy = r ? r.top + r.height / 2 : vh * 3
+      const cx = r ? r.left + r.width / 2 : vw / 2
+      pz = content.z - ((cy - vh / 2) / vh) * viewH
+      px = content.x - ((cx - vw / 2) / vw) * viewH * aspect
+      // il mouse sposta di pochissimo, per dare profondita'
+      px += mouse.current.x * 0.06; pz += mouse.current.y * 0.04
     }
-
-    // il mouse sposta la camera di poco, di lato e in alto (meno sul banco)
-    t.right.set(1, 0, 0).applyQuaternion(cam.quaternion)
-    t.up.set(0, 1, 0).applyQuaternion(cam.quaternion)
-    t.pos.addScaledVector(t.right, mouse.current.x * free).addScaledVector(t.up, -mouse.current.y * free * 0.6)
+    to.current.set(px, py, pz)
 
     let moving = false
     for (const ax of ['x', 'y', 'z'] as const) {
-      cam.position[ax] = damp(cam.position[ax], t.pos[ax], 4, dt)
-      look.current[ax] = damp(look.current[ax], t.lk[ax], 4, dt)
-      if (Math.abs(cam.position[ax] - t.pos[ax]) > EPS) moving = true
+      // sul banco si segue lo scroll alla lettera (lo scroll e' gia' morbido); le aperture sono smorzate
+      const k = top || phase === 'returning' || phase === 'closing' ? 5 : 14
+      cam.position[ax] = damp(cam.position[ax], to.current[ax], k, dt)
+      if (Math.abs(cam.position[ax] - to.current[ax]) > EPS) moving = true
     }
-    const nf = damp(cam.fov, fov, 4, dt)
-    if (Math.abs(nf - cam.fov) > 0.001) { cam.fov = nf; cam.updateProjectionMatrix(); moving = true }
+    look.current.set(cam.position.x, 0, cam.position.z - 0.0001)
+    cam.up.copy(DOWN_UP)
     cam.lookAt(look.current)
-    cam.rotateZ(roll)
     if (moving) invalidate()
   })
   return null
@@ -174,8 +129,9 @@ function Focus({ grab, dof, look }: { grab: boolean; dof: MutableRefObject<Depth
   useFrame(({ camera }) => {
     const e = dof.current
     if (!e) return
-    if (grab) want.current.copy(camera.position).lerp(new THREE.Vector3(0.25, 0, 0.7), 0.6)
-    else want.current.copy(look.current)
+    // dall'alto: a fuoco il piano del banco, o la console quando sale in mano
+    want.current.copy(look.current)
+    if (grab) want.current.y = camera.position.y * 0.38
     e.target?.copy(want.current)
   })
   return null
@@ -235,7 +191,7 @@ function Table(props: Props & { images: Images }) {
 function World(props: Props & { images: Images | null }) {
   const { grab, mobile } = props
   const dof = useRef<DepthOfFieldEffect | null>(null)
-  const look = useRef(new THREE.Vector3(0, 31, -20))
+  const look = useRef(new THREE.Vector3(0, 0, 0))
 
   return (
     <>
@@ -317,7 +273,7 @@ export default function Table3D(props: Props) {
         frameloop="demand"
         shadows="soft"
         dpr={[1, 1.5]}
-        camera={{ fov: 30, position: [0, 34, 14], near: 0.1, far: 200 }}
+        camera={{ fov: 30, position: [0.3, 14, 60], near: 0.1, far: 200 }}
         gl={{ antialias: false, alpha: false, powerPreference: 'high-performance' }}
         eventSource={document.body}
         eventPrefix="client"
