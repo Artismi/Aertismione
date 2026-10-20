@@ -24,30 +24,354 @@
   margin-bottom: 2.5rem;
 }
 
-/* ── Canvas wrapper — nessun box, il canvas respira ──────────────── */
+/* ── Il tavolo: cartellina + gamepad ────────────────────────────── */
 
-.canvasWrapper {
-  /* Canvas edge-to-edge — la mappa è tutta la sezione */
-  padding: 0;
+.stage {
+  position: relative;
   width: 100%;
+  min-height: 380px;
+  perspective: 2400px;
 }
 
 .canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
   display: block;
   width: 100%;
-  /* Nessun border, border-radius, box-shadow —
-     il campo non è imprigionato in un box */
   background: transparent;
   cursor: crosshair;
-  /* L'opacity è gestita via JS in base allo scroll (IntersectionObserver).
-     Parte da 0 e si svela mentre la sezione entra nel viewport. */
+  /* L'opacity e' gestita via JS: la mappa compare solo a fascicolo aperto */
   opacity: 0;
+  pointer-events: none;
   will-change: opacity;
 }
+
+.stage[data-phase='open'] .canvas { pointer-events: auto; }
+
+/* Fuori dalla fase aperta la mappa sparisce subito, prima che la copertina si chiuda
+   (vince sull'opacity scritta dal JS, che a scatti puo' restare indietro) */
+.stage:not([data-phase='open']) .canvas {
+  opacity: 0 !important;
+  transition: opacity 0.25s ease;
+}
+
+/* La cartellina. Chiusa: a sinistra sul tavolo. Aperta: la meta' destra del
+   tavolo, con la copertina ribaltata a sinistra — insieme fanno tutta la mappa. */
+.folder {
+  --paper: #E8A8BF;
+  --paper-dark: #D58FA8;
+  --lining: #1E1B24;
+  position: absolute;
+  z-index: 2;
+  left: 7%;
+  top: 10%;
+  width: 42%;
+  height: 78%;
+  transform-style: preserve-3d;
+  cursor: pointer;
+  outline: none;
+  transition:
+    left 0.65s var(--ease-in-out),
+    top 0.65s var(--ease-in-out),
+    width 0.65s var(--ease-in-out),
+    height 0.65s var(--ease-in-out),
+    transform 0.35s var(--ease-expo),
+    filter 0.35s ease;
+}
+
+.stage:not([data-phase='closed']):not([data-phase='returning']):not([data-phase='list']) .folder {
+  left: 50%;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  cursor: default;
+}
+
+.folderBack {
+  position: absolute;
+  inset: 0;
+  background: var(--lining);
+  border: 1px solid rgba(232, 168, 191, 0.35);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+}
+
+/* La piega: un'ombra lungo il dorso, che si vede a fascicolo aperto */
+.folderBack::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 46px;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0));
+}
+
+.folderTab {
+  position: absolute;
+  right: 8%;
+  bottom: 100%;
+  padding: 7px 16px 5px;
+  background: var(--paper-dark);
+  color: #1A1A1A;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 100%, 0 100%);
+}
+
+/* Le solite card, che spuntano dal bordo della cartellina chiusa */
+.folderCards {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.folderCard {
+  position: absolute;
+  top: -11%;
+  left: calc(10% + var(--i) * 19%);
+  width: 30%;
+  aspect-ratio: 480 / 260;
+  background: #0E0A14;
+  border: 3px solid #F2EDE4;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+  transform: rotate(calc((var(--i) - 1.5) * 4deg));
+  transition: transform 0.4s var(--ease-expo);
+}
+
+.folderCard img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.stage:not([data-phase='closed']):not([data-phase='returning']) .folderCards { opacity: 0; }
+
+/* La copertina: due facce, fuori rosa carta e dentro la fodera scura */
+.folderCover {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  transition: transform 0.8s var(--ease-in-out);
+}
+
+.stage[data-phase='opening'] .folderCover,
+.stage[data-phase='open'] .folderCover {
+  transform: rotateY(-180deg);
+}
+
+.stage[data-phase='closing'] .folderCover { transition-delay: 0.28s; }
+
+.coverFront,
+.coverInside {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.coverFront {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    repeating-linear-gradient(0deg, rgba(26, 26, 26, 0.035) 0 1px, transparent 1px 7px),
+    linear-gradient(135deg, var(--paper), var(--paper-dark));
+  box-shadow: 0 22px 50px rgba(0, 0, 0, 0.5);
+  transition: box-shadow 0.35s ease;
+}
+
+.coverInside {
+  transform: rotateY(180deg);
+  background: var(--lining);
+  border: 1px solid rgba(232, 168, 191, 0.35);
+}
+
+.coverInside::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 46px;
+  background: linear-gradient(270deg, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0));
+}
+
+.coverStamp {
+  position: absolute;
+  left: 22px;
+  bottom: 18px;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(26, 26, 26, 0.55);
+}
+
+.coverLabel {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2.4rem, 5vw, 4.6rem);
+  line-height: 1;
+  color: #1A1A1A;
+  opacity: 0;
+  transform: translateY(10px) scale(0.96);
+  transition: opacity 0.3s ease, transform 0.4s var(--ease-expo);
+}
+
+/* Hover: si accende, si solleva, compare la scritta */
+.stage[data-phase='closed'] .folder:hover,
+.stage[data-phase='closed'] .folder:focus-visible {
+  transform: translateY(-12px);
+  filter: brightness(1.08);
+}
+
+.stage[data-phase='closed'] .folder:hover .coverFront,
+.stage[data-phase='closed'] .folder:focus-visible .coverFront {
+  box-shadow: 0 34px 70px rgba(0, 0, 0, 0.55), 0 0 60px rgba(232, 168, 191, 0.35);
+}
+
+.stage[data-phase='closed'] .folder:hover .coverLabel,
+.stage[data-phase='closed'] .folder:focus-visible .coverLabel {
+  opacity: 1;
+  transform: none;
+}
+
+.stage[data-phase='closed'] .folder:hover .folderCard {
+  transform: translateY(-14px) rotate(calc((var(--i) - 1.5) * 6deg));
+}
+
+.folderClose {
+  position: absolute;
+  z-index: 4;
+  top: 12px;
+  right: 16px;
+  padding: 8px 12px;
+  background: rgba(16, 15, 19, 0.85);
+  border: 1px solid rgba(242, 237, 228, 0.25);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, background 0.15s, color 0.15s;
+}
+
+.stage[data-phase='open'] .folderClose { opacity: 1; pointer-events: auto; }
+
+.folderClose:hover {
+  background: var(--color-text);
+  color: #1A1A1A;
+}
+
+/* Il gamepad */
+.gamepad {
+  position: absolute;
+  z-index: 2;
+  right: 7%;
+  top: 50%;
+  width: min(32%, 400px);
+  margin-top: -9%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: 0;
+  padding: 0;
+  outline: none; /* il fuoco si vede dal gamepad che si solleva */
+  perspective: 800px;
+  transition: opacity 0.4s ease, transform 0.5s var(--ease-expo);
+}
+
+.stage:not([data-phase='closed']):not([data-phase='list']) .gamepad {
+  opacity: 0;
+  transform: translateY(60px);
+  pointer-events: none;
+}
+
+.pad {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.55));
+  transition: transform 0.35s var(--ease-expo), filter 0.35s ease;
+}
+
+.padBody     { fill: #1A1A1A; stroke: rgba(242, 237, 228, 0.22); stroke-width: 1.5; }
+.padShoulder { fill: #2A2630; stroke: rgba(242, 237, 228, 0.15); }
+.padDpad     { fill: #0E0D12; }
+.padSmall    { fill: #3A3640; }
+.padLed      { fill: #3A3640; transition: fill 0.3s ease; }
+.padBtn {
+  fill: var(--b);
+  opacity: 0.55;
+  transition: opacity 0.3s ease;
+}
+
+.gamepadLabel {
+  position: absolute;
+  top: 46%;
+  left: 50%;
+  transform: translate(-50%, -50%) translateY(8px);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.4rem, 2.4vw, 2.2rem);
+  white-space: nowrap;
+  color: #ffb35c;
+  text-shadow: 0 2px 0 #1A1A1A, 0 0 24px rgba(255, 179, 92, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.4s var(--ease-expo);
+}
+
+.gamepadHint {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(242, 237, 228, 0.5);
+}
+
+/* Hover: si accende e si solleva, compare il nome */
+.gamepad:hover .pad,
+.gamepad:focus-visible .pad {
+  transform: translateY(-12px);
+  filter: drop-shadow(0 30px 34px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 26px rgba(255, 179, 92, 0.35));
+}
+
+.gamepad:hover .padBtn,
+.gamepad:focus-visible .padBtn { opacity: 1; }
+.gamepad:hover .padLed,
+.gamepad:focus-visible .padLed { fill: #ffb35c; }
+
+.gamepad:hover .gamepadLabel,
+.gamepad:focus-visible .gamepadLabel {
+  opacity: 1;
+  transform: translate(-50%, -50%) translateY(-12px);
+}
+
+/* Preso in mano: viene verso chi guarda, inclinato come impugnato */
+.gamepad[data-grab='true'] .pad {
+  transform: translateY(-30px) scale(1.45) rotateX(22deg);
+  filter: drop-shadow(0 40px 40px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 40px rgba(255, 179, 92, 0.45));
+  transition: transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.4s ease;
+}
+
+.gamepad[data-grab='true'] .padBtn { opacity: 1; }
+.gamepad[data-grab='true'] .padLed { fill: #ffb35c; }
+.gamepad[data-grab='true'] .gamepadLabel { opacity: 0; }
 
 /* ── Legenda ─────────────────────────────────────────────────────── */
 
 .legend {
+  opacity: 0;
+  transition: opacity 0.4s ease;
   display: flex;
   flex-wrap: wrap;
   gap: 6px 18px;
@@ -73,6 +397,8 @@
   background: var(--lc, #C4622D);
   flex-shrink: 0;
 }
+
+.legend[data-show='true'] { opacity: 1; }
 
 /* ── Mobile: griglia card ────────────────────────────────────────── */
 
@@ -312,16 +638,54 @@
 
 /* ── Responsive ──────────────────────────────────────────────────────── */
 
-/* Su schermo largo con mouse si gioca sulla mappa; altrove si legge l'elenco.
-   Le cartelline sono grandi 154px: su un telefono si sovrapporrebbero, e la
-   fionda al tocco e' pressoche' ingiocabile. */
-.introMobile { display: none; }
+/* Su schermo largo con mouse il fascicolo si apre sul tavolo e dentro si gioca
+   sulla mappa; altrove si socchiude e sotto compare l'elenco di schede. Le
+   cartelline della mappa sono grandi 154px: su un telefono si sovrapporrebbero,
+   e la fionda al tocco e' pressoche' ingiocabile. */
+.introDesktop { display: none; }
+.introDesktop[data-show='true'] { display: inline; }
 
 @media (max-width: 899px), (pointer: coarse) {
-  .canvasWrapper { display: none; }
-  .mobileGrid { display: flex; }
-  .introDesktop { display: none; }
-  .introMobile { display: inline; }
+  .canvas, .legend, .folderClose { display: none; }
+  .introDesktop[data-show='true'] { display: none; }
+
+  .stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 56px;
+    min-height: 0;
+    padding: 40px clamp(20px, 5vw, 60px) 8px;
+  }
+
+  .folder,
+  .stage:not([data-phase='closed']):not([data-phase='returning']):not([data-phase='list']) .folder {
+    position: relative;
+    left: auto;
+    top: auto;
+    width: 100%;
+    max-width: 520px;
+    height: auto;
+    aspect-ratio: 4 / 3;
+  }
+
+  .stage[data-phase='list'] .folderCover { transform: rotateY(-62deg); }
+  .stage[data-phase='list'] .folderCards { opacity: 0; }
+
+  .gamepad {
+    position: relative;
+    right: auto;
+    top: auto;
+    margin-top: 0;
+    width: min(78%, 360px);
+  }
+
+  /* Niente hover sul telefono: le scritte si vedono sempre */
+  .coverLabel { opacity: 1; transform: none; }
+  .gamepadLabel { opacity: 1; transform: translate(-50%, -50%) translateY(-12px); }
+
+  .mobileGrid { padding-top: 32px; }
+  .mobileGrid[data-show='true'] { display: flex; }
 }
 
 @media (max-width: 768px) {

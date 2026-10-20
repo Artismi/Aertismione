@@ -18,6 +18,13 @@ const nextConfig = {
       },
     ],
   },
+  // Link da condividere per il gioco: porta al tavolo dei Progetti con il
+  // gamepad gia' in mano (lo gestisce PortfolioSection leggendo l'ancora).
+  async redirects() {
+    return [
+      { source: '/porto-vecchio', destination: '/#porto-vecchio', permanent: false },
+    ]
+  },
   eslint: {
     ignoreDuringBuilds: true,
   },

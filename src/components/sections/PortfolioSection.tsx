@@ -9,7 +9,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import styles from './PortfolioSection.module.css'
-import { PORTFOLIO } from '@/config/content'
+import { PORTFOLIO, PROGETTI } from '@/config/content'
+import { GameOverlay, type Rect } from '@/components/ui/GameOverlay'
 
 /* â”€â”€â”€ Costanti â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
@@ -30,7 +31,21 @@ interface JumpState {
   startTime: number; duration: number; arcHeight: number
   scaleX: number; scaleY: number; arcNorm: number
   landed: boolean; projectId: string
+  /** Velocita' da dare alla pallina dopo l'atterraggio (uscita dalla piega) */
+  thenVx?: number; thenVy?: number
 }
+
+/**
+ * Il tavolo: la cartellina si apre in piu' tempi.
+ * closed → sliding (scivola a destra) → opening (la copertina si apre a sinistra)
+ * → open (dentro c'e' la mappa) → closing → returning → closed.
+ * Da telefono basta socchiuderla: 'list' mostra l'elenco di schede.
+ */
+type Phase = 'closed' | 'sliding' | 'opening' | 'open' | 'closing' | 'returning' | 'list'
+
+const SLIDE_MS = 650
+const COVER_MS = 800
+const FADE_MS  = 280
 
 interface Particle { x: number; y: number; vx: number; vy: number; r: number; alpha: number; color: string }
 
@@ -520,6 +535,14 @@ export function PortfolioSection() {
   const startTimeRef  = useRef(0)
   const gridRevealRef = useRef(0)
   const inViewRef     = useRef(false)
+  const openRef       = useRef(false)
+  const desktopRef    = useRef(false)
+  const timersRef     = useRef<number[]>([])
+  const gamepadRef    = useRef<HTMLButtonElement>(null)
+
+  const [phase, setPhase] = useState<Phase>('closed')
+  const [grab, setGrab]   = useState(false)
+  const [game, setGame]   = useState<Rect | null>(null)
 
   const isDraggingRef       = useRef(false)
   const dragPosRef          = useRef({ x: 0, y: 0 })
@@ -545,6 +568,9 @@ export function PortfolioSection() {
         : Math.min(620, Math.max(380, Math.round(w * 0.54)))
       canvasEl.width=w*dpr; canvasEl.height=h*dpr
       canvasEl.style.width=`${w}px`; canvasEl.style.height=`${h}px`
+      // Il tavolo e' alto quanto la mappa: aperto, il fascicolo la contiene tutta
+      desktopRef.current = window.matchMedia('(min-width: 900px) and (pointer: fine)').matches
+      wrapperEl.style.height = desktopRef.current ? `${h}px` : ''
       sizeRef.current={w,h}
       const b=ballRef.current
       if (b.x===0&&b.y===0) { b.x=w/2; b.y=h/2 }
@@ -585,14 +611,17 @@ export function PortfolioSection() {
       const time=now-startTimeRef.current
       const ball=ballRef.current
 
-      gridRevealRef.current+=(( inViewRef.current?1:0)-gridRevealRef.current)*0.03
+      // La mappa si vede solo a fascicolo aperto: entra piano, esce svelta
+      const visible = inViewRef.current && openRef.current
+      gridRevealRef.current+=((visible?1:0)-gridRevealRef.current)*(visible?0.06:0.2)
       canvasLoop.style.opacity=Math.max(0, gridRevealRef.current).toFixed(3)
 
-      // Sezione fuori schermo: si salta tutto il disegno. Prima la mappa
-      // continuava a ridisegnare cartelline, ombre, scia e particelle 60 volte
-      // al secondo anche mentre si guardava tutt'altra parte del sito: era una
-      // tassa costante che faceva scattare 3D, cursore e video.
-      if (!inViewRef.current && gridRevealRef.current < 0.02) {
+      // Sezione fuori schermo o fascicolo chiuso: si salta tutto il disegno.
+      // Prima la mappa continuava a ridisegnare cartelline, ombre, scia e
+      // particelle 60 volte al secondo anche mentre si guardava tutt'altra
+      // parte del sito: era una tassa costante che faceva scattare 3D,
+      // cursore e video.
+      if (!visible && gridRevealRef.current < 0.02) {
         rafRef.current = requestAnimationFrame(loop)
         return
       }
@@ -630,6 +659,7 @@ export function PortfolioSection() {
             setTimeout(()=>{
               jumpRef.current=null
               if (proj) routerRef.current.push(`/portfolio/${proj.id}`)
+              else if (js.thenVx !== undefined) { ball.vx=js.thenVx; ball.vy=js.thenVy ?? 0 }
             }, 340)
           }, 120)
         }
@@ -700,6 +730,104 @@ export function PortfolioSection() {
 
     rafRef.current=requestAnimationFrame(loop)
     return ()=>{ if(rafRef.current) cancelAnimationFrame(rafRef.current) }
+  }, [])
+
+  /* ── Il tavolo: cartellina e gamepad ── */
+
+  function later(fn: () => void, ms: number) {
+    timersRef.current.push(window.setTimeout(fn, ms))
+  }
+
+  useEffect(() => () => { timersRef.current.forEach(clearTimeout) }, [])
+
+  // La pallina era rimasta pizzicata nella piega: aperto il fascicolo, salta fuori
+  function popBall() {
+    const {w,h}=sizeRef.current; if (w===0) return
+    const ball=ballRef.current, now=performance.now()
+    const sx=w/2, sy=h*0.42
+    ball.x=sx; ball.y=sy; ball.vx=0; ball.vy=0; trailRef.current=[]
+    collisionCooldownRef.current=now+800
+    const fire=['#FF55E0','#CC44FF','#FF99EE','#E8A8BF']
+    for (let i=0;i<14;i++) {
+      const a=Math.PI+(Math.random()-0.5)*1.6, sp=1.5+Math.random()*4
+      particlesRef.current.push({x:sx,y:sy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1.5,r:1.2+Math.random()*2.5,alpha:0.9,color:fire[i%fire.length]})
+    }
+    jumpRef.current={
+      fromX:sx, fromY:sy, toX:w*0.3, toY:h*0.58,
+      startTime:now, duration:640, arcHeight:120,
+      scaleX:0.6, scaleY:1.5, arcNorm:0,
+      landed:false, projectId:'', thenVx:-3.4, thenVy:0.8,
+    }
+  }
+
+  useEffect(() => {
+    openRef.current = phase === 'open'
+    if (phase === 'open') popBall()
+  }, [phase])
+
+  function openFolder() {
+    if (phase === 'list') { setPhase('closed'); return }
+    if (phase !== 'closed') return
+    if (!desktopRef.current) { setPhase('list'); return }
+    setPhase('sliding')
+    later(() => setPhase('opening'), SLIDE_MS)
+    later(() => setPhase('open'), SLIDE_MS + COVER_MS)
+  }
+
+  function closeFolder() {
+    if (phase === 'list') { setPhase('closed'); return }
+    if (phase !== 'open') return
+    const ball=ballRef.current; ball.vx=0; ball.vy=0; jumpRef.current=null
+    hoveredRef.current=null
+    setPhase('closing')
+    later(() => setPhase('returning'), FADE_MS + COVER_MS)
+    later(() => setPhase('closed'), FADE_MS + COVER_MS + SLIDE_MS)
+  }
+
+  useEffect(() => {
+    if (phase !== 'open') return
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape' && !game) closeFolder() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
+
+  // Il gamepad si prende in mano, poi il gioco si allarga a tutto schermo
+  function grabGamepad() {
+    if (grab || game) return
+    setGrab(true)
+    later(() => {
+      const r = gamepadRef.current?.getBoundingClientRect()
+      if (!r) return
+      setGame({ top: r.top, left: r.left, width: r.width, height: r.height })
+    }, 560)
+  }
+
+  function closeGame() {
+    setGame(null)
+    setGrab(false)
+    if (window.location.hash === `#${PROGETTI.game.id}`) {
+      history.replaceState(null, '', window.location.pathname + window.location.search)
+    }
+  }
+
+  // Link diretto (artismi.it/porto-vecchio → /#porto-vecchio): si arriva al
+  // tavolo e il gamepad arriva subito in mano
+  useEffect(() => {
+    function fromHash() {
+      if (window.location.hash !== `#${PROGETTI.game.id}`) return
+      gamepadRef.current?.scrollIntoView({ block: 'center', behavior: 'instant' })
+      window.setTimeout(() => {
+        gamepadRef.current?.scrollIntoView({ block: 'center', behavior: 'instant' })
+        setGrab(true)
+        window.setTimeout(() => {
+          const r = gamepadRef.current?.getBoundingClientRect()
+          if (r) setGame({ top: r.top, left: r.left, width: r.width, height: r.height })
+        }, 560)
+      }, 250)
+    }
+    fromHash()
+    window.addEventListener('hashchange', fromHash)
+    return () => window.removeEventListener('hashchange', fromHash)
   }, [])
 
   function jumpToPoint(lx: number, ly: number) {
@@ -840,21 +968,54 @@ export function PortfolioSection() {
     }
   }
 
+  const thumbs = PROJECTS
+    .map((p) => (p as { thumb?: string }).thumb)
+    .filter((t): t is string => Boolean(t))
+    .slice(0, 4)
+
   return (
     <div ref={sectionRef} className={styles.section}>
       <div className="container">
         <span className="accent-bar" />
-        <h2 className={styles.heading}>Portfolio</h2>
+        <h2 className={styles.heading}>{PROGETTI.heading}</h2>
         <p className={styles.intro}>
-          Ogni progetto è un territorio.{' '}
-          <em className={styles.introDesktop}>
+          {PROGETTI.intro}{' '}
+          <em className={styles.introDesktop} data-show={phase === 'open' ? 'true' : undefined}>
             Clicca per saltare — trascina la pallina per spararla come una bilia.
           </em>
-          <em className={styles.introMobile}>Tocca un progetto per aprirlo.</em>
         </p>
       </div>
 
-      <div ref={wrapperRef} className={styles.canvasWrapper}>
+      <div ref={wrapperRef} className={styles.stage} data-phase={phase}>
+        {/* La cartellina: chiusa sul tavolo, aperta contiene la mappa */}
+        <div
+          className={styles.folder}
+          role="button"
+          tabIndex={phase === 'closed' || phase === 'list' ? 0 : -1}
+          aria-label={phase === 'list' ? PROGETTI.folderClose : PROGETTI.folderHint}
+          aria-expanded={phase === 'open' || phase === 'list'}
+          onClick={openFolder}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openFolder() } }}
+        >
+          <div className={styles.folderBack}>
+            <span className={styles.folderTab}>{PROJECTS.length} lavori</span>
+          </div>
+          <div className={styles.folderCards} aria-hidden="true">
+            {thumbs.map((src, i) => (
+              <span key={src} className={styles.folderCard} style={{ '--i': i } as React.CSSProperties}>
+                <img src={src} alt="" loading="lazy" decoding="async" />
+              </span>
+            ))}
+          </div>
+          <div className={styles.folderCover}>
+            <div className={styles.coverFront}>
+              <span className={styles.coverStamp}>Artismi — fascicolo</span>
+              <span className={styles.coverLabel}>{PROGETTI.folderLabel}</span>
+            </div>
+            <div className={styles.coverInside} />
+          </div>
+        </div>
+
         <canvas
           ref={canvasRef}
           className={styles.canvas}
@@ -867,16 +1028,54 @@ export function PortfolioSection() {
           onTouchEnd={handleTouchEnd}
           style={{ touchAction: 'none' }}
         />
-        <div className={styles.legend}>
-          {PROJECTS.map(p=>(
-            <span key={p.id} className={styles.legendItem} style={{'--lc':p.accent} as React.CSSProperties}>
-              <span className={styles.legendDot}/>{p.title}
-            </span>
-          ))}
-        </div>
+
+        <button type="button" className={styles.folderClose} onClick={closeFolder} tabIndex={phase === 'open' ? 0 : -1}>
+          {PROGETTI.folderClose} ✕
+        </button>
+
+        {/* Il gamepad: preso in mano apre Porto Vecchio a tutto schermo */}
+        <button
+          ref={gamepadRef}
+          id={PROGETTI.game.id}
+          type="button"
+          className={styles.gamepad}
+          data-grab={grab ? 'true' : undefined}
+          onClick={grabGamepad}
+          aria-label={`${PROGETTI.game.title} — ${PROGETTI.game.hint}`}
+        >
+          <svg className={styles.pad} viewBox="0 0 360 220" aria-hidden="true">
+            <rect className={styles.padShoulder} x="62" y="30" width="78" height="22" rx="10" />
+            <rect className={styles.padShoulder} x="220" y="30" width="78" height="22" rx="10" />
+            <path
+              className={styles.padBody}
+              d="M70 42 H290 C330 42 352 72 356 112 C360 152 352 198 320 206 C296 212 276 192 262 170 H98 C84 192 64 212 40 206 C8 198 0 152 4 112 C8 72 30 42 70 42 Z"
+            />
+            <g className={styles.padDpad}>
+              <rect x="86" y="80" width="20" height="62" rx="3" />
+              <rect x="65" y="101" width="62" height="20" rx="3" />
+            </g>
+            <circle className={styles.padBtn} style={{ '--b': '#E8A8BF' } as React.CSSProperties} cx="268" cy="84" r="13" />
+            <circle className={styles.padBtn} style={{ '--b': '#ffb35c' } as React.CSSProperties} cx="296" cy="111" r="13" />
+            <circle className={styles.padBtn} style={{ '--b': '#9DD4EE' } as React.CSSProperties} cx="268" cy="138" r="13" />
+            <circle className={styles.padBtn} style={{ '--b': '#C4622D' } as React.CSSProperties} cx="240" cy="111" r="13" />
+            <rect className={styles.padSmall} x="150" y="118" width="24" height="8" rx="4" />
+            <rect className={styles.padSmall} x="186" y="118" width="24" height="8" rx="4" />
+            <circle className={styles.padLed} cx="180" cy="70" r="4" />
+          </svg>
+          <span className={styles.gamepadLabel}>{PROGETTI.game.title}</span>
+          <span className={styles.gamepadHint}>{PROGETTI.game.hint}</span>
+        </button>
       </div>
 
-      <div className={styles.mobileGrid}>
+      <div className={styles.legend} data-show={phase === 'open' ? 'true' : undefined}>
+        {PROJECTS.map(p=>(
+          <span key={p.id} className={styles.legendItem} style={{'--lc':p.accent} as React.CSSProperties}>
+            <span className={styles.legendDot}/>{p.title}
+          </span>
+        ))}
+      </div>
+
+      <div className={styles.mobileGrid} data-show={phase === 'list' ? 'true' : undefined}>
         {PROJECTS.map(p=>(
           <button key={p.id} type="button" className={styles.mobileCard}
             style={{'--ca':p.accent} as React.CSSProperties}
@@ -894,6 +1093,7 @@ export function PortfolioSection() {
         ))}
       </div>
 
+      {game && <GameOverlay from={game} onClose={closeGame} />}
     </div>
   )
 }

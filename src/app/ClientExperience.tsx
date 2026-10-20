@@ -222,6 +222,8 @@ function Scene({ isHome }: { isHome: boolean }) {
 export default function ClientExperience() {
   const pathname = usePathname()
   const isHome = pathname === '/'
+  // Con Porto Vecchio a tutto schermo il 3D dietro non si vede: lo fermiamo
+  const gameOpen = useStore((s) => s.gameOpen)
 
   return (
     <div
@@ -238,7 +240,7 @@ export default function ClientExperience() {
         camera={{ position: [0, 0, 6], fov: 35 }}
         dpr={[1, 1.5]} /* Cap rendering quality to save GPU */
         gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
-        frameloop={isHome ? 'always' : 'demand'}
+        frameloop={isHome && !gameOpen ? 'always' : 'demand'}
       >
         <Suspense fallback={null}>
           <Scene isHome={isHome} />
