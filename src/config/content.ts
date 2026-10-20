@@ -82,37 +82,59 @@ export const SERVICES = {
   intro:   "Ogni elemento che costruiamo nasce dall'identità della tua attività. Puoi scegliere una cosa sola o un percorso completo. La differenza è che nel percorso, tutto parla la stessa lingua — e si vede.",
   savingsNote: "Se hai già un'identità visiva fatta con Artismi, ogni lavoro successivo costa meno — perché partiamo da qualcosa che esiste già.",
   cta: 'Chiedi un preventivo',
-  packages: [
+  /*
+   * Le quattro carte sul tavolo dei Servizi: ognuna e' un oggetto di carta diverso
+   * (cartellina, cartellino appeso, foglio, scheda), tutto il testo e' in vista.
+   * kind decide l'oggetto; l'ordine e' quello in cui si leggono.
+   */
+  cards: [
     {
-      id:    'singole',
-      label: 'Prestazioni Singole',
-      type:  'Una tantum',
-      items: [
-        { name: 'Illustrazione',      price: '120 – 350 €' },
-        { name: 'Poster / Volantino', price: '100 – 280 €' },
-        { name: 'Murale',             price: '500 – 1.200 €' },
+      id:    'partecipata',
+      kind:  'folder',
+      code:  'LAB-01',
+      tab:   'Laboratori',
+      label: 'Progettazione partecipata',
+      lead:  'Un progetto costruito con le persone che lo vivranno, dalla prima domanda all\'oggetto finito.',
+      steps: [
+        { name: 'Scrittura',       text: 'il percorso, le domande, gli obiettivi: su misura del gruppo e del luogo.' },
+        { name: 'Organizzazione',  text: 'tempi, spazi, materiali, inviti: chi partecipa e come.' },
+        { name: 'Conduzione',      text: 'i laboratori progettuali, dal vivo, facilitati da me.' },
+        { name: 'Concretizzazione', text: 'un esito unico e usabile, che cambia col contesto: un oggetto, uno spazio, una guida, un\'identità.' },
       ],
+      note:  'E poi c\'e\' quello che non si vede: relazioni, fiducia, un gruppo che si riconosce nel risultato.',
+    },
+    {
+      id:    'stampe',
+      kind:  'tag',
+      code:  'STP-02',
+      label: 'Illustrazioni, stampe e gadget',
+      lead:  'Disegnati a mano, prodotti su misura, fatti per essere usati.',
+      items: ['Illustrazioni su commissione', 'Poster e stampe', 'Spille su misura', 'Adesivi', 'Magliette e felpe', 'Shopper, toppe, cartoline'],
+      sticker: 'Su misura',
     },
     {
       id:       'identita',
-      label:    'Identità Narrativa',
-      type:     'Percorso completo',
+      kind:     'sheet',
+      code:     'ID-03',
+      label:    'Identità completa',
+      type:     'Per la tua attività',
       featured: true,
-      items: [
-        { name: 'Identità narrativa',  price: '649.99 € (Promo)' },
-        { name: 'Ecosistema completo', price: '3.500 – 6.000 €' },
-      ],
-      note: 'Il sistema è tuo — trasferibile, autonomo, applicabile da chiunque. Ogni lavoro successivo parte da qui.',
+      lead:     'Il racconto della tua attività diventa un sistema: riconoscibile, coerente, tuo.',
+      core:     ['Nome e racconto', 'Logo', 'Colori', 'Caratteri', 'Tono di voce', 'Manuale d\'uso'],
+      addLabel: 'Si aggiunge quando serve',
+      adds:     ['Insegna', 'Menu e listini', 'Biglietti', 'Packaging', 'Divise', 'Segnaletica', 'Sito', 'Kit social'],
+      variants: 'Declinazioni: stagioni, eventi, nuovi prodotti, nuove sedi.',
+      note:     'Il sistema è tuo: trasferibile, autonomo, applicabile da chiunque. Ogni lavoro successivo parte da qui e costa meno.',
     },
     {
-      id:    'continuativi',
-      label: 'Continuativi',
+      id:    'social',
+      kind:  'card',
+      code:  'SOC-04',
+      label: 'Gestione social',
       type:  'Al mese',
-      items: [
-        { name: 'Social media base',   price: '200 – 350 €/mese' },
-        { name: 'Social media attivo', price: '400 – 650 €/mese' },
-        { name: 'Manutenzione sito',   price: '100 – 180 €/mese'  },
-      ],
+      lead:  'I tuoi canali parlano la lingua della tua identità, ogni settimana.',
+      items: ['Piano editoriale', 'Contenuti illustrati e foto', 'Pubblicazione', 'Risposte e community', 'Report del mese'],
+      week:  ['L', 'M', 'M', 'G', 'V', 'S', 'D'],
     },
   ],
   footerNote: "Tutti i prezzi sono indicativi — ogni progetto è un'altra storia. Materiali di stampa e produzione sempre a parte.",
