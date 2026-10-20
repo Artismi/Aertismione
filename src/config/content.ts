@@ -86,11 +86,14 @@ export const SERVICES = {
    * I quattro servizi, una colonna ciascuno, da leggere tutto d'un fiato:
    * type: l'etichetta sopra il titolo · promise: a cosa serve, in una frase
    * text: cosa succede e cosa ottieni, in poche righe · proof: un lavoro vero.
+   * code: il codice in mono · paper: che foglio e' (folder, sheet, featured, tag).
    * I prezzi non si mostrano.
    */
   cards: [
     {
       id:      'partecipata',
+      code:    'LAB-01',
+      paper:   'folder',
       type:    'Su progetto',
       label:   'Progettazione partecipata',
       promise: 'Le persone progettano con te, e il risultato lo sentono loro.',
@@ -99,6 +102,8 @@ export const SERVICES = {
     },
     {
       id:      'stampe',
+      code:    'STP-02',
+      paper:   'sheet',
       type:    'Una tantum',
       label:   'Illustrazioni, stampe e gadget',
       promise: 'I tuoi disegni diventano oggetti che la gente porta con sé.',
@@ -107,6 +112,8 @@ export const SERVICES = {
     },
     {
       id:       'identita',
+      code:    'ID-03',
+      paper:   'featured',
       type:     'Percorso completo',
       label:    'Identità completa',
       featured: true,
@@ -116,6 +123,8 @@ export const SERVICES = {
     },
     {
       id:      'social',
+      code:    'SOC-04',
+      paper:   'tag',
       type:    'Al mese',
       label:   'Gestione social',
       promise: 'I tuoi canali vivi ogni settimana, con la tua voce.',
@@ -123,6 +132,9 @@ export const SERVICES = {
       proof:   'Bicicleria, ciclofficina',
     },
   ],
+  // la fascia ambra in cima ai fogli, e la riga in fondo
+  band:    ['Artismi-(Servizi)-(04)', 'Quattro modi di lavorare insieme', 'Fatto a mano ✦'],
+  collect: ['Scegli', 'quello che', 'ti serve.'],
   footerNote: "Tutti i prezzi sono indicativi — ogni progetto è un'altra storia. Materiali di stampa e produzione sempre a parte.",
 }
 
