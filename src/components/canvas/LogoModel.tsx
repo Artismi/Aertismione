@@ -1,8 +1,9 @@
-import { useGLTF, Center, Float } from '@react-three/drei'
+import { useGLTF, useEnvironment, Center, Float } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { useEffect, useMemo, useRef } from 'react'
 import { useStore } from '../../stores/useStore'
+import { glassUniforms, glassPars, glassComposite } from './table/WorldBackdrop'
 
 // Invisible occluder material — blocks depth without painting pixels
 const occluderMat = new THREE.MeshBasicMaterial({
@@ -17,6 +18,9 @@ const occluderMat = new THREE.MeshBasicMaterial({
  */
 export function LogoModel({ inWorld = false, ...props }: any) {
     const { scene } = useGLTF('/models/logo.glb')
+    // la sua luce di studio, quella di sempre (il preset "studio" di drei, servito dal sito):
+    // nel mondo del banco la luce e' piu' calda e il vetro diventava grigio
+    const studio = useEnvironment({ files: '/models/studio_logo.hdr' })
     const rotatingRef = useRef<THREE.Group>(null)
     const groupRef = useRef<THREE.Group>(null)
     const timeRef = useRef(0)
@@ -42,6 +46,14 @@ export function LogoModel({ inWorld = false, ...props }: any) {
         // Fresnel sull'alpha: fronte quasi trasparente, bordi opachi come cristallo.
         // NdotV ≈ 1 (fronte) → alpha bassa; NdotV ≈ 0 (bordi) → alpha alta.
         mat.onBeforeCompile = (shader) => {
+            if (inWorld) {
+                // nel mondo del banco: il vetro si fonde da solo con il rosa che ha dietro (vedi WorldBackdrop)
+                Object.assign(shader.uniforms, glassUniforms)
+                shader.fragmentShader = glassPars + shader.fragmentShader.replace(
+                    '#include <dithering_fragment>',
+                    '#include <dithering_fragment>\n' + glassComposite,
+                )
+            }
             shader.fragmentShader = shader.fragmentShader.replace(
                 '#include <alphamap_fragment>',
                 `#include <alphamap_fragment>
@@ -53,7 +65,12 @@ export function LogoModel({ inWorld = false, ...props }: any) {
         }
 
         return mat
-    }, [])
+    }, [inWorld])
+
+    useEffect(() => {
+        glassMaterial.envMap = studio
+        glassMaterial.needsUpdate = true
+    }, [glassMaterial, studio])
 
     useEffect(() => {
         if (!scene) return

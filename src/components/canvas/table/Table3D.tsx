@@ -20,14 +20,14 @@ import { Suspense, useEffect, useMemo, useRef, useState, type MutableRefObject, 
 import { createPortal } from 'react-dom'
 import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber'
 import { Environment } from '@react-three/drei'
-import { EffectComposer, N8AO, Vignette, Noise, ToneMapping } from '@react-three/postprocessing'
+import { EffectComposer, N8AO, Vignette, ToneMapping } from '@react-three/postprocessing'
 import { ToneMappingMode, type EffectComposer as Composer } from 'postprocessing'
 import * as THREE from 'three'
 import { loadImage } from './textures'
 import { Bench } from './Bench'
 import { Folder3D, FW, FD, BW, BD, BOARD_Y, MOBILE_Z } from './Folder3D'
 import { Console3D } from './Console3D'
-import { WorldBackdrop } from './WorldBackdrop'
+import { WorldBackdrop, GlassSync } from './WorldBackdrop'
 import { LogoModel } from '../LogoModel'
 import styles from './Table3D.module.css'
 
@@ -302,11 +302,11 @@ function Budget({ stage, table, composer }: {
     const vh = window.innerHeight
     const r = stage.current?.getBoundingClientRect()
     const onTable = !!r && r.bottom > -60 && r.top < vh + 60
-    const onLogo = window.scrollY < vh * 1.3
     const g = table.current
     if (g) g.visible = onTable
     composer.current?.passes.forEach((p) => {
-      if ('configuration' in p) p.enabled = onTable || onLogo // N8AOPostPass
+      // N8AOPostPass: solo sul banco. Sul vetro del logo l'occlusione, a meta' risoluzione, lo sgranava
+      if ('configuration' in p) p.enabled = onTable
     })
 
     if (!onTable || !g) { was.current = onTable; return }
@@ -363,6 +363,7 @@ function World(props: Props & { images: Images | null }) {
         <Suspense fallback={null}>
           <LogoModel inWorld scale={mobile ? 0.75 : 1} />
         </Suspense>
+        <GlassSync />
       </group>
 
       <group ref={table}>
@@ -370,13 +371,13 @@ function World(props: Props & { images: Images | null }) {
       </group>
       <Budget stage={props.stage} table={table} composer={composer} />
 
-      {/* come in un render: occlusione negli angoli, grana, vignettatura */}
+      {/* come in un render: occlusione negli angoli e vignettatura. Niente grana qui:
+          sgranava il logo (la grana del sito e' gia' sopra tutta la pagina) */}
       {/* niente messa a fuoco: costava piu' di tutto il resto e faceva scattare lo scroll */}
-      <EffectComposer ref={composer} multisampling={mobile ? 0 : 2}>
+      <EffectComposer ref={composer} multisampling={mobile ? 0 : 4}>
         <N8AO aoRadius={0.5} distanceFalloff={0.5} intensity={3.5} quality={mobile ? 'low' : 'medium'} halfRes />
         <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
         <Vignette offset={0.25} darkness={0.55} />
-        <Noise opacity={0.035} />
         {/* il fondale: la piscina rosata, dietro al tavolo e alle cose che ha sopra */}
         <WorldBackdrop mobile={mobile} />
       </EffectComposer>

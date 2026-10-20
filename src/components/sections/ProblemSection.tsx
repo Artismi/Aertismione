@@ -1,67 +1,67 @@
 'use client'
 
+/**
+ * Il metodo, in una riga: tra l'apertura e il banco una frase sola, che si
+ * legge in un colpo d'occhio, e tre garanzie. Prima qui c'erano Problema e
+ * Soluzione, sei righe da leggere prima di arrivare ai lavori.
+ */
+
 import { motion } from 'framer-motion'
-import type { Transition } from 'framer-motion'
 import styles from './ProblemSection.module.css'
 import { VISION } from '@/config/content'
 
 const vp = { once: true, margin: '-80px' }
+const ease = [0.16, 1, 0.3, 1] as const
+
+/** *parola* → la parola nel colore d'accento */
+function accent(text: string) {
+  return text.split(/\*([^*]+)\*/).map((part, i) =>
+    i % 2 ? <em key={i} className={styles.accent}>{part}</em> : part)
+}
 
 export function ProblemSection() {
   return (
     <div className={styles.section}>
       <div className="container">
-        <div className={styles.grid}>
-          {VISION.blocks.map((block, idx) => (
-            <motion.div
-              key={block.id}
-              className={styles.block}
-              initial={{ opacity: 0, x: idx === 0 ? -50 : 50 }}
-              whileInView={{ opacity: 1, x: 0 }}
+        <div className={styles.row}>
+          <div>
+            <motion.span
+              className={styles.eyebrow}
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
               viewport={vp}
-              transition={{ duration: 0.8, ease: 'easeOut' as const, delay: idx * 0.15 }}
+              transition={{ duration: 0.5 }}
             >
-              <span className={styles.blockIndex} aria-hidden="true">
-                0{idx + 1}
-              </span>
+              {VISION.eyebrow}
+            </motion.span>
+            <h2 className={styles.claim}>
+              {VISION.claim.map((line, i) => (
+                <motion.span
+                  key={i}
+                  className={styles.claimLine}
+                  initial={{ opacity: 0, y: 28 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={vp}
+                  transition={{ duration: 0.8, ease, delay: 0.1 + i * 0.12 }}
+                >
+                  {accent(line)}
+                </motion.span>
+              ))}
+            </h2>
+          </div>
 
-              <motion.span
-                className={styles.blockLabel}
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={vp}
-                transition={{ duration: 0.5, delay: 0.3 + idx * 0.15 }}
-              >
-                {block.id}
-              </motion.span>
-
-              <motion.h2
-                className={styles.heading}
-                style={block.accent === 'warm' ? { color: 'var(--color-warm)' } : undefined}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={vp}
-                transition={{ duration: 0.7, ease: 'easeOut' as const, delay: 0.2 + idx * 0.15 }}
-              >
-                {block.heading}
-              </motion.h2>
-
-              <motion.div
-                className={styles.bodyWrap}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={vp}
-                transition={{ duration: 0.6, delay: 0.4 + idx * 0.15 }}
-              >
-                <div className={styles.bodyLine} aria-hidden="true" />
-                <p className={styles.body}>
-                  {block.body.split('\n').map((line, i, arr) => (
-                    <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
-                  ))}
-                </p>
-              </motion.div>
-            </motion.div>
-          ))}
+          <motion.div
+            className={styles.side}
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={vp}
+            transition={{ duration: 0.7, ease, delay: 0.35 }}
+          >
+            <p className={styles.line}>{VISION.line}</p>
+            <ul className={styles.points}>
+              {VISION.points.map((p) => <li key={p}>{p}</li>)}
+            </ul>
+          </motion.div>
         </div>
       </div>
     </div>

@@ -56,23 +56,18 @@ export const HERO = {
   scrollHint: 'Scorri',
 }
 
-/* ─── VISIONE (Problema / Soluzione) ─────────────────────────────────────── */
+/* ─── VISIONE (il metodo, in una riga) ───────────────────────────────────── */
 
+/**
+ * Tra l'apertura e il banco: una frase sola, che si legge in un colpo d'occhio.
+ * claim: due battute, la parola fra *asterischi* va nel colore d'accento ·
+ * line: cosa ottieni, in una riga · points: tre garanzie, due parole ciascuna.
+ */
 export const VISION = {
-  blocks: [
-    {
-      id:      'problema',
-      heading: 'Il Problema',
-      accent:  'yellow',
-      body:    `Oggi non basta fare bene il tuo lavoro.\nLe persone scelgono anche quello in cui si riconoscono, che possono capire.\nSe la tua attività non si racconta, non trasmette il suo vero valore.`,
-    },
-    {
-      id:      'soluzione',
-      heading: 'La Soluzione',
-      accent:  'warm',
-      body:    `Ti accompagno in un percorso strutturato per scoprire l'identità della tua attività.\nPoi la concretizziamo perché diventi il linguaggio con cui comunichi con il cliente, su tutti i livelli che vuoi.`,
-    },
-  ],
+  eyebrow: 'Come lavoro',
+  claim:   ['Prima ti ascolto.', 'Poi ti faccio *riconoscere*.'],
+  line:    "Un metodo chiaro, dall'identità della tua attività a tutto ciò che comunica.",
+  points:  ['Progettato con te', 'Coerente ovunque', 'Resta tuo'],
 }
 
 /* ─── SERVICES ───────────────────────────────────────────────────────────── */
