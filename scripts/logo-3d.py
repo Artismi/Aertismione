@@ -18,7 +18,7 @@ from PIL import Image, ImageDraw
 from scipy import ndimage as nd, sparse
 from scipy.ndimage import map_coordinates
 from scipy.sparse.linalg import spsolve
-from skimage import measure, morphology
+from skimage import measure
 from shapely import affinity
 from shapely.geometry import Point, Polygon
 from shapely.ops import unary_union
@@ -65,53 +65,7 @@ def sagoma():
             buchi |= r
     vuoto = fuori | buchi
     pieno = nd.distance_transform_edt(~vuoto) > TRATTO / 2
-    # le linee che partono dal contorno e finiscono dentro separano le lettere
-    # sovrapposte (le gambe di A e R, R T S): diventano tagli, cosi' ogni gamba
-    # si gonfia per conto suo invece di fondersi con la vicina
-    pieno &= ~nd.binary_dilation(linee_interne(inchiostro, vuoto), iterations=int(TRATTO / 4))
     return nd.gaussian_filter(pieno.astype(float), S * 0.8)
-
-
-def linee_interne(inchiostro, vuoto):
-    """I rami dello scheletro del tratto con un capo libero, che corrono dentro il pieno."""
-    sch = morphology.skeletonize(inchiostro)
-    vicini = nd.convolve(sch.astype(int), np.ones((3, 3), int), mode='constant') - 1
-    lontano = nd.distance_transform_edt(~vuoto)
-    tagli = np.zeros_like(sch)
-    for y, x in zip(*np.nonzero(sch & (vicini == 1))):
-        ramo, prima = [(y, x)], None
-        while True:
-            cy, cx = ramo[-1]
-            avanti = [(cy + dy, cx + dx) for dy in (-1, 0, 1) for dx in (-1, 0, 1)
-                      if (dy or dx) and sch[cy + dy, cx + dx] and (cy + dy, cx + dx) != prima
-                      and (cy + dy, cx + dx) not in ramo[-3:]]
-            if len(avanti) != 1 or vicini[cy, cx] > 2 and len(ramo) > 1:
-                break
-            prima = ramo[-1]
-            ramo.append(avanti[0])
-        r = tuple(np.array(ramo).T)
-        if len(ramo) > 3 * TRATTO and np.median(lontano[r]) > TRATTO:
-            tagli[r] = True
-            tagli |= prolunga(ramo, inchiostro, vuoto)
-    return tagli
-
-
-def prolunga(ramo, inchiostro, vuoto, fino=45 * S):
-    """La linea finisce dove la lettera passa dietro l'altra: la si continua
-    dritta dal capo libero finche' tocca il contorno o un altro tratto. Se non
-    tocca niente entro `fino` la si lascia com'era."""
-    capo = np.array(ramo[0], float)
-    dietro = np.array(ramo[min(len(ramo) - 1, int(3 * TRATTO))], float)
-    verso = (capo - dietro) / (np.linalg.norm(capo - dietro) + 1e-9)
-    tratto = np.zeros_like(vuoto)
-    for k in range(1, fino):
-        y, x = np.round(capo + verso * k).astype(int)
-        if not (0 <= y < vuoto.shape[0] and 0 <= x < vuoto.shape[1]):
-            break
-        if k > TRATTO and (vuoto[y, x] or inchiostro[y, x]):
-            return tratto
-        tratto[y, x] = True
-    return np.zeros_like(vuoto)
 
 
 def liscia(c, passo=1.0 * S, sigma=2.4 * S):
