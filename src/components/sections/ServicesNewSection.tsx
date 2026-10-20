@@ -97,14 +97,16 @@ function Folder({ c, n }: { c: Card; n: string }) {
           </li>
         ))}
       </ol>
-      {c.note && (
-        <p className={styles.sticky}>
-          <span className={styles.tape} aria-hidden="true" />
-          <span className={styles.stickyLabel}>+ valore intangibile</span>
-          {c.note}
-        </p>
-      )}
-      <Cta />
+      <div className={styles.folderFoot}>
+        <Cta />
+        {c.note && (
+          <p className={styles.sticky}>
+            <span className={styles.tape} aria-hidden="true" />
+            <span className={styles.stickyLabel}>+ valore intangibile</span>
+            {c.note}
+          </p>
+        )}
+      </div>
     </article>
   )
 }
@@ -139,8 +141,8 @@ function Sheet({ c }: { c: Card }) {
         <span>Artismi-({c.code})</span>
         <span>{c.type} ✦</span>
       </div>
-      {c.featured && <span className={styles.stamp}>✦<br />Più<br />richiesto</span>}
       <div className={styles.sheetBody}>
+        {c.featured && <span className={styles.stamp}>✦<br />Più<br />richiesto</span>}
         <span className={styles.sheetType}>Percorso completo</span>
         <h3 className={`${styles.title} ${styles.sheetTitle}`}>{c.label}</h3>
         <p className={styles.lead}>{c.lead}</p>

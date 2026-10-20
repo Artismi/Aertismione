@@ -101,7 +101,7 @@ export const SERVICES = {
         { name: 'Conduzione',      text: 'i laboratori progettuali, dal vivo, facilitati da me.' },
         { name: 'Concretizzazione', text: 'un esito unico e usabile, che cambia col contesto: un oggetto, uno spazio, una guida, un\'identità.' },
       ],
-      note:  'E poi c\'e\' quello che non si vede: relazioni, fiducia, un gruppo che si riconosce nel risultato.',
+      note:  'E poi c\'è quello che non si vede: relazioni, fiducia, un gruppo che si riconosce nel risultato.',
     },
     {
       id:    'stampe',
