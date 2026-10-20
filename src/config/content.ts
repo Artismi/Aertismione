@@ -686,7 +686,8 @@ export const CONTACT = {
     messagePlaceholder: 'Ho un negozio di bici e vorrei...',
     submitLabel:        'Invia messaggio',
     sendingLabel:       'Invio in corso…',
-    doneLabel:          'Ricevuto, grazie! Ti rispondo entro 24 ore.',
-    errorLabel:         'Non è partito. Riprova, oppure scrivimi a apizzoglio@gmail.com.',
+    // l'esito dell'invio: la parola in mono, poi la frase
+    done:  { tag: '✦ Ricevuto',    text: 'Grazie! Ti rispondo entro 24 ore.' },
+    error: { tag: '✦ Non è partito', text: 'Riprova, oppure scrivimi a apizzoglio@gmail.com.' },
   },
 }

@@ -127,10 +127,21 @@ export function ContactSection() {
               {state === 'sending' ? CONTACT.form.sendingLabel : CONTACT.form.submitLabel}
             </motion.button>
 
-            <p className={styles.formStatus} role="status" aria-live="polite" data-state={state}>
-              {state === 'done' && CONTACT.form.doneLabel}
-              {state === 'error' && CONTACT.form.errorLabel}
-            </p>
+            <div role="status" aria-live="polite">
+              {(state === 'done' || state === 'error') && (
+                <motion.p
+                  key={state}
+                  className={styles.formStatus}
+                  data-state={state}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, ease: 'easeOut' as const }}
+                >
+                  <span className={styles.formStatusTag}>{CONTACT.form[state].tag}</span>
+                  {CONTACT.form[state].text}
+                </motion.p>
+              )}
+            </div>
           </motion.form>
 
         </div>
