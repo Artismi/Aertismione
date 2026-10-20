@@ -1,0 +1,315 @@
+/* ============================================
+   GameConsole — conchiglia viola trasparente, CSS 3D
+   Assi: x a destra, y verso chi guarda, z in alto dal tavolo.
+   ============================================ */
+
+.console {
+  --plastic: rgba(205, 175, 255, 0.2);
+  --edge: rgba(242, 232, 255, 0.85);
+  --core: rgba(84, 52, 235, 0.5);
+  --glow: rgba(176, 118, 255, 0.7);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: 0;
+  padding: 0;
+  outline: none; /* il fuoco si vede dalla console che si solleva */
+}
+
+.stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 320px;
+  height: 280px;
+  perspective: 1100px;
+  filter: drop-shadow(0 0 8px var(--glow)) drop-shadow(0 0 26px rgba(140, 80, 255, 0.35));
+  transition: filter 0.35s ease;
+}
+
+.scene {
+  position: relative;
+  display: block;
+  width: 220px;
+  height: 200px;
+  transform-style: preserve-3d;
+  transform: rotateX(58deg) rotateZ(-28deg);
+  transition: transform 0.6s var(--ease-expo);
+}
+
+/* ── Scatole ── */
+
+.box {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--w);
+  height: var(--d);
+  transform-style: preserve-3d;
+}
+
+.face {
+  position: absolute;
+  background: var(--plastic);
+  border: 1px solid var(--edge);
+  box-shadow: inset 0 0 14px rgba(200, 160, 255, 0.45);
+}
+
+.faceBottom { inset: 0; }
+.faceTop    { inset: 0; transform: translateZ(var(--h)); }
+
+.faceBack,
+.faceFront {
+  left: 0;
+  width: var(--w);
+  height: var(--h);
+  transform-origin: top;
+  transform: rotateX(90deg);
+}
+.faceBack  { top: 0; }
+.faceFront { top: var(--d); }
+
+.faceLeft,
+.faceRight {
+  top: 0;
+  width: var(--h);
+  height: var(--d);
+  transform-origin: left;
+  transform: rotateY(-90deg);
+}
+.faceLeft  { left: 0; }
+.faceRight { left: var(--w); }
+
+/* ── Base ── */
+
+.base {
+  --w: 220px;
+  --d: 200px;
+  --h: 16px;
+}
+
+.base .faceTop {
+  background: linear-gradient(160deg, rgba(150, 120, 255, 0.35), var(--core));
+}
+
+.controls {
+  position: absolute;
+  inset: 0;
+  transform: translateZ(16.5px);
+}
+
+.controls svg { display: block; width: 100%; height: 100%; }
+
+.dpad rect { fill: rgba(235, 225, 255, 0.55); stroke: var(--edge); stroke-width: 1; }
+.btn       { fill: rgba(235, 225, 255, 0.45); stroke: var(--edge); stroke-width: 1; }
+.small     { fill: rgba(235, 225, 255, 0.4); }
+.speaker   { fill: rgba(30, 16, 80, 0.55); }
+.power     { fill: rgba(60, 40, 120, 0.8); transition: fill 0.3s ease; }
+
+/* ── Coperchio: incernierato sul bordo dietro (y = 0) ── */
+
+.lid {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 220px;
+  height: 200px;
+  transform-style: preserve-3d;
+  transform-origin: 50% 0 0;
+  transform: translateZ(17px) rotateX(0deg);
+  transition: transform 0.85s cubic-bezier(0.34, 1.3, 0.64, 1);
+}
+
+.lidBox {
+  --w: 220px;
+  --d: 200px;
+  --h: 12px;
+}
+
+/* L'interno del coperchio (la faccia di sotto), girato perche' si legga dritto
+   quando il coperchio e' alzato */
+.lidInside {
+  position: absolute;
+  inset: 0;
+  transform: translateZ(-0.5px) rotateX(180deg);
+}
+
+.screen {
+  position: absolute;
+  left: 28px;
+  top: 22px;
+  width: 164px;
+  height: 120px;
+  background: #0b0a12;
+  border: 6px solid rgba(20, 12, 40, 0.92);
+  overflow: hidden;
+}
+
+.screen img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.screen img { filter: brightness(0.45) saturate(1.2); }
+
+.screenTitle,
+.screenStart {
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.screenTitle {
+  top: 34%;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  color: #FFD3EC;
+  text-shadow: 0 0 6px #FF5FB8, 0 0 14px #FF5FB8;
+}
+
+.screenStart {
+  top: 64%;
+  font-family: var(--font-mono);
+  font-size: 7px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #E8DCC0;
+}
+
+.console[data-open='true'] .screenTitle { opacity: 1; transition-delay: 0.7s; }
+.console[data-open='true'] .screenStart {
+  opacity: 1;
+  transition-delay: 0.8s;
+  animation: start-blink 0.9s steps(2) 1s infinite;
+}
+
+@keyframes start-blink {
+  50% { opacity: 0; }
+}
+
+/* Accensione: un lampo bianco, poi il gioco */
+.screen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.brand {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 156px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(242, 232, 255, 0.8);
+}
+
+.logo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 46px;
+  height: 46px;
+  margin: -23px 0 0 -23px;
+  border-radius: 50%;
+  border: 1px solid var(--edge);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.35), rgba(176, 118, 255, 0.1));
+  transform: translateZ(12.5px);
+}
+
+/* ── Nome e suggerimento ── */
+
+.label {
+  position: absolute;
+  top: 44%;
+  left: 50%;
+  transform: translate(-50%, -50%) translateY(8px);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.4rem, 2.4vw, 2.2rem);
+  white-space: nowrap;
+  color: #F4ECFF;
+  text-shadow: 0 0 18px rgba(176, 118, 255, 0.9), 0 2px 0 #1A1A1A;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.4s var(--ease-expo);
+}
+
+.hint {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(242, 237, 228, 0.5);
+}
+
+/* Hover: si solleva e si accende, compare il nome */
+.console:hover .scene,
+.console:focus-visible .scene {
+  transform: rotateX(58deg) rotateZ(-28deg) translateZ(22px);
+}
+
+.console:hover .stage,
+.console:focus-visible .stage {
+  filter: drop-shadow(0 0 12px var(--glow)) drop-shadow(0 0 44px rgba(150, 90, 255, 0.6));
+}
+
+.console:hover .power,
+.console:focus-visible .power { fill: #B98CFF; }
+
+.console:hover .label,
+.console:focus-visible .label {
+  opacity: 1;
+  transform: translate(-50%, -50%) translateY(-14px);
+}
+
+/* Presa in mano: viene verso chi guarda, il coperchio si alza, lo schermo si accende */
+.console[data-open='true'] .scene {
+  transform: rotateX(34deg) rotateZ(-10deg) translateZ(40px) scale(1.2);
+}
+
+.console[data-open='true'] .lid {
+  transform: translateZ(17px) rotateX(112deg);
+}
+
+.console[data-open='true'] .power { fill: #9CFF9C; }
+
+.console[data-open='true'] .screen img {
+  opacity: 1;
+  transition-delay: 0.6s;
+}
+
+.console[data-open='true'] .screen::after {
+  animation: power-on 0.5s ease-out 0.45s;
+}
+
+@keyframes power-on {
+  0%   { opacity: 0; }
+  30%  { opacity: 0.9; }
+  100% { opacity: 0; }
+}
+
+.console[data-open='true'] .label { opacity: 0; }
+
+@media (max-width: 899px), (pointer: coarse) {
+  .stage { width: 280px; height: 250px; }
+  .label { opacity: 1; transform: translate(-50%, -50%) translateY(-14px); }
+}

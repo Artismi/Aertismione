@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation'
 import styles from './PortfolioSection.module.css'
 import { PORTFOLIO, PROGETTI } from '@/config/content'
 import { GameOverlay, type Rect } from '@/components/ui/GameOverlay'
+import { GameConsole } from '@/components/ui/GameConsole'
 
 /* â”€â”€â”€ Costanti â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
@@ -46,6 +47,7 @@ type Phase = 'closed' | 'sliding' | 'opening' | 'open' | 'closing' | 'returning'
 const SLIDE_MS = 650
 const COVER_MS = 800
 const FADE_MS  = 280
+const OPEN_MS  = 1150 // coperchio alzato e schermo acceso
 
 interface Particle { x: number; y: number; vx: number; vy: number; r: number; alpha: number; color: string }
 
@@ -538,7 +540,7 @@ export function PortfolioSection() {
   const openRef       = useRef(false)
   const desktopRef    = useRef(false)
   const timersRef     = useRef<number[]>([])
-  const gamepadRef    = useRef<HTMLButtonElement>(null)
+  const consoleRef    = useRef<HTMLDivElement>(null)   // lo schermo della console
 
   const [phase, setPhase] = useState<Phase>('closed')
   const [grab, setGrab]   = useState(false)
@@ -791,20 +793,22 @@ export function PortfolioSection() {
     return () => window.removeEventListener('keydown', onKey)
   })
 
-  // Il gamepad si prende in mano, poi il gioco si allarga a tutto schermo
+  // La console si prende in mano e si apre; poi lo schermo si allarga a tutto schermo
+  function screenRect(): Rect | null {
+    const r = consoleRef.current?.getBoundingClientRect()
+    return r ? { top: r.top, left: r.left, width: r.width, height: r.height } : null
+  }
+
   function grabGamepad() {
     if (grab || game) return
     setGrab(true)
-    later(() => {
-      const r = gamepadRef.current?.getBoundingClientRect()
-      if (!r) return
-      setGame({ top: r.top, left: r.left, width: r.width, height: r.height })
-    }, 560)
+    later(() => setGame(screenRect()), OPEN_MS)
   }
 
   function closeGame() {
     setGame(null)
-    setGrab(false)
+    // lo schermo si spegne, poi il coperchio si richiude
+    later(() => setGrab(false), 250)
     if (window.location.hash === `#${PROGETTI.game.id}`) {
       history.replaceState(null, '', window.location.pathname + window.location.search)
     }
@@ -815,14 +819,12 @@ export function PortfolioSection() {
   useEffect(() => {
     function fromHash() {
       if (window.location.hash !== `#${PROGETTI.game.id}`) return
-      gamepadRef.current?.scrollIntoView({ block: 'center', behavior: 'instant' })
+      const el = document.getElementById(PROGETTI.game.id)
+      el?.scrollIntoView({ block: 'center', behavior: 'instant' })
       window.setTimeout(() => {
-        gamepadRef.current?.scrollIntoView({ block: 'center', behavior: 'instant' })
+        el?.scrollIntoView({ block: 'center', behavior: 'instant' })
         setGrab(true)
-        window.setTimeout(() => {
-          const r = gamepadRef.current?.getBoundingClientRect()
-          if (r) setGame({ top: r.top, left: r.left, width: r.width, height: r.height })
-        }, 560)
+        window.setTimeout(() => setGame(screenRect()), OPEN_MS)
       }, 250)
     }
     fromHash()
@@ -1033,38 +1035,18 @@ export function PortfolioSection() {
           {PROGETTI.folderClose} ✕
         </button>
 
-        {/* Il gamepad: preso in mano apre Porto Vecchio a tutto schermo */}
-        <button
-          ref={gamepadRef}
-          id={PROGETTI.game.id}
-          type="button"
-          className={styles.gamepad}
-          data-grab={grab ? 'true' : undefined}
-          onClick={grabGamepad}
-          aria-label={`${PROGETTI.game.title} — ${PROGETTI.game.hint}`}
-        >
-          <svg className={styles.pad} viewBox="0 0 360 220" aria-hidden="true">
-            <rect className={styles.padShoulder} x="62" y="30" width="78" height="22" rx="10" />
-            <rect className={styles.padShoulder} x="220" y="30" width="78" height="22" rx="10" />
-            <path
-              className={styles.padBody}
-              d="M70 42 H290 C330 42 352 72 356 112 C360 152 352 198 320 206 C296 212 276 192 262 170 H98 C84 192 64 212 40 206 C8 198 0 152 4 112 C8 72 30 42 70 42 Z"
-            />
-            <g className={styles.padDpad}>
-              <rect x="86" y="80" width="20" height="62" rx="3" />
-              <rect x="65" y="101" width="62" height="20" rx="3" />
-            </g>
-            <circle className={styles.padBtn} style={{ '--b': '#E8A8BF' } as React.CSSProperties} cx="268" cy="84" r="13" />
-            <circle className={styles.padBtn} style={{ '--b': '#ffb35c' } as React.CSSProperties} cx="296" cy="111" r="13" />
-            <circle className={styles.padBtn} style={{ '--b': '#9DD4EE' } as React.CSSProperties} cx="268" cy="138" r="13" />
-            <circle className={styles.padBtn} style={{ '--b': '#C4622D' } as React.CSSProperties} cx="240" cy="111" r="13" />
-            <rect className={styles.padSmall} x="150" y="118" width="24" height="8" rx="4" />
-            <rect className={styles.padSmall} x="186" y="118" width="24" height="8" rx="4" />
-            <circle className={styles.padLed} cx="180" cy="70" r="4" />
-          </svg>
-          <span className={styles.gamepadLabel}>{PROGETTI.game.title}</span>
-          <span className={styles.gamepadHint}>{PROGETTI.game.hint}</span>
-        </button>
+        {/* La console: presa in mano si apre, e lo schermo diventa il gioco */}
+        <div className={styles.gamepad}>
+          <GameConsole
+            ref={consoleRef}
+            id={PROGETTI.game.id}
+            open={grab}
+            title={PROGETTI.game.title}
+            hint={PROGETTI.game.hint}
+            screen={PROGETTI.game.screen}
+            onClick={grabGamepad}
+          />
+        </div>
       </div>
 
       <div className={styles.legend} data-show={phase === 'open' ? 'true' : undefined}>

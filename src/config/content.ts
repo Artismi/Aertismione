@@ -135,8 +135,9 @@ export const PROGETTI = {
   game: {
     id:    'porto-vecchio',
     title: 'Porto Vecchio',
-    hint:  'Videogioco · prendilo in mano',
+    hint:  'Videogioco · aprila',
     url:   'https://porto-vecchio.vercel.app/v7/',
+    screen: '/progetti/porto-vecchio-schermo.jpg', // sfondo della schermata del titolo sulla console aperta
     close: 'Esci dal gioco',
     loading: 'Porto Vecchio sta arrivando…',
   },

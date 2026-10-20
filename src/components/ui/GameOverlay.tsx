@@ -28,7 +28,7 @@ function clipFrom(r: Rect) {
   const left = Math.min(Math.max(0, r.left), vw - 1)
   const right = Math.min(Math.max(0, vw - r.left - r.width), vw - left - 1)
   const bottom = Math.min(Math.max(0, vh - r.top - r.height), vh - top - 1)
-  return `inset(${top}px ${right}px ${bottom}px ${left}px round 28px)`
+  return `inset(${top}px ${right}px ${bottom}px ${left}px round 8px)`
 }
 
 export function GameOverlay({ from, onClose }: { from: Rect; onClose: () => void }) {
@@ -57,7 +57,11 @@ export function GameOverlay({ from, onClose }: { from: Rect; onClose: () => void
     setGameOpen(true)
     const html = document.documentElement
     const prevOverflow = html.style.overflow
+    const prevPadding = html.style.paddingRight
+    // la barra di scorrimento sparisce: compensiamo, cosi' la pagina sotto non salta
+    const scrollbar = window.innerWidth - html.clientWidth
     html.style.overflow = 'hidden'
+    if (scrollbar > 0) html.style.paddingRight = `${scrollbar}px`
     const paused: HTMLAudioElement[] = []
     document.querySelectorAll('audio').forEach((a) => {
       if (!a.paused) { a.pause(); paused.push(a) }
@@ -65,6 +69,7 @@ export function GameOverlay({ from, onClose }: { from: Rect; onClose: () => void
     return () => {
       setGameOpen(false)
       html.style.overflow = prevOverflow
+      html.style.paddingRight = prevPadding
       paused.forEach((a) => { a.play().catch(() => { /* serve un gesto */ }) })
     }
   }, [setGameOpen])
