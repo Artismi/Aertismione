@@ -3,7 +3,8 @@
 /**
  * Il banco da lavoro: piano in legno vissuto (texture fotografica CC0 di
  * Poly Haven, «wood_table_worn»), macchie di colore, tappetino da taglio, una
- * matita e un righello. Tutto fermo: riceve le ombre degli oggetti.
+ * matita e un righello. Sotto: gambe, traverse, un ripiano basso e il
+ * pavimento in ombra, dove sta il resto del sito.
  */
 
 import { useEffect, useMemo } from 'react'
@@ -16,7 +17,11 @@ const TEX = '/progetti/tex'
 
 const FLAT: [number, number, number] = [-Math.PI / 2, 0, 0]
 
-export const BENCH = { w: 18, d: 10, h: 0.4 }
+/** il piano: largo, poco profondo verso il fondo (z = centro del piano) */
+export const BENCH = { w: 18, d: 6.6, h: 0.4, z: 0.7 }
+/** Altezza delle gambe (circa 75 cm): il pavimento sta a -(h + LEGS) */
+export const LEGS = 7.5
+export const FLOOR_Y = -(BENCH.h + LEGS)
 
 export function Bench({ mobile, metal, metalRough }: { mobile: boolean; metal: HTMLImageElement | null; metalRough: THREE.Texture }) {
   // da telefono le versioni da 1K: pesano un quarto
@@ -29,12 +34,25 @@ export function Bench({ mobile, metal, metalRough }: { mobile: boolean; metal: H
     woodMap.colorSpace = THREE.SRGBColorSpace
     // il piano e' grande (circa 1,6 m): la texture copre circa un metro
     for (const t of [woodMap, woodNormal, woodRough]) {
-      t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1.6, 0.9); t.anisotropy = 8
+      t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1.6, 0.6); t.anisotropy = 8
     }
     return { stains: stainsTexture(), mat: matTexture(), ruler: rulerTexture(metal) }
   }, [woodMap, woodNormal, woodRough, metal])
 
+  // per gambe e traverse la venatura va in lungo: la stessa texture, girata e ristretta
+  const legTex = useMemo(() => [woodMap, woodNormal, woodRough].map((t) => {
+    const c = t.clone()
+    c.wrapS = c.wrapT = THREE.RepeatWrapping
+    c.center.set(0.5, 0.5); c.rotation = Math.PI / 2; c.repeat.set(0.12, 0.9)
+    c.needsUpdate = true
+    return c
+  }), [woodMap, woodNormal, woodRough])
+
   const mats = useMemo(() => ({
+    leg: new THREE.MeshStandardMaterial({
+      map: legTex[0], normalMap: legTex[1], roughnessMap: legTex[2], roughness: 1, color: '#c9a88a',
+    }),
+    floor: new THREE.MeshStandardMaterial({ color: '#2a2019', roughness: 0.92, metalness: 0 }),
     wood: new THREE.MeshStandardMaterial({
       map: woodMap, normalMap: woodNormal, roughnessMap: woodRough, roughness: 1, metalness: 0,
       normalScale: new THREE.Vector2(1.2, 1.2),
@@ -50,10 +68,10 @@ export function Bench({ mobile, metal, metalRough }: { mobile: boolean; metal: H
     lead: new THREE.MeshStandardMaterial({ color: '#2b2b2e', roughness: 0.35, metalness: 0.4 }),
     ferrule: new THREE.MeshStandardMaterial({ color: '#cfc6b4', roughnessMap: metalRough, roughness: 0.5, metalness: 1 }),
     eraser: new THREE.MeshStandardMaterial({ color: '#9DD4EE', roughness: 0.9 }),
-  }), [tex])
+  }), [tex, legTex])
 
   useEffect(() => () => {
-    ;[tex.stains, tex.mat, tex.ruler].forEach((t) => t.dispose())
+    ;[tex.stains, tex.mat, tex.ruler, ...legTex].forEach((t) => t.dispose())
     Object.values(mats).forEach((m) => m.dispose())
   }, [tex, mats])
 
@@ -61,16 +79,48 @@ export function Bench({ mobile, metal, metalRough }: { mobile: boolean; metal: H
   const ruler = mobile ? { p: [-0.9, 0, 2.05], r: 0.2 } : { p: [0.3, 0, -1.05], r: -1.38 }
   const mat = mobile ? { p: [0, 0, -1.0], r: 0 } : { p: [-1.5, 0, 0.1], r: 0.03 }
 
+  const lx = BENCH.w / 2 - 0.8, lz = BENCH.d / 2 - 0.7, legY = -BENCH.h - LEGS / 2
+
   return (
     <group>
+      {/* il pavimento, in ombra sotto il tavolo */}
+      <mesh position={[0, FLOOR_Y, 0]} rotation={FLAT} material={mats.floor} receiveShadow>
+        <planeGeometry args={[160, 160]} />
+      </mesh>
+
+      <group position={[0, 0, BENCH.z]}>
+      {/* gambe, traverse sotto il piano, traverse basse e ripiano */}
+      {[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([sx, sz]) => (
+        <mesh key={`${sx}${sz}`} position={[sx * lx, legY, sz * lz]} material={mats.leg} castShadow receiveShadow>
+          <boxGeometry args={[0.75, LEGS, 0.75]} />
+        </mesh>
+      ))}
+      {[-1, 1].map((s) => (
+        <group key={s}>
+          <mesh position={[0, -BENCH.h - 0.45, s * lz]} material={mats.leg} castShadow receiveShadow>
+            <boxGeometry args={[lx * 2 - 0.4, 0.9, 0.3]} />
+          </mesh>
+          <mesh position={[s * lx, -BENCH.h - 0.45, 0]} material={mats.leg} castShadow receiveShadow>
+            <boxGeometry args={[0.3, 0.9, lz * 2 - 0.4]} />
+          </mesh>
+          <mesh position={[s * lx, FLOOR_Y + 1.2, 0]} material={mats.leg} castShadow receiveShadow>
+            <boxGeometry args={[0.35, 0.45, lz * 2]} />
+          </mesh>
+        </group>
+      ))}
+      <mesh position={[0, FLOOR_Y + 1.5, 0]} material={mats.leg} castShadow receiveShadow>
+        <boxGeometry args={[lx * 2 + 0.4, 0.22, lz * 2 - 0.6]} />
+      </mesh>
+
       {/* piano: facce laterali scure, quella di sopra con il legno */}
-      <mesh position={[0, -BENCH.h / 2, 0]} receiveShadow
+      <mesh position={[0, -BENCH.h / 2, 0]} castShadow receiveShadow
         material={[mats.woodSide, mats.woodSide, mats.wood, mats.woodSide, mats.woodSide, mats.woodSide]}>
         <boxGeometry args={[BENCH.w, BENCH.h, BENCH.d]} />
       </mesh>
       <mesh position={[0, 0.0008, 0]} rotation={FLAT} material={mats.stains} receiveShadow>
         <planeGeometry args={[10, 5.56]} />
       </mesh>
+      </group>
 
       {/* tappetino da taglio */}
       <group position={mat.p as [number, number, number]} rotation={[0, mat.r, 0]}>

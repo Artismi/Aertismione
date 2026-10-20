@@ -780,6 +780,13 @@ export function PortfolioSection() {
     if (phase === 'open') popBall()
   }, [phase])
 
+  /** Il tavolo e' al centro dello schermo (la camera del mondo e' sul banco) */
+  function atTable() {
+    const r = wrapperRef.current?.getBoundingClientRect()
+    if (!r) return false
+    return Math.abs(r.top + r.height / 2 - window.innerHeight / 2) < window.innerHeight * 0.3
+  }
+
   function openFolder() {
     if (phase === 'list') { setPhase('closed'); return }
     if (phase !== 'closed') return
@@ -995,23 +1002,24 @@ export function PortfolioSection() {
         </p>
       </div>
 
-      <div ref={wrapperRef} className={styles.stage} data-phase={phase}>
-        {/* Il tavolo in 3D: il fascicolo e la console */}
-        <div className={styles.table3d}>
-          <Table3D
-            phase={phase}
-            grab={grab}
-            mobile={!desktop}
-            thumbs={THUMBS}
-            count={PROJECTS.length}
-            folderLabel={PROGETTI.folderLabel}
-            folderHint={PROGETTI.folderHint}
-            game={PROGETTI.game}
-            onFolder={openFolder}
-            onConsole={grabGamepad}
-            api={tableRef}
-          />
-        </div>
+      <div ref={wrapperRef} className={styles.stage} data-phase={phase} data-world-stage>
+        {/* Il tavolo in 3D sta nel mondo dietro la pagina (Table3D fa un portale su body):
+            qui resta il riquadro che lo inquadra. I clic sul 3D arrivano da tutta la
+            pagina, quindi contano solo quando il tavolo e' davvero sullo schermo. */}
+        <Table3D
+          phase={phase}
+          grab={grab}
+          mobile={!desktop}
+          thumbs={THUMBS}
+          count={PROJECTS.length}
+          folderLabel={PROGETTI.folderLabel}
+          folderHint={PROGETTI.folderHint}
+          game={PROGETTI.game}
+          onFolder={() => { if (atTable()) openFolder() }}
+          onConsole={() => { if (atTable()) grabGamepad() }}
+          api={tableRef}
+          stage={wrapperRef}
+        />
 
         {/* Il fascicolo aperto, in piano: sotto la mappa */}
         <div className={styles.spread} aria-hidden="true" />

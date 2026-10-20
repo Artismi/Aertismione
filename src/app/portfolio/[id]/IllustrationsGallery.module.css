@@ -168,7 +168,7 @@
   transition: background 0.2s;
 }
 
-.close:hover { background: var(--accent); color: #12081C; }
+.close:hover { background: var(--accent); color: #1E1610; }
 
 .detailMedia {
   position: relative;
@@ -271,7 +271,7 @@
   transition: background 0.2s, color 0.2s;
 }
 
-.download:hover { background: var(--accent); color: #12081C; }
+.download:hover { background: var(--accent); color: #1E1610; }
 
 .detailNav {
   display: flex;

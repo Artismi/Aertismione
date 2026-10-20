@@ -6,7 +6,8 @@
   padding: var(--section-py) 0;
   position: relative;
   z-index: 1; /* CRITICAL: Establishes stacking context over the fixed Canvas */
-  background: rgba(16, 15, 19, 0.90); /* grafite neutro, meno viola */
+  /* niente fondo: dietro c'e' il mondo 3D, e qui la camera e' sul banco */
+  background: transparent;
 }
 
 .heading {
@@ -54,20 +55,6 @@
 .stage:not([data-phase='open']) .canvas {
   opacity: 0 !important;
   transition: opacity 0.25s ease;
-}
-
-/* Il tavolo in 3D: sotto la mappa, sparisce quando il fascicolo e' aperto */
-.table3d {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  transition: opacity 0.2s ease;
-}
-
-.stage[data-phase='open'] .table3d {
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.35s ease;
 }
 
 /* Il fascicolo aperto in piano: fodera scura e piega al centro, sotto la mappa */

@@ -4,13 +4,13 @@
    ============================================ */
 
 :root {
-  /* --- Palette: Notte d'Inchiostro --- */
-  /* Viola bordeaux quasi nero — la carta diventa testo, il rosa diventa luce */
-  --color-bg: rgba(18, 8, 28, 0.94);
-  /* Viola-bordeaux — semi-trasparente per mostrare 3D */
-  --color-bg-alt: rgba(26, 14, 40, 0.97);
-  /* Sezioni alternate — viola leggermente più aperto */
-  --color-bg-solid: #12081C;
+  /* --- Palette: Bottega --- */
+  /* Marrone caldo quasi nero, i colori dello studio e del banco da lavoro del mondo 3D */
+  --color-bg: rgba(30, 22, 16, 0.94);
+  /* Marrone caldo — semi-trasparente per mostrare il mondo 3D */
+  --color-bg-alt: rgba(38, 28, 20, 0.97);
+  /* Sezioni alternate — marrone leggermente più aperto */
+  --color-bg-solid: #1E1610;
   /* Opacità piena (modal, form) */
   --color-text: #F2EDE4;
   /* Carta invecchiata — ora è il testo */
@@ -79,7 +79,7 @@ html {
 
 body {
   font-family: var(--font-body);
-  background-color: #12081C;
+  background-color: #1E1610;
   color: var(--color-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

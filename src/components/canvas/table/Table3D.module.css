@@ -1,6 +1,9 @@
-.canvas {
-  position: absolute !important;
+/* il mondo sta dietro tutta la pagina: sotto il logo e sotto le sezioni */
+.world {
+  position: fixed;
   inset: 0;
+  z-index: -1;
+  pointer-events: none;
 }
 
 .label {
