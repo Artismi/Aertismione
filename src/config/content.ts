@@ -137,7 +137,7 @@ export const PROGETTI = {
     title: 'Porto Vecchio',
     hint:  'Videogioco · aprila',
     url:   'https://porto-vecchio.vercel.app/v7/',
-    screen: '/progetti/porto-vecchio-schermo.jpg', // sfondo della schermata del titolo sulla console aperta
+    screen: '/progetti/porto-vecchio-lancio.webp', // la schermata di lancio del gioco, sullo schermo del Game Boy
     close: 'Esci dal gioco',
     loading: 'Porto Vecchio sta arrivando…',
   },

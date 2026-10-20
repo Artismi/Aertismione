@@ -17,6 +17,8 @@ import { createPortal } from 'react-dom'
 import { useStore } from '@/stores/useStore'
 import { PROGETTI } from '@/config/content'
 import styles from './GameOverlay.module.css'
+import pre from './Preloader.module.css'
+import { MatrixGrid } from './Preloader'
 
 export type Rect = { top: number; left: number; width: number; height: number }
 
@@ -37,6 +39,14 @@ export function GameOverlay({ from, onClose }: { from: Rect; onClose: () => void
   const frameRef = useRef<HTMLIFrameElement>(null)
   const [phase, setPhase] = useState<'expand' | 'open' | 'closing'>('expand')
   const [loaded, setLoaded] = useState(false)
+  const [pct, setPct] = useState(0)
+  const ready = loaded && pct >= 100
+
+  // contatore come quello della home: sale da solo, si ferma a 95 finche' il gioco non e' pronto
+  useEffect(() => {
+    const id = window.setInterval(() => setPct((p) => loaded ? Math.min(100, p + 8) : Math.min(95, p + 1.2)), 35)
+    return () => window.clearInterval(id)
+  }, [loaded])
   const setGameOpen = useStore((s) => s.setGameOpen)
 
   // Apertura: dal gamepad a tutto schermo
@@ -112,15 +122,24 @@ export function GameOverlay({ from, onClose }: { from: Rect; onClose: () => void
       aria-modal="true"
       aria-label={game.title}
     >
-      <div className={styles.loading} data-hidden={loaded ? 'true' : undefined} aria-hidden={loaded}>
-        <span className={styles.loadingTitle}>{game.title}</span>
-        <span className={styles.loadingText}>{game.loading}</span>
+      {/* il caricamento della home del sito: griglia, logo Artismi, percentuale */}
+      <div className={`${pre.overlay} ${styles.loading}`} data-hidden={ready ? 'true' : undefined} aria-hidden={ready}>
+        <MatrixGrid />
+        <div className={pre.hud}>
+          <img className={styles.logo} src="/artismi-logo.png" alt="Artismi" />
+          <span className={styles.loadingText}>{game.loading}</span>
+          <div className={pre.counter}>
+            <span className={pre.counterNum}>{Math.floor(pct)}</span>
+            <span className={pre.counterPct}>%</span>
+          </div>
+        </div>
+        <div className={pre.progressFill} style={{ width: `${pct}%` }} />
       </div>
 
       <iframe
         ref={frameRef}
         className={styles.frame}
-        data-loaded={loaded ? 'true' : undefined}
+        data-loaded={ready ? 'true' : undefined}
         src={game.url}
         title={game.title}
         allow="fullscreen; autoplay; gamepad"

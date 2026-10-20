@@ -21,7 +21,7 @@ const CENTERS = [
 const SALTS = Array.from({ length: TOTAL }, () => Math.random() * Math.PI * 2)
 
 // ── MatrixGrid — pure rAF, no React re-renders ────────────────────────────────
-function MatrixGrid() {
+export function MatrixGrid() {
   const cellRefs = useRef<(HTMLDivElement | null)[]>([])
   const started  = useRef(Date.now())
   const rafRef   = useRef<number | null>(null)

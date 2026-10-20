@@ -11,7 +11,11 @@ import { useRouter } from 'next/navigation'
 import styles from './PortfolioSection.module.css'
 import { PORTFOLIO, PROGETTI } from '@/config/content'
 import { GameOverlay, type Rect } from '@/components/ui/GameOverlay'
-import { GameConsole } from '@/components/ui/GameConsole'
+import dynamic from 'next/dynamic'
+import type { TableApi } from '@/components/canvas/table/Table3D'
+
+// Il tavolo in 3D si carica solo nel browser, a parte dal resto della pagina
+const Table3D = dynamic(() => import('@/components/canvas/table/Table3D'), { ssr: false })
 
 /* â”€â”€â”€ Costanti â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
@@ -59,6 +63,12 @@ const ZONE_JITTER = PROJECTS.map((p) => {
   const seed = p.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
   return Array.from({ length: 9 }, (_, i) => 0.68 + ((seed * (i+1) * 137 + 41) % 100) / 175)
 })
+
+/** Le anteprime che spuntano dal fascicolo chiuso */
+const THUMBS = PROJECTS
+  .map((p) => (p as { thumb?: string }).thumb)
+  .filter((t): t is string => Boolean(t))
+  .slice(0, 4)
 
 const PATH_PAIRS: [number, number][] = [
   [0,2],[2,4],[4,6],[6,8],[8,0],
@@ -540,7 +550,8 @@ export function PortfolioSection() {
   const openRef       = useRef(false)
   const desktopRef    = useRef(false)
   const timersRef     = useRef<number[]>([])
-  const consoleRef    = useRef<HTMLDivElement>(null)   // lo schermo della console
+  const tableRef      = useRef<TableApi | null>(null)   // da qui si legge dove sta lo schermo della console
+  const [desktop, setDesktop] = useState(true)
 
   const [phase, setPhase] = useState<Phase>('closed')
   const [grab, setGrab]   = useState(false)
@@ -572,7 +583,9 @@ export function PortfolioSection() {
       canvasEl.style.width=`${w}px`; canvasEl.style.height=`${h}px`
       // Il tavolo e' alto quanto la mappa: aperto, il fascicolo la contiene tutta
       desktopRef.current = window.matchMedia('(min-width: 900px) and (pointer: fine)').matches
-      wrapperEl.style.height = desktopRef.current ? `${h}px` : ''
+      setDesktop(desktopRef.current)
+      // da telefono il tavolo e' in verticale: fascicolo sopra, console sotto
+      wrapperEl.style.height = desktopRef.current ? `${h}px` : `${Math.round(Math.min(720, Math.max(520, w * 1.45)))}px`
       sizeRef.current={w,h}
       const b=ballRef.current
       if (b.x===0&&b.y===0) { b.x=w/2; b.y=h/2 }
@@ -795,8 +808,7 @@ export function PortfolioSection() {
 
   // La console si prende in mano e si apre; poi lo schermo si allarga a tutto schermo
   function screenRect(): Rect | null {
-    const r = consoleRef.current?.getBoundingClientRect()
-    return r ? { top: r.top, left: r.left, width: r.width, height: r.height } : null
+    return tableRef.current?.screenRect() ?? null
   }
 
   function grabGamepad() {
@@ -970,11 +982,6 @@ export function PortfolioSection() {
     }
   }
 
-  const thumbs = PROJECTS
-    .map((p) => (p as { thumb?: string }).thumb)
-    .filter((t): t is string => Boolean(t))
-    .slice(0, 4)
-
   return (
     <div ref={sectionRef} className={styles.section}>
       <div className="container">
@@ -989,34 +996,45 @@ export function PortfolioSection() {
       </div>
 
       <div ref={wrapperRef} className={styles.stage} data-phase={phase}>
-        {/* La cartellina: chiusa sul tavolo, aperta contiene la mappa */}
-        <div
-          className={styles.folder}
-          role="button"
-          tabIndex={phase === 'closed' || phase === 'list' ? 0 : -1}
-          aria-label={phase === 'list' ? PROGETTI.folderClose : PROGETTI.folderHint}
-          aria-expanded={phase === 'open' || phase === 'list'}
-          onClick={openFolder}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openFolder() } }}
-        >
-          <div className={styles.folderBack}>
-            <span className={styles.folderTab}>{PROJECTS.length} lavori</span>
-          </div>
-          <div className={styles.folderCards} aria-hidden="true">
-            {thumbs.map((src, i) => (
-              <span key={src} className={styles.folderCard} style={{ '--i': i } as React.CSSProperties}>
-                <img src={src} alt="" loading="lazy" decoding="async" />
-              </span>
-            ))}
-          </div>
-          <div className={styles.folderCover}>
-            <div className={styles.coverFront}>
-              <span className={styles.coverStamp}>Artismi — fascicolo</span>
-              <span className={styles.coverLabel}>{PROGETTI.folderLabel}</span>
-            </div>
-            <div className={styles.coverInside} />
-          </div>
+        {/* Il tavolo in 3D: il fascicolo e la console */}
+        <div className={styles.table3d}>
+          <Table3D
+            phase={phase}
+            grab={grab}
+            mobile={!desktop}
+            thumbs={THUMBS}
+            count={PROJECTS.length}
+            folderLabel={PROGETTI.folderLabel}
+            folderHint={PROGETTI.folderHint}
+            game={PROGETTI.game}
+            onFolder={openFolder}
+            onConsole={grabGamepad}
+            api={tableRef}
+          />
         </div>
+
+        {/* Il fascicolo aperto, in piano: sotto la mappa */}
+        <div className={styles.spread} aria-hidden="true" />
+
+        {/* Gli stessi comandi da tastiera e per chi usa un lettore di schermo */}
+        <button
+          type="button"
+          className={`${styles.hit} ${styles.hitFolder}`}
+          onClick={openFolder}
+          aria-expanded={phase === 'open' || phase === 'list'}
+          tabIndex={phase === 'closed' || phase === 'list' ? 0 : -1}
+        >
+          {phase === 'list' ? PROGETTI.folderClose : PROGETTI.folderHint}
+        </button>
+        <button
+          id={PROGETTI.game.id}
+          type="button"
+          className={`${styles.hit} ${styles.hitConsole}`}
+          onClick={grabGamepad}
+          tabIndex={phase === 'closed' || phase === 'list' ? 0 : -1}
+        >
+          {PROGETTI.game.title} — {PROGETTI.game.hint}
+        </button>
 
         <canvas
           ref={canvasRef}
@@ -1035,18 +1053,6 @@ export function PortfolioSection() {
           {PROGETTI.folderClose} ✕
         </button>
 
-        {/* La console: presa in mano si apre, e lo schermo diventa il gioco */}
-        <div className={styles.gamepad}>
-          <GameConsole
-            ref={consoleRef}
-            id={PROGETTI.game.id}
-            open={grab}
-            title={PROGETTI.game.title}
-            hint={PROGETTI.game.hint}
-            screen={PROGETTI.game.screen}
-            onClick={grabGamepad}
-          />
-        </div>
       </div>
 
       <div className={styles.legend} data-show={phase === 'open' ? 'true' : undefined}>

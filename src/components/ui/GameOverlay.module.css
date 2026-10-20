@@ -30,27 +30,23 @@
 
 .frame[data-loaded='true'] { opacity: 1; }
 
-.loading {
+/* il caricamento usa l'aspetto di quello della home (Preloader.module.css):
+   qui lo si tiene dentro l'overlay invece che fisso sulla pagina */
+.overlay .loading {
   position: absolute;
   inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  color: #e8dcc0;
+  z-index: 1;
   pointer-events: none;
-  transition: opacity 0.4s ease;
+  transition: opacity 0.6s ease;
 }
 
-.loading[data-hidden='true'] { opacity: 0; }
+.overlay .loading[data-hidden='true'] { opacity: 0; }
 
-.loadingTitle {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: clamp(2.4rem, 7vw, 5.5rem);
-  line-height: 0.9;
-  color: #ffb35c;
+/* il logo graffiti e' a righe nere: lo si accende in chiaro, come il nome nella home */
+.logo {
+  width: min(62vw, 560px);
+  height: auto;
+  filter: invert(1) brightness(1.1) drop-shadow(0 0 22px rgba(250, 160, 195, 0.75));
 }
 
 .loadingText {
@@ -58,6 +54,7 @@
   font-size: 0.72rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
+  color: rgba(255, 215, 230, 0.7);
   animation: blink 1.2s ease-in-out infinite;
 }
 
@@ -67,6 +64,7 @@
 
 .controls {
   position: absolute;
+  z-index: 2;
   top: 10px;
   right: 10px;
   display: flex;
