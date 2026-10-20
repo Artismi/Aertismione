@@ -640,7 +640,7 @@ export const ABOUT = {
     },
     {
       code:  'S-06', label: 'OPERATIVITÀ', color: '#1A1A1A',
-      items: ['Italia + trasferte', 'Remoto per digital', 'Risposta entro 24 h', 'Freelance / agenzia'],
+      items: ['Italia + trasferte', 'Remoto per digital', 'Freelance / agenzia'],
     },
   ],
 }
@@ -650,7 +650,6 @@ export const ABOUT = {
 export const CONTACT = {
   heading: 'Raccontami il tuo progetto.',
   lead:    'Anche se non hai ancora le idee chiare — partiamo da lì.',
-  note:    'Rispondo entro 24 ore.',
   /** Ottieni il tuo ID su formspree.io */
   formspreeId: 'xvgzbgzl',
   directLinks: [
@@ -687,7 +686,7 @@ export const CONTACT = {
     submitLabel:        'Invia messaggio',
     sendingLabel:       'Invio in corso…',
     // l'esito dell'invio: la parola in mono, poi la frase
-    done:  { tag: '✦ Ricevuto',    text: 'Grazie! Ti rispondo entro 24 ore.' },
+    done:  { tag: '✦ Ricevuto',    text: 'Grazie! Ho il tuo messaggio, ti rispondo presto.' },
     error: { tag: '✦ Non è partito', text: 'Riprova, oppure scrivimi a apizzoglio@gmail.com.' },
   },
 }

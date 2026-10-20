@@ -47,7 +47,6 @@ export function ContactSection() {
             <span className="accent-bar" />
             <h2 className={styles.heading}>{CONTACT.heading}</h2>
             <p className={styles.lead}>{CONTACT.lead}</p>
-            <p className={styles.note}>{CONTACT.note}</p>
 
             <div className={styles.directLinks}>
               {CONTACT.directLinks.map((l, i) => (

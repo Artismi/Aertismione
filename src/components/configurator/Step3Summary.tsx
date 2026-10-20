@@ -62,7 +62,7 @@ export function Step3Summary() {
     return (
       <div className={styles.done}>
         <div className={styles.doneIcon}>✓</div>
-        <h3 className={styles.doneTitle}>Ricevuto. Ti scrivo entro 24 ore.</h3>
+        <h3 className={styles.doneTitle}>Ricevuto. Ti scrivo presto.</h3>
         <p className={styles.doneText}>
           Ho salvato la tua configurazione. La studierò e ti contatterò per parlarne insieme.
         </p>
@@ -109,7 +109,7 @@ export function Step3Summary() {
         <form className={styles.form} onSubmit={handleSubmit}>
           <h4 className={styles.blockTitle}>Parliamone.</h4>
           <p className={styles.formIntro}>
-            Ti rispondo entro 24 ore. Capiamo se il progetto è fattibile e affiniamo la stima.
+            Capiamo insieme se il progetto è fattibile e affiniamo la stima.
           </p>
 
           <div className={styles.field}>
