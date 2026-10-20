@@ -99,7 +99,9 @@ export function LogoModel(props: any) {
                 mesh.material = glassMaterial
                 mesh.renderOrder = 1
 
-                const edges = new THREE.EdgesGeometry(mesh.geometry, 15)
+                // Il logo e' liscio: solo le pieghe vere (le punte) fanno linea,
+                // non gli anelli che costruiscono i bordi tondi.
+                const edges = new THREE.EdgesGeometry(mesh.geometry, 50)
                 const lines = new THREE.LineSegments(edges, edgeMat)
                 lines.renderOrder = 2
                 mesh.add(lines)

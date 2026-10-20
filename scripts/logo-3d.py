@@ -35,7 +35,7 @@ Z0, Z1 = -62.32643, -17.774971
 SPESSORE = Z1 - Z0
 PASSO = 1.0          # distanza tra i punti del bordo, unita' del file
 GRIGLIA = 0.3        # lato delle celle della membrana
-BANDA, ANELLI = 8.0, 14   # fascia vicino al bordo e quanti anelli la riempiono
+BANDA, ANELLI = 8.0, 24   # fascia vicino al bordo e quanti anelli la riempiono
 SATURA = 3.0         # quanto presto il bordo tondo arriva allo spessore pieno
 LETTURA = 1.5        # sotto questa distanza dal bordo la membrana si legge piu' dentro
 NODO = {'name': 'aRTISMI 3D', 'rotation': [0.00022664666175842285, 0, 0, 1],
@@ -68,7 +68,7 @@ def sagoma():
     return nd.gaussian_filter(pieno.astype(float), S * 0.8)
 
 
-def liscia(c, passo=1.0 * S, sigma=2.4 * S):
+def liscia(c, passo=1.0 * S, sigma=3.5 * S):
     """Ricampiona l'anello a passo costante e lo ammorbidisce lungo il bordo:
     il tremolio del tratto sparisce (il sito lo disegnerebbe come spigoli),
     le punte del tag restano."""
@@ -86,7 +86,7 @@ def liscia(c, passo=1.0 * S, sigma=2.4 * S):
 def poligoni(campo):
     """Contorni lisci -> poligoni con i buchi (in pixel sovracampionati)."""
     anelli = [Polygon(liscia(c[:, ::-1])) for c in measure.find_contours(campo, 0.5)]
-    anelli = [a for a in anelli if a.is_valid and a.area > (3 * S) ** 2]
+    anelli = [a for a in anelli if a.is_valid and a.area > (7 * S) ** 2]   # via le macchioline del foglio
     # pari/dispari: un anello dentro un numero dispari di altri e' un buco,
     # e appartiene al piu' piccolo degli anelli pieni che lo contengono
     punti = [a.representative_point() for a in anelli]
@@ -153,12 +153,17 @@ def a_passo(anello, passo):
 
 
 def gonfia(forma):
+    # la forma diventa esattamente il bordo campionato: anelli e scelta dei
+    # triangoli si fanno su questa, altrimenti nelle curve concave le corde
+    # escono dalla forma e i triangoli sottili lungo il bordo spariscono (fori)
+    forma = unary_union([Polygon(a_passo(p.exterior, PASSO), [a_passo(h, PASSO) for h in p.interiors])
+                         for p in getattr(forma, 'geoms', [forma])])
     u, cella = membrana(forma)
     # i punti: il bordo (vincolato), anelli fitti vicino al bordo dove la
     # superficie e' ripida, poi una griglia rada dentro
     pts, seg = [], []
     for a in anelli_di(forma):
-        q = a_passo(a, PASSO)
+        q = np.asarray(a.coords)[:-1]
         seg += [(len(pts) + i, len(pts) + (i + 1) % len(q)) for i in range(len(q))]
         pts += q.tolist()
     nbordo = len(pts)
