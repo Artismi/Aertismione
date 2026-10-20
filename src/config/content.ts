@@ -86,36 +86,37 @@ export const SERVICES = {
    * I quattro servizi, una colonna ciascuno, da leggere tutto d'un fiato:
    * type: l'etichetta sopra il titolo · promise: a cosa serve, in una frase
    * text: cosa succede e cosa ottieni, in poche righe · proof: un lavoro vero.
-   * code: il codice in mono · paper: che foglio e' (folder, sheet, featured, tag).
+   * label: il titolo, con *la parola chiave* fra asterischi · seal: il testo che gira
+   * intorno all'adesivo del foglio · paper: che foglio e' (folder, sheet, featured, tag).
    * I prezzi non si mostrano.
    */
   cards: [
     {
       id:      'partecipata',
-      code:    'LAB-01',
+      seal:    'Insieme si progetta meglio ✦ ',
       paper:   'folder',
       type:    'Su progetto',
-      label:   'Progettazione partecipata',
+      label:   'Progettazione *partecipata*',
       promise: 'Le persone progettano con te, e il risultato lo sentono loro.',
       text:    'Scrivo e conduco laboratori con chi vivrà il progetto: abitanti, soci, studenti. Insieme si arriva a un risultato concreto, un oggetto, uno spazio, una guida, e a quello che non si vede: fiducia, relazioni, un gruppo che si riconosce in ciò che ha costruito.',
       proof:   'Mulini, Ecomuseo Terra del Castelmagno',
     },
     {
       id:      'stampe',
-      code:    'STP-02',
+      seal:    'Disegnato a mano ✦ Fatto per durare ✦ ',
       paper:   'sheet',
       type:    'Una tantum',
-      label:   'Illustrazioni, stampe e gadget',
+      label:   'Illustrazioni, stampe e *gadget*',
       promise: 'I tuoi disegni diventano oggetti che la gente porta con sé.',
       text:    'Illustrazioni su commissione, poster, spille, adesivi, magliette, shopper: disegnati a mano e preparati per la stampa. Per un evento, per il merch, per un regalo che fa parlare di te.',
       proof:   'Bicicleria, ciclofficina',
     },
     {
       id:       'identita',
-      code:    'ID-03',
+      seal:    'Riconoscibile ovunque ✦ ',
       paper:   'featured',
       type:     'Percorso completo',
-      label:    'Identità completa',
+      label:    'Identità *completa*',
       featured: true,
       promise:  'La tua attività riconoscibile ovunque, dal logo ai muri del negozio.',
       text:     'Nome, logo e un\'illustrazione madre da cui nasce tutto il resto: personaggi, menu, biglietti, insegna, vetrina, murales. Ricevi il sistema completo e il manuale per usarlo anche da solo; ogni lavoro dopo costa meno, perché parte da qui.',
@@ -123,17 +124,17 @@ export const SERVICES = {
     },
     {
       id:      'social',
-      code:    'SOC-04',
+      seal:    'Ogni settimana ✦ Con la tua voce ✦ ',
       paper:   'tag',
       type:    'Al mese',
-      label:   'Gestione social',
+      label:   'Gestione *social*',
       promise: 'I tuoi canali vivi ogni settimana, con la tua voce.',
       text:    'Piano editoriale, contenuti illustrati, pubblicazione e risposte ai messaggi, con un resoconto a fine mese. Tu pensi alla tua attività; la tua identità continua a parlare per te.',
       proof:   'Bicicleria, ciclofficina',
     },
   ],
   // la fascia ambra in cima ai fogli, e la riga in fondo
-  band:    ['Artismi-(Servizi)-(04)', 'Quattro modi di lavorare insieme', 'Fatto a mano ✦'],
+  band:    ['Artismi — Servizi', 'Quattro modi di lavorare insieme', 'Fatto a mano ✦'],
   collect: ['Scegli', 'quello che', 'ti serve.'],
   footerNote: "Tutti i prezzi sono indicativi — ogni progetto è un'altra storia. Materiali di stampa e produzione sempre a parte.",
 }

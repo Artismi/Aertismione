@@ -178,7 +178,7 @@
 
 /* la linguetta della cartellina, come quella del tavolo 3D */
 .block[data-paper='folder']::before {
-  content: attr(data-code);
+  content: attr(data-tab);
   position: absolute;
   left: 18px;
   bottom: 100%;
@@ -190,11 +190,11 @@
   color: var(--ink);
   clip-path: polygon(8% 0, 92% 0, 100% 100%, 0 100%);
 }
-/* la graffetta sul foglio crema */
+/* la graffetta sul foglio crema, a sinistra: a destra c'e' l'adesivo */
 .clip {
   position: absolute;
   top: -20px;
-  right: 26px;
+  left: 30px;
   width: 20px;
   height: 58px;
   z-index: 3;
@@ -226,33 +226,24 @@
 /* ── testa: numero, codice, tipo, titolo ─────────────────── */
 
 .blockHead {
-  padding: clamp(22px, 2.4vw, 30px) clamp(20px, 2.2vw, 28px) 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  padding: clamp(24px, 2.6vw, 32px) clamp(20px, 2.2vw, 28px) 0;
 }
-.headRow {
-  align-self: stretch;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 18px;
+/* il posto dell'adesivo, in alto a destra: il testo ci gira intorno, e
+   una parola troppo lunga per stargli accanto scende sotto */
+.blockHead::before {
+  content: '';
+  float: right;
+  width: clamp(52px, 4.2vw, 62px);
+  height: clamp(48px, 4vw, 58px);
+  margin-left: 8px;
 }
-.headRow .code { opacity: 0.7; padding-top: 4px; }
+.blockHead .badge { display: inline-block; }
+.blockHead .blockType { display: block; }
+/* sulla cartellina il tipo e' gia' scritto sulla linguetta */
+.block[data-paper='folder'] .blockType { display: none; }
 /* sul cartellino la testa scende sotto il foro */
-.block[data-paper='tag'] .blockHead { padding-top: 46px; }
-
-.blockIdx {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: clamp(2.2rem, 3vw, 2.8rem);
-  line-height: 0.8;
-  letter-spacing: -0.04em;
-  color: transparent;
-  -webkit-text-stroke: 1.2px var(--ink);
-}
-.featured .blockIdx { -webkit-text-stroke-color: var(--amber); }
+.block[data-paper='tag'] .blockHead,
+.block[data-paper='sheet'] .blockHead { padding-top: 46px; }
 
 .badge {
   font-family: var(--font-condensed);
@@ -277,12 +268,31 @@
 }
 
 .blockTitle {
-  font-family: var(--font-condensed);
-  font-size: clamp(1.3rem, 1.8vw, 1.65rem);
-  letter-spacing: -0.02em;
-  text-transform: uppercase;
-  line-height: 1;
-  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.55rem, 2.05vw, 2.15rem);
+  line-height: 0.95;
+  letter-spacing: -0.035em;
+  margin: 2px 0 0;
+  text-wrap: balance;
+}
+/* la parola chiave: nel colore d'accento, sottolineata a mano */
+.key {
+  position: relative;
+  display: inline-block;
+  font-style: normal;
+  color: var(--accent);
+}
+.key::after {
+  content: '';
+  position: absolute;
+  left: -3%;
+  right: -3%;
+  bottom: -0.2em;
+  height: 0.3em;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 20' preserveAspectRatio='none'%3E%3Cpath d='M3 13 C40 5 70 15 105 9 S170 5 197 11' fill='none' stroke='black' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 20' preserveAspectRatio='none'%3E%3Cpath d='M3 13 C40 5 70 15 105 9 S170 5 197 11' fill='none' stroke='black' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
 }
 
 /* ── corpo: la promessa, poi il resto ────────────────────── */
@@ -365,8 +375,9 @@
   font-family: var(--font-condensed);
   font-size: 0.76rem;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
+  white-space: nowrap;
   padding: clamp(14px, 1.8vw, 17px) clamp(20px, 2.2vw, 28px);
   color: inherit;
   transition: background 0.18s;
@@ -378,36 +389,40 @@
 .blockCta:hover::after { transform: translateX(4px); }
 .blockCta:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; }
 
-/* ── l'adesivo tondo, sull'angolo in basso a destra ──────── */
+/* ── l'adesivo del foglio, sull'angolo in alto a destra ────
+   Come gli adesivi del collage: il testo gira e dice lo spirito del
+   servizio, al centro un asterisco. Ogni foglio ha i suoi colori. */
 
-.sticker {
+.seal {
+  --seal-bg: var(--plum);
+  --seal-ink: var(--amber);
+  --seal-star: var(--paper);
   position: absolute;
-  /* a cavallo del bordo destro dell'ultimo foglio, dopo la freccia */
-  right: calc(clamp(24px, 5vw, 72px) - 58px);
-  bottom: clamp(30px, 3vw, 44px);
-  width: 92px;
-  height: 92px;
-  rotate: -12deg;
+  /* dentro l'angolo del foglio, senza uscire dal bordo */
+  top: 14px;
+  right: 14px;
+  width: clamp(58px, 4.8vw, 70px);
+  height: clamp(58px, 4.8vw, 70px);
+  rotate: 12deg;
   z-index: 4;
-  filter: drop-shadow(0 8px 10px rgba(0,0,0,0.45));
+  filter: drop-shadow(0 7px 8px rgba(0,0,0,0.4));
   pointer-events: none;
 }
-.sticker circle { fill: var(--plum); stroke: var(--paper); stroke-width: 3; }
-.stickerRing {
+.seal circle { fill: var(--seal-bg); stroke: var(--paper); stroke-width: 3; }
+.seal .sealInner { fill: none; stroke: var(--seal-ink); stroke-width: 1; opacity: 0.55; }
+.sealRing {
   font-family: var(--font-display);
   font-weight: 700;
   font-size: 10.5px;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  fill: var(--amber);
+  fill: var(--seal-ink);
 }
-.stickerCenter {
-  font-family: var(--font-mono);
-  font-size: 8.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-  fill: var(--paper);
-}
+.sealStar { fill: none; stroke: var(--seal-star); stroke-width: 5; stroke-linecap: round; }
+
+.block[data-paper='sheet'] .seal    { --seal-bg: var(--amber); --seal-ink: var(--ink); --seal-star: var(--ink); rotate: -10deg; }
+.block[data-paper='featured'] .seal { --seal-bg: var(--paper); --seal-ink: var(--plum); --seal-star: var(--amber); rotate: 8deg; }
+.block[data-paper='tag'] .seal      { --seal-bg: var(--plum); --seal-ink: var(--paper); --seal-star: var(--amber); rotate: -14deg; }
 
 /* ── Riga decorativa sotto la griglia ────────────────────── */
 
@@ -458,10 +473,9 @@
   .block[data-paper='folder'], .block[data-paper='featured'] { rotate: -0.6deg; }
   .block[data-paper='sheet'], .block[data-paper='tag'] { rotate: 0.6deg; }
   .blockHead { padding: 16px 14px 0; }
-  .headRow { margin-bottom: 12px; }
-  .headRow .code { display: none; }
-  .blockIdx { font-size: 1.7rem; }
-  .blockTitle { font-size: 1.04rem; }
+  .blockHead::before { width: 36px; height: 34px; margin-left: 4px; }
+  .seal { width: 40px; height: 40px; top: 10px; right: 10px; }
+  .blockTitle { font-size: 1.16rem; }
   .blockType { font-size: 0.58rem; }
   .badge { font-size: 0.56rem; }
   .blockBody { padding: 12px 14px 14px; }
@@ -471,9 +485,9 @@
   .block[data-paper='folder']::before { padding: 5px 12px 4px; font-size: 0.5rem; left: 10px; }
   .clip { width: 16px; height: 46px; top: -16px; right: 14px; }
   .twine { display: none; }
-  .block[data-paper='tag'] .blockHead { padding-top: 36px; }
+  .block[data-paper='tag'] .blockHead,
+  .block[data-paper='sheet'] .blockHead { padding-top: 38px; }
   .hole { top: 10px; width: 12px; height: 12px; margin-left: -6px; }
-  .sticker { display: none; }
   .peek {
     display: inline-flex;
     align-self: flex-start;
@@ -493,8 +507,9 @@
   }
   .block[data-open] { grid-column: 1 / -1; rotate: none; }
   .block[data-open] .blockHead { padding: 22px 20px 0; }
-  .block[data-open] .headRow .code { display: block; }
-  .block[data-open] .blockTitle { font-size: 1.4rem; }
+  .block[data-open] .blockTitle { font-size: 1.7rem; }
+  .block[data-open] .blockHead::before { width: 54px; height: 44px; }
+  .block[data-open] .seal { width: 58px; height: 58px; top: 14px; right: 14px; }
   .block[data-open] .blockBody { padding: 16px 20px 20px; }
   .block[data-open] .promise { font-size: 1.2rem; }
   .block[data-open] .blockCta { padding: 15px 20px; font-size: 0.74rem; }

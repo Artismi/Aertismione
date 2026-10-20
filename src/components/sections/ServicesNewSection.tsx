@@ -22,7 +22,7 @@ const vp = { once: true, margin: '-60px' }
 
 type Card = {
   id: string
-  code: string
+  seal: string
   paper: 'folder' | 'sheet' | 'featured' | 'tag'
   type: string
   label: string
@@ -55,20 +55,29 @@ function Twine({ className }: { className: string }) {
   )
 }
 
-/** l'adesivo tondo, col testo che gira intorno */
-function Sticker() {
+/** l'adesivo tondo del foglio: il testo che gira dice lo spirito del servizio */
+function Seal({ id, text }: { id: string; text: string }) {
   return (
-    <svg className={styles.sticker} viewBox="0 0 120 120" aria-hidden="true">
+    <svg className={styles.seal} viewBox="0 0 120 120" aria-hidden="true">
       <defs>
-        <path id="servizi-ring" d="M60 60 m-44 0 a44 44 0 1 1 88 0 a44 44 0 1 1 -88 0" />
+        <path id={`seal-${id}`} d="M60 60 m-43 0 a43 43 0 1 1 86 0 a43 43 0 1 1 -86 0" />
       </defs>
       <circle cx="60" cy="60" r="58" />
-      <text className={styles.stickerRing}>
-        <textPath href="#servizi-ring">Artismi ✦ Fatto a mano ✦ Artismi ✦ Fatto a mano ✦</textPath>
+      <circle cx="60" cy="60" r="31" className={styles.sealInner} />
+      <text className={styles.sealRing}>
+        <textPath href={`#seal-${id}`} textLength="268" lengthAdjust="spacing">{text.repeat(text.length > 26 ? 1 : 2)}</textPath>
       </text>
-      <text className={styles.stickerCenter} x="60" y="56" textAnchor="middle">Qual è il</text>
-      <text className={styles.stickerCenter} x="60" y="70" textAnchor="middle">tuo preferito?</text>
+      <path d="M60 44 V76 M46 52 L74 68 M74 52 L46 68" className={styles.sealStar} />
     </svg>
+  )
+}
+
+/** il titolo, con la parola chiave messa in evidenza (fra asterischi in content.ts) */
+function Title({ label }: { label: string }) {
+  return (
+    <h3 className={styles.blockTitle}>
+      {label.split('*').map((part, i) => (i % 2 ? <em key={i} className={styles.key}>{part}</em> : part))}
+    </h3>
   )
 }
 
@@ -109,7 +118,7 @@ export function ServicesNewSection() {
               key={c.id}
               className={`${styles.block} ${c.featured ? styles.featured : ''}`}
               data-paper={c.paper}
-              data-code={c.code}
+              data-tab={c.type}
               data-open={isOpen || undefined}
               initial={{ opacity: 0, y: 48 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -118,14 +127,11 @@ export function ServicesNewSection() {
             >
               {c.paper === 'sheet' && <Clip className={styles.clip} />}
               {c.paper === 'tag' && <><Twine className={styles.twine} /><span className={styles.hole} aria-hidden="true" /></>}
+              <Seal id={c.id} text={c.seal} />
               <div className={styles.blockHead}>
-                <div className={styles.headRow}>
-                  <span className={styles.blockIdx} aria-hidden="true">0{idx + 1}</span>
-                  <span className={styles.code}>{c.code} · Artismi</span>
-                </div>
                 {c.featured && <span className={styles.badge}>✦ Più richiesto</span>}
                 <span className={styles.blockType}>{c.type}</span>
-                <h3 className={styles.blockTitle}>{c.label}</h3>
+                <Title label={c.label} />
               </div>
 
               <div className={styles.blockBody}>
@@ -155,7 +161,6 @@ export function ServicesNewSection() {
           )
         })}
       </div>
-      <Sticker />
       </div>
 
       {/* ── Footer decorativo ──────────────────────────────────── */}
