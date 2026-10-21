@@ -65,7 +65,7 @@ export const SERVICES = {
    * type: l'etichetta sopra il titolo · promise: a cosa serve, in una frase
    * text: cosa succede e cosa ottieni, in poche righe · proof: un lavoro vero.
    * label: il titolo, con *la parola chiave* fra asterischi · seal: il testo che gira
-   * intorno all'adesivo del foglio · paper: che foglio e' (folder, sheet, featured, tag).
+   * intorno all'adesivo del foglio · paper: che foglio e' (folder, sheet, featured, tag, grid).
    * I prezzi non si mostrano.
    */
   cards: [
@@ -110,9 +110,19 @@ export const SERVICES = {
       text:    'Piano editoriale, contenuti illustrati, pubblicazione e risposte ai messaggi, con un resoconto a fine mese. Tu pensi alla tua attività; la tua identità continua a parlare per te.',
       proof:   'Bicicleria, ciclofficina',
     },
+    {
+      id:      'web',
+      seal:    'Sul web ✦ Nel telefono ✦ ',
+      paper:   'grid',
+      type:    'Su misura',
+      label:   'Siti web e *app*',
+      promise: 'La tua identità diventa un posto da visitare: sul web, in un\'app, in realtà aumentata.',
+      text:    'Siti vetrina e su misura, piccole app e web app, esperienze in realtà aumentata: un\'etichetta, una vetrina o un murale che prendono vita inquadrandoli col telefono. Disegnati con le tue illustrazioni, veloci e facili da aggiornare.',
+      proof:   'Questo sito e Porto Vecchio, un videogioco nel browser',
+    },
   ],
   // la fascia ambra in cima ai fogli, e la riga in fondo
-  band:    ['Artismi — Servizi', 'Quattro modi di lavorare insieme', 'Fatto a mano ✦'],
+  band:    ['Artismi — Servizi', 'Cinque modi di lavorare insieme', 'Fatto a mano ✦'],
   collect: ['Scegli', 'quello che', 'ti serve.'],
   footerNote: "Tutti i prezzi sono indicativi — ogni progetto è un'altra storia. Materiali di stampa e produzione sempre a parte.",
 }

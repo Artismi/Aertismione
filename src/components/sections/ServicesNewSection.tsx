@@ -23,7 +23,7 @@ const vp = { once: true, margin: '-60px' }
 type Card = {
   id: string
   seal: string
-  paper: 'folder' | 'sheet' | 'featured' | 'tag'
+  paper: 'folder' | 'sheet' | 'featured' | 'tag' | 'grid'
   type: string
   label: string
   promise: string
@@ -127,6 +127,7 @@ export function ServicesNewSection() {
             >
               {c.paper === 'sheet' && <Clip className={styles.clip} />}
               {c.paper === 'tag' && <><Twine className={styles.twine} /><span className={styles.hole} aria-hidden="true" /></>}
+              {c.paper === 'grid' && <span className={styles.tape} aria-hidden="true" />}
               <Seal id={c.id} text={c.seal} />
               <div className={styles.blockHead}>
                 {c.featured && <span className={styles.badge}>✦ Più richiesto</span>}

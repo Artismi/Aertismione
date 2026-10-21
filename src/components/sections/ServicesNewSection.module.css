@@ -137,7 +137,8 @@
 .grid {
   position: relative;
   display: grid;
-  grid-template-columns: 1fr 1fr 1.08fr 1fr;
+  /* cinque fogli; minmax(0, …) li fa stringere invece di uscire dalla fascia */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.08fr) minmax(0, 1fr) minmax(0, 1fr);
   gap: clamp(10px, 1.2vw, 16px);
   align-items: stretch;
   margin-top: 44px;
@@ -146,6 +147,8 @@
 /* ── il foglio ────────────────────────────────────────────── */
 
 .block {
+  /* titolo e promessa si misurano sulla larghezza del foglio, non della finestra */
+  container-type: inline-size;
   --accent: var(--amber);
   --line: rgba(26,26,26,0.16);
   --soft: rgba(26,26,26,0.72);
@@ -175,6 +178,31 @@
   z-index: 2;
 }
 .block[data-paper='tag'] { background-color: var(--amber); rotate: 0.9deg; --accent: var(--plum); --soft: rgba(26,26,26,0.8); }
+/* siti web e app: carta a quadretti da progetto, i quadretti nel ghiaccio del sito */
+.block[data-paper='grid'] {
+  background-color: #F6F3EC;
+  background-image:
+    linear-gradient(rgba(157,212,238,0.55) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(157,212,238,0.55) 1px, transparent 1px);
+  background-size: 14px 14px;
+  background-position: -1px -1px;
+  rotate: -0.7deg;
+  --accent: var(--plum);
+}
+/* il nastro rosa che tiene il foglio a quadretti */
+.tape {
+  position: absolute;
+  top: -11px;
+  left: 50%;
+  width: 84px;
+  height: 24px;
+  margin-left: -42px;
+  background: rgba(232,168,191,0.82);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.18);
+  transform: rotate(-3deg);
+  z-index: 3;
+  clip-path: polygon(0 8%, 4% 0, 8% 10%, 12% 0, 88% 0, 92% 12%, 96% 0, 100% 10%, 100% 90%, 96% 100%, 92% 88%, 88% 100%, 12% 100%, 8% 90%, 4% 100%, 0 92%);
+}
 
 /* la linguetta della cartellina, come quella del tavolo 3D */
 .block[data-paper='folder']::before {
@@ -270,7 +298,7 @@
 .blockTitle {
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: clamp(1.55rem, 2.05vw, 2.15rem);
+  font-size: clamp(1.25rem, 10cqi, 2.15rem);
   line-height: 0.95;
   letter-spacing: -0.035em;
   margin: 2px 0 0;
@@ -309,7 +337,7 @@
   margin: 0;
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: clamp(1.16rem, 1.5vw, 1.42rem);
+  font-size: clamp(1rem, 7.4cqi, 1.42rem);
   line-height: 1.24;
   letter-spacing: -0.01em;
 }
@@ -373,9 +401,10 @@
   align-items: center;
   gap: 8px;
   font-family: var(--font-condensed);
-  font-size: 0.76rem;
+  /* misurato sul foglio: nei fogli stretti stringe e non esce dal bordo */
+  font-size: clamp(0.6rem, 5cqi, 0.76rem);
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   white-space: nowrap;
   padding: clamp(14px, 1.8vw, 17px) clamp(20px, 2.2vw, 28px);
@@ -423,6 +452,7 @@
 .block[data-paper='sheet'] .seal    { --seal-bg: var(--amber); --seal-ink: var(--ink); --seal-star: var(--ink); rotate: -10deg; }
 .block[data-paper='featured'] .seal { --seal-bg: var(--paper); --seal-ink: var(--plum); --seal-star: var(--amber); rotate: 8deg; }
 .block[data-paper='tag'] .seal      { --seal-bg: var(--plum); --seal-ink: var(--paper); --seal-star: var(--amber); rotate: -14deg; }
+.block[data-paper='grid'] .seal     { --seal-bg: #E8A8BF; --seal-ink: var(--plum); --seal-star: var(--plum); rotate: 10deg; }
 
 /* ── Riga decorativa sotto la griglia ────────────────────── */
 
@@ -459,6 +489,8 @@
 /* tablet: due per due */
 @media (max-width: 1180px) {
   .grid { grid-template-columns: 1fr 1fr; row-gap: 44px; }
+  /* il quinto foglio, da solo, prende tutta la riga */
+  .block:last-child:nth-child(odd) { grid-column: 1 / -1; }
 }
 
 /* telefono: ancora due per due, con titolo e promessa; toccato, un foglio
