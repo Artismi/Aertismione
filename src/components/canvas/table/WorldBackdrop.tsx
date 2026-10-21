@@ -71,19 +71,19 @@ const common = causticsFragment
     // l'aria accesa intorno al logo
     vec2 q = p / max(0.6, u_logo.z / 0.32);
     float glow = exp(-dot(q * vec2(0.85, 1.3), q * vec2(0.85, 1.3)) * 1.5);
-    float luce = (beam * (0.45 + 0.85 * v) + glow * 0.28 * (0.4 + 0.6 * v)) * u_logo.w;
+    float luce = (beam * (0.3 + 0.55 * v) + glow * 0.22 * (0.4 + 0.6 * v)) * u_logo.w;
     // fuori dal fascio la stanza e' in penombra: e' il buio che fa vedere la luce
     // (solo intorno al logo: lontano, sul banco, il fondale resta quello di sempre)
     float r2 = dot(p, p);
-    float ombra = (1.0 - beam) * (1.0 - glow) * (1.0 - exp(-r2 * 0.05)) * exp(-r2 * 0.03) * 1.15 * u_logo.w;
+    float ombra = (1.0 - beam) * (1.0 - glow) * (1.0 - exp(-r2 * 0.05)) * exp(-r2 * 0.03) * 0.45 * u_logo.w;
     return vec2(luce, ombra);
   }
   float hazeLight(vec2 uv) { return haze(uv).x; }
   vec3 hazed(vec3 c, vec2 uv) {
     vec2 h = haze(uv);
-    // la penombra tira al viola (si spegne prima il verde), la luce e' magenta
-    c *= 1.0 - h.y * vec3(0.5, 0.85, 0.3);
-    return 1.0 - (1.0 - c) * (1.0 - h.x * vec3(1.0, 0.68, 0.98));
+    // la penombra tira appena al viola, la luce e' bianca con un filo di lilla
+    c *= 1.0 - h.y * vec3(0.8, 0.95, 0.65);
+    return 1.0 - (1.0 - c) * (1.0 - h.x * vec3(1.0, 0.92, 1.0));
   }
   vec3 backdrop(vec2 uv) {
     return hazed(srgbToLinearBg(causticsColor(0.5 + (uv - 0.5) * u_scale + vec2(0.0, u_scroll)).rgb), uv);
@@ -234,7 +234,7 @@ export const glassComposite = /* glsl */`
     float a2 = 1.0 - (1.0 - gl_FragColor.a) * (1.0 - gl_FragColor.a);
     vec3 c = mix(bgc, g, a2);
     // un velo del vapore passa anche davanti al vetro: l'aria e' spessa
-    c = 1.0 - (1.0 - c) * (1.0 - hazeLight(gl_FragCoord.xy / u_px) * 0.28 * vec3(1.0, 0.68, 0.98));
+    c = 1.0 - (1.0 - c) * (1.0 - hazeLight(gl_FragCoord.xy / u_px) * 0.2 * vec3(1.0, 0.92, 1.0));
     gl_FragColor = vec4(pvAcesInv(srgbToLinearBg(c)), 1.0);
   }
 `
