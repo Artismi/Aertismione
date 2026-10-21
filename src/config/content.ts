@@ -61,11 +61,11 @@ export const SERVICES = {
   savingsNote: "Se hai già un'identità visiva fatta con Artismi, ogni lavoro successivo costa meno — perché partiamo da qualcosa che esiste già.",
   cta: 'Chiedi un preventivo',
   /*
-   * I quattro servizi, una colonna ciascuno, da leggere tutto d'un fiato:
+   * I cinque servizi, una colonna ciascuno, da leggere tutto d'un fiato:
    * type: l'etichetta sopra il titolo · promise: a cosa serve, in una frase
    * text: cosa succede e cosa ottieni, in poche righe · proof: un lavoro vero.
    * label: il titolo, con *la parola chiave* fra asterischi · seal: il testo che gira
-   * intorno all'adesivo del foglio · paper: che foglio e' (folder, sheet, featured, tag).
+   * intorno all'adesivo del foglio · paper: che foglio e' (folder, sheet, featured, grid, tag).
    * I prezzi non si mostrano.
    */
   cards: [
@@ -101,6 +101,16 @@ export const SERVICES = {
       proof:    'Bicicleria, ciclofficina',
     },
     {
+      id:      'web',
+      seal:    'Online come dal vivo ✦ ',
+      paper:   'grid',
+      type:    'Su misura',
+      label:   'Siti\u00A0web e *app*',
+      promise: 'Chi ti cerca online ritrova la stessa attività che incontra dal vivo.',
+      text:    'Siti vetrina, pagine per prenotare o vendere, app ed esperienze interattive con illustrazioni e 3D: li disegno e li costruisco io, leggeri e comodi anche sul telefono. Partono dalla tua identità, e ti lascio il modo di cambiare testi e foto da solo.',
+      proof:   'Porto Vecchio, videogioco nel browser',
+    },
+    {
       id:      'social',
       seal:    'Ogni settimana ✦ Con la tua voce ✦ ',
       paper:   'tag',
@@ -112,7 +122,7 @@ export const SERVICES = {
     },
   ],
   // la fascia ambra in cima ai fogli, e la riga in fondo
-  band:    ['Artismi — Servizi', 'Quattro modi di lavorare insieme', 'Fatto a mano ✦'],
+  band:    ['Artismi — Servizi', 'Cinque modi di lavorare insieme', 'Fatto a mano ✦'],
   collect: ['Scegli', 'quello che', 'ti serve.'],
   footerNote: "Tutti i prezzi sono indicativi — ogni progetto è un'altra storia. Materiali di stampa e produzione sempre a parte.",
 }
