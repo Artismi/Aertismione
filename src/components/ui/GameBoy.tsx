@@ -29,6 +29,7 @@ import { PROGETTI } from '@/config/content'
 import styles from './GameBoy.module.css'
 import pre from './Preloader.module.css'
 import { MatrixGrid } from './Preloader'
+import { gameLoad } from '@/components/canvas/table/gameLoad'
 
 export type Rect = { top: number; left: number; width: number; height: number }
 
@@ -76,6 +77,10 @@ export function GameBoy({ from, onClose, page = false, warm = false }: {
       talks.current = true
       if (typeof e.data.p === 'number') real.current = Math.max(real.current, e.data.p)
       if (e.data.pv === 'pronto') setReady(true)
+      // anche lo schermo del Game Boy sul banco. Nascosto il gioco non disegna il menu
+      // (e 'pronto' arriva solo quando si vede): per lo schermo basta il caricamento finito
+      gameLoad.p = e.data.pv === 'pronto' ? 1 : real.current
+      if (e.data.pv === 'pronto' || real.current >= 0.99) gameLoad.ready = true
     }
     window.addEventListener('message', onMsg)
     return () => window.removeEventListener('message', onMsg)

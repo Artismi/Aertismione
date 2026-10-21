@@ -13,6 +13,8 @@ import { PORTFOLIO, PROGETTI } from '@/config/content'
 import dynamic from 'next/dynamic'
 import type { TableApi } from '@/components/canvas/table/Table3D'
 import { consoleScreen } from '@/components/canvas/table/Console3D'
+import { marble } from '@/components/canvas/table/marble'
+import { gameLoad } from '@/components/canvas/table/gameLoad'
 import { GameBoy, gameWarmable, type Rect } from '@/components/ui/GameBoy'
 
 // Il tavolo in 3D si carica solo nel browser, a parte dal resto della pagina
@@ -20,7 +22,8 @@ const Table3D = dynamic(() => import('@/components/canvas/table/Table3D'), { ssr
 
 /* â”€â”€â”€ Costanti â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
-const BALL_R        = 15
+// la bilia 3D sul tabellone (Marble3D: 0,14 × 0,6 unita', il tabellone e' largo 4,46 su 1200)
+const BALL_R        = 22
 const FOLDER_HIT_R  = 74   // raggio collisione/hover cartellina (a misura piena)
 
 /** Con tanti lavori le cartelline si stringono: misura in base allo spazio tra una e l'altra */
@@ -34,8 +37,9 @@ const MAX_LAUNCH    = 38
 // stesse proporzioni della tavola (BW : BD in Folder3D)
 const MAP_W         = 1200
 const MAP_H         = 775
-// pixel del canvas per unita' del tabellone: la texture si ricarica a ogni
-// fotogramma, piu' grande farebbe scattare il 3D
+// pixel del canvas per unita' del tabellone. La texture si ricarica solo quando la
+// mappa cambia (la pallina e' la bilia 3D, non si disegna qui); a 1,5 la scheda
+// video emulata del test si spegneva: meglio non rischiare sui telefoni deboli
 const MAP_SCALE     = 1
 
 /* â”€â”€â”€ Tipi â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
@@ -226,7 +230,7 @@ function wrapTitle(ctx: CanvasRenderingContext2D, text: string, maxW: number): s
   return lines.slice(0, 2)
 }
 
-function drawFolder(ctx: CanvasRenderingContext2D, p: Project, w: number, h: number, time: number, isHovered: boolean) {
+function drawFolder(ctx: CanvasRenderingContext2D, p: Project, w: number, h: number, isHovered: boolean) {
   const cx = p.mapX*w, cy = p.mapY*h
   const [cr,cg,cb] = hexToRgb(p.accent)
   const seed = p.id.split('').reduce((a,c)=>a+c.charCodeAt(0),0)
@@ -241,8 +245,9 @@ function drawFolder(ctx: CanvasRenderingContext2D, p: Project, w: number, h: num
   ctx.rotate(tilt)
   const fs = folderScale(w, h); ctx.scale(fs, fs)
 
-  // Alone pulsante attorno alla cartellina
-  const pulse = 0.5+0.5*Math.sin(time*0.0019+p.mapX*8)
+  // Alone attorno alla cartellina: fermo (la mappa si ridisegna solo quando cambia
+  // qualcosa), si accende sotto il puntatore
+  const pulse = 0.5
   ctx.beginPath()
   ctx.arc(0, 0, 88 + (isHovered ? 0 : pulse*9), 0, Math.PI*2)
   ctx.strokeStyle = `rgba(${cr},${cg},${cb},${isHovered ? 0.45 : (0.06+pulse*0.08).toFixed(3)})`
@@ -439,100 +444,6 @@ function drawSlingshot(
   ctx.globalCompositeOperation = prevComp
 }
 
-function drawBall(ctx: CanvasRenderingContext2D, ball: Ball, js: JumpState | null) {
-  const speed = Math.hypot(ball.vx, ball.vy)
-  let drawX=ball.x, drawY=ball.y, sx=1, sy=1
-  let shadowX=ball.x, shadowY: number, shadowSx: number, shadowSy: number
-
-  if (js && !js.landed) {
-    sx=js.scaleX; sy=js.scaleY
-    const ss = 0.45 + 0.55*(1-js.arcNorm)
-    shadowX=ball.x; shadowY=ball.y+(BALL_R*sy)+6; shadowSx=ss; shadowSy=ss*0.35
-  } else if (js?.landed) {
-    sx=js.scaleX; sy=js.scaleY
-    shadowX=ball.x; shadowY=ball.y+4; shadowSx=1.5; shadowSy=0.22
-  } else {
-    const lift = Math.min(speed*0.95, 15)
-    drawY=ball.y-lift
-    const ss = Math.max(0.38, 1-lift*0.025)
-    shadowX=ball.x; shadowY=ball.y+3; shadowSx=ss; shadowSy=ss*0.28
-  }
-
-  const spd = Math.hypot(ball.vx, ball.vy)
-  const speedF = Math.min(spd / 14, 1)
-  const prev = ctx.globalCompositeOperation
-
-  // ── Glow plasma esterno — screen composite (luce additiva su dark) ──
-  ctx.globalCompositeOperation = 'screen'
-  const glowR = BALL_R * (2.0 + speedF * 1.6)
-  const glow = ctx.createRadialGradient(drawX, drawY, BALL_R*0.5, drawX, drawY, glowR)
-  glow.addColorStop(0,   `rgba(200,70,200,${(0.38 + speedF*0.40).toFixed(3)})`)
-  glow.addColorStop(0.45,`rgba(110,30,175,${(0.18 + speedF*0.20).toFixed(3)})`)
-  glow.addColorStop(1,   'rgba(60,0,100,0)')
-  ctx.beginPath(); ctx.arc(drawX, drawY, glowR, 0, Math.PI*2)
-  ctx.fillStyle = glow; ctx.fill()
-  ctx.globalCompositeOperation = prev
-
-  // ── Shadow viola (normale, non screen) ──
-  ctx.beginPath()
-  ctx.ellipse(shadowX, shadowY, BALL_R*shadowSx, BALL_R*shadowSy, 0, 0, Math.PI*2)
-  ctx.fillStyle = `rgba(60,0,80,${(0.45*shadowSx).toFixed(3)})`; ctx.fill()
-
-  ctx.save(); ctx.translate(drawX, drawY); ctx.scale(sx, sy)
-
-  // ── Corpo meteorite — gradiente viola-rosa rocky ──
-  const body = ctx.createRadialGradient(-BALL_R*0.28,-BALL_R*0.32, BALL_R*0.05, 0, 0, BALL_R)
-  body.addColorStop(0,    '#D068DC')  // rosa-viola caldo
-  body.addColorStop(0.30, '#8228B0')  // viola profondo
-  body.addColorStop(0.65, '#3A0E58')  // quasi nero viola
-  body.addColorStop(1,    '#120620')  // bordo scurissimo
-  ctx.beginPath(); ctx.arc(0, 0, BALL_R, 0, Math.PI*2)
-  ctx.fillStyle = body; ctx.fill()
-
-  // ── Texture superficie — ruota con la fisica ──
-  ctx.save(); ctx.rotate(ball.rotation)
-
-  // Crepe
-  ctx.strokeStyle = 'rgba(210,110,230,0.28)'; ctx.lineWidth = 0.9
-  ctx.beginPath()
-  ctx.moveTo(-BALL_R*0.42, -BALL_R*0.06)
-  ctx.lineTo(-BALL_R*0.05,  BALL_R*0.26)
-  ctx.lineTo( BALL_R*0.32,  BALL_R*0.12)
-  ctx.stroke()
-  ctx.beginPath()
-  ctx.moveTo( BALL_R*0.16, -BALL_R*0.40)
-  ctx.lineTo(-BALL_R*0.08, -BALL_R*0.02)
-  ctx.stroke()
-
-  // Crateri
-  const craters: Array<{x:number;y:number;r:number}> = [
-    {x:-0.28, y:0.22,  r:0.20},
-    {x: 0.30, y:-0.20, r:0.13},
-    {x:-0.08, y:-0.30, r:0.09},
-  ]
-  for (const c of craters) {
-    ctx.beginPath(); ctx.arc(c.x*BALL_R, c.y*BALL_R, c.r*BALL_R, 0, Math.PI*2)
-    ctx.fillStyle = 'rgba(6,0,14,0.58)'; ctx.fill()
-    ctx.beginPath(); ctx.arc(
-      (c.x-c.r*0.32)*BALL_R, (c.y-c.r*0.32)*BALL_R, c.r*BALL_R*0.52, 0, Math.PI*2
-    )
-    ctx.strokeStyle = 'rgba(210,110,230,0.20)'; ctx.lineWidth=0.5; ctx.stroke()
-  }
-  ctx.restore()
-
-  // ── Specular — screen per brillantezza additiva ──
-  ctx.globalCompositeOperation = 'screen'
-  const spec = ctx.createRadialGradient(-BALL_R*0.32,-BALL_R*0.36, 0, -BALL_R*0.26,-BALL_R*0.28, BALL_R*0.46)
-  spec.addColorStop(0,   'rgba(255,200,255,0.72)')
-  spec.addColorStop(0.42,'rgba(220,130,255,0.25)')
-  spec.addColorStop(1,   'rgba(180,70,220,0)')
-  ctx.beginPath(); ctx.arc(0, 0, BALL_R, 0, Math.PI*2)
-  ctx.fillStyle = spec; ctx.fill()
-  ctx.globalCompositeOperation = prev
-
-  ctx.restore()
-}
-
 function drawParticles(ctx: CanvasRenderingContext2D, particles: Particle[]) {
   if (particles.length === 0) return
   const prev = ctx.globalCompositeOperation
@@ -560,6 +471,8 @@ export function PortfolioSection() {
   const particlesRef  = useRef<Particle[]>([])
   const hoveredRef    = useRef<string | null>(null)
   const startTimeRef  = useRef(0)
+  const redrawRef     = useRef(true)               // la mappa va ridisegnata
+  const drawnHoverRef = useRef<string | null>(null) // la cartellina accesa nell'ultimo disegno
   const gridRevealRef = useRef(0)
   const inViewRef     = useRef(false)
   const openRef       = useRef(false)
@@ -630,7 +543,6 @@ export function PortfolioSection() {
       // (x, y) del disegno → (y, MAP_H - x) del canvas, che resta orizzontale
       if (desk) ctx.setTransform(MAP_SCALE,0,0,MAP_SCALE,0,0)
       else ctx.setTransform(0,-MAP_SCALE,MAP_SCALE,0,0,MAP_H*MAP_SCALE)
-      const time=now-startTimeRef.current
       const ball=ballRef.current
 
       // La mappa si vede solo a fascicolo aperto: entra piano, esce svelta
@@ -652,8 +564,9 @@ export function PortfolioSection() {
       if (js && !js.landed) {
         const t=Math.min((now-js.startTime)/js.duration, 1)
         const eased=t<0.5?2*t*t:-1+(4-2*t)*t
+        // l'arco del salto e' un'altezza vera: la bilia 3D si alza dal tabellone
         ball.x=js.fromX+(js.toX-js.fromX)*eased
-        ball.y=js.fromY+(js.toY-js.fromY)*t - 4*js.arcHeight*t*(1-t)
+        ball.y=js.fromY+(js.toY-js.fromY)*t
         ball.rotation+=(Math.abs(js.toX-js.fromX)/js.duration)*0.06
         js.arcNorm=4*t*(1-t)
         if      (t<0.44)  { js.scaleX=0.81; js.scaleY=1.24 }
@@ -735,18 +648,35 @@ export function PortfolioSection() {
       }
       particlesRef.current=alive
 
-      // la fodera scura del fascicolo: il tabellone e' stampato li' sopra
-      ctx.fillStyle='#1E1B24'; ctx.fillRect(0,0,w,h)
-      drawBackground(ctx,w,h,gridRevealRef.current)
-      for (let i=0;i<PROJ.length;i++) drawZone(ctx,PROJ[i],ZONE_JITTER[i],w,h)
-      drawPaths(ctx,PROJ,w,h)
-      for (const p of PROJ) drawFolder(ctx,p,w,h,time,hoveredRef.current===p.id)
-      drawTrail(ctx,trailRef.current)
-      drawParticles(ctx,particlesRef.current)
-      if (isDraggingRef.current) drawSlingshot(ctx, ball, dragOriginRef.current, w, h)
-      drawBall(ctx,ball,jumpRef.current)
-      drawMapDecorations(ctx,w,h,!desk)
-      tableRef.current?.refresh()
+      // la pallina e' la bilia 3D: si dice dove sta sul tabellone (che da telefono e' girato)
+      const jl = jumpRef.current
+      const lift = jl && !jl.landed ? jl.arcNorm*jl.arcHeight : 0
+      const bm = marble.board
+      if (desk) { bm.u = ball.x/MAP_W; bm.v = ball.y/MAP_H }
+      else { bm.u = ball.y/MAP_W; bm.v = 1 - ball.x/MAP_H }
+      bm.lift = lift/MAP_W
+      const moving = !!(jl && !jl.landed) || Math.hypot(ball.vx,ball.vy) > 0 || isDraggingRef.current
+
+      // la mappa si ridisegna (e la texture si ricarica) solo quando cambia qualcosa
+      const reveal = gridRevealRef.current, target = visible ? 1 : 0
+      const dirty = redrawRef.current || hoveredRef.current !== drawnHoverRef.current
+        || Math.abs(reveal - target) > 0.003 || particlesRef.current.length > 0
+        || trailRef.current.length > 0 || isDraggingRef.current
+      if (dirty) {
+        redrawRef.current = false
+        drawnHoverRef.current = hoveredRef.current
+        // la fodera scura del fascicolo: il tabellone e' stampato li' sopra
+        ctx.fillStyle='#1E1B24'; ctx.fillRect(0,0,w,h)
+        drawBackground(ctx,w,h,reveal)
+        for (let i=0;i<PROJ.length;i++) drawZone(ctx,PROJ[i],ZONE_JITTER[i],w,h)
+        drawPaths(ctx,PROJ,w,h)
+        for (const p of PROJ) drawFolder(ctx,p,w,h,hoveredRef.current===p.id)
+        drawTrail(ctx,trailRef.current)
+        drawParticles(ctx,particlesRef.current)
+        if (isDraggingRef.current) drawSlingshot(ctx, ball, dragOriginRef.current, w, h)
+        drawMapDecorations(ctx,w,h,!desk)
+        tableRef.current?.refresh()
+      } else if (moving) tableRef.current?.tick()
 
       rafRef.current=requestAnimationFrame(loop)
     }
@@ -785,6 +715,7 @@ export function PortfolioSection() {
 
   useEffect(() => {
     openRef.current = phase === 'open'
+    redrawRef.current = true
     if (phase === 'open') popBall()
   }, [phase])
 
@@ -1086,7 +1017,8 @@ function useGamePreload(on: boolean) {
   useEffect(() => {
     if (!on) return
     const net = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection
-    if (net?.saveData || /(^|-)2g$/.test(net?.effectiveType ?? '')) return
+    // niente anticipo: lo schermo del Game Boy mostra subito la schermata di lancio
+    if (net?.saveData || /(^|-)2g$/.test(net?.effectiveType ?? '')) { gameLoad.ready = true; return }
     const base = PROGETTI.game.path.replace(/[^/]*$/, '')
     const ctrl = new AbortController()
     const idle = (cb: () => void) => {
@@ -1096,14 +1028,18 @@ function useGamePreload(on: boolean) {
     let timer = 0
 
     async function run() {
-      for (const file of PROGETTI.game.preload) {
+      const files = PROGETTI.game.preload
+      for (let i = 0; i < files.length; i++) {
         if (ctrl.signal.aborted) return
         await new Promise<void>((ok) => idle(ok))
         try {
-          const res = await fetch(base + file, { signal: ctrl.signal, priority: 'low' } as RequestInit)
+          const res = await fetch(base + files[i], { signal: ctrl.signal, priority: 'low' } as RequestInit)
           await res.arrayBuffer()   // letto fino in fondo, cosi' resta in cache
         } catch { if (ctrl.signal.aborted) return }
+        // lo schermo del Game Boy sul banco segue lo scaricamento
+        gameLoad.p = (i + 1) / files.length
       }
+      gameLoad.ready = true
     }
     function start() { timer = window.setTimeout(run, 4000) }
     if (document.readyState === 'complete') start()

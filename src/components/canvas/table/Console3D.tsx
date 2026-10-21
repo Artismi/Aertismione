@@ -17,6 +17,7 @@ import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import { RoundedBox, Html } from '@react-three/drei'
 import * as THREE from 'three'
 import { pcbTexture, faceTexture, bezelTexture, screenTexture, BOOT_SECONDS } from './textures'
+import { gameLoad } from './gameLoad'
 import type { TablePhase } from './Table3D'
 import { HIT_MAT } from './Folder3D'
 import styles from './Table3D.module.css'
@@ -115,7 +116,7 @@ function domeGeometry(r: number, h: number) {
 export function Console3D({ phase, mobile, grab, hovered, game, logo, plasticRough, metalRough, onPointer, onClick }: {
   phase: TablePhase; mobile: boolean; grab: boolean; hovered: boolean
   logo: HTMLImageElement | null; plasticRough: THREE.Texture; metalRough: THREE.Texture
-  game: { title: string; hint: string; screen: string }
+  game: { title: string; hint: string; screen: string; loading: string }
   onPointer: (h: boolean) => void; onClick: () => void
 }) {
   const group = useRef<THREE.Group>(null!)
@@ -181,7 +182,9 @@ export function Console3D({ phase, mobile, grab, hovered, game, logo, plasticRou
   }), [tex, plasticRough, metalRough])
 
   // lo schermo si accende con il logo Artismi, poi la schermata di lancio
-  const lcd = useMemo(() => screenTexture(game.screen, logo, () => invalidate()), [game.screen, logo, invalidate])
+  const lcd = useMemo(() => screenTexture(game.screen, logo, game.loading, () => invalidate()), [game.screen, logo, game.loading, invalidate])
+  // l'ultimo stato del caricamento disegnato sullo schermo: si ridisegna solo se cambia
+  const shownLoad = useRef({ p: -1, ready: false })
   const boot = useRef(0)
   const screenMat = useMemo(() => new THREE.MeshBasicMaterial({ map: lcd.tex, toneMapped: false }), [lcd])
   // si riaccende quando entra in scena e ogni volta che lo si prende in mano
@@ -255,8 +258,16 @@ export function Console3D({ phase, mobile, grab, hovered, game, logo, plasticRou
     // accensione: logo Artismi, poi la schermata di lancio
     if (boot.current < BOOT_SECONDS) {
       boot.current = Math.min(BOOT_SECONDS, boot.current + Math.min(dt, 0.05))
-      lcd.draw(boot.current)
+      lcd.draw(boot.current, gameLoad)
       moving = true
+    } else {
+      // il gioco si carica in sottofondo: lo schermo segue, un punto percentuale alla volta
+      const p = Math.floor(gameLoad.p * 100)
+      if (p !== shownLoad.current.p || gameLoad.ready !== shownLoad.current.ready) {
+        shownLoad.current = { p, ready: gameLoad.ready }
+        lcd.draw(BOOT_SECONDS, gameLoad)
+        moving = true
+      }
     }
     // lo schermo sta sempre acceso; piu' luminoso del resto (la post-produzione lo smorza)
     power.current = step(power.current, grab ? 1.5 : hovered ? 1.4 : 1.3, 6)

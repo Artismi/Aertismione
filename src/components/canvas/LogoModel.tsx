@@ -4,6 +4,7 @@ import * as THREE from 'three'
 import { useEffect, useMemo, useRef } from 'react'
 import { useStore } from '../../stores/useStore'
 import { glassUniforms, glassPars, glassComposite } from './table/WorldBackdrop'
+import { marble } from './table/marble'
 
 /** Larghezza del logo nel mondo, a scala 1 (logo.glb: 343 × 0,139 × 0,06) */
 const LOGO_W = 2.86
@@ -195,6 +196,8 @@ export function LogoModel({ inWorld = false, ...props }: any) {
             b.getCenter(ball.position)
             dot.parent.add(ball)
             dot.visible = false
+            // scendendo nella pagina la bilia lascia la i e cade sul banco (Marble3D)
+            if (inWorld) marble.logoBall = ball
         }
 
         // prima si raccolgono le mesh: il contorno e' a sua volta una mesh e il
@@ -225,6 +228,7 @@ export function LogoModel({ inWorld = false, ...props }: any) {
 
         return () => {
             if (ball) { ball.removeFromParent(); ball.geometry.dispose() }
+            if (marble.logoBall === ball) marble.logoBall = null
             if (dot) dot.visible = true
             added.forEach(l => l.parent?.remove(l))
             outlineMat?.dispose()
