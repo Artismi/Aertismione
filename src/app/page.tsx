@@ -2,27 +2,26 @@ import SceneLoader from './SceneLoader'
 import { Navbar } from '@/components/ui/Navbar'
 import { Preloader } from '@/components/ui/Preloader'
 import { HeroSection } from '@/components/sections/HeroSection'
-import { ProblemSection } from '@/components/sections/ProblemSection'
 import { ServicesNewSection } from '@/components/sections/ServicesNewSection'
 import { ConfiguratorModal } from '@/components/configurator/ConfiguratorModal'
 import { PortfolioSection } from '@/components/sections/PortfolioSection'
 import { ContactSection } from '@/components/sections/ContactSection'
 import { AboutSection } from '@/components/sections/AboutSection'
+import { SmoothScroll } from '@/components/ui/SmoothScroll'
 
 /**
- * Scroll Map — the scroll journey through the 3D world:
+ * La discesa nel mondo 3D (Table3D, dietro la pagina), con lo scroll morbido:
  *
- *  0px   – 100vh  → Logo rotates (screen 1, empty text area)
- *  100vh – 200vh  → Intro text / Hero copy (screen 2)
- *  200vh – 300vh  → Problema / Visione (camera mid-descent)
- *  300vh – 420vh  → Servizi (camera still descending)
- *  420vh – 550vh  → Portfolio placeholder
- *  550vh – 700vh  → Chi Sono / Avatar floor (camera at y≈-16)
- *  700vh+         → Contatti
+ *  Hero (con Visione)    → in aria, con il logo e lo shader rosa
+ *  Progetti              → la camera scende e si ferma sul banco da lavoro
+ *  Servizi, Chi sono,    → la camera scende oltre il bordo, il banco esce in alto:
+ *  Contatti                 resta lo sfondo rosa e il sito continua come prima
+ *
  */
 export default function Home() {
   return (
     <>
+      <SmoothScroll />
       <Preloader />
       <Navbar />
       <ConfiguratorModal />
@@ -30,10 +29,6 @@ export default function Home() {
 
       <section id="hero" style={{ position: 'relative' }}>
         <HeroSection />
-      </section>
-
-      <section id="visione">
-        <ProblemSection />
       </section>
 
       <section id="portfolio">

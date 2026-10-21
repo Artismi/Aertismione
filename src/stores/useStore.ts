@@ -21,6 +21,9 @@ interface AppState {
     /** Traccia audio corrente: null = quella di casa, altrimenti quella del progetto. */
     ambienceTrack: string | null
     setAmbienceTrack: (src: string | null) => void
+    /** Porto Vecchio aperto a tutto schermo: il 3D dietro si ferma. */
+    gameOpen: boolean
+    setGameOpen: (open: boolean) => void
     loadingProgress: number
     setLoadingProgress: (progress: number) => void
 
@@ -84,6 +87,8 @@ export const useStore = create<AppState>((set) => ({
 
     ambienceTrack: null,
     setAmbienceTrack: (ambienceTrack) => set({ ambienceTrack }),
+    gameOpen: false,
+    setGameOpen: (gameOpen) => set({ gameOpen }),
     loadingProgress: 0,
     setLoadingProgress: (loadingProgress) => set({ loadingProgress }),
 

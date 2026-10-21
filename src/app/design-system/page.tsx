@@ -1,14 +1,12 @@
 'use client'
 
 import React from 'react'
-import { HERO, ABOUT, SERVICES, PORTFOLIO, VISION, CONTACT } from '@/config/content'
+import { HERO, ABOUT, SERVICES, PORTFOLIO, CONTACT } from '@/config/content'
 import { HeroSection } from '@/components/sections/HeroSection'
-import { ProblemSection } from '@/components/sections/ProblemSection'
 import { ServicesNewSection } from '@/components/sections/ServicesNewSection'
 import { AboutSection } from '@/components/sections/AboutSection'
 import { ContactSection } from '@/components/sections/ContactSection'
 import { ProjectPage } from '@/app/portfolio/[id]/ProjectPage'
-import { IllustrationsGallery } from '@/app/portfolio/[id]/IllustrationsGallery'
 import { Navbar } from '@/components/ui/Navbar'
 import { DesignFrame } from '@/components/design/DesignFrame'
 
@@ -25,11 +23,6 @@ export default function DesignSystemPage() {
       <DesignFrame title="Home - Hero">
         <Navbar />
         <HeroSection />
-      </DesignFrame>
-
-      <DesignFrame title="Home - Il Problema">
-         <Navbar />
-         <ProblemSection />
       </DesignFrame>
 
       <DesignFrame title="Home - About">
@@ -54,17 +47,13 @@ export default function DesignSystemPage() {
           {/* Main Landing / Hero of Project */}
           <DesignFrame title={`Portfolio - ${project.title} - Hero`}>
             <Navbar />
-            {project.id === 'illustrazioni' ? (
-              <IllustrationsGallery project={project as any} />
-            ) : (
-              <ProjectPage 
-                project={project as any} 
-                index={idx} 
-                total={PORTFOLIO.projects.length}
-                prev={null}
-                next={null}
-              />
-            )}
+            <ProjectPage
+              project={project as any}
+              index={idx}
+              total={PORTFOLIO.projects.length}
+              prev={null}
+              next={null}
+            />
           </DesignFrame>
           
           {/* Additional detail frames if content is long, but for doc purposes we focus on the main entry */}

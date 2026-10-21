@@ -8,7 +8,6 @@ import { useStore } from '../../stores/useStore'
 import { LogoModel } from './LogoModel'
 import { AvatarParticles } from './AvatarParticles'
 import { BackgroundModel } from './BackgroundModel'
-import { CausticsPlane } from './CausticsPlane'
 import type { AvatarTarget } from './AvatarParticles'
 
 interface HeroStageProps {
@@ -49,8 +48,8 @@ export function HeroStage({ onTrackedPoints }: HeroStageProps = {}) {
 
     return (
         <group ref={groupRef}>
-            {/* Background caustics — piscina rosata dietro il logo */}
-            <CausticsPlane />
+            {/* La piscina rosata ora e' il fondale del mondo dietro la pagina (Table3D,
+                WorldBackdrop): sta dietro al tavolo e alle cose che ha sopra */}
 
             {/* STAGE 1: Logo — co-located at y=0 */}
             <LogoModel position={[0, 0, 0]} />

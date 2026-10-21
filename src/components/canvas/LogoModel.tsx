@@ -1,8 +1,9 @@
-import { useGLTF, Center, Float } from '@react-three/drei'
+import { useGLTF, useEnvironment, Center, Float } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { useEffect, useMemo, useRef } from 'react'
 import { useStore } from '../../stores/useStore'
+import { glassUniforms, glassPars, glassComposite } from './table/WorldBackdrop'
 
 // Invisible occluder material — blocks depth without painting pixels
 const occluderMat = new THREE.MeshBasicMaterial({
@@ -10,8 +11,16 @@ const occluderMat = new THREE.MeshBasicMaterial({
     side: THREE.FrontSide,
 })
 
-export function LogoModel(props: any) {
+/**
+ * inWorld: il logo e' un oggetto del mondo della home (Table3D), sospeso in aria
+ * sopra il banco. Li' non svanisce con lo scroll e non serve proteggere i testi:
+ * e' la camera che si muove.
+ */
+export function LogoModel({ inWorld = false, ...props }: any) {
     const { scene } = useGLTF('/models/logo.glb')
+    // la sua luce di studio, quella di sempre (il preset "studio" di drei, servito dal sito):
+    // nel mondo del banco la luce e' piu' calda e il vetro diventava grigio
+    const studio = useEnvironment({ files: '/models/studio_logo.hdr' })
     const rotatingRef = useRef<THREE.Group>(null)
     const groupRef = useRef<THREE.Group>(null)
     const timeRef = useRef(0)
@@ -37,6 +46,14 @@ export function LogoModel(props: any) {
         // Fresnel sull'alpha: fronte quasi trasparente, bordi opachi come cristallo.
         // NdotV ≈ 1 (fronte) → alpha bassa; NdotV ≈ 0 (bordi) → alpha alta.
         mat.onBeforeCompile = (shader) => {
+            if (inWorld) {
+                // nel mondo del banco: il vetro si fonde da solo con il rosa che ha dietro (vedi WorldBackdrop)
+                Object.assign(shader.uniforms, glassUniforms)
+                shader.fragmentShader = glassPars + shader.fragmentShader.replace(
+                    '#include <dithering_fragment>',
+                    '#include <dithering_fragment>\n' + glassComposite,
+                )
+            }
             shader.fragmentShader = shader.fragmentShader.replace(
                 '#include <alphamap_fragment>',
                 `#include <alphamap_fragment>
@@ -48,7 +65,12 @@ export function LogoModel(props: any) {
         }
 
         return mat
-    }, [])
+    }, [inWorld])
+
+    useEffect(() => {
+        glassMaterial.envMap = studio
+        glassMaterial.needsUpdate = true
+    }, [glassMaterial, studio])
 
     useEffect(() => {
         if (!scene) return
@@ -123,6 +145,8 @@ export function LogoModel(props: any) {
 
         // Il logo resta staticamente ben inquadrato al centro dello schermo.
         // Essendo il Canvas fisso, l'interfaccia HTML scrollando gli passerà naturalmente sopra.
+        if (inWorld) return
+
         if (groupRef.current) {
             const targetY = -0.2 // Altezza perfetta al centro
             const lerpFactor = Math.min(1, delta * 6.5)
@@ -149,12 +173,16 @@ export function LogoModel(props: any) {
     return (
         <group ref={groupRef} {...props} rotation-y={Math.PI}>
             {/* Occluder planes — proteggono le sezioni testo */}
-            <mesh position={[0, -6, -0.5]} renderOrder={0} material={occluderMat}>
-                <planeGeometry args={[18, 6]} />
-            </mesh>
-            <mesh position={[0, -12, -0.5]} renderOrder={0} material={occluderMat}>
-                <planeGeometry args={[18, 7]} />
-            </mesh>
+            {!inWorld && (
+                <>
+                    <mesh position={[0, -6, -0.5]} renderOrder={0} material={occluderMat}>
+                        <planeGeometry args={[18, 6]} />
+                    </mesh>
+                    <mesh position={[0, -12, -0.5]} renderOrder={0} material={occluderMat}>
+                        <planeGeometry args={[18, 7]} />
+                    </mesh>
+                </>
+            )}
 
             <Center>
                 <Float speed={3} rotationIntensity={0} floatIntensity={0.3}>

@@ -2,7 +2,6 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { PORTFOLIO } from '@/config/content'
 import { ProjectPage } from './ProjectPage'
-import { IllustrationsGallery } from './IllustrationsGallery'
 
 type Props = { params: Promise<{ id: string }> }
 
@@ -31,10 +30,6 @@ export default async function Page({ params }: Props) {
   if (index === -1) notFound()
 
   const project = PORTFOLIO.projects[index]
-
-  if (id === 'illustrazioni') {
-    return <IllustrationsGallery project={project} />
-  }
 
   const prev = index > 0 ? PORTFOLIO.projects[index - 1] : null
   const next = index < PORTFOLIO.projects.length - 1 ? PORTFOLIO.projects[index + 1] : null

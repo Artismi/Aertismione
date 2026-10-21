@@ -9,15 +9,34 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import styles from './PortfolioSection.module.css'
-import { PORTFOLIO } from '@/config/content'
+import { PORTFOLIO, PROGETTI } from '@/config/content'
+import dynamic from 'next/dynamic'
+import type { TableApi } from '@/components/canvas/table/Table3D'
+import { consoleScreen } from '@/components/canvas/table/Console3D'
+import { GameBoy, gameWarmable, type Rect } from '@/components/ui/GameBoy'
+
+// Il tavolo in 3D si carica solo nel browser, a parte dal resto della pagina
+const Table3D = dynamic(() => import('@/components/canvas/table/Table3D'), { ssr: false })
 
 /* â”€â”€â”€ Costanti â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 const BALL_R        = 15
-const FOLDER_HIT_R  = 74   // raggio collisione/hover cartellina
+const FOLDER_HIT_R  = 74   // raggio collisione/hover cartellina (a misura piena)
+
+/** Con tanti lavori le cartelline si stringono: misura in base allo spazio tra una e l'altra */
+function folderScale(w: number, h: number) {
+  return Math.max(0.5, Math.min(1, (Math.min(w, h) * 0.27) / 160))
+}
 const FRICTION      = 0.972
 const MIN_SPEED     = 0.07
 const MAX_LAUNCH    = 38
+// Il tabellone e' la tavola stesa sul fascicolo 3D aperto: misura fissa, con le
+// stesse proporzioni della tavola (BW : BD in Folder3D)
+const MAP_W         = 1200
+const MAP_H         = 775
+// pixel del canvas per unita' del tabellone: la texture si ricarica a ogni
+// fotogramma, piu' grande farebbe scattare il 3D
+const MAP_SCALE     = 1
 
 /* â”€â”€â”€ Tipi â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
@@ -30,7 +49,22 @@ interface JumpState {
   startTime: number; duration: number; arcHeight: number
   scaleX: number; scaleY: number; arcNorm: number
   landed: boolean; projectId: string
+  /** Velocita' da dare alla pallina dopo l'atterraggio (uscita dalla piega) */
+  thenVx?: number; thenVy?: number
 }
+
+/**
+ * Il tavolo: la cartellina si apre in piu' tempi.
+ * closed → sliding (scivola a destra) → opening (la copertina si apre a sinistra)
+ * → open (dentro c'e' la mappa) → closing → returning → closed.
+ * Da telefono basta socchiuderla: 'list' mostra l'elenco di schede.
+ */
+type Phase = 'closed' | 'sliding' | 'opening' | 'open' | 'closing' | 'returning' | 'list'
+
+const SLIDE_MS = 650
+const COVER_MS = 800
+const FADE_MS  = 280
+const OPEN_MS  = 1150 // coperchio alzato e schermo acceso
 
 interface Particle { x: number; y: number; vx: number; vy: number; r: number; alpha: number; color: string }
 
@@ -43,6 +77,16 @@ const ZONE_JITTER = PROJECTS.map((p) => {
   return Array.from({ length: 9 }, (_, i) => 0.68 + ((seed * (i+1) * 137 + 41) % 100) / 175)
 })
 
+/** Le anteprime che spuntano dal fascicolo chiuso */
+// Da telefono il tabellone e' in verticale (il fascicolo aperto si guarda girato
+// di 90°): le stesse cartelline, con le coordinate scambiate
+const PROJECTS_TALL: Project[] = PROJECTS.map((p) => ({ ...p, mapX: p.mapY, mapY: p.mapX }))
+
+const THUMBS = PROJECTS
+  .map((p) => (p as { thumb?: string }).thumb)
+  .filter((t): t is string => Boolean(t))
+  .slice(0, 4)
+
 const PATH_PAIRS: [number, number][] = [
   [0,2],[2,4],[4,6],[6,8],[8,0],
   [1,3],[3,5],[5,7],[7,9],[9,1],
@@ -54,16 +98,6 @@ const PATH_PAIRS: [number, number][] = [
 function hexToRgb(hex: string): [number, number, number] {
   const h = hex.replace('#', '')
   return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)]
-}
-
-function getCanvasPos(e: React.MouseEvent<HTMLCanvasElement>): { lx: number; ly: number } {
-  const rect = e.currentTarget.getBoundingClientRect()
-  return { lx: e.clientX - rect.left, ly: e.clientY - rect.top }
-}
-
-function getTouchCanvasPos(e: React.TouchEvent<HTMLCanvasElement>, touch: React.Touch): { lx: number; ly: number } {
-  const rect = e.currentTarget.getBoundingClientRect()
-  return { lx: touch.clientX - rect.left, ly: touch.clientY - rect.top }
 }
 
 /* â”€â”€â”€ Disegno: sfondo con hex dots + reveal radiale â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
@@ -85,7 +119,7 @@ function drawBackground(ctx: CanvasRenderingContext2D, w: number, h: number, rev
   }
 }
 
-function drawMapDecorations(ctx: CanvasRenderingContext2D, w: number, h: number) {
+function drawMapDecorations(ctx: CanvasRenderingContext2D, w: number, h: number, touch: boolean) {
   const cx = w-44, cy = 44, r = 14
   ctx.strokeStyle = 'rgba(242,237,228,0.30)'; ctx.lineWidth = 1.2
   ctx.beginPath(); ctx.moveTo(cx, cy-r); ctx.lineTo(cx, cy+r); ctx.stroke()
@@ -104,10 +138,17 @@ function drawMapDecorations(ctx: CanvasRenderingContext2D, w: number, h: number)
   ctx.font = '600 7.5px "JetBrains Mono",monospace'
   ctx.fillStyle = 'rgba(242,237,228,0.25)'; ctx.textAlign = 'left'
   ctx.fillText('ARTISMI STUDIO', 14, h-12)
+  // le istruzioni sono stampate sul tabellone, come su un gioco da tavolo
+  ctx.font = '600 11px "JetBrains Mono",monospace'
+  ctx.fillStyle = 'rgba(242,237,228,0.5)'; ctx.textAlign = 'right'
+  ctx.fillText(touch
+    ? 'TOCCA PER SALTARE — TRASCINA LA PALLINA PER SPARARLA'
+    : 'CLICCA PER SALTARE — TRASCINA LA PALLINA PER SPARARLA COME UNA BILIA', w-18, h-14)
 }
 
 function drawZone(ctx: CanvasRenderingContext2D, p: Project, jitter: number[], w: number, h: number) {
-  const cx = p.mapX*w, cy = p.mapY*h, r = Math.min(w,h)*0.155, N = jitter.length
+  // le zone si stringono con il numero dei lavori (erano pensate per sei)
+  const cx = p.mapX*w, cy = p.mapY*h, r = Math.min(w,h)*0.155*Math.min(1, Math.sqrt(6/PROJECTS.length)), N = jitter.length
   const [rr,gg,bb] = hexToRgb(p.accent)
   ctx.beginPath()
   for (let i = 0; i <= N; i++) {
@@ -198,6 +239,7 @@ function drawFolder(ctx: CanvasRenderingContext2D, p: Project, w: number, h: num
   ctx.save()
   ctx.translate(cx, cy+lift)
   ctx.rotate(tilt)
+  const fs = folderScale(w, h); ctx.scale(fs, fs)
 
   // Alone pulsante attorno alla cartellina
   const pulse = 0.5+0.5*Math.sin(time*0.0019+p.mapX*8)
@@ -520,13 +562,20 @@ export function PortfolioSection() {
   const startTimeRef  = useRef(0)
   const gridRevealRef = useRef(0)
   const inViewRef     = useRef(false)
+  const openRef       = useRef(false)
+  const desktopRef    = useRef(false)
+  const projRef       = useRef<Project[]>(PROJECTS)   // le cartelline, nel verso del tabellone
+  const timersRef     = useRef<number[]>([])
+  const tableRef      = useRef<TableApi | null>(null)   // il tabellone nel 3D: texture e punto sotto il mouse
+  const [desktop, setDesktop] = useState(true)
+
+  const [phase, setPhase] = useState<Phase>('closed')
+  const [grab, setGrab]   = useState(false)
 
   const isDraggingRef       = useRef(false)
   const dragPosRef          = useRef({ x: 0, y: 0 })
   const dragOriginRef       = useRef({ x: 0, y: 0 })
   const collisionCooldownRef = useRef(0)
-  const winMoveRef = useRef<((e: MouseEvent) => void) | null>(null)
-  const winUpRef   = useRef<((e: MouseEvent) => void) | null>(null)
 
   const router = useRouter()
   const routerRef = useRef(router)
@@ -535,20 +584,24 @@ export function PortfolioSection() {
   useEffect(() => {
     const canvas=canvasRef.current, wrapper=wrapperRef.current
     if (!canvas||!wrapper) return
-    const canvasEl = canvas, wrapperEl = wrapper
+    const wrapperEl = wrapper
+    // il tabellone ha misura fissa: e' la texture dentro il fascicolo. Da telefono
+    // lo si disegna in verticale (MAP_H × MAP_W) e ruotato nella texture (vedi loop)
+    canvas.width=MAP_W*MAP_SCALE; canvas.height=MAP_H*MAP_SCALE
     function resize() {
-      const dpr=window.devicePixelRatio||1, w=wrapperEl.clientWidth
-      // On narrow screens give more vertical room so the ball playground is playable
-      const isMobile = w < 768
-      const h = isMobile
-        ? Math.min(700, Math.max(480, Math.round(w * 0.78)))
-        : Math.min(620, Math.max(380, Math.round(w * 0.54)))
-      canvasEl.width=w*dpr; canvasEl.height=h*dpr
-      canvasEl.style.width=`${w}px`; canvasEl.style.height=`${h}px`
-      sizeRef.current={w,h}
-      const b=ballRef.current
-      if (b.x===0&&b.y===0) { b.x=w/2; b.y=h/2 }
-      else { b.x=Math.min(Math.max(b.x,BALL_R+2),w-BALL_R-2); b.y=Math.min(Math.max(b.y,BALL_R+2),h-BALL_R-2) }
+      const w=wrapperEl.clientWidth
+      const desk = window.matchMedia('(min-width: 900px) and (pointer: fine)').matches
+      if (desk !== desktopRef.current || sizeRef.current.w === 0) {
+        desktopRef.current = desk
+        sizeRef.current = desk ? {w:MAP_W,h:MAP_H} : {w:MAP_H,h:MAP_W}
+        projRef.current = desk ? PROJECTS : PROJECTS_TALL
+        ballRef.current.x=sizeRef.current.w/2; ballRef.current.y=sizeRef.current.h/2
+      }
+      setDesktop(desk)
+      // il riquadro del tavolo; da telefono e' in verticale: fascicolo sopra, console sotto
+      wrapperEl.style.height = desktopRef.current
+        ? `${Math.min(620, Math.max(380, Math.round(w * 0.54)))}px`
+        : `${Math.round(Math.min(720, Math.max(520, w * 1.45)))}px`
     }
     resize()
     const ro=new ResizeObserver(resize); ro.observe(wrapper)
@@ -562,14 +615,6 @@ export function PortfolioSection() {
   }, [])
 
   useEffect(() => {
-    // Da telefono la mappa non viene nemmeno disegnata: le cartelline si
-    // sovrappongono su schermi stretti e la fionda e' ingiocabile al tocco.
-    // Li' si usa l'elenco sotto, che il CSS mostra al posto del canvas.
-    // Solo schermo largo con mouse. Su telefono le cartelline si
-    // sovrappongono e la fionda al tocco e' ingiocabile, in qualunque
-    // orientamento: li' si usa l'elenco di schede.
-    if (!window.matchMedia('(min-width: 900px) and (pointer: fine)').matches) return
-
     const canvas=canvasRef.current; if (!canvas) return
     const canvasLoop = canvas
     startTimeRef.current=performance.now()
@@ -580,19 +625,24 @@ export function PortfolioSection() {
       const {w,h}=sizeRef.current
       if (w===0) { rafRef.current=requestAnimationFrame(loop); return }
 
-      const dpr=window.devicePixelRatio||1
-      ctx.setTransform(dpr,0,0,dpr,0,0)
+      const PROJ=projRef.current, desk=desktopRef.current
+      // da telefono il tabellone si disegna in verticale e si ruota nella texture:
+      // (x, y) del disegno → (y, MAP_H - x) del canvas, che resta orizzontale
+      if (desk) ctx.setTransform(MAP_SCALE,0,0,MAP_SCALE,0,0)
+      else ctx.setTransform(0,-MAP_SCALE,MAP_SCALE,0,0,MAP_H*MAP_SCALE)
       const time=now-startTimeRef.current
       const ball=ballRef.current
 
-      gridRevealRef.current+=(( inViewRef.current?1:0)-gridRevealRef.current)*0.03
-      canvasLoop.style.opacity=Math.max(0, gridRevealRef.current).toFixed(3)
+      // La mappa si vede solo a fascicolo aperto: entra piano, esce svelta
+      const visible = inViewRef.current && openRef.current
+      gridRevealRef.current+=((visible?1:0)-gridRevealRef.current)*(visible?0.06:0.2)
 
-      // Sezione fuori schermo: si salta tutto il disegno. Prima la mappa
-      // continuava a ridisegnare cartelline, ombre, scia e particelle 60 volte
-      // al secondo anche mentre si guardava tutt'altra parte del sito: era una
-      // tassa costante che faceva scattare 3D, cursore e video.
-      if (!inViewRef.current && gridRevealRef.current < 0.02) {
+      // Sezione fuori schermo o fascicolo chiuso: si salta tutto il disegno.
+      // Prima la mappa continuava a ridisegnare cartelline, ombre, scia e
+      // particelle 60 volte al secondo anche mentre si guardava tutt'altra
+      // parte del sito: era una tassa costante che faceva scattare 3D,
+      // cursore e video.
+      if (!visible && gridRevealRef.current < 0.02) {
         rafRef.current = requestAnimationFrame(loop)
         return
       }
@@ -613,7 +663,7 @@ export function PortfolioSection() {
         if (t>=1) {
           ball.x=js.toX; ball.y=js.toY
           js.scaleX=1.6; js.scaleY=0.50; js.landed=true
-          const proj=PROJECTS.find(p=>p.id===js.projectId)
+          const proj=PROJ.find(p=>p.id===js.projectId)
           if (proj) {
             for (let i=0; i<12; i++) {
               const a=(i/12)*Math.PI*2+Math.random()*0.4, spd=2.5+Math.random()*5
@@ -630,6 +680,7 @@ export function PortfolioSection() {
             setTimeout(()=>{
               jumpRef.current=null
               if (proj) routerRef.current.push(`/portfolio/${proj.id}`)
+              else if (js.thenVx !== undefined) { ball.vx=js.thenVx; ball.vy=js.thenVy ?? 0 }
             }, 340)
           }, 120)
         }
@@ -655,9 +706,9 @@ export function PortfolioSection() {
         } else if (trailRef.current.length>0) { trailRef.current.shift() }
 
         if (now - collisionCooldownRef.current > 900) {
-          for (const p of PROJECTS) {
+          for (const p of PROJ) {
             const d=Math.hypot(ball.x-p.mapX*w, ball.y-p.mapY*h)
-            if (d < FOLDER_HIT_R) {
+            if (d < FOLDER_HIT_R*folderScale(w,h)) {
               collisionCooldownRef.current=now
               const ang=Math.atan2(ball.y-p.mapY*h, ball.x-p.mapX*w)
               ball.vx=Math.cos(ang)*6; ball.vy=Math.sin(ang)*6
@@ -684,16 +735,18 @@ export function PortfolioSection() {
       }
       particlesRef.current=alive
 
-      ctx.clearRect(0,0,w,h)
+      // la fodera scura del fascicolo: il tabellone e' stampato li' sopra
+      ctx.fillStyle='#1E1B24'; ctx.fillRect(0,0,w,h)
       drawBackground(ctx,w,h,gridRevealRef.current)
-      for (let i=0;i<PROJECTS.length;i++) drawZone(ctx,PROJECTS[i],ZONE_JITTER[i],w,h)
-      drawPaths(ctx,PROJECTS,w,h)
-      for (const p of PROJECTS) drawFolder(ctx,p,w,h,time,hoveredRef.current===p.id)
+      for (let i=0;i<PROJ.length;i++) drawZone(ctx,PROJ[i],ZONE_JITTER[i],w,h)
+      drawPaths(ctx,PROJ,w,h)
+      for (const p of PROJ) drawFolder(ctx,p,w,h,time,hoveredRef.current===p.id)
       drawTrail(ctx,trailRef.current)
       drawParticles(ctx,particlesRef.current)
       if (isDraggingRef.current) drawSlingshot(ctx, ball, dragOriginRef.current, w, h)
       drawBall(ctx,ball,jumpRef.current)
-      drawMapDecorations(ctx,w,h)
+      drawMapDecorations(ctx,w,h,!desk)
+      tableRef.current?.refresh()
 
       rafRef.current=requestAnimationFrame(loop)
     }
@@ -702,15 +755,145 @@ export function PortfolioSection() {
     return ()=>{ if(rafRef.current) cancelAnimationFrame(rafRef.current) }
   }, [])
 
+  /* ── Il tavolo: cartellina e gamepad ── */
+
+  function later(fn: () => void, ms: number) {
+    timersRef.current.push(window.setTimeout(fn, ms))
+  }
+
+  useEffect(() => () => { timersRef.current.forEach(clearTimeout) }, [])
+
+  // La pallina era rimasta pizzicata nella piega: aperto il fascicolo, salta fuori
+  function popBall() {
+    const {w,h}=sizeRef.current; if (w===0) return
+    const ball=ballRef.current, now=performance.now()
+    const sx=w/2, sy=h*0.42
+    ball.x=sx; ball.y=sy; ball.vx=0; ball.vy=0; trailRef.current=[]
+    collisionCooldownRef.current=now+800
+    const fire=['#FF55E0','#CC44FF','#FF99EE','#E8A8BF']
+    for (let i=0;i<14;i++) {
+      const a=Math.PI+(Math.random()-0.5)*1.6, sp=1.5+Math.random()*4
+      particlesRef.current.push({x:sx,y:sy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1.5,r:1.2+Math.random()*2.5,alpha:0.9,color:fire[i%fire.length]})
+    }
+    jumpRef.current={
+      fromX:sx, fromY:sy, toX:w*0.3, toY:h*0.58,
+      startTime:now, duration:640, arcHeight:120,
+      scaleX:0.6, scaleY:1.5, arcNorm:0,
+      landed:false, projectId:'', thenVx:-3.4, thenVy:0.8,
+    }
+  }
+
+  useEffect(() => {
+    openRef.current = phase === 'open'
+    if (phase === 'open') popBall()
+  }, [phase])
+
+  /** Il tavolo e' al centro dello schermo (la camera del mondo e' sul banco) */
+  function atTable() {
+    const r = wrapperRef.current?.getBoundingClientRect()
+    if (!r) return false
+    return Math.abs(r.top + r.height / 2 - window.innerHeight / 2) < window.innerHeight * 0.3
+  }
+
+  function openFolder() {
+    if (phase === 'list') { setPhase('closed'); return }
+    if (phase !== 'closed') return
+    setPhase('sliding')
+    later(() => setPhase('opening'), SLIDE_MS)
+    later(() => setPhase('open'), SLIDE_MS + COVER_MS)
+  }
+
+  function closeFolder() {
+    if (phase === 'list') { setPhase('closed'); return }
+    if (phase !== 'open') return
+    const ball=ballRef.current; ball.vx=0; ball.vy=0; jumpRef.current=null
+    hoveredRef.current=null
+    setPhase('closing')
+    later(() => setPhase('returning'), FADE_MS + COVER_MS)
+    later(() => setPhase('closed'), FADE_MS + COVER_MS + SLIDE_MS)
+  }
+
+  useEffect(() => {
+    if (phase !== 'open') return
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') closeFolder() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
+
+  // Il gioco si apre dentro il Game Boy, qui sulla home (vedi GameBoy): la console
+  // si prende in mano, viene davanti alla camera, e dal suo schermo nasce il gioco.
+  // Da computer il gioco e' gia' partito in sottofondo, nascosto: arriva al menu subito.
+  const [warm, setWarm] = useState(false)
+  const [gameOn, setGameOn] = useState(false)      // il gioco e' montato (anche nascosto)
+  const [gameFrom, setGameFrom] = useState<Rect | null>(null)
+  const [gameKey, setGameKey] = useState(0)
+
+  useEffect(() => {
+    if (!gameWarmable()) return
+    setWarm(true)
+    // finito di caricare il sito, quando il browser e' libero
+    let t = 0
+    const start = () => { t = window.setTimeout(() => {
+      const go = () => setGameOn(true)
+      if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(go, { timeout: 4000 })
+      else go()
+    }, 2500) }
+    if (document.readyState === 'complete') start()
+    else window.addEventListener('load', start, { once: true })
+    return () => { window.clearTimeout(t); window.removeEventListener('load', start) }
+  }, [])
+  useGamePreload(!warm)
+
+  function centerRect(): Rect {
+    const w = window.innerWidth, h = window.innerHeight
+    return { top: h * 0.35, left: w * 0.35, width: w * 0.3, height: h * 0.3 }
+  }
+
+  function grabGamepad() {
+    if (grab || gameFrom) return
+    setGrab(true)
+    setGameOn(true)
+    later(() => setGameFrom(consoleScreen.rect ?? centerRect()), OPEN_MS)
+  }
+
+  function closeGame() {
+    setGameFrom(null)
+    // lo schermo torna sulla console, poi il coperchio si richiude
+    later(() => setGrab(false), 120)
+    if (window.location.hash === `#${PROGETTI.game.id}`) {
+      history.replaceState(null, '', window.location.pathname + window.location.search)
+    }
+    // il gioco si rimonta da capo (si ferma, musica compresa); da computer riparte in sottofondo
+    if (warm) setGameKey((k) => k + 1)
+    else setGameOn(false)
+  }
+
+  // Link diretto (/#porto-vecchio): si arriva al tavolo e il Game Boy arriva subito in mano
+  useEffect(() => {
+    function fromHash() {
+      if (window.location.hash !== `#${PROGETTI.game.id}`) return
+      const el = wrapperRef.current
+      el?.scrollIntoView({ block: 'center', behavior: 'instant' })
+      window.setTimeout(() => {
+        el?.scrollIntoView({ block: 'center', behavior: 'instant' })
+        grabGamepad()
+      }, 400)
+    }
+    fromHash()
+    window.addEventListener('hashchange', fromHash)
+    return () => window.removeEventListener('hashchange', fromHash)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   function jumpToPoint(lx: number, ly: number) {
     if (jumpRef.current) return
     const ball=ballRef.current
     const {w,h}=sizeRef.current; if(w===0) return
 
     let clicked: Project|null=null, minD=Infinity
-    for (const p of PROJECTS) {
+    for (const p of projRef.current) {
       const d=Math.hypot(lx-p.mapX*w, ly-p.mapY*h)
-      if (d<FOLDER_HIT_R&&d<minD) {minD=d;clicked=p}
+      if (d<FOLDER_HIT_R*folderScale(w,h)&&d<minD) {minD=d;clicked=p}
     }
     const tx=clicked?clicked.mapX*w:lx, ty=clicked?clicked.mapY*h:ly
     const dist=Math.hypot(tx-ball.x, ty-ball.y)
@@ -739,144 +922,139 @@ export function PortfolioSection() {
       const spd=Math.min(dist*0.22, MAX_LAUNCH)
       ball.vx=(dx/dist)*spd; ball.vy=(dy/dist)*spd
     } else { ball.vx=0; ball.vy=0 }
-    if (canvasRef.current) canvasRef.current.style.cursor='crosshair'
-    if (winMoveRef.current) { window.removeEventListener('mousemove',winMoveRef.current); winMoveRef.current=null }
-    if (winUpRef.current)   { window.removeEventListener('mouseup',winUpRef.current);   winUpRef.current=null }
   }
 
-  function handleMouseDown(e: React.MouseEvent<HTMLCanvasElement>) {
-    const {lx,ly}=getCanvasPos(e)
-    const ball=ballRef.current
-    if (Math.hypot(lx-ball.x, ly-ball.y) < BALL_R+14) {
-      isDraggingRef.current=true
-      dragOriginRef.current={x:ball.x, y:ball.y}
-      dragPosRef.current={x:lx,y:ly}
-      jumpRef.current=null
-      e.currentTarget.style.cursor='grabbing'
+  /* ── Mouse e dita sul tabellone: dallo schermo al fascicolo 3D ── */
 
-      const canvas=canvasRef.current
-      winMoveRef.current=(ev:MouseEvent)=>{
-        if (!canvas) return
-        const rect=canvas.getBoundingClientRect()
-        dragPosRef.current={x:ev.clientX-rect.left, y:ev.clientY-rect.top}
-      }
-      winUpRef.current=()=>fireSlingshot()
-      window.addEventListener('mousemove',winMoveRef.current)
-      window.addEventListener('mouseup',winUpRef.current)
-    }
-  }
+  useEffect(() => {
+    if (phase !== 'open') return
+    const body = document.body
 
-  function handleMouseMove(e: React.MouseEvent<HTMLCanvasElement>) {
-    const {lx,ly}=getCanvasPos(e)
-    const {w,h}=sizeRef.current
-    const ball=ballRef.current
-
-    if (isDraggingRef.current) {
-      dragPosRef.current={x:lx,y:ly}
-      e.currentTarget.style.cursor='grabbing'
-      return
+    // da telefono il tabellone e' girato: vedi la rotazione nel loop
+    const desk = desktopRef.current
+    function toMap(e: PointerEvent) {
+      const p = tableRef.current?.toBoard(e.clientX, e.clientY)
+      if (!p) return null
+      return desk
+        ? { lx: p.u*MAP_W, ly: p.v*MAP_H, inside: p.inside }
+        : { lx: (1-p.v)*MAP_H, ly: p.u*MAP_W, inside: p.inside }
     }
 
-    const onBall=Math.hypot(lx-ball.x, ly-ball.y)<BALL_R+10
-    hoveredRef.current=null
-    for (const p of PROJECTS) {
-      if (Math.hypot(lx-p.mapX*w, ly-p.mapY*h)<FOLDER_HIT_R) {hoveredRef.current=p.id;break}
+    // da telefono, a fascicolo aperto, il dito gioca: la pagina sta ferma
+    const html = document.documentElement
+    const prev = { overflow: html.style.overflow, touch: html.style.touchAction }
+    if (!desk) { html.style.overflow = 'hidden'; html.style.touchAction = 'none' }
+    // pulsanti, link e menu della pagina restano loro
+    function ours(e: PointerEvent) {
+      const t = e.target as Element | null
+      return !t?.closest?.('a, button, input, textarea, select, nav, header, [role="dialog"]')
     }
-    e.currentTarget.style.cursor=onBall?'grab':hoveredRef.current?'pointer':'crosshair'
-  }
 
-  function handleMouseUp(e: React.MouseEvent<HTMLCanvasElement>) {
-    if (isDraggingRef.current) {
-      fireSlingshot(); return
-    }
-    const {lx,ly}=getCanvasPos(e)
-    jumpToPoint(lx, ly)
-  }
-
-  function handleMouseLeave() {
-    hoveredRef.current=null
-    if (!isDraggingRef.current && canvasRef.current) canvasRef.current.style.cursor='crosshair'
-  }
-
-  /* ── Touch handlers (mirror mouse logic for mobile) ── */
-
-  function handleTouchStart(e: React.TouchEvent<HTMLCanvasElement>) {
-    if (e.touches.length === 0) return
-    e.preventDefault()
-    const touch = e.touches[0]
-    const {lx,ly} = getTouchCanvasPos(e, touch)
-    const ball = ballRef.current
-    if (Math.hypot(lx-ball.x, ly-ball.y) < BALL_R+20) {
-      isDraggingRef.current = true
-      dragOriginRef.current = {x: ball.x, y: ball.y}
-      dragPosRef.current = {x: lx, y: ly}
-      jumpRef.current = null
-    }
-  }
-
-  function handleTouchMove(e: React.TouchEvent<HTMLCanvasElement>) {
-    if (!isDraggingRef.current || e.touches.length === 0) return
-    e.preventDefault()
-    const touch = e.touches[0]
-    const {lx,ly} = getTouchCanvasPos(e, touch)
-    dragPosRef.current = {x: lx, y: ly}
-  }
-
-  function handleTouchEnd(e: React.TouchEvent<HTMLCanvasElement>) {
-    e.preventDefault()
-    if (isDraggingRef.current) {
-      fireSlingshot()
-    } else {
-      // Tap: jump to tapped point
-      const touch = e.changedTouches[0]
-      if (touch) {
-        const rect = canvasRef.current?.getBoundingClientRect()
-        if (rect) {
-          const lx = touch.clientX - rect.left
-          const ly = touch.clientY - rect.top
-          jumpToPoint(lx, ly)
-        }
+    let pressed = false
+    function down(e: PointerEvent) {
+      if (e.button !== 0 || !ours(e)) return
+      const p = toMap(e); if (!p?.inside) return
+      pressed = true
+      const ball = ballRef.current
+      if (Math.hypot(p.lx-ball.x, p.ly-ball.y) < BALL_R+(desk ? 16 : 40)) {
+        isDraggingRef.current = true
+        dragOriginRef.current = { x: ball.x, y: ball.y }
+        dragPosRef.current = { x: p.lx, y: p.ly }
+        jumpRef.current = null
+        body.style.cursor = 'grabbing'
       }
     }
-  }
+    function move(e: PointerEvent) {
+      const p = toMap(e); if (!p) return
+      if (isDraggingRef.current) { dragPosRef.current = { x: p.lx, y: p.ly }; return }
+      hoveredRef.current = null
+      if (!p.inside || !ours(e)) { body.style.cursor = ''; return }
+      const {w,h} = sizeRef.current
+      for (const pr of projRef.current) {
+        if (Math.hypot(p.lx-pr.mapX*w, p.ly-pr.mapY*h) < FOLDER_HIT_R*folderScale(w,h)) { hoveredRef.current = pr.id; break }
+      }
+      const ball = ballRef.current
+      body.style.cursor = Math.hypot(p.lx-ball.x, p.ly-ball.y) < BALL_R+12 ? 'grab' : hoveredRef.current ? 'pointer' : 'crosshair'
+    }
+    function up(e: PointerEvent) {
+      if (isDraggingRef.current) { fireSlingshot(); body.style.cursor = 'grab'; pressed = false; return }
+      if (!pressed) return
+      pressed = false
+      const p = toMap(e)
+      if (p?.inside) jumpToPoint(p.lx, p.ly)
+    }
+
+    window.addEventListener('pointerdown', down)
+    window.addEventListener('pointermove', move, { passive: true })
+    window.addEventListener('pointerup', up)
+    return () => {
+      window.removeEventListener('pointerdown', down)
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', up)
+      isDraggingRef.current = false
+      hoveredRef.current = null
+      body.style.cursor = ''
+      html.style.overflow = prev.overflow; html.style.touchAction = prev.touch
+    }
+  }, [phase])
 
   return (
     <div ref={sectionRef} className={styles.section}>
-      <div className="container">
-        <span className="accent-bar" />
-        <h2 className={styles.heading}>Portfolio</h2>
-        <p className={styles.intro}>
-          Ogni progetto è un territorio.{' '}
-          <em className={styles.introDesktop}>
-            Clicca per saltare — trascina la pallina per spararla come una bilia.
-          </em>
-          <em className={styles.introMobile}>Tocca un progetto per aprirlo.</em>
-        </p>
-      </div>
+      {/* Niente titolo a vista: la sezione e' il piano di lavoro. Il titolo resta per chi legge con lo screen reader */}
+      <h2 className={styles.srOnly}>{PROGETTI.heading}</h2>
 
-      <div ref={wrapperRef} className={styles.canvasWrapper}>
-        <canvas
-          ref={canvasRef}
-          className={styles.canvas}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseLeave}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          style={{ touchAction: 'none' }}
+      <div ref={wrapperRef} className={styles.stage} data-phase={phase} data-world-stage>
+        {/* Il tavolo in 3D sta nel mondo dietro la pagina (Table3D fa un portale su body):
+            qui resta il riquadro che lo inquadra. I clic sul 3D arrivano da tutta la
+            pagina, quindi contano solo quando il tavolo e' davvero sullo schermo. */}
+        <Table3D
+          phase={phase}
+          grab={grab}
+          mobile={!desktop}
+          thumbs={THUMBS}
+          count={PROJECTS.length}
+          folderLabel={PROGETTI.folderLabel}
+          folderHint={PROGETTI.folderHint}
+          game={PROGETTI.game}
+          onFolder={() => { if (atTable()) openFolder() }}
+          onConsole={() => { if (atTable()) grabGamepad() }}
+          api={tableRef}
+          board={canvasRef}
+          stage={wrapperRef}
         />
-        <div className={styles.legend}>
-          {PROJECTS.map(p=>(
-            <span key={p.id} className={styles.legendItem} style={{'--lc':p.accent} as React.CSSProperties}>
-              <span className={styles.legendDot}/>{p.title}
-            </span>
-          ))}
-        </div>
+
+        {/* Gli stessi comandi da tastiera e per chi usa un lettore di schermo */}
+        <button
+          type="button"
+          className={`${styles.hit} ${styles.hitFolder}`}
+          onClick={openFolder}
+          aria-expanded={phase === 'open' || phase === 'list'}
+          tabIndex={phase === 'closed' || phase === 'list' ? 0 : -1}
+        >
+          {phase === 'list' ? PROGETTI.folderClose : PROGETTI.folderHint}
+        </button>
+        <button
+          id={PROGETTI.game.id}
+          type="button"
+          className={`${styles.hit} ${styles.hitConsole}`}
+          onClick={grabGamepad}
+          tabIndex={phase === 'closed' || phase === 'list' ? 0 : -1}
+        >
+          {PROGETTI.game.title} — {PROGETTI.game.hint}
+        </button>
+
+        {/* il tabellone si disegna qui ma si vede nel 3D, stampato dentro il fascicolo */}
+        <canvas ref={canvasRef} className={styles.canvas} aria-hidden="true" />
+
+        <button type="button" className={styles.folderClose} onClick={closeFolder} tabIndex={phase === 'open' ? 0 : -1}>
+          {PROGETTI.folderClose} ✕
+        </button>
+
       </div>
 
-      <div className={styles.mobileGrid}>
+      {gameOn && <GameBoy key={gameKey} from={gameFrom} onClose={closeGame} warm={warm} />}
+
+      <div className={styles.mobileGrid} data-show={phase === 'list' ? 'true' : undefined}>
         {PROJECTS.map(p=>(
           <button key={p.id} type="button" className={styles.mobileCard}
             style={{'--ca':p.accent} as React.CSSProperties}
@@ -893,7 +1071,43 @@ export function PortfolioSection() {
           </button>
         ))}
       </div>
-
     </div>
   )
+}
+
+/**
+ * Porto Vecchio si carica in sottofondo, dopo il sito: si aspetta che la pagina
+ * abbia finito (e il banco 3D abbia avuto il suo tempo), poi un file alla volta,
+ * a bassa priorita', solo quando il browser e' libero. Cosi' il sito non ne
+ * risente e, aprendo il gioco, i file arrivano dalla cache.
+ * Niente con il risparmio dati o la rete lenta.
+ */
+function useGamePreload(on: boolean) {
+  useEffect(() => {
+    if (!on) return
+    const net = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection
+    if (net?.saveData || /(^|-)2g$/.test(net?.effectiveType ?? '')) return
+    const base = PROGETTI.game.path.replace(/[^/]*$/, '')
+    const ctrl = new AbortController()
+    const idle = (cb: () => void) => {
+      if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(cb, { timeout: 3000 })
+      else window.setTimeout(cb, 200)   // Safari non ce l'ha
+    }
+    let timer = 0
+
+    async function run() {
+      for (const file of PROGETTI.game.preload) {
+        if (ctrl.signal.aborted) return
+        await new Promise<void>((ok) => idle(ok))
+        try {
+          const res = await fetch(base + file, { signal: ctrl.signal, priority: 'low' } as RequestInit)
+          await res.arrayBuffer()   // letto fino in fondo, cosi' resta in cache
+        } catch { if (ctrl.signal.aborted) return }
+      }
+    }
+    function start() { timer = window.setTimeout(run, 4000) }
+    if (document.readyState === 'complete') start()
+    else window.addEventListener('load', start, { once: true })
+    return () => { ctrl.abort(); window.clearTimeout(timer); window.removeEventListener('load', start) }
+  }, [on])
 }

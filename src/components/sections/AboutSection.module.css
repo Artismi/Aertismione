@@ -10,6 +10,8 @@
   flex-direction: column;
   justify-content: center;
   padding: clamp(60px, 8vw, 100px) clamp(24px, 5.5vw, 72px);
+  /* quello che entra dai lati non allarga la pagina (vedi ProblemSection) */
+  overflow-x: clip;
 }
 
 /* ── Card bio — max 420px, ancorata a sinistra ──────────── */
@@ -23,11 +25,10 @@
   /* Pannello rosa-violetto galleggiante — come da richiesta */
   background: linear-gradient(
     148deg,
-    rgba(60, 20, 70, 0.65) 0%,
-    rgba(30, 10, 40, 0.85) 100%
+    rgba(60, 20, 70, 0.88) 0%,
+    rgba(30, 10, 40, 0.95) 100%
   );
-  backdrop-filter: blur(32px) saturate(160%) brightness(0.95);
-  -webkit-backdrop-filter: blur(32px) saturate(160%) brightness(0.95);
+  /* niente sfocatura dello sfondo: sopra il mondo 3D costava a ogni fotogramma */
 
   /* Bordi luminosi del viola-rosato */
   border-top:    1.5px solid rgba(232, 168, 191, 0.35);
@@ -91,7 +92,7 @@
   font-family: var(--font-display);
   font-size: clamp(2rem, 4vw, 3rem);
   font-weight: 400;
-  letter-spacing: 0.04em;
+  letter-spacing: -0.02em; /* titoli stretti, come h1 */
   text-transform: uppercase;
   color: var(--color-text);
   line-height: 0.95;
@@ -219,17 +220,3 @@
   .section { padding-bottom: 80px; }
 }
 
-/* ── Fallback Immagine al posto del 3D ─────────────────────── */
-.bgImage {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  background-image: url("/images/chi-sono-bg.webp");
-  background-size: cover;
-  background-position: center;
-  background-color: transparent;
-  z-index: -1; 
-  /* Opacità per blendare con il resto del layout, modificare a piacere */
-  opacity: 0.9;
-}

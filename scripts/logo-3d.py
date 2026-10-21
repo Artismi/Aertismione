@@ -11,6 +11,11 @@ Scala, posizione e materiale restano quelli del vecchio file: il sito lo
 carica senza toccare il codice.
     pip install numpy pillow scipy scikit-image shapely triangle
     python scripts/logo-3d.py
+    npx @gltf-transform/cli@4.1.1 meshopt public/models/logo.glb public/models/logo.glb \
+        --quantize-position 16 --quantize-normal 12 --quantize-texcoord 12
+Il secondo comando comprime il file (da 5 MB a meno di 1) per la home; la
+precisione alta serve: gli anelli del bordo distano centesimi e su un vetro
+lucido le normali a 8 bit fanno bande.
 """
 import json, os, struct
 import numpy as np

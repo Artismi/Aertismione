@@ -1,7 +1,7 @@
 {
     "headers": [
         {
-            "source": "/(.*)",
+            "source": "/((?!gioco/).*)",
             "headers": [
                 {
                     "key": "Strict-Transport-Security",
@@ -29,7 +29,40 @@
                 },
                 {
                     "key": "Content-Security-Policy",
-                    "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://www.gstatic.com; style-src 'self' 'unsafe-inline'; img-src * data: blob: https://*.githubusercontent.com https://raw.githubusercontent.com; font-src 'self' data:; connect-src 'self' blob: https://www.gstatic.com https://raw.githack.com https://raw.githubusercontent.com https://*.githubusercontent.com https://*.amazonaws.com https://www.notion.so; frame-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;"
+                    "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://www.gstatic.com; style-src 'self' 'unsafe-inline'; img-src * data: blob: https://*.githubusercontent.com https://raw.githubusercontent.com; font-src 'self' data:; connect-src 'self' blob: https://www.gstatic.com https://raw.githack.com https://raw.githubusercontent.com https://*.githubusercontent.com https://*.amazonaws.com https://www.notion.so; frame-src 'self' https://porto-vecchio.vercel.app; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;"
+                }
+            ]
+        },
+        {
+            "source": "/gioco/(.*)",
+            "headers": [
+                {
+                    "key": "Strict-Transport-Security",
+                    "value": "max-age=31536000; includeSubDomains; preload"
+                },
+                {
+                    "key": "X-Frame-Options",
+                    "value": "SAMEORIGIN"
+                },
+                {
+                    "key": "X-Content-Type-Options",
+                    "value": "nosniff"
+                },
+                {
+                    "key": "Referrer-Policy",
+                    "value": "strict-origin-when-cross-origin"
+                },
+                {
+                    "key": "Permissions-Policy",
+                    "value": "geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=()"
+                },
+                {
+                    "key": "X-XSS-Protection",
+                    "value": "1; mode=block"
+                },
+                {
+                    "key": "Content-Security-Policy",
+                    "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src * data: blob:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' blob: data:; worker-src 'self' blob:; media-src 'self' blob: data:; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;"
                 }
             ]
         },

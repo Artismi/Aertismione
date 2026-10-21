@@ -19,7 +19,7 @@ const vertexShader = /* glsl */`
 // si biforcano e si fondono nei punti sella — esattamente i filamenti
 // di luce sul fondo di una piscina.
 // Un solo campo → UN'unica famiglia di curve, senza caos da sovrapposizione.
-const fragmentShader = /* glsl */`
+export const causticsFragment = /* glsl */`
   uniform float u_time;
   uniform float u_fade;
   uniform float u_white; // 0 = rosa hero, 1 = bianco about
@@ -196,7 +196,7 @@ export function CausticsPlane() {
       <shaderMaterial
         ref={matRef}
         vertexShader={vertexShader}
-        fragmentShader={fragmentShader}
+        fragmentShader={causticsFragment}
         uniforms={uniforms}
         transparent
         depthWrite={false}
