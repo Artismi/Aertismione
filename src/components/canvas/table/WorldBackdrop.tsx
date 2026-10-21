@@ -217,11 +217,12 @@ export const glassPars = common + /* glsl */`
   }
 `
 
-/** Va in fondo al fragment del vetro (dopo dithering_fragment) */
+/** Va in fondo al fragment del vetro (dopo dithering_fragment). Chi lo usa dichiara
+ *  prima vec2 glassShift: di quanto si sposta il fondale visto attraverso (rifrazione) */
 export const glassComposite = /* glsl */`
   {
     // come sulla tela di una volta: fusione sui colori gia' pronti per lo schermo (sRGB)
-    vec3 bgc = pvToSrgb(backdrop(gl_FragCoord.xy / u_px));
+    vec3 bgc = pvToSrgb(backdrop(gl_FragCoord.xy / u_px + glassShift));
     vec3 g = pvToSrgb(pvAces(gl_FragColor.rgb));
     // sulla tela di una volta si vedevano anche i fianchi delle lettere dietro al fronte:
     // due strati di vetro, piu' bianchi di uno

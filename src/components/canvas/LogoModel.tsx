@@ -57,13 +57,20 @@ export function LogoModel({ inWorld = false, ...props }: any) {
         mat.onBeforeCompile = (shader) => {
             // Il logo e' liscio: senza spigoli serve un contorno. Dove il bordo tondo gira
             // via dalla vista il vetro diventa denso e scuro, come lo spessore del plexiglass
-            // visto di taglio.
+            // visto di taglio; il bordo che guarda in su prende la luce dall'alto, lucido
+            // come plastica stampata. glassShift: quanto il fondale si piega attraverso
+            // i bordi tondi (rifrazione), nulla sul fronte.
             const rim = /* glsl */`
+                vec2 glassShift = vec2(0.0);
                 {
-                    float nv = abs(dot(normalize(vNormal), normalize(vViewPosition)));
+                    vec3 n = normalize(vNormal);
+                    float nv = abs(dot(n, normalize(vViewPosition)));
                     float edge = smoothstep(0.8, 0.25, nv);
-                    gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.035, 0.015, 0.06), edge * 0.88);
-                    gl_FragColor.a = mix(gl_FragColor.a, 1.0, edge);
+                    float up = clamp(n.y * 0.5 + 0.5, 0.0, 1.0);
+                    gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.035, 0.015, 0.06), edge * 0.75);
+                    gl_FragColor.rgb += vec3(1.0, 0.97, 1.0) * pow(edge, 1.3) * smoothstep(0.55, 0.95, up) * 1.4;
+                    gl_FragColor.a = mix(gl_FragColor.a, 1.0, edge * 0.8);
+                    glassShift = -n.xy * (1.0 - nv) * 0.03;
                 }
             `
             if (inWorld) {
@@ -86,7 +93,7 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                 float fresnel = 1.0 - NdotV;
                 // fronte: ~0.92 opaco + riflettente | bordi: ~0.18 sottili.
                 // Nel mondo il fronte lascia vedere la luce e il vapore dietro; il bordo lo fa il contorno
-                diffuseColor.a *= ${inWorld ? '0.3' : '0.18 + NdotV * NdotV * NdotV * 0.74'};`
+                diffuseColor.a *= ${inWorld ? '0.16' : '0.18 + NdotV * NdotV * NdotV * 0.74'};`
             )
         }
 
@@ -160,6 +167,7 @@ export function LogoModel({ inWorld = false, ...props }: any) {
             fragmentShader: glassPars + /* glsl */`
                 uniform float u_opacity;
                 void main() {
+                    vec2 glassShift = vec2(0.0);
                     gl_FragColor = vec4(0.03, 0.012, 0.05, u_opacity);
                     ${glassComposite}
                 }
