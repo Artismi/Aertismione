@@ -21,6 +21,7 @@ import * as THREE from 'three'
 import { causticsFragment } from '../CausticsPlane'
 import { useStore } from '@/stores/useStore'
 import { BENCH } from './Bench'
+import { worldHold } from './shared'
 
 // lo shader della piscina diventa una funzione; le uv riproducono la scala che
 // aveva sul piano 16 × 10 a 7,5 di distanza (fov 35) nella scena del logo
@@ -112,7 +113,7 @@ export function WorldBackdrop({ mobile = false }: { mobile?: boolean }) {
 
   useEffect(() => {
     const id = window.setInterval(() => {
-      if (!document.hidden && !useStore.getState().gameOpen) invalidate()
+      if (!document.hidden && !useStore.getState().gameOpen && !worldHold.on) invalidate()
     }, 42)
     return () => { window.clearInterval(id); effect.dispose() }
   }, [invalidate, effect])

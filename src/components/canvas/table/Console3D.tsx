@@ -20,6 +20,7 @@ import { pcbTexture, faceTexture, bezelTexture, screenTexture, BOOT_SECONDS } fr
 import type { TablePhase } from './Table3D'
 import { HIT_MAT } from './Folder3D'
 import styles from './Table3D.module.css'
+import { consoleScreen } from './shared'
 
 const CW = 1.0, CD = 0.98, BH = 0.115, LH = 0.1, CR = 0.05
 const HINGE_Z = -CD / 2 + 0.04
@@ -27,11 +28,6 @@ const LID_D = CD - 0.04
 const SCREEN = { w: 0.6, h: 0.4 }
 const damp = THREE.MathUtils.damp
 
-/**
- * Dove sta lo schermo del Game Boy sulla pagina, in pixel: da li' nasce il gioco
- * a tutto schermo. Lo aggiorna Console3D a ogni fotogramma.
- */
-export const consoleScreen: { rect: { top: number; left: number; width: number; height: number } | null } = { rect: null }
 
 // coperchio aperto in mano: di quanto girare la console perche' lo schermo guardi dritto la camera
 const GRAB_LID = -2.05

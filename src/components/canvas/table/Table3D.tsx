@@ -28,6 +28,7 @@ import { Bench } from './Bench'
 import { Folder3D, FW, FD, BW, BD, BOARD_Y, MOBILE_Z } from './Folder3D'
 import { Console3D } from './Console3D'
 import { WorldBackdrop, GlassSync } from './WorldBackdrop'
+import { worldHold } from './shared'
 import { LogoModel } from '../LogoModel'
 import styles from './Table3D.module.css'
 
@@ -35,6 +36,8 @@ export type TablePhase = 'closed' | 'sliding' | 'opening' | 'open' | 'closing' |
 /** u, v tra 0 e 1 sul tabellone (v = 0 in alto); inside = il punto cade sul fascicolo */
 export type BoardPoint = { u: number; v: number; inside: boolean }
 export type TableApi = {
+  /** dove cadono sullo schermo tre angoli della tavola: alto-sinistra, alto-destra, basso-sinistra */
+  boardScreen: () => [number, number, number, number, number, number] | null
   /** dal punto sullo schermo al punto sul tabellone, anche fuori (per tirare la fionda) */
   toBoard: (clientX: number, clientY: number) => BoardPoint | null
   /** il canvas del tabellone e' stato ridisegnato */
@@ -96,7 +99,7 @@ function Rig({ phase, mobile, stage, look, logo }: {
     const on = () => invalidate()
     const move = (e: PointerEvent) => {
       mouse.current.set(e.clientX / window.innerWidth * 2 - 1, e.clientY / window.innerHeight * 2 - 1)
-      invalidate()
+      if (!worldHold.on) invalidate()
     }
     window.addEventListener('scroll', on, { passive: true })
     window.addEventListener('pointermove', move, { passive: true })
@@ -212,8 +215,17 @@ function useBoard(board: Props['board'], api: Props['api'], mobile: boolean) {
         const u = hit.x / BW + 0.5, v = (hit.z - center) / BD + 0.5
         return { u, v, inside: u >= 0 && u <= 1 && v >= 0 && v <= 1 }
       },
+      boardScreen: () => {
+        const r = gl.domElement.getBoundingClientRect()
+        const out: number[] = []
+        for (const [x, z] of [[-BW / 2, center - BD / 2], [BW / 2, center - BD / 2], [-BW / 2, center + BD / 2]]) {
+          hit.set(x, BOARD_Y, z).project(camera)
+          out.push(r.left + (hit.x + 1) / 2 * r.width, r.top + (1 - hit.y) / 2 * r.height)
+        }
+        return out as [number, number, number, number, number, number]
+      },
       refresh: () => {
-        if (!tex) return
+        if (!tex || worldHold.on) return
         tex.needsUpdate = true
         invalidate()
       },

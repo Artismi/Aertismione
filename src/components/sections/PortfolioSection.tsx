@@ -12,7 +12,7 @@ import styles from './PortfolioSection.module.css'
 import { PORTFOLIO, PROGETTI } from '@/config/content'
 import dynamic from 'next/dynamic'
 import type { TableApi } from '@/components/canvas/table/Table3D'
-import { consoleScreen } from '@/components/canvas/table/Console3D'
+import { worldHold, consoleScreen } from '@/components/canvas/table/shared'
 import { GameBoy, gameWarmable, type Rect } from '@/components/ui/GameBoy'
 
 // Il tavolo in 3D si carica solo nel browser, a parte dal resto della pagina
@@ -564,6 +564,7 @@ export function PortfolioSection() {
   const gridRevealRef = useRef(0)
   const inViewRef     = useRef(false)
   const openRef       = useRef(false)
+  const flatRef       = useRef({ last: [0, 0, 0, 0, 0, 0], still: 0 })   // still: da quando la tavola e' ferma (ms)
   const desktopRef    = useRef(false)
   const projRef       = useRef<Project[]>(PROJECTS)   // le cartelline, nel verso del tabellone
   const timersRef     = useRef<number[]>([])
@@ -577,6 +578,8 @@ export function PortfolioSection() {
   const dragPosRef          = useRef({ x: 0, y: 0 })
   const dragOriginRef       = useRef({ x: 0, y: 0 })
   const collisionCooldownRef = useRef(0)
+  // la bilia apre un lavoro solo se l'hai tirata tu: i rimbalzi da soli (all'apertura) no
+  const shotRef = useRef(false)
 
   const router = useRouter()
   const routerRef = useRef(router)
@@ -644,6 +647,7 @@ export function PortfolioSection() {
       // parte del sito: era una tassa costante che faceva scattare 3D,
       // cursore e video.
       if (!visible && gridRevealRef.current < 0.02) {
+        showFlat(canvasLoop)   // si toglie la tavola dalla pagina, se c'era
         rafRef.current = requestAnimationFrame(loop)
         return
       }
@@ -695,7 +699,7 @@ export function PortfolioSection() {
         ball.vx*=FRICTION; ball.vy*=FRICTION
         const spd=Math.hypot(ball.vx,ball.vy)
         ball.rotation+=spd*0.055
-        if (spd<MIN_SPEED){ball.vx=0;ball.vy=0}
+        if (spd<MIN_SPEED){ball.vx=0;ball.vy=0;shotRef.current=false}   // tiro finito
         const m=BALL_R+2
         if(ball.x<m){ball.x=m;ball.vx*=-0.72}
         if(ball.x>w-m){ball.x=w-m;ball.vx*=-0.72}
@@ -722,7 +726,7 @@ export function PortfolioSection() {
                 const a=Math.random()*Math.PI*2, sp=1.5+Math.random()*5.5
                 particlesRef.current.push({x:ball.x,y:ball.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,r:1.2+Math.random()*2.5,alpha:0.95,color:fire[i%fire.length]})
               }
-              const proj=p; setTimeout(()=>goProject(proj.id), 300)
+              if (shotRef.current) { shotRef.current=false; const proj=p; setTimeout(()=>goProject(proj.id), 300) }
               break
             }
           }
@@ -747,6 +751,7 @@ export function PortfolioSection() {
       if (isDraggingRef.current) drawSlingshot(ctx, ball, dragOriginRef.current, w, h)
       drawBall(ctx,ball,jumpRef.current)
       drawMapDecorations(ctx,w,h,!desk)
+      showFlat(canvasLoop)
       tableRef.current?.refresh()
 
       rafRef.current=requestAnimationFrame(loop)
@@ -771,6 +776,7 @@ export function PortfolioSection() {
     const sx=w/2, sy=h*0.42
     ball.x=sx; ball.y=sy; ball.vx=0; ball.vy=0; trailRef.current=[]
     collisionCooldownRef.current=now+800
+    shotRef.current=false
     const fire=['#FF55E0','#CC44FF','#FF99EE','#E8A8BF']
     for (let i=0;i<14;i++) {
       const a=Math.PI+(Math.random()-0.5)*1.6, sp=1.5+Math.random()*4
@@ -782,6 +788,45 @@ export function PortfolioSection() {
       scaleX:0.6, scaleY:1.5, arcNorm:0,
       landed:false, projectId:'', thenVx:-3.4, thenVy:0.8,
     }
+  }
+
+  /**
+   * Fascicolo aperto e camera ferma: la tavola si mostra sulla pagina, proprio
+   * sopra la sua stampa nel 3D (stessi angoli sullo schermo). Niente patina del
+   * render e il mondo 3D non si ridisegna mentre si gioca con la bilia.
+   */
+  useEffect(() => {
+    const reset = () => {
+      if (!worldHold.on) return
+      worldHold.on = false; flatRef.current.still = 0
+      if (canvasRef.current) canvasRef.current.style.cssText = ''
+    }
+    window.addEventListener('resize', reset)
+    return () => { window.removeEventListener('resize', reset); worldHold.on = false }
+  }, [])
+
+  function showFlat(c: HTMLCanvasElement) {
+    const f = flatRef.current
+    const p = openRef.current && inViewRef.current ? tableRef.current?.boardScreen() : null
+    if (!p) {
+      if (f.still) { c.style.cssText = ''; f.still = 0; worldHold.on = false }
+      return
+    }
+    // gia' sulla pagina: la camera e' ferma (il mondo non si ridisegna), non si rimisura
+    if (worldHold.on) return
+    // ferma da un quarto di secondo: la camera e' arrivata
+    const now = performance.now()
+    if (p.some((v, i) => Math.abs(v - f.last[i]) > 0.5) || !f.still) f.still = now
+    f.last = p
+    if (now - f.still < 250) return
+    const W = c.width, H = c.height
+    const base = `display:block;position:fixed;left:0;top:0;width:${W}px;height:${H}px;pointer-events:none;z-index:1;border-radius:2px;`
+    // un antenato trasformato sposta l'origine di «fixed»: si misura dove cade davvero
+    c.style.cssText = base
+    const o = c.getBoundingClientRect()
+    c.style.cssText = base + `transform-origin:0 0;transform:matrix(${(p[2]-p[0])/W},${(p[3]-p[1])/W},` +
+      `${(p[4]-p[0])/H},${(p[5]-p[1])/H},${p[0] - o.left},${p[1] - o.top});`
+    worldHold.on = true
   }
 
   useEffect(() => {
@@ -935,6 +980,7 @@ export function PortfolioSection() {
 
   function fireSlingshot() {
     isDraggingRef.current=false
+    shotRef.current=true
     const ball=ballRef.current
     const origin=dragOriginRef.current
     const pullX=dragPosRef.current.x, pullY=dragPosRef.current.y
