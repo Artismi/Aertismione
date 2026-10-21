@@ -70,9 +70,11 @@ export function HeroSection() {
             <div className={styles.subtitleBar} />
             <div>
               <p className={styles.subtitle}>{HERO.line}</p>
-              <ul className={styles.points}>
-                {HERO.points.map((p) => <li key={p}>{p}</li>)}
-              </ul>
+              {HERO.points.length > 0 && (
+                <ul className={styles.points}>
+                  {HERO.points.map((p) => <li key={p}>{p}</li>)}
+                </ul>
+              )}
             </div>
           </div>
 

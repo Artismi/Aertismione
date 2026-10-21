@@ -39,13 +39,13 @@ export const NAV = {
 
 export const HERO = {
   /**
-   * Sotto il logo, un blocco solo che si legge in un colpo d'occhio.
-   * claim: due battute, la parola fra *asterischi* va nel colore d'accento ·
-   * line: cosa ottieni, in una riga · points: tre garanzie, due parole ciascuna.
+   * Sotto il logo, un blocco solo che si legge in un colpo d'occhio: una promessa,
+   * poi cosa fai e per chi. claim: le righe del titolo, la parola fra *asterischi*
+   * va nel colore d'accento · line: cosa fai e per chi · points: etichette facoltative.
    */
-  claim:  ['Prima ti ascolto.', 'Poi ti faccio *riconoscere*.'],
-  line:   "Un metodo chiaro, dall'identità della tua attività a tutto ciò che comunica.",
-  points: ['Progettato con te', 'Coerente ovunque', 'Resta tuo'],
+  claim:  ['Diamo un *volto*', 'alla tua attività.'],
+  line:   'Identità visive, illustrazione e murales per negozi, associazioni e piccole imprese.',
+  points: [] as string[],
   ctas: [
     { label: 'Scopri i servizi', href: '#servizi',  variant: 'primary'   },
     { label: 'Scrivimi',         href: '#contatti', variant: 'secondary' },
