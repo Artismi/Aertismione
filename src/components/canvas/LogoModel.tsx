@@ -7,7 +7,7 @@ import { glassUniforms, glassPars, glassComposite } from './table/WorldBackdrop'
 
 /** Larghezza del logo nel mondo, a scala 1 (logo.glb: 343 × 0,139 × 0,06) */
 const LOGO_W = 2.86
-const _c = new THREE.Vector3(), _u = new THREE.Vector3()
+const _c = new THREE.Vector3(), _u = new THREE.Vector3(), _s = new THREE.Vector3()
 
 // Invisible occluder material — blocks depth without painting pixels
 const occluderMat = new THREE.MeshBasicMaterial({
@@ -34,19 +34,18 @@ export function LogoModel({ inWorld = false, ...props }: any) {
     const glassMaterial = useMemo(() => {
         const mat = new THREE.MeshPhysicalMaterial({
             // nel mondo poca luce diffusa: il plexiglass vive di riflessi, non e' bianco latte
-            // il vetro ghiaccio di sempre, nel mondo appena velato di lilla
-            color: new THREE.Color(inWorld ? '#c8b4f2' : '#eef5ff'),
-            emissive: new THREE.Color(inWorld ? '#c9a8ff' : '#c8e8ff'),
-            emissiveIntensity: inWorld ? 0.16 : 0.32,
+            color: new THREE.Color(inWorld ? '#9fb0c4' : '#eef5ff'),
+            emissive: new THREE.Color('#c8e8ff'),
+            emissiveIntensity: inWorld ? 0.1 : 0.32,
             roughness: 0.0,
             metalness: 0.0,
             clearcoat: 1.0,
             clearcoatRoughness: 0.0,
-            envMapIntensity: inWorld ? 4.0 : 5.5,
+            envMapIntensity: inWorld ? 3.2 : 5.5,
             // plexiglass: un velo di arcobaleno dove la luce lo prende di sbieco
-            iridescence: inWorld ? 0.3 : 0.45,
+            iridescence: 0.45,
             iridescenceIOR: 1.35,
-            iridescenceThicknessRange: [250, 650],
+            iridescenceThicknessRange: [180, 520],
             transparent: true,
             opacity: 1.0,   // controllata dal Fresnel nel shader
             depthWrite: true,
@@ -56,24 +55,15 @@ export function LogoModel({ inWorld = false, ...props }: any) {
         // Fresnel sull'alpha: fronte quasi trasparente, bordi opachi come cristallo.
         // NdotV ≈ 1 (fronte) → alpha bassa; NdotV ≈ 0 (bordi) → alpha alta.
         mat.onBeforeCompile = (shader) => {
-            // Plexiglass bagnato sotto una luce dall'alto: il bordo tondo che guarda in su
-            // prende la luce e si accende di bianco, quello che guarda in giu' resta in
-            // ombra, scuro come lo spessore del plexiglass visto di taglio. E' questo
-            // che da' volume al logo liscio. glassShift: quanto il fondale si piega
-            // attraverso il vetro (rifrazione), forte sui bordi tondi, nulla sul fronte.
+            // Il logo e' liscio: senza spigoli serve un contorno. Dove il bordo tondo gira
+            // via dalla vista il vetro diventa denso e scuro, come lo spessore del plexiglass
+            // visto di taglio.
             const rim = /* glsl */`
-                vec2 glassShift = vec2(0.0);
                 {
-                    vec3 n = normalize(vNormal);
-                    float nv = abs(dot(n, normalize(vViewPosition)));
-                    float edge = smoothstep(0.85, 0.15, nv);
-                    float up = clamp(n.y * 0.5 + 0.5, 0.0, 1.0);
-                    // in ombra appena violaceo, sul taglio l'indaco delle linee di una volta
-                    float ombra = edge * smoothstep(0.65, 0.1, up);
-                    gl_FragColor.rgb = mix(gl_FragColor.rgb, mix(vec3(0.4, 0.24, 0.68), vec3(0.1, 0.06, 0.24), edge), ombra * 0.72);
-                    gl_FragColor.rgb += vec3(1.0, 0.95, 1.0) * pow(edge, 1.4) * smoothstep(0.5, 0.95, up) * 1.2;
-                    gl_FragColor.a = mix(gl_FragColor.a, 1.0, edge * 0.85);
-                    glassShift = -n.xy * (1.0 - nv) * 0.025;
+                    float nv = abs(dot(normalize(vNormal), normalize(vViewPosition)));
+                    float edge = smoothstep(0.8, 0.25, nv);
+                    gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.035, 0.015, 0.06), edge * 0.88);
+                    gl_FragColor.a = mix(gl_FragColor.a, 1.0, edge);
                 }
             `
             if (inWorld) {
@@ -96,7 +86,7 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                 float fresnel = 1.0 - NdotV;
                 // fronte: ~0.92 opaco + riflettente | bordi: ~0.18 sottili.
                 // Nel mondo il fronte lascia vedere la luce e il vapore dietro; il bordo lo fa il contorno
-                diffuseColor.a *= ${inWorld ? '0.4' : '0.18 + NdotV * NdotV * NdotV * 0.74'};`
+                diffuseColor.a *= ${inWorld ? '0.3' : '0.18 + NdotV * NdotV * NdotV * 0.74'};`
             )
         }
 
@@ -152,10 +142,9 @@ export function LogoModel({ inWorld = false, ...props }: any) {
         // Il contorno: il logo e' liscio e il bordo tondo diventa verticale solo
         // nell'ultimo pixel, quindi non basta scurire il vetro di taglio. Una copia
         // del logo vista da dietro, allargata di qualche pixel sullo schermo, fa da
-        // filo sottile e leggero tutto intorno, come le linee degli spigoli di prima
-        // (fuso con il fondale come il vetro).
+        // filo scuro tutto intorno (fuso con il fondale come il vetro).
         const outlineMat = inWorld ? new THREE.ShaderMaterial({
-            uniforms: { ...glassUniforms, u_opacity: { value: 0.22 }, u_width: { value: 1.0 } },
+            uniforms: { ...glassUniforms, u_opacity: { value: 0.62 }, u_width: { value: 1.7 } },
             vertexShader: /* glsl */`
                 uniform vec2 u_px;
                 uniform float u_width;
@@ -171,8 +160,7 @@ export function LogoModel({ inWorld = false, ...props }: any) {
             fragmentShader: glassPars + /* glsl */`
                 uniform float u_opacity;
                 void main() {
-                    vec2 glassShift = vec2(0.0);
-                    gl_FragColor = vec4(0.08, 0.07, 0.18, u_opacity);
+                    gl_FragColor = vec4(0.03, 0.012, 0.05, u_opacity);
                     ${glassComposite}
                 }
             `,
@@ -220,20 +208,16 @@ export function LogoModel({ inWorld = false, ...props }: any) {
             rotatingRef.current.rotation.y = Math.sin(timeRef.current) * (Math.PI / 6)
         }
 
-        // Nel mondo il logo e' grande quanto una parte fissa dello schermo (il 32% della
-        // larghezza dal computer, il 70% dal telefono), qualunque sia la distanza della
-        // camera. Poi si dice al fondale (WorldBackdrop) dove sta e quanto e' grande:
-        // la luce dall'alto e il vapore gli si mettono intorno.
+        // dove sta il logo sullo schermo e quanto e' grande: la luce dall'alto e il
+        // vapore del fondale (WorldBackdrop) gli si mettono intorno
         if (inWorld && groupRef.current) {
             const g = groupRef.current
-            const aspect = (camera as THREE.PerspectiveCamera).aspect || 1
             g.getWorldPosition(_c)
+            g.getWorldScale(_s)
             _u.set(0, 1, 0).applyQuaternion(camera.quaternion).add(_c).project(camera)
             _c.project(camera)
             const perUnit = Math.abs(_u.y - _c.y) / 2   // altezze di schermo per unita' di mondo
-            const width = aspect * (aspect < 1 ? 0.7 : 0.32)   // in altezze di schermo
-            if (perUnit > 1e-6) g.scale.setScalar(width / (LOGO_W * perUnit))
-            glassUniforms.u_logo.value.set((_c.x + 1) / 2, (_c.y + 1) / 2, width, 1)
+            glassUniforms.u_logo.value.set((_c.x + 1) / 2, (_c.y + 1) / 2, LOGO_W * _s.x * perUnit, 1)
         }
 
         // Il logo resta staticamente ben inquadrato al centro dello schermo.
@@ -286,7 +270,7 @@ export function LogoModel({ inWorld = false, ...props }: any) {
             </Center>
 
             {/* La luce dall'alto, quella del fascio nel vapore: riflessi bagnati sopra le lettere */}
-            {inWorld && <pointLight position={[0, 1.7, -0.6]} intensity={10} color="#fff0fc" />}
+            {inWorld && <pointLight position={[0, 1.7, -0.6]} intensity={14} color="#fff4ec" />}
 
             {/* Luce chiave: dall'alto-fronte, definisce i piani superiori */}
             <pointLight position={[0, 4, 3]} intensity={18} color="#ffffff" />
