@@ -413,7 +413,8 @@ function World(props: Props & { images: Images | null }) {
           si carica subito, e' la prima cosa che si vede */}
       <group ref={logo}>
         <Suspense fallback={null}>
-          <LogoModel inWorld scale={mobile ? 0.75 : 1} />
+          {/* la sua grandezza la decide lui, in proporzione allo schermo */}
+          <LogoModel inWorld />
         </Suspense>
         <GlassSync />
       </group>

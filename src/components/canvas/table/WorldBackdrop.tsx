@@ -55,7 +55,10 @@ const common = causticsFragment
   // Coordinate in larghezze del logo, centro del logo in (0, 0), y in su.
   vec2 haze(vec2 uv) {
     if (u_logo.w <= 0.0) return vec2(0.0);
-    vec2 p = (uv - u_logo.xy) * vec2(u_res.x / max(1.0, u_res.y), 1.0) / max(u_logo.z, 1e-3);
+    // in unita' di 0,32 altezze di schermo (la luce non cresce con il logo)
+    vec2 p = (uv - u_logo.xy) * vec2(u_res.x / max(1.0, u_res.y), 1.0) / 0.32;
+    // quanto e' alto mezzo logo, nelle stesse unita'
+    float top = u_logo.z * 0.3 / 0.32;
     float t = u_time;
     // vapore: sale piano e si sfilaccia
     float v = hzFbm(p * vec2(1.6, 1.0) + vec2(0.1 * t, -0.14 * t));
@@ -64,21 +67,23 @@ const common = causticsFragment
     // logo si spegne, cosi' attraverso il vetro si vede il rosa e il vetro si legge
     float w = 0.22 + 0.3 * clamp(1.8 - p.y, 0.0, 3.0);
     float beam = 1.0 - smoothstep(w * 0.35, w, abs(p.x + 0.05 * p.y));
-    beam *= smoothstep(0.0, 0.7, p.y) * (1.0 - 0.5 * smoothstep(1.4, 3.0, p.y));
+    beam *= smoothstep(top * 0.4, top + 0.45, p.y) * (1.0 - 0.5 * smoothstep(1.4, 3.0, p.y));
     // l'aria accesa intorno al logo
-    float glow = exp(-dot(p * vec2(0.85, 1.3), p * vec2(0.85, 1.3)) * 1.5);
+    vec2 q = p / max(0.6, u_logo.z / 0.32);
+    float glow = exp(-dot(q * vec2(0.85, 1.3), q * vec2(0.85, 1.3)) * 1.5);
     float luce = (beam * (0.45 + 0.85 * v) + glow * 0.28 * (0.4 + 0.6 * v)) * u_logo.w;
     // fuori dal fascio la stanza e' in penombra: e' il buio che fa vedere la luce
     // (solo intorno al logo: lontano, sul banco, il fondale resta quello di sempre)
     float r2 = dot(p, p);
-    float ombra = (1.0 - beam) * (1.0 - glow) * (1.0 - exp(-r2 * 0.05)) * exp(-r2 * 0.03) * 0.8 * u_logo.w;
+    float ombra = (1.0 - beam) * (1.0 - glow) * (1.0 - exp(-r2 * 0.05)) * exp(-r2 * 0.03) * 1.15 * u_logo.w;
     return vec2(luce, ombra);
   }
   float hazeLight(vec2 uv) { return haze(uv).x; }
   vec3 hazed(vec3 c, vec2 uv) {
     vec2 h = haze(uv);
-    c *= 1.0 - h.y;
-    return 1.0 - (1.0 - c) * (1.0 - h.x * vec3(1.0, 0.95, 0.93));
+    // la penombra tira al viola (si spegne prima il verde), la luce e' magenta
+    c *= 1.0 - h.y * vec3(0.5, 0.85, 0.3);
+    return 1.0 - (1.0 - c) * (1.0 - h.x * vec3(1.0, 0.68, 0.98));
   }
   vec3 backdrop(vec2 uv) {
     return hazed(srgbToLinearBg(causticsColor(0.5 + (uv - 0.5) * u_scale + vec2(0.0, u_scroll)).rgb), uv);
@@ -217,18 +222,19 @@ export const glassPars = common + /* glsl */`
   }
 `
 
-/** Va in fondo al fragment del vetro (dopo dithering_fragment) */
+/** Va in fondo al fragment del vetro (dopo dithering_fragment). Chi lo usa dichiara
+ *  prima vec2 glassShift: di quanto si sposta il fondale visto attraverso (rifrazione) */
 export const glassComposite = /* glsl */`
   {
     // come sulla tela di una volta: fusione sui colori gia' pronti per lo schermo (sRGB)
-    vec3 bgc = pvToSrgb(backdrop(gl_FragCoord.xy / u_px));
+    vec3 bgc = pvToSrgb(backdrop(gl_FragCoord.xy / u_px + glassShift));
     vec3 g = pvToSrgb(pvAces(gl_FragColor.rgb));
     // sulla tela di una volta si vedevano anche i fianchi delle lettere dietro al fronte:
     // due strati di vetro, piu' bianchi di uno
     float a2 = 1.0 - (1.0 - gl_FragColor.a) * (1.0 - gl_FragColor.a);
     vec3 c = mix(bgc, g, a2);
     // un velo del vapore passa anche davanti al vetro: l'aria e' spessa
-    c = 1.0 - (1.0 - c) * (1.0 - hazeLight(gl_FragCoord.xy / u_px) * 0.28);
+    c = 1.0 - (1.0 - c) * (1.0 - hazeLight(gl_FragCoord.xy / u_px) * 0.28 * vec3(1.0, 0.68, 0.98));
     gl_FragColor = vec4(pvAcesInv(srgbToLinearBg(c)), 1.0);
   }
 `
