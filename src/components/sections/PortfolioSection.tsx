@@ -13,6 +13,8 @@ import { PORTFOLIO, PROGETTI } from '@/config/content'
 import dynamic from 'next/dynamic'
 import type { TableApi } from '@/components/canvas/table/Table3D'
 import { worldHold, consoleScreen } from '@/components/canvas/table/shared'
+import { marble } from '@/components/canvas/table/marble'
+import { gameLoad } from '@/components/canvas/table/gameLoad'
 import { GameBoy, gameWarmable, type Rect } from '@/components/ui/GameBoy'
 
 // Il tavolo in 3D si carica solo nel browser, a parte dal resto della pagina
@@ -20,7 +22,8 @@ const Table3D = dynamic(() => import('@/components/canvas/table/Table3D'), { ssr
 
 /* â”€â”€â”€ Costanti â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
-const BALL_R        = 15
+// la bilia 3D sul tabellone (Marble3D: 0,14 × 0,6 unita', il tabellone e' largo 4,46 su 1200)
+const BALL_R        = 22
 const FOLDER_KEY    = 'artismi:fascicolo-aperto'   // il fascicolo era aperto quando si e' andati a un lavoro
 const FOLDER_HIT_R  = 74   // raggio collisione/hover cartellina (a misura piena)
 
@@ -35,8 +38,9 @@ const MAX_LAUNCH    = 38
 // stesse proporzioni della tavola (BW : BD in Folder3D)
 const MAP_W         = 1200
 const MAP_H         = 775
-// pixel del canvas per unita' del tabellone: la texture si ricarica a ogni
-// fotogramma, piu' grande farebbe scattare il 3D
+// pixel del canvas per unita' del tabellone. La texture si ricarica solo quando la
+// mappa cambia (la pallina e' la bilia 3D, non si disegna qui); a 1,5 la scheda
+// video emulata del test si spegneva: meglio non rischiare sui telefoni deboli
 const MAP_SCALE     = 1
 
 /* â”€â”€â”€ Tipi â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
@@ -227,7 +231,7 @@ function wrapTitle(ctx: CanvasRenderingContext2D, text: string, maxW: number): s
   return lines.slice(0, 2)
 }
 
-function drawFolder(ctx: CanvasRenderingContext2D, p: Project, w: number, h: number, time: number, isHovered: boolean) {
+function drawFolder(ctx: CanvasRenderingContext2D, p: Project, w: number, h: number, isHovered: boolean) {
   const cx = p.mapX*w, cy = p.mapY*h
   const [cr,cg,cb] = hexToRgb(p.accent)
   const seed = p.id.split('').reduce((a,c)=>a+c.charCodeAt(0),0)
@@ -242,8 +246,9 @@ function drawFolder(ctx: CanvasRenderingContext2D, p: Project, w: number, h: num
   ctx.rotate(tilt)
   const fs = folderScale(w, h); ctx.scale(fs, fs)
 
-  // Alone pulsante attorno alla cartellina
-  const pulse = 0.5+0.5*Math.sin(time*0.0019+p.mapX*8)
+  // Alone attorno alla cartellina: fermo (la mappa si ridisegna solo quando cambia
+  // qualcosa), si accende sotto il puntatore
+  const pulse = 0.5
   ctx.beginPath()
   ctx.arc(0, 0, 88 + (isHovered ? 0 : pulse*9), 0, Math.PI*2)
   ctx.strokeStyle = `rgba(${cr},${cg},${cb},${isHovered ? 0.45 : (0.06+pulse*0.08).toFixed(3)})`
@@ -440,97 +445,49 @@ function drawSlingshot(
   ctx.globalCompositeOperation = prevComp
 }
 
-function drawBall(ctx: CanvasRenderingContext2D, ball: Ball, js: JumpState | null) {
-  const speed = Math.hypot(ball.vx, ball.vy)
-  let drawX=ball.x, drawY=ball.y, sx=1, sy=1
-  let shadowX=ball.x, shadowY: number, shadowSx: number, shadowSy: number
-
-  if (js && !js.landed) {
-    sx=js.scaleX; sy=js.scaleY
-    const ss = 0.45 + 0.55*(1-js.arcNorm)
-    shadowX=ball.x; shadowY=ball.y+(BALL_R*sy)+6; shadowSx=ss; shadowSy=ss*0.35
-  } else if (js?.landed) {
-    sx=js.scaleX; sy=js.scaleY
-    shadowX=ball.x; shadowY=ball.y+4; shadowSx=1.5; shadowSy=0.22
-  } else {
-    const lift = Math.min(speed*0.95, 15)
-    drawY=ball.y-lift
-    const ss = Math.max(0.38, 1-lift*0.025)
-    shadowX=ball.x; shadowY=ball.y+3; shadowSx=ss; shadowSy=ss*0.28
-  }
-
-  const spd = Math.hypot(ball.vx, ball.vy)
-  const speedF = Math.min(spd / 14, 1)
-  const prev = ctx.globalCompositeOperation
-
-  // ── Glow plasma esterno — screen composite (luce additiva su dark) ──
-  ctx.globalCompositeOperation = 'screen'
-  const glowR = BALL_R * (2.0 + speedF * 1.6)
-  const glow = ctx.createRadialGradient(drawX, drawY, BALL_R*0.5, drawX, drawY, glowR)
-  glow.addColorStop(0,   `rgba(200,70,200,${(0.38 + speedF*0.40).toFixed(3)})`)
-  glow.addColorStop(0.45,`rgba(110,30,175,${(0.18 + speedF*0.20).toFixed(3)})`)
-  glow.addColorStop(1,   'rgba(60,0,100,0)')
-  ctx.beginPath(); ctx.arc(drawX, drawY, glowR, 0, Math.PI*2)
-  ctx.fillStyle = glow; ctx.fill()
-  ctx.globalCompositeOperation = prev
-
-  // ── Shadow viola (normale, non screen) ──
+/**
+ * La bilia disegnata sulla mappa quando la tavola e' piatta sulla pagina (il 3D
+ * e' fermo): lo stesso vetro ambra di Marble3D. Ombra a terra, corpo trasparente
+ * che si scurisce verso il bordo, la luce che la attraversa e si raccoglie in
+ * basso, il riflesso in alto. lift: quanto e' alta nel salto (unita' della mappa).
+ */
+function drawBall(ctx: CanvasRenderingContext2D, ball: Ball, lift: number) {
+  const R = BALL_R, x = ball.x, y = ball.y - lift
+  // l'ombra resta a terra e si allarga e schiarisce quando la bilia si alza
+  const up = Math.min(lift / 120, 1)
+  ctx.save()
   ctx.beginPath()
-  ctx.ellipse(shadowX, shadowY, BALL_R*shadowSx, BALL_R*shadowSy, 0, 0, Math.PI*2)
-  ctx.fillStyle = `rgba(60,0,80,${(0.45*shadowSx).toFixed(3)})`; ctx.fill()
+  ctx.ellipse(ball.x + R*0.35, ball.y + R*0.55, R*(1.05 + up*0.4), R*(0.42 + up*0.15), 0, 0, Math.PI*2)
+  ctx.fillStyle = `rgba(20,10,4,${(0.42 - up*0.25).toFixed(3)})`
+  ctx.filter = 'blur(3px)'; ctx.fill(); ctx.filter = 'none'
+  // la luce che passa nel vetro e cade sul tabellone, calda
+  const caustic = ctx.createRadialGradient(ball.x + R*0.5, ball.y + R*0.4, 0, ball.x + R*0.5, ball.y + R*0.4, R*0.9)
+  caustic.addColorStop(0, `rgba(255,190,110,${(0.35 - up*0.25).toFixed(3)})`)
+  caustic.addColorStop(1, 'rgba(255,190,110,0)')
+  ctx.fillStyle = caustic
+  ctx.beginPath(); ctx.arc(ball.x + R*0.5, ball.y + R*0.4, R*0.9, 0, Math.PI*2); ctx.fill()
 
-  ctx.save(); ctx.translate(drawX, drawY); ctx.scale(sx, sy)
-
-  // ── Corpo meteorite — gradiente viola-rosa rocky ──
-  const body = ctx.createRadialGradient(-BALL_R*0.28,-BALL_R*0.32, BALL_R*0.05, 0, 0, BALL_R)
-  body.addColorStop(0,    '#D068DC')  // rosa-viola caldo
-  body.addColorStop(0.30, '#8228B0')  // viola profondo
-  body.addColorStop(0.65, '#3A0E58')  // quasi nero viola
-  body.addColorStop(1,    '#120620')  // bordo scurissimo
-  ctx.beginPath(); ctx.arc(0, 0, BALL_R, 0, Math.PI*2)
+  // il corpo: chiaro e trasparente al centro, ambra scuro verso il bordo
+  const body = ctx.createRadialGradient(x - R*0.2, y - R*0.25, R*0.1, x, y, R)
+  body.addColorStop(0,    'rgba(255,240,220,0.55)')
+  body.addColorStop(0.55, 'rgba(243,166,106,0.62)')
+  body.addColorStop(0.88, 'rgba(196,98,45,0.85)')
+  body.addColorStop(1,    'rgba(120,52,18,0.95)')
+  ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI*2)
   ctx.fillStyle = body; ctx.fill()
 
-  // ── Texture superficie — ruota con la fisica ──
-  ctx.save(); ctx.rotate(ball.rotation)
+  // la luce rifratta: si raccoglie nella parte bassa, dalla parte opposta al riflesso
+  const refr = ctx.createRadialGradient(x + R*0.25, y + R*0.45, 0, x + R*0.25, y + R*0.45, R*0.6)
+  refr.addColorStop(0, 'rgba(255,214,150,0.85)')
+  refr.addColorStop(1, 'rgba(255,214,150,0)')
+  ctx.fillStyle = refr
+  ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI*2); ctx.fill()
 
-  // Crepe
-  ctx.strokeStyle = 'rgba(210,110,230,0.28)'; ctx.lineWidth = 0.9
-  ctx.beginPath()
-  ctx.moveTo(-BALL_R*0.42, -BALL_R*0.06)
-  ctx.lineTo(-BALL_R*0.05,  BALL_R*0.26)
-  ctx.lineTo( BALL_R*0.32,  BALL_R*0.12)
-  ctx.stroke()
-  ctx.beginPath()
-  ctx.moveTo( BALL_R*0.16, -BALL_R*0.40)
-  ctx.lineTo(-BALL_R*0.08, -BALL_R*0.02)
-  ctx.stroke()
-
-  // Crateri
-  const craters: Array<{x:number;y:number;r:number}> = [
-    {x:-0.28, y:0.22,  r:0.20},
-    {x: 0.30, y:-0.20, r:0.13},
-    {x:-0.08, y:-0.30, r:0.09},
-  ]
-  for (const c of craters) {
-    ctx.beginPath(); ctx.arc(c.x*BALL_R, c.y*BALL_R, c.r*BALL_R, 0, Math.PI*2)
-    ctx.fillStyle = 'rgba(6,0,14,0.58)'; ctx.fill()
-    ctx.beginPath(); ctx.arc(
-      (c.x-c.r*0.32)*BALL_R, (c.y-c.r*0.32)*BALL_R, c.r*BALL_R*0.52, 0, Math.PI*2
-    )
-    ctx.strokeStyle = 'rgba(210,110,230,0.20)'; ctx.lineWidth=0.5; ctx.stroke()
-  }
-  ctx.restore()
-
-  // ── Specular — screen per brillantezza additiva ──
-  ctx.globalCompositeOperation = 'screen'
-  const spec = ctx.createRadialGradient(-BALL_R*0.32,-BALL_R*0.36, 0, -BALL_R*0.26,-BALL_R*0.28, BALL_R*0.46)
-  spec.addColorStop(0,   'rgba(255,200,255,0.72)')
-  spec.addColorStop(0.42,'rgba(220,130,255,0.25)')
-  spec.addColorStop(1,   'rgba(180,70,220,0)')
-  ctx.beginPath(); ctx.arc(0, 0, BALL_R, 0, Math.PI*2)
-  ctx.fillStyle = spec; ctx.fill()
-  ctx.globalCompositeOperation = prev
-
+  // il riflesso in alto e un filo di luce sul bordo
+  ctx.beginPath(); ctx.ellipse(x - R*0.38, y - R*0.42, R*0.3, R*0.17, -0.6, 0, Math.PI*2)
+  ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fill()
+  ctx.beginPath(); ctx.arc(x, y, R - 0.8, Math.PI*0.95, Math.PI*1.45)
+  ctx.strokeStyle = 'rgba(255,248,236,0.55)'; ctx.lineWidth = 1.4; ctx.stroke()
   ctx.restore()
 }
 
@@ -561,6 +518,9 @@ export function PortfolioSection() {
   const particlesRef  = useRef<Particle[]>([])
   const hoveredRef    = useRef<string | null>(null)
   const startTimeRef  = useRef(0)
+  const redrawRef     = useRef(true)               // la mappa va ridisegnata
+  const drawnHoverRef = useRef<string | null>(null) // la cartellina accesa nell'ultimo disegno
+  const drawnFlatRef  = useRef(false)               // l'ultimo disegno era per la tavola piatta (con la bilia)
   const gridRevealRef = useRef(0)
   const inViewRef     = useRef(false)
   const openRef       = useRef(false)
@@ -634,7 +594,6 @@ export function PortfolioSection() {
       // (x, y) del disegno → (y, MAP_H - x) del canvas, che resta orizzontale
       if (desk) ctx.setTransform(MAP_SCALE,0,0,MAP_SCALE,0,0)
       else ctx.setTransform(0,-MAP_SCALE,MAP_SCALE,0,0,MAP_H*MAP_SCALE)
-      const time=now-startTimeRef.current
       const ball=ballRef.current
 
       // La mappa si vede solo a fascicolo aperto: entra piano, esce svelta
@@ -657,8 +616,9 @@ export function PortfolioSection() {
       if (js && !js.landed) {
         const t=Math.min((now-js.startTime)/js.duration, 1)
         const eased=t<0.5?2*t*t:-1+(4-2*t)*t
+        // l'arco del salto e' un'altezza vera: la bilia 3D si alza dal tabellone
         ball.x=js.fromX+(js.toX-js.fromX)*eased
-        ball.y=js.fromY+(js.toY-js.fromY)*t - 4*js.arcHeight*t*(1-t)
+        ball.y=js.fromY+(js.toY-js.fromY)*t
         ball.rotation+=(Math.abs(js.toX-js.fromX)/js.duration)*0.06
         js.arcNorm=4*t*(1-t)
         if      (t<0.44)  { js.scaleX=0.81; js.scaleY=1.24 }
@@ -674,7 +634,7 @@ export function PortfolioSection() {
               const a=(i/12)*Math.PI*2+Math.random()*0.4, spd=2.5+Math.random()*5
               particlesRef.current.push({x:ball.x,y:ball.y,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd-2,r:3+Math.random()*3.5,alpha:0.9,color:proj.accent})
             }
-            const fire=['#FF55E0','#CC44FF','#FF99EE','#EE44CC']
+            const fire=['#FFD9A8','#F3A66A','#C8860A','#FFF0E2']   // le scintille della bilia ambra
             for (let i=0; i<16; i++) {
               const a=Math.random()*Math.PI*2, spd=2+Math.random()*8
               particlesRef.current.push({x:ball.x,y:ball.y,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd-3,r:1.5+Math.random()*3,alpha:1,color:fire[i%fire.length]})
@@ -721,7 +681,7 @@ export function PortfolioSection() {
                 const a=(i/10)*Math.PI*2+Math.random()*0.4, sp=2+Math.random()*4
                 particlesRef.current.push({x:ball.x,y:ball.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1.5,r:2.5+Math.random()*3,alpha:0.85,color:p.accent})
               }
-              const fire=['#FF55E0','#CC44FF','#FF99EE']
+              const fire=['#FFD9A8','#F3A66A','#C8860A']
               for (let i=0;i<12;i++) {
                 const a=Math.random()*Math.PI*2, sp=1.5+Math.random()*5.5
                 particlesRef.current.push({x:ball.x,y:ball.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,r:1.2+Math.random()*2.5,alpha:0.95,color:fire[i%fire.length]})
@@ -740,19 +700,42 @@ export function PortfolioSection() {
       }
       particlesRef.current=alive
 
-      // la fodera scura del fascicolo: il tabellone e' stampato li' sopra
-      ctx.fillStyle='#1E1B24'; ctx.fillRect(0,0,w,h)
-      drawBackground(ctx,w,h,gridRevealRef.current)
-      for (let i=0;i<PROJ.length;i++) drawZone(ctx,PROJ[i],ZONE_JITTER[i],w,h)
-      drawPaths(ctx,PROJ,w,h)
-      for (const p of PROJ) drawFolder(ctx,p,w,h,time,hoveredRef.current===p.id)
-      drawTrail(ctx,trailRef.current)
-      drawParticles(ctx,particlesRef.current)
-      if (isDraggingRef.current) drawSlingshot(ctx, ball, dragOriginRef.current, w, h)
-      drawBall(ctx,ball,jumpRef.current)
-      drawMapDecorations(ctx,w,h,!desk)
+      // la pallina e' la bilia 3D: si dice dove sta sul tabellone (che da telefono e' girato)
+      const jl = jumpRef.current
+      const lift = jl && !jl.landed ? jl.arcNorm*jl.arcHeight : 0
+      const bm = marble.board
+      if (desk) { bm.u = ball.x/MAP_W; bm.v = ball.y/MAP_H }
+      else { bm.u = ball.y/MAP_W; bm.v = 1 - ball.x/MAP_H }
+      bm.lift = lift/MAP_W
+      const moving = !!(jl && !jl.landed) || Math.hypot(ball.vx,ball.vy) > 0 || isDraggingRef.current
+
+      // Con la tavola piatta sulla pagina il mondo 3D e' fermo: la bilia 3D si
+      // nasconde e la si disegna qui, con lo stesso vetro ambra
+      const flat = worldHold.on
+      // la mappa si ridisegna (e la texture si ricarica) solo quando cambia qualcosa
+      const reveal = gridRevealRef.current, target = visible ? 1 : 0
+      const dirty = redrawRef.current || hoveredRef.current !== drawnHoverRef.current
+        || Math.abs(reveal - target) > 0.003 || particlesRef.current.length > 0
+        || trailRef.current.length > 0 || isDraggingRef.current
+        || flat !== drawnFlatRef.current || (flat && moving)
+      if (dirty) {
+        redrawRef.current = false
+        drawnHoverRef.current = hoveredRef.current
+        drawnFlatRef.current = flat
+        // la fodera scura del fascicolo: il tabellone e' stampato li' sopra
+        ctx.fillStyle='#1E1B24'; ctx.fillRect(0,0,w,h)
+        drawBackground(ctx,w,h,reveal)
+        for (let i=0;i<PROJ.length;i++) drawZone(ctx,PROJ[i],ZONE_JITTER[i],w,h)
+        drawPaths(ctx,PROJ,w,h)
+        for (const p of PROJ) drawFolder(ctx,p,w,h,hoveredRef.current===p.id)
+        drawTrail(ctx,trailRef.current)
+        drawParticles(ctx,particlesRef.current)
+        if (isDraggingRef.current) drawSlingshot(ctx, ball, dragOriginRef.current, w, h)
+        if (flat) drawBall(ctx, ball, lift)
+        drawMapDecorations(ctx,w,h,!desk)
+        tableRef.current?.refresh()
+      } else if (moving && !flat) tableRef.current?.tick()
       showFlat(canvasLoop)
-      tableRef.current?.refresh()
 
       rafRef.current=requestAnimationFrame(loop)
     }
@@ -777,7 +760,7 @@ export function PortfolioSection() {
     ball.x=sx; ball.y=sy; ball.vx=0; ball.vy=0; trailRef.current=[]
     collisionCooldownRef.current=now+800
     shotRef.current=false
-    const fire=['#FF55E0','#CC44FF','#FF99EE','#E8A8BF']
+    const fire=['#FFD9A8','#F3A66A','#C8860A','#FFF0E2']
     for (let i=0;i<14;i++) {
       const a=Math.PI+(Math.random()-0.5)*1.6, sp=1.5+Math.random()*4
       particlesRef.current.push({x:sx,y:sy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1.5,r:1.2+Math.random()*2.5,alpha:0.9,color:fire[i%fire.length]})
@@ -827,10 +810,13 @@ export function PortfolioSection() {
     c.style.cssText = base + `transform-origin:0 0;transform:matrix(${(p[2]-p[0])/W},${(p[3]-p[1])/W},` +
       `${(p[4]-p[0])/H},${(p[5]-p[1])/H},${p[0] - o.left},${p[1] - o.top});`
     worldHold.on = true
+    // un ultimo fotogramma del mondo, senza la bilia 3D: ora la disegna la mappa
+    tableRef.current?.tick()
   }
 
   useEffect(() => {
     openRef.current = phase === 'open'
+    redrawRef.current = true
     if (phase === 'open') popBall()
   }, [phase])
 
@@ -1155,7 +1141,8 @@ function useGamePreload(on: boolean) {
   useEffect(() => {
     if (!on) return
     const net = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection
-    if (net?.saveData || /(^|-)2g$/.test(net?.effectiveType ?? '')) return
+    // niente anticipo: lo schermo del Game Boy mostra subito la schermata di lancio
+    if (net?.saveData || /(^|-)2g$/.test(net?.effectiveType ?? '')) { gameLoad.ready = true; return }
     const base = PROGETTI.game.path.replace(/[^/]*$/, '')
     const ctrl = new AbortController()
     const idle = (cb: () => void) => {
@@ -1165,14 +1152,18 @@ function useGamePreload(on: boolean) {
     let timer = 0
 
     async function run() {
-      for (const file of PROGETTI.game.preload) {
+      const files = PROGETTI.game.preload
+      for (let i = 0; i < files.length; i++) {
         if (ctrl.signal.aborted) return
         await new Promise<void>((ok) => idle(ok))
         try {
-          const res = await fetch(base + file, { signal: ctrl.signal, priority: 'low' } as RequestInit)
+          const res = await fetch(base + files[i], { signal: ctrl.signal, priority: 'low' } as RequestInit)
           await res.arrayBuffer()   // letto fino in fondo, cosi' resta in cache
         } catch { if (ctrl.signal.aborted) return }
+        // lo schermo del Game Boy sul banco segue lo scaricamento
+        gameLoad.p = (i + 1) / files.length
       }
+      gameLoad.ready = true
     }
     function start() { timer = window.setTimeout(run, 4000) }
     if (document.readyState === 'complete') start()

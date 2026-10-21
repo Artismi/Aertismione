@@ -505,7 +505,7 @@ export function bezelTexture(title: string) {
  */
 export const BOOT_SECONDS = 2.6
 
-export function screenTexture(src: string, logo: HTMLImageElement | null, onReady: () => void) {
+export function screenTexture(src: string, logo: HTMLImageElement | null, loading: string, onReady: () => void) {
   const W = 960, H = 640
   const [c, ctx] = canvas(W, H)
   const tex = toTexture(c)
@@ -517,7 +517,8 @@ export function screenTexture(src: string, logo: HTMLImageElement | null, onRead
     for (let y = 0; y < H; y += 4) ctx.fillRect(0, y, W, 1)
     for (let x = 0; x < W; x += 4) ctx.fillRect(x, 0, 1, H)
   }
-  const draw = (t: number) => {
+  /** load: il caricamento del gioco (gameLoad); finche' non e' pronto lo schermo lo mostra */
+  const draw = (t: number, load: { p: number; ready: boolean } = { p: 1, ready: true }) => {
     if (t < 2.1) {
       // LCD chiaro e logo che scende
       ctx.fillStyle = '#F4EAEE'; ctx.fillRect(0, 0, W, H)
@@ -538,9 +539,25 @@ export function screenTexture(src: string, logo: HTMLImageElement | null, onRead
     } else {
       ctx.fillStyle = '#0d0b1a'; ctx.fillRect(0, 0, W, H)
       if (launch) {
-        ctx.globalAlpha = Math.min(1, (t - 2.1) / 0.4)
+        // mentre il gioco si carica la schermata di lancio resta in penombra
+        ctx.globalAlpha = Math.min(1, (t - 2.1) / 0.4) * (load.ready ? 1 : 0.32)
         ctx.drawImage(launch, 0, 0, W, H)
         ctx.globalAlpha = 1
+      }
+      if (!load.ready) {
+        // la schermata di caricamento del gioco: scritta, barra, percentuale
+        const p = Math.max(0, Math.min(1, load.p))
+        ctx.fillStyle = '#F4EAEE'
+        ctx.font = `700 34px ${mono}`; ctx.textAlign = 'center'
+        ctx.fillText(loading, W / 2, H / 2 - 40)
+        const bw = W * 0.6, bh = 22, bx = (W - bw) / 2, by = H / 2
+        ctx.strokeStyle = '#F4EAEE'; ctx.lineWidth = 3
+        ctx.strokeRect(bx, by, bw, bh)
+        ctx.fillStyle = '#E8A8BF'
+        ctx.fillRect(bx + 5, by + 5, (bw - 10) * p, bh - 10)
+        ctx.fillStyle = '#F4EAEE'
+        ctx.font = `700 40px ${mono}`
+        ctx.fillText(`${Math.floor(p * 100)}%`, W / 2, by + bh + 64)
       }
     }
     lcd()
