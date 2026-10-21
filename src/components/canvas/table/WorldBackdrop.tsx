@@ -35,8 +35,53 @@ const common = causticsFragment
   }
   uniform float u_scroll;
   uniform vec2 u_scale;
+  // il logo sullo schermo: centro (uv), larghezza (in altezze di schermo), quanta luce
+  uniform vec4 u_logo;
+
+  float hzHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+  float hzNoise(vec2 p) {
+    vec2 i = floor(p), f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(hzHash(i), hzHash(i + vec2(1.0, 0.0)), f.x),
+               mix(hzHash(i + vec2(0.0, 1.0)), hzHash(i + vec2(1.0, 1.0)), f.x), f.y);
+  }
+  float hzFbm(vec2 p) {
+    float s = 0.0, a = 0.5;
+    for (int i = 0; i < 4; i++) { s += a * hzNoise(p); p = p * 2.03 + 11.7; a *= 0.5; }
+    return s;
+  }
+  // la luce che scende dall'alto sul logo e il vapore che la rende spessa:
+  // x = quanta luce (fascio e aria accesa), y = quanta penombra intorno al fascio.
+  // Coordinate in larghezze del logo, centro del logo in (0, 0), y in su.
+  vec2 haze(vec2 uv) {
+    if (u_logo.w <= 0.0) return vec2(0.0);
+    vec2 p = (uv - u_logo.xy) * vec2(u_res.x / max(1.0, u_res.y), 1.0) / max(u_logo.z, 1e-3);
+    float t = u_time;
+    // vapore: sale piano e si sfilaccia
+    float v = hzFbm(p * vec2(1.6, 1.0) + vec2(0.1 * t, -0.14 * t));
+    v = 0.12 + 0.88 * smoothstep(0.28, 0.8, v);
+    // il fascio: stretto in alto, si apre scendendo e si posa sul logo; dietro al
+    // logo si spegne, cosi' attraverso il vetro si vede il rosa e il vetro si legge
+    float w = 0.22 + 0.3 * clamp(1.8 - p.y, 0.0, 3.0);
+    float beam = 1.0 - smoothstep(w * 0.35, w, abs(p.x + 0.05 * p.y));
+    beam *= smoothstep(0.0, 0.7, p.y) * (1.0 - 0.5 * smoothstep(1.4, 3.0, p.y));
+    // l'aria accesa intorno al logo
+    float glow = exp(-dot(p * vec2(0.85, 1.3), p * vec2(0.85, 1.3)) * 1.5);
+    float luce = (beam * (0.45 + 0.85 * v) + glow * 0.28 * (0.4 + 0.6 * v)) * u_logo.w;
+    // fuori dal fascio la stanza e' in penombra: e' il buio che fa vedere la luce
+    // (solo intorno al logo: lontano, sul banco, il fondale resta quello di sempre)
+    float r2 = dot(p, p);
+    float ombra = (1.0 - beam) * (1.0 - glow) * (1.0 - exp(-r2 * 0.05)) * exp(-r2 * 0.03) * 0.8 * u_logo.w;
+    return vec2(luce, ombra);
+  }
+  float hazeLight(vec2 uv) { return haze(uv).x; }
+  vec3 hazed(vec3 c, vec2 uv) {
+    vec2 h = haze(uv);
+    c *= 1.0 - h.y;
+    return 1.0 - (1.0 - c) * (1.0 - h.x * vec3(1.0, 0.95, 0.93));
+  }
   vec3 backdrop(vec2 uv) {
-    return srgbToLinearBg(causticsColor(0.5 + (uv - 0.5) * u_scale + vec2(0.0, u_scroll)).rgb);
+    return hazed(srgbToLinearBg(causticsColor(0.5 + (uv - 0.5) * u_scale + vec2(0.0, u_scroll)).rgb), uv);
   }
 `
 
@@ -74,6 +119,7 @@ const water = {
   u_res: new THREE.Uniform(new THREE.Vector2(1, 1)),
   u_scroll: new THREE.Uniform(0),
   u_scale: new THREE.Uniform(new THREE.Vector2(1, 1)),
+  u_logo: new THREE.Uniform(new THREE.Vector4(0.5, 0.5, 0.3, 0)),   // lo aggiorna LogoModel
 }
 
 /** La scala della scena del logo di una volta: piano 16 × 10 a 7,5 di distanza, fov 35 (piu' largo sotto il 16:9) */
@@ -180,7 +226,10 @@ export const glassComposite = /* glsl */`
     // sulla tela di una volta si vedevano anche i fianchi delle lettere dietro al fronte:
     // due strati di vetro, piu' bianchi di uno
     float a2 = 1.0 - (1.0 - gl_FragColor.a) * (1.0 - gl_FragColor.a);
-    gl_FragColor = vec4(pvAcesInv(srgbToLinearBg(mix(bgc, g, a2))), 1.0);
+    vec3 c = mix(bgc, g, a2);
+    // un velo del vapore passa anche davanti al vetro: l'aria e' spessa
+    c = 1.0 - (1.0 - c) * (1.0 - hazeLight(gl_FragCoord.xy / u_px) * 0.28);
+    gl_FragColor = vec4(pvAcesInv(srgbToLinearBg(c)), 1.0);
   }
 `
 
