@@ -21,6 +21,7 @@ const Table3D = dynamic(() => import('@/components/canvas/table/Table3D'), { ssr
 /* â”€â”€â”€ Costanti â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 const BALL_R        = 15
+const FOLDER_KEY    = 'artismi:fascicolo-aperto'   // il fascicolo era aperto quando si e' andati a un lavoro
 const FOLDER_HIT_R  = 74   // raggio collisione/hover cartellina (a misura piena)
 
 /** Con tanti lavori le cartelline si stringono: misura in base allo spazio tra una e l'altra */
@@ -679,7 +680,7 @@ export function PortfolioSection() {
             if (jumpRef.current) { jumpRef.current.scaleX=1; jumpRef.current.scaleY=1 }
             setTimeout(()=>{
               jumpRef.current=null
-              if (proj) routerRef.current.push(`/portfolio/${proj.id}`)
+              if (proj) goProject(proj.id)
               else if (js.thenVx !== undefined) { ball.vx=js.thenVx; ball.vy=js.thenVy ?? 0 }
             }, 340)
           }, 120)
@@ -721,7 +722,7 @@ export function PortfolioSection() {
                 const a=Math.random()*Math.PI*2, sp=1.5+Math.random()*5.5
                 particlesRef.current.push({x:ball.x,y:ball.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,r:1.2+Math.random()*2.5,alpha:0.95,color:fire[i%fire.length]})
               }
-              const proj=p; setTimeout(()=>routerRef.current.push(`/portfolio/${proj.id}`), 300)
+              const proj=p; setTimeout(()=>goProject(proj.id), 300)
               break
             }
           }
@@ -795,6 +796,27 @@ export function PortfolioSection() {
     return Math.abs(r.top + r.height / 2 - window.innerHeight / 2) < window.innerHeight * 0.3
   }
 
+  /**
+   * Si apre un lavoro dal fascicolo: il fascicolo se lo ricorda. Tornando indietro
+   * (o con «torna al portfolio») si ritrova la tavola aperta, non il fascicolo chiuso.
+   */
+  function goProject(id: string) {
+    try { sessionStorage.setItem(FOLDER_KEY, '1') } catch { /* niente memoria: pazienza */ }
+    routerRef.current.push(`/portfolio/${id}`)
+  }
+
+  useEffect(() => {
+    let open = false
+    try { open = sessionStorage.getItem(FOLDER_KEY) === '1' } catch { /* ignora */ }
+    if (!open) return
+    // di nuovo al banco, con il fascicolo gia' aperto
+    const center = () => wrapperRef.current?.scrollIntoView({ block: 'center', behavior: 'instant' })
+    center()
+    const t1 = window.setTimeout(center, 120)
+    const t2 = window.setTimeout(() => { center(); setPhase('open') }, 260)
+    return () => { window.clearTimeout(t1); window.clearTimeout(t2) }
+  }, [])
+
   function openFolder() {
     if (phase === 'list') { setPhase('closed'); return }
     if (phase !== 'closed') return
@@ -804,6 +826,7 @@ export function PortfolioSection() {
   }
 
   function closeFolder() {
+    try { sessionStorage.removeItem(FOLDER_KEY) } catch { /* ignora */ }
     if (phase === 'list') { setPhase('closed'); return }
     if (phase !== 'open') return
     const ball=ballRef.current; ball.vx=0; ball.vy=0; jumpRef.current=null
