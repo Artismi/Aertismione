@@ -33,9 +33,9 @@ export function LogoModel({ inWorld = false, ...props }: any) {
 
     const glassMaterial = useMemo(() => {
         const mat = new THREE.MeshPhysicalMaterial({
-            // nel mondo poca luce diffusa: il plexiglass vive di riflessi, non e' bianco latte
-            color: new THREE.Color(inWorld ? '#9fb0c4' : '#eef5ff'),
-            emissive: new THREE.Color('#c8e8ff'),
+            // nel mondo: vetro colato color pesca-ambra, trasparente, che vive di riflessi
+            color: new THREE.Color(inWorld ? '#f6c6a4' : '#eef5ff'),
+            emissive: new THREE.Color(inWorld ? '#ffb27c' : '#c8e8ff'),
             emissiveIntensity: inWorld ? 0.1 : 0.32,
             roughness: 0.0,
             metalness: 0.0,
@@ -43,7 +43,7 @@ export function LogoModel({ inWorld = false, ...props }: any) {
             clearcoatRoughness: 0.0,
             envMapIntensity: inWorld ? 3.2 : 5.5,
             // plexiglass: un velo di arcobaleno dove la luce lo prende di sbieco
-            iridescence: 0.45,
+            iridescence: inWorld ? 0.2 : 0.45,
             iridescenceIOR: 1.35,
             iridescenceThicknessRange: [180, 520],
             transparent: true,
@@ -56,21 +56,24 @@ export function LogoModel({ inWorld = false, ...props }: any) {
         // NdotV ≈ 1 (fronte) → alpha bassa; NdotV ≈ 0 (bordi) → alpha alta.
         mat.onBeforeCompile = (shader) => {
             // Il logo e' liscio: senza spigoli serve un contorno. Dove il bordo tondo gira
-            // via dalla vista il vetro diventa denso e scuro, come lo spessore del plexiglass
-            // visto di taglio; il bordo che guarda in su prende la luce dall'alto, lucido
-            // come plastica stampata. glassShift: quanto il fondale si piega attraverso
+            // via dalla vista il vetro si fa piu' denso e saturo, arancio-ambra, come lo
+            // spessore del vetro colato visto di taglio; il bordo che guarda in su prende
+            // la luce dall'alto, lucido. glassShift: quanto il fondale si piega attraverso
             // i bordi tondi (rifrazione), nulla sul fronte.
             const rim = /* glsl */`
                 vec2 glassShift = vec2(0.0);
+                vec3 glassTint = vec3(1.0);
                 {
                     vec3 n = normalize(vNormal);
                     float nv = abs(dot(n, normalize(vViewPosition)));
                     float edge = smoothstep(0.8, 0.25, nv);
                     float up = clamp(n.y * 0.5 + 0.5, 0.0, 1.0);
-                    gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.035, 0.015, 0.06), edge * 0.75);
-                    gl_FragColor.rgb += vec3(1.0, 0.97, 1.0) * pow(edge, 1.3) * smoothstep(0.55, 0.95, up) * 1.4;
+                    gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.62, 0.17, 0.05), edge * 0.6);
+                    gl_FragColor.rgb += vec3(1.0, 0.96, 0.92) * pow(edge, 1.3) * smoothstep(0.55, 0.95, up) * 1.1;
                     gl_FragColor.a = mix(gl_FragColor.a, 1.0, edge * 0.8);
-                    glassShift = -n.xy * (1.0 - nv) * 0.03;
+                    glassShift = -n.xy * (1.0 - nv) * 0.055;
+                    // il vetro ambra filtra il fondo: piu' spesso (di taglio), piu' carico
+                    glassTint = mix(vec3(1.0, 0.8, 0.62), vec3(0.95, 0.52, 0.28), edge);
                 }
             `
             if (inWorld) {
@@ -93,7 +96,7 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                 float fresnel = 1.0 - NdotV;
                 // fronte: ~0.92 opaco + riflettente | bordi: ~0.18 sottili.
                 // Nel mondo il fronte lascia vedere la luce e il vapore dietro; il bordo lo fa il contorno
-                diffuseColor.a *= ${inWorld ? '0.16' : '0.18 + NdotV * NdotV * NdotV * 0.74'};`
+                diffuseColor.a *= ${inWorld ? '0.2' : '0.18 + NdotV * NdotV * NdotV * 0.74'};`
             )
         }
 
@@ -151,7 +154,7 @@ export function LogoModel({ inWorld = false, ...props }: any) {
         // del logo vista da dietro, allargata di qualche pixel sullo schermo, fa da
         // filo scuro tutto intorno (fuso con il fondale come il vetro).
         const outlineMat = inWorld ? new THREE.ShaderMaterial({
-            uniforms: { ...glassUniforms, u_opacity: { value: 0.62 }, u_width: { value: 1.7 } },
+            uniforms: { ...glassUniforms, u_opacity: { value: 0.4 }, u_width: { value: 1.3 } },
             vertexShader: /* glsl */`
                 uniform vec2 u_px;
                 uniform float u_width;
@@ -168,7 +171,8 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                 uniform float u_opacity;
                 void main() {
                     vec2 glassShift = vec2(0.0);
-                    gl_FragColor = vec4(0.03, 0.012, 0.05, u_opacity);
+                    vec3 glassTint = vec3(1.0);
+                    gl_FragColor = vec4(0.35, 0.1, 0.03, u_opacity);
                     ${glassComposite}
                 }
             `,
@@ -177,11 +181,27 @@ export function LogoModel({ inWorld = false, ...props }: any) {
 
         const added: THREE.Object3D[] = []
 
+        // La bilia al posto del pallino della i: il pallino del disegno (nodo
+        // "pallino" di logo.glb) si nasconde e al suo centro c'e' una sfera di vetro
+        const dot = scene.getObjectByName('pallino') as THREE.Mesh | undefined
+        let ball: THREE.Mesh | null = null
+        if (dot?.parent) {
+            dot.updateMatrix()
+            dot.geometry.computeBoundingBox()
+            const b = dot.geometry.boundingBox!.clone().applyMatrix4(dot.matrix)
+            const size = b.getSize(new THREE.Vector3())
+            ball = new THREE.Mesh(new THREE.SphereGeometry(Math.sqrt(size.x * size.y) / 2 * 1.6, 48, 32), glassMaterial)
+            ball.name = 'bilia'
+            b.getCenter(ball.position)
+            dot.parent.add(ball)
+            dot.visible = false
+        }
+
         // prima si raccolgono le mesh: il contorno e' a sua volta una mesh e il
         // traverse lo visiterebbe all'infinito
         const meshes: THREE.Mesh[] = []
         scene.traverse((child: any) => {
-            if ((child as THREE.Mesh).isMesh && child.material !== outlineMat) meshes.push(child)
+            if ((child as THREE.Mesh).isMesh && child.material !== outlineMat && child !== dot) meshes.push(child)
         })
         meshes.forEach((mesh) => {
             mesh.material = glassMaterial
@@ -204,6 +224,8 @@ export function LogoModel({ inWorld = false, ...props }: any) {
         })
 
         return () => {
+            if (ball) { ball.removeFromParent(); ball.geometry.dispose() }
+            if (dot) dot.visible = true
             added.forEach(l => l.parent?.remove(l))
             outlineMat?.dispose()
             edgeMatRef.current = null
@@ -278,7 +300,7 @@ export function LogoModel({ inWorld = false, ...props }: any) {
             </Center>
 
             {/* La luce dall'alto, quella del fascio nel vapore: riflessi bagnati sopra le lettere */}
-            {inWorld && <pointLight position={[0, 1.7, -0.6]} intensity={14} color="#fff4ec" />}
+            {inWorld && <pointLight position={[0, 1.7, -0.6]} intensity={14} color="#fff0e0" />}
 
             {/* Luce chiave: dall'alto-fronte, definisce i piani superiori */}
             <pointLight position={[0, 4, 3]} intensity={18} color="#ffffff" />
