@@ -92,6 +92,13 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                         vec3 n = normalize(vNormal);
                         float nv = abs(dot(n, normalize(vViewPosition)));
                         glassShift = -n.xy * (1.0 - nv) * 0.035;
+                        // per staccare dal rosa: i fianchi che girano via prendono la luce
+                        // (un filo chiaro, come sul vetro vero) e proprio sulla sagoma un
+                        // segno piu' scuro, sottile, che la separa dal fondo
+                        float rimLight = smoothstep(0.65, 0.12, nv);
+                        gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1.35, 1.32, 1.4), rimLight * 0.55);
+                        float edgeLine = smoothstep(0.16, 0.02, nv);
+                        gl_FragColor.rgb *= 1.0 - edgeLine * 0.45;
                     }
                 `
                 shader.fragmentShader = glassPars + shader.fragmentShader.replace(
@@ -112,7 +119,7 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                 ${inWorld
                     // nel mondo: il fronte e' vetro limpido (~0.08) e piu' ci si allontana dai bordi
                     // piu' e' nitido; la forma la disegnano i bordi, densi (~0.9)
-                    ? 'diffuseColor.a *= mix(0.08, 0.9, pow(fresnel, 2.2));'
+                    ? 'diffuseColor.a *= mix(0.08, 0.96, pow(fresnel, 1.5));'
                     // fronte: ~0.92 opaco + riflettente | bordi: ~0.18 sottili
                     : 'diffuseColor.a *= 0.18 + NdotV * NdotV * NdotV * 0.74;'}`
             )
