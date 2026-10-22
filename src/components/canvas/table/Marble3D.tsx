@@ -5,12 +5,14 @@
  * su un piano solo (il banco), con pochi ostacoli a scatola. Niente motore di
  * fisica: costa quanto una sfera, e il mondo si ridisegna solo mentre si muove.
  *
- * - Scendendo nella pagina il pallino della i (LogoModel) si stacca e cade sul banco.
+ * - Ci arriva dalla pagina (MarblePage): la posa sul banco e qui cade con un
+ *   piccolo rimbalzo; uscendo dal banco la riprende la pagina.
  * - Il cursore e' il mirino: un clic sul banco e la bilia ci salta; premuta e
  *   tirata indietro e' una fionda, e sbatte contro il fascicolo e i bordi.
  * - Aperto il fascicolo ci salta dentro (poi la mappa e' di PortfolioSection);
  *   cliccato il Game Boy, o colpito, ci salta sopra e all'atterraggio lo accende.
- * - Tornando in cima alla pagina torna a essere il pallino della i.
+ * - Fra la i, la pagina e il banco la portano i salti di MarblePage: qui si scrive
+ *   solo dove si vedono sullo schermo (marble.logoAt, landAt, benchAt).
  */
 
 import { useEffect, useMemo, useRef, type RefObject } from 'react'
@@ -21,6 +23,7 @@ import { worldHold } from './shared'
 import { BENCH } from './Bench'
 import { FW, FD, BW, BD, BOARD_Y, MOBILE_Z } from './Folder3D'
 import type { TablePhase } from './Table3D'
+import type { Spot } from './marble'
 
 /** raggio della bilia: quanto il pallino della i del logo */
 export const MARBLE_R = 0.14
@@ -111,7 +114,7 @@ export function Marble3D({ phase, mobile, grab, stage, hover, onConsole }: {
   const k = useMemo(() => ({
     ray: new THREE.Raycaster(), plane: new THREE.Plane(new THREE.Vector3(0, 1, 0), -MARBLE_R),
     ndc: new THREE.Vector2(), hit: new THREE.Vector3(), axis: new THREE.Vector3(), dq: new THREE.Quaternion(),
-    proj: new THREE.Vector3(),
+    proj: new THREE.Vector3(), wp: new THREE.Vector3(), ws: new THREE.Vector3(),
   }), [])
 
   const props = useRef({ onConsole })
@@ -139,6 +142,22 @@ export function Marble3D({ phase, mobile, grab, stage, hover, onConsole }: {
     return new THREE.Vector3(b.x + lz * Math.sin(b.ry), 0.145 + MARBLE_R, b.z + lz * Math.cos(b.ry))
   }
 
+  // la pagina posa la bilia sul banco: cade sul punto d'arrivo da un palmo, e rimbalza
+  useEffect(() => {
+    marble.enterBench = () => {
+      const st = s.current
+      st.jump = null
+      st.p.copy(landing()).setY(MARBLE_R + 0.45)
+      st.v.set(0.35, 0, -0.15)
+      marble.mode = 'fall'
+      invalidate()
+    }
+    marble.invalidate = invalidate
+    marble.stage = stage.current
+    return () => { marble.enterBench = null; marble.invalidate = null; marble.stage = null }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invalidate, stage])
+
   // il Game Boy cliccato: se la bilia e' sul banco ci salta sopra e lo accende all'atterraggio
   useEffect(() => {
     marble.toConsole = () => {
@@ -161,8 +180,8 @@ export function Marble3D({ phase, mobile, grab, stage, hover, onConsole }: {
       st.jump = null
       jumpTo(new THREE.Vector3(0, BOARD_Y + MARBLE_R, mobile ? MOBILE_Z : 0), () => { marble.mode = 'board' }, 0.8)
     }
-    // aperto prima che la bilia fosse scesa dalla i (un link diretto): e' gia' dentro
-    if (phase === 'open' && marble.mode === 'logo') marble.mode = 'board'
+    // aperto prima che la bilia fosse scesa sul banco (un link diretto): e' gia' dentro
+    if (phase === 'open' && (marble.mode === 'logo' || marble.mode === 'page')) marble.mode = 'board'
     if (phase === 'closed' && marble.mode === 'board') {
       // il fascicolo si e' richiuso: la bilia salta fuori, sul banco
       st.p.set(mobile ? -0.2 : -1.2, 0.08 + MARBLE_R, mobile ? MOBILE_Z : 0.1)
@@ -350,25 +369,35 @@ export function Marble3D({ phase, mobile, grab, stage, hover, onConsole }: {
     return moving
   }
 
+  /** dove cade sullo schermo un punto del mondo, e quanto e' grande li' un raggio r */
+  function toScreen(p: THREE.Vector3, r: number, out: Spot) {
+    k.proj.copy(p).project(camera)
+    const w = window.innerWidth, h = window.innerHeight
+    out.x = (k.proj.x + 1) / 2 * w
+    out.y = (1 - k.proj.y) / 2 * h
+    k.proj.copy(p).addScaledVector(camera.up, r).project(camera)
+    out.r = Math.abs((1 - k.proj.y) / 2 * h - out.y)
+    out.ok = true
+  }
+
   useFrame((_, rawDt) => {
     const st = s.current
     const m = mesh.current
     const r = stage.current?.getBoundingClientRect()
     const vh = window.innerHeight
 
-    // scendendo nella pagina il pallino della i si stacca e cade sul banco;
-    // tornando in cima ritorna al suo posto
-    if (marble.mode === 'logo' && r && r.top < vh * 0.72 && r.bottom > vh * 0.2 && st.phase === 'closed') {
-      st.p.copy(landing()).setY(6)
-      st.v.set(0, 0, 0)
-      marble.mode = 'fall'
-    } else if (marble.mode !== 'logo' && marble.mode !== 'board' && marble.mode !== 'console'
-      && r && r.top > vh * 1.6 && st.phase === 'closed' && !st.drag) {
-      marble.mode = 'logo'
-      st.jump = null
+    // per i salti della pagina (MarblePage): la i, il punto d'arrivo sul banco, la bilia sul banco
+    const lb = marble.logoBall
+    if (lb) {
+      lb.getWorldPosition(k.wp)
+      lb.getWorldScale(k.ws)
+      toScreen(k.wp, ((lb as THREE.Mesh).geometry as THREE.SphereGeometry).parameters.radius * k.ws.x, marble.logoAt)
     }
+    toScreen(landing(), MARBLE_R, marble.landAt)
+    toScreen(st.p, MARBLE_R, marble.benchAt)
+    marble.benchFree = st.phase === 'closed' && !st.grab && !st.drag
 
-    if (marble.logoBall) marble.logoBall.visible = marble.mode === 'logo'
+    if (lb) lb.visible = marble.mode === 'logo'
     // sul tabellone e' piu' piccola: la mappa e' fitta di cartelline
     const sc = THREE.MathUtils.damp(m.scale.x, marble.mode === 'board' ? BOARD_SCALE : 1, 8, rawDt)
     m.scale.setScalar(sc)

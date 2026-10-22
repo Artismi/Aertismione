@@ -546,7 +546,7 @@
   width: 100%;
   border: none;
   background: none;
-  cursor: none;
+  cursor: var(--cursor-hover);
   padding: 0;
   position: relative;
 }
@@ -594,7 +594,7 @@
   height: 100%;
   border: none;
   background: none;
-  cursor: none;
+  cursor: var(--cursor-hover);
   padding: 0;
   position: relative;
 }
@@ -631,7 +631,7 @@
   height: 100%;
   border: none;
   background: none;
-  cursor: none;
+  cursor: var(--cursor-hover);
   padding: 0;
   position: relative;
 }
@@ -657,7 +657,7 @@
   height: 100%;
   border: none;
   background: none;
-  cursor: none;
+  cursor: var(--cursor-hover);
   padding: 0;
   position: relative;
 }
@@ -687,7 +687,7 @@
   aspect-ratio: 3 / 4;
   overflow: hidden;
   border: 2px solid color-mix(in srgb, var(--ink) 10%, transparent);
-  cursor: none;
+  cursor: var(--cursor-hover);
   border: none;
   background: none;
   padding: 0;
@@ -947,7 +947,7 @@
   border: none;
   color: #F2EDE4;
   font-size: 2rem;
-  cursor: none;
+  cursor: var(--cursor-hover);
   line-height: 1;
   opacity: 0.7;
   transition: opacity 0.2s;
@@ -966,7 +966,7 @@
   color: #F2EDE4;
   font-size: 1.2rem;
   padding: 12px 18px;
-  cursor: none;
+  cursor: var(--cursor-hover);
   transition: background 0.2s;
 }
 

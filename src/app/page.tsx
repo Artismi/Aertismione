@@ -8,6 +8,7 @@ import { PortfolioSection } from '@/components/sections/PortfolioSection'
 import { ContactSection } from '@/components/sections/ContactSection'
 import { AboutSection } from '@/components/sections/AboutSection'
 import { SmoothScroll } from '@/components/ui/SmoothScroll'
+import { MarblePage } from '@/components/ui/MarblePage'
 
 /**
  * La discesa nel mondo 3D (Table3D, dietro la pagina), con lo scroll morbido:
@@ -26,6 +27,8 @@ export default function Home() {
       <Navbar />
       <ConfiguratorModal />
       <SceneLoader />
+      {/* la bilia sulla pagina, fra la i del logo e il banco */}
+      <MarblePage />
 
       <section id="hero" style={{ position: 'relative' }}>
         <HeroSection />

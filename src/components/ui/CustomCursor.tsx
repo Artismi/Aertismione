@@ -3,17 +3,20 @@
 import { useEffect, useRef } from 'react'
 import styles from './CustomCursor.module.css'
 
+/**
+ * L'anello che segue il cursore. Il punto lo disegna il sistema (--cursor-dot in
+ * globals.css): un'immagine di cursore non aspetta la pagina, quindi resta
+ * attaccata al mouse anche quando il 3D la tiene occupata.
+ */
 export function CustomCursor() {
-  const dotRef = useRef<HTMLDivElement>(null)
   const ringRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     // Solo su dispositivi con mouse preciso
     if (window.matchMedia('(pointer: coarse)').matches) return
 
-    const dot = dotRef.current
     const ring = ringRef.current
-    if (!dot || !ring) return
+    if (!ring) return
 
     let rafId: number
     let mouseX = -200
@@ -21,16 +24,16 @@ export function CustomCursor() {
     let ringX = -200
     let ringY = -200
     let shown = false
+    let last = performance.now()
 
-    // Aggiorna posizione cursore senza React state
-    const onMove = (e: MouseEvent) => {
+    const onMove = (e: PointerEvent) => {
+      if (e.pointerType !== 'mouse') return
       mouseX = e.clientX
       mouseY = e.clientY
-      // Dot segue istantaneamente — zero latenza
-      dot.style.transform = `translate(${mouseX - 4}px,${mouseY - 4}px)`
       if (!shown) {
         shown = true
-        dot.style.opacity = '1'
+        ringX = mouseX
+        ringY = mouseY
         ring.style.opacity = '1'
       }
     }
@@ -38,35 +41,30 @@ export function CustomCursor() {
     // Hover state: classList diretta, zero re-render React
     const onOver = (e: MouseEvent) => {
       const el = e.target as HTMLElement
-      const isInteractive = el.tagName === 'A' || el.tagName === 'BUTTON'
-        || !!el.closest('a') || !!el.closest('button')
-      dot.classList.toggle(styles.dotHovered, isInteractive)
-      ring.classList.toggle(styles.ringHovered, isInteractive)
+      ring.classList.toggle(styles.ringHovered, !!el.closest?.('a, button'))
     }
 
-    // RAF loop: solo il ring lerpa — dot già aggiornato in onMove
-    const tick = () => {
-      ringX += (mouseX - ringX) * 0.18
-      ringY += (mouseY - ringY) * 0.18
-      ring.style.transform = `translate(${ringX - 20}px,${ringY - 20}px)`
+    // l'anello rincorre il punto: sul tempo vero, cosi' con un fotogramma perso non scatta
+    const tick = (now: number) => {
+      const dt = Math.min((now - last) / 1000, 0.1)
+      last = now
+      const k = 1 - Math.exp(-dt * 13)
+      ringX += (mouseX - ringX) * k
+      ringY += (mouseY - ringY) * k
+      ring.style.transform = `translate3d(${(ringX - 20).toFixed(2)}px,${(ringY - 20).toFixed(2)}px,0)`
       rafId = requestAnimationFrame(tick)
     }
 
-    window.addEventListener('mousemove', onMove, { passive: true })
+    window.addEventListener('pointermove', onMove, { passive: true })
     window.addEventListener('mouseover', onOver, { passive: true })
     rafId = requestAnimationFrame(tick)
 
     return () => {
-      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('pointermove', onMove)
       window.removeEventListener('mouseover', onOver)
       cancelAnimationFrame(rafId)
     }
   }, [])
 
-  return (
-    <>
-      <div ref={dotRef} className={styles.dot} />
-      <div ref={ringRef} className={styles.ring} />
-    </>
-  )
+  return <div ref={ringRef} className={styles.ring} />
 }
