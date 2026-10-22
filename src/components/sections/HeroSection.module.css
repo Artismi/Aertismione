@@ -34,10 +34,11 @@
   background: linear-gradient(
     to bottom,
     var(--veil-0) 0%,
-    var(--veil) 30vh,
+    var(--veil-0) 16vh,
+    var(--veil) 34vh,
     var(--veil) calc(100% - 26vh),
     var(--veil-0) 100%
-  ); /* entra ed esce sfumato: niente stacchi, sotto arriva il banco */
+  ); /* entra sotto il logo, che respira, ed esce sfumato: sotto arriva il banco */
 }
 
 /* ── Eyebrow row: studio label + disponibilità ── */

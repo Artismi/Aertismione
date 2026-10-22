@@ -95,7 +95,8 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                         // per staccare dal rosa senza linee: dove il vetro e' piu' spesso (i
                         // fianchi che girano via) il fondo visto attraverso si fa lilla, morbido.
                         // Niente bordo bianco, niente contorno scuro
-                        glassTint = mix(vec3(1.0), vec3(0.82, 0.76, 0.9), smoothstep(0.75, 0.15, nv));
+                        // (piu' carico: il lilla chiaro si perdeva nel rosa del fondale)
+                        glassTint = mix(vec3(0.9, 0.86, 0.97), vec3(0.48, 0.34, 0.7), smoothstep(0.9, 0.15, nv));
                     }
                 `
                 shader.fragmentShader = glassPars + shader.fragmentShader.replace(
@@ -116,7 +117,7 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                 ${inWorld
                     // nel mondo: il fronte e' vetro limpido (~0.08) e piu' ci si allontana dai bordi
                     // piu' e' nitido; la forma la disegnano i bordi, densi (~0.9)
-                    ? 'diffuseColor.a *= mix(0.08, 0.96, pow(fresnel, 1.5));'
+                    ? 'diffuseColor.a *= mix(0.16, 0.97, pow(fresnel, 1.3));'
                     // fronte: ~0.92 opaco + riflettente | bordi: ~0.18 sottili
                     : 'diffuseColor.a *= 0.18 + NdotV * NdotV * NdotV * 0.74;'}`
             )
@@ -225,8 +226,9 @@ export function LogoModel({ inWorld = false, ...props }: any) {
 
     useFrame(({ camera }, delta) => {
         if (rotatingRef.current) {
-            timeRef.current += delta * 0.4
-            rotatingRef.current.rotation.y = Math.sin(timeRef.current) * (Math.PI / 6)
+            // ondeggia appena (±10°): girando di piu' le lettere di taglio non si leggevano
+            timeRef.current += delta * 0.3
+            rotatingRef.current.rotation.y = Math.sin(timeRef.current) * (Math.PI / 18)
         }
 
         // dove sta il logo sullo schermo e quanto e' grande: la luce dall'alto e il
