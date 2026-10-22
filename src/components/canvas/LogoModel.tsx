@@ -201,7 +201,7 @@ export function LogoModel({ inWorld = false, ...props }: any) {
             b.getCenter(ball.position)
             dot.parent.add(ball)
             dot.visible = false
-            // scendendo nella pagina la bilia lascia la i e cade sul banco (Marble3D)
+            // appena la pagina sale la bilia lascia la i e cade sul piano di gioco (MarblePage)
             if (inWorld) marble.logoBall = ball
         }
 

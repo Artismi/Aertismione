@@ -14,6 +14,7 @@ import dynamic from 'next/dynamic'
 import type { TableApi } from '@/components/canvas/table/Table3D'
 import { worldHold, consoleScreen } from '@/components/canvas/table/shared'
 import { marble } from '@/components/canvas/table/marble'
+import { MARBLE_PX } from '@/components/ui/MarblePage'
 import { gameLoad } from '@/components/canvas/table/gameLoad'
 import { GameBoy, gameWarmable, type Rect } from '@/components/ui/GameBoy'
 
@@ -451,8 +452,8 @@ function drawSlingshot(
  * che si scurisce verso il bordo, la luce che la attraversa e si raccoglie in
  * basso, il riflesso in alto. lift: quanto e' alta nel salto (unita' della mappa).
  */
-function drawBall(ctx: CanvasRenderingContext2D, ball: Ball, lift: number) {
-  const R = BALL_R, x = ball.x, y = ball.y - lift
+function drawBall(ctx: CanvasRenderingContext2D, ball: Ball, lift: number, R = BALL_R) {
+  const x = ball.x, y = ball.y - lift
   // l'ombra resta a terra e si allarga e schiarisce quando la bilia si alza
   const up = Math.min(lift / 120, 1)
   ctx.save()
@@ -739,7 +740,7 @@ export function PortfolioSection() {
         drawTrail(ctx,trailRef.current)
         drawParticles(ctx,particlesRef.current)
         if (isDraggingRef.current) drawSlingshot(ctx, ball, dragOriginRef.current, w, h)
-        if (flat) drawBall(ctx, ball, lift)
+        if (flat) drawBall(ctx, ball, lift, ballOnScreen())
         drawMapDecorations(ctx,w,h,!desk)
         tableRef.current?.refresh()
       } else if (moving && !flat) tableRef.current?.tick()
@@ -751,6 +752,14 @@ export function PortfolioSection() {
     rafRef.current=requestAnimationFrame(loop)
     return ()=>{ if(rafRef.current) cancelAnimationFrame(rafRef.current) }
   }, [])
+
+  /** la bilia sulla tavola piatta: grande sullo schermo come sul resto della pagina
+   *  (MarblePage), in unita' della mappa. Il tabellone e' largo MAP_W */
+  function ballOnScreen() {
+    const p = tableRef.current?.boardScreen()
+    const w = p ? Math.hypot(p[2] - p[0], p[3] - p[1]) : 0
+    return w > 0 ? (desktopRef.current ? MARBLE_PX.desk : MARBLE_PX.touch) * MAP_W / w : BALL_R
+  }
 
   /* ── Il tavolo: cartellina e gamepad ── */
 

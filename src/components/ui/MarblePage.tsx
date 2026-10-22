@@ -1,35 +1,34 @@
 'use client'
 
 /**
- * La bilia sulla pagina. Appena sotto il logo compare il testo, il pallino della
- * i si stacca e salta sulla pagina, piu' piccola che sul banco. Li' fa come sul
- * banco: sta appoggiata sulle parti viola scuro (i «piani»: il testo sotto il
- * logo, i servizi, i contatti) e scorre con loro; un clic su un punto libero e ci
- * salta, premuta e tirata e' una fionda, rotola, rallenta e rimbalza sui bordi
- * del piano. Se il suo piano esce dallo schermo cade su quello che si vede.
- * Arrivati al banco ci salta dentro (poi e' di Marble3D), uscendone torna su un
- * piano, e tornando in cima risale sulla i.
+ * La bilia: una sola, sempre la stessa, su un unico piano di gioco che e' tutta
+ * la pagina, banco compreso.
+ *
+ * Nasce come pallino della i del logo; appena la pagina sale e compare il testo
+ * si stacca e cade sul piano. Li' fa come una bilia vera: un clic su un punto
+ * libero e ci salta, premuta e tirata e' una fionda, rotola, rallenta, rimbalza
+ * sui bordi. Scorrendo, i bordi dello schermo la spingono come pareti: se la
+ * porta dietro e le danno un po' di slancio, cosi' resta sempre in vista e la
+ * pagina e la bilia scorrono insieme. Sul banco il fascicolo e il Game Boy sono
+ * ostacoli (li misura Marble3D): colpito forte, o cliccato, il Game Boy se la
+ * prende e si accende; aperto il fascicolo ci salta dentro e li' la muove la
+ * mappa, richiuso ne esce. Tornando in cima risale sulla i.
  *
  * E' fuori dal 3D apposta: tre div spostati con transform, niente da ridisegnare,
  * cosi' resta fluida anche quando il mondo dietro e' pesante. Il tempo e' quello
  * vero (non i fotogrammi): con qualche fotogramma perso la bilia non rallenta.
- * Le posizioni sono quelle della pagina (non dello schermo): scorrendo, la bilia
- * va su e giu' con il suo piano.
  */
 
 import { useEffect, useRef } from 'react'
-import { marble, type Spot } from '@/components/canvas/table/marble'
+import { marble, type Spot, type Quad } from '@/components/canvas/table/marble'
+import { worldHold } from '@/components/canvas/table/shared'
 import { useStore } from '@/stores/useStore'
 import styles from './MarblePage.module.css'
 
 /** meta' del lato del disegno: la bilia si fa grande o piccola con scale() */
 const RB = 40
-/** i piani: le parti viola scuro e quanto sfuma il velo in cima e in fondo (in altezze di schermo) */
-const FLOORS = [
-  { sel: '#visione', top: 0.3, bottom: 0.26 },
-  { sel: '#servizi', top: 0.22, bottom: 0.22 },
-  { sel: '#contatti', top: -0.1, bottom: 0 },
-]
+/** la bilia sullo schermo: la stessa dappertutto (anche la mappa del fascicolo la disegna cosi') */
+export const MARBLE_PX = { desk: 10, touch: 8 }
 /** come sul banco: la velocita' si dimezza in mezzo secondo, i bordi restituiscono poco piu' di meta' */
 const ROLL_DRAG = 1.4
 const BOUNCE = 0.55
@@ -37,15 +36,18 @@ const BOUNCE = 0.55
 const PULL_MAX = 150
 const SHOT = 9
 const SHOT_MAX = 2400
+/** colpito piu' forte di cosi', il Game Boy se la prende */
+const CONSOLE_HIT = 700
+/** sotto la barra del menu la bilia non va */
+const NAV = 72
 
 type P = { x: number; y: number; r: number }
-type Floor = { top: number; bottom: number; left: number; right: number }
 type Jump = {
-  /** dove va: su un piano, sul banco o sulla i */
-  kind: 'page' | 'bench' | 'logo'
+  /** dove va: sul piano, sulla i, nel fascicolo, sul Game Boy */
+  kind: 'page' | 'logo' | 'board' | 'console'
   /** da dove parte, in coordinate della pagina */
   x0: number; y0: number; r0: number
-  /** dove arriva, in coordinate dello schermo (il banco e la i si misurano li') */
+  /** dove arriva, in coordinate della pagina */
   to: () => P
   t: number; dur: number; h: number
   then: (() => void) | null
@@ -65,166 +67,147 @@ export function MarblePage() {
     const shadow: HTMLDivElement = shadowRef.current
     const band: HTMLDivElement = bandRef.current
     const body = document.body
+    const layer = ball.parentElement
 
     const fine = window.matchMedia('(pointer: fine)').matches
-    const R = fine ? 8 : 7
+    const R = fine ? MARBLE_PX.desk : MARBLE_PX.touch
 
     // x, y: la bilia nella pagina; gx, gy: il punto a terra sotto di lei (nei salti resta giu')
     const st = {
       x: 0, y: 0, r: R, vx: 0, vy: 0, gx: 0, gy: 0, lift: 0,
-      floor: -1, jump: null as Jump | null,
-      drag: false, px: 0, py: 0,
+      jump: null as Jump | null, drag: false, px: 0, py: 0,
+      /** si muove perche' e' stata tirata (fionda), non perche' la spinge lo schermo */
+      shot: false,
     }
-    let shown = false, hideIn = 0, raf = 0, last = performance.now(), sy = window.scrollY
+    let shown = false, raf = 0, last = performance.now()
+    let sy = window.scrollY, prevSy = sy, scrollV = 0
 
-    /** i piani in coordinate della pagina, misurati una volta per fotogramma */
-    let floors: (Floor | null)[] = []
+    /** il piano: da dove comincia il testo sotto il logo fino in fondo alla pagina */
+    const plane = { top: 0, bottom: 0, left: 0, right: 0 }
     function measure() {
       const vh = window.innerHeight
       sy = window.scrollY
-      floors = FLOORS.map((f) => {
-        const r = document.querySelector(f.sel)?.getBoundingClientRect()
-        if (!r || r.height <= 0) return null
-        const top = r.top + sy + f.top * vh, bottom = r.bottom + sy - f.bottom * vh
-        if (bottom - top < 4 * R) return null
-        return { top, bottom, left: r.left + 6, right: r.right - 6 }
-      })
+      const vis = document.getElementById('visione')?.getBoundingClientRect()
+      plane.top = (vis ? vis.top + sy + vh * 0.3 : vh * 0.8) + R
+      plane.bottom = document.documentElement.scrollHeight - R - 4
+      plane.left = R + 4
+      plane.right = window.innerWidth - R - 4
     }
-    /** quanto di un piano si vede, in px */
-    const seen = (f: Floor) => Math.max(0, Math.min(f.bottom, sy + window.innerHeight) - Math.max(f.top, sy))
-    /** il piano che si vede di piu' (almeno un po'), o -1 */
-    function bestFloor() {
-      let best = -1, most = 6 * R
-      floors.forEach((f, i) => { if (f && seen(f) > most) { most = seen(f); best = i } })
-      return best
-    }
-    /** il piano sotto un punto della pagina, o -1 */
-    function floorAt(x: number, y: number) {
-      return floors.findIndex((f) => !!f && x >= f.left && x <= f.right && y >= f.top && y <= f.bottom)
-    }
-    /** dove posarsi su un piano: la parte che si vede, entrando dal lato da cui si arriva */
-    function landOn(i: number, x: number, fromAbove: boolean): P {
-      const f = floors[i]!
-      const vh = window.innerHeight
-      const lo = Math.max(f.top, sy) + R + 2, hi = Math.min(f.bottom, sy + vh) - R - 2
-      const y = fromAbove ? Math.min(hi, lo + vh * 0.18) : Math.max(lo, hi - vh * 0.18)
-      return { x: clamp(x, f.left + R, f.right - R), y, r: R }
-    }
+    /** dove la bilia puo' stare adesso: il piano, e dentro lo schermo (sotto il menu) */
+    const lo = () => Math.max(plane.top, sy + NAV + R)
+    const hi = () => Math.min(plane.bottom, sy + window.innerHeight - R - 6)
+    const inView = (x: number, y: number): P => ({ x: clamp(x, plane.left, plane.right), y: clamp(y, lo(), Math.max(lo(), hi())), r: R })
+    /** un punto dello schermo (dal 3D) in coordinate della pagina */
+    const fromScreen = (s: Spot): P => ({ x: s.x, y: s.y + sy, r: R })
+    const here = (): P => ({ x: st.x, y: st.y, r: st.r })
 
     function jump(kind: Jump['kind'], from: P, to: Jump['to'], then: Jump['then'] = null, dur?: number) {
       const t0 = to()
-      const d = Math.hypot(t0.x - from.x, t0.y + sy - from.y)
+      const d = Math.hypot(t0.x - from.x, t0.y - from.y)
       st.jump = {
         kind, x0: from.x, y0: from.y, r0: from.r, to, t: 0,
-        dur: dur ?? clamp(0.42 + d / 1500, 0.48, 0.9),
-        h: clamp(d * 0.3, 40, 220),
+        dur: dur ?? clamp(0.4 + d / 1500, 0.45, 0.85),
+        h: clamp(d * 0.3, 30, 200),
         then,
       }
       st.vx = st.vy = 0
       st.drag = false
     }
-    /** un salto verso un punto della pagina (si sposta con lei mentre si scorre) */
-    function jumpOnPage(from: P, at: P, floor: number) {
-      jump('page', from, () => ({ x: at.x, y: at.y - sy, r: R }), () => { st.floor = floor })
-    }
-    const here = (): P => ({ x: st.x, y: st.y, r: st.r })
+    /** un salto verso un punto fermo della pagina */
+    const jumpTo = (at: P) => jump('page', here(), () => at)
 
-    function zones() {
-      const vh = window.innerHeight
+    /** la bilia passa al piano, da dove si vedeva (la i, il tabellone, il Game Boy) */
+    function take(from: Spot) {
+      marble.mode = 'page'
+      const p = fromScreen(from)
+      st.x = st.gx = p.x; st.y = st.gy = p.y; st.r = R
+      st.vx = st.vy = 0
+      marble.invalidate?.()   // il 3D nasconde la sua (la i)
+    }
+
+    // il Game Boy cliccato: se la bilia e' sul banco ci salta sopra e lo accende all'atterraggio
+    marble.toConsole = () => {
       const stg = marble.stage?.getBoundingClientRect()
-      return {
-        // in cima il testo e' appena accennato sotto il logo: appena la pagina comincia a
-        // salire e il testo entra, la bilia salta; tornati del tutto in cima torna sulla i
-        textIn: sy > vh * 0.06,
-        textOut: sy < vh * 0.015,
-        // il banco e' in mezzo allo schermo / ne e' uscito (con un margine: niente avanti e indietro)
-        benchIn: !!stg && stg.top < vh * 0.72 && stg.bottom > vh * 0.2,
-        benchOut: !stg || stg.top > vh * 0.85 || stg.bottom < vh * 0.12,
-      }
+      const onBench = !!stg && st.y - sy > stg.top && st.y - sy < stg.bottom
+      if (marble.mode !== 'page' || st.jump || st.drag || !onBench || !marble.consoleAt.ok) return false
+      jump('console', here(), () => fromScreen(marble.consoleAt), () => {
+        marble.mode = 'console'
+        marble.onConsole?.()
+      })
+      return true
     }
 
-    /** le strade fra la i, i piani e il banco */
+    /** le strade fra la i, il piano, il fascicolo e il Game Boy */
     function route() {
-      const z = zones()
       const vh = window.innerHeight
-      // nel frattempo la bilia l'ha presa il 3D (il fascicolo aperto, il Game Boy): il salto finisce qui
-      if (st.jump && marble.mode !== 'page') { st.jump = null; st.lift = 0 }
+      const ph = marble.phase
+      const opening = ph === 'sliding' || ph === 'opening' || ph === 'open'
+      const m = marble.mode
       if (st.jump) {
-        // cambia idea a mezz'aria: il banco e' uscito mentre ci saltava, o la pagina
-        // e' ridiscesa mentre tornava sulla i. Riparte da dov'e' verso un piano
-        const j = st.jump
-        if ((j.kind === 'bench' && z.benchOut) || (j.kind === 'logo' && z.textIn)) toFloor(true)
+        // cambia idea a mezz'aria: la pagina e' ridiscesa mentre tornava sulla i, o il
+        // fascicolo si e' richiuso mentre ci saltava dentro. Ricade sul piano, dov'e'
+        const k = st.jump.kind
+        if ((k === 'logo' && sy > vh * 0.06) || (k === 'board' && !opening)) {
+          st.jump = null; st.lift = 0
+          jumpTo(inView(st.x, st.y))
+        }
         return
       }
-      const m = marble.mode
       if (m === 'logo') {
-        if (!marble.logoAt.ok) return
-        if (z.benchIn && marble.enterBench && marble.landAt.ok) {
-          // un link diretto al banco: dalla i dritta sul banco
+        // appena la pagina sale e il testo entra: la i si stacca e cade sul piano
+        if (sy > vh * 0.06 && marble.logoAt.ok) {
           take(marble.logoAt)
-          toBench()
-        } else if (z.textIn && !z.benchIn) {
-          // dalla i sul piano del testo, sotto di lei
-          const i = bestFloor()
-          if (i < 0) return
-          take(marble.logoAt)
-          jumpOnPage(here(), landOn(i, marble.logoAt.x, true), i)
+          jumpTo(inView(st.x, sy + vh * 0.72))
         }
       } else if (m === 'page') {
         if (st.drag) return
-        if (z.benchIn && marble.enterBench && marble.landAt.ok && marble.benchFree) {
-          toBench()
-        } else if (z.textOut && marble.logoAt.ok) {
-          jump('logo', here(), () => marble.logoAt, () => {
+        if (opening && marble.boardMid.ok) {
+          // si apre il fascicolo: la bilia ci salta dentro, al centro del tabellone
+          jump('board', here(), () => fromScreen(marble.boardMid), () => { marble.mode = 'board' }, 0.8)
+        } else if (sy < vh * 0.015 && marble.logoAt.ok) {
+          // tornati in cima: risale sulla i
+          jump('logo', here(), () => fromScreen(marble.logoAt), () => {
             marble.mode = 'logo'
-            hideIn = 2   // la bilia del 3D ricompare al prossimo fotogramma: fino ad allora resta questa
             marble.invalidate?.()
           })
-        } else {
-          // uscita dallo schermo insieme al suo piano: cade su quello che si vede
-          const sy0 = st.y - sy
-          if (sy0 < -2 * st.r || sy0 > vh + 2 * st.r) toFloor(sy0 < 0)
         }
-      } else if ((m === 'roll' || m === 'fall') && z.benchOut && marble.benchFree && marble.benchAt.ok) {
-        // fuori dal banco: torna su un piano, se se ne vede uno
-        const i = bestFloor()
-        if (i < 0) return
-        take(marble.benchAt)
-        jumpOnPage(here(), landOn(i, st.x, st.y - sy < vh / 2), i)
+      } else if (m === 'board' && !opening && marble.boardAt.ok) {
+        // il fascicolo si chiude: la bilia salta fuori, davanti a lui
+        take(marble.boardAt)
+        jumpTo(inView(st.x, st.y + vh * 0.16))
+      } else if (m === 'console' && !marble.grab && marble.consoleAt.ok) {
+        // il Game Boy e' tornato sul banco: la bilia ne scende
+        take(marble.consoleAt)
+        jump('page', here(), () => fromScreen(marble.consoleOut))
       }
     }
 
-    function toBench() {
-      st.floor = -1
-      jump('bench', here(), () => marble.landAt, () => land())
-    }
-    /** da dov'e' adesso, a mezz'aria compresa, sul piano che si vede. Se e' fuori
-     *  dallo schermo cade dal bordo da cui e' uscita: dall'alto, o risale dal basso */
-    function toFloor(fromAbove: boolean) {
-      const i = bestFloor()
-      if (i < 0) { st.jump = null; return }
-      st.lift = 0
-      const vh = window.innerHeight
-      const from = here()
-      const off = from.y - sy < -st.r || from.y - sy > vh + st.r
-      if (off) from.y = sy + (fromAbove ? -3 * st.r : vh + 3 * st.r)
-      const at = landOn(i, st.x, fromAbove)
-      jumpOnPage(from, at, i)
-      // una caduta: poco arco, e svelta
-      if (off && st.jump) { st.jump.h = fromAbove ? 12 : 60; st.jump.dur = 0.5 }
-    }
-
-    /** la bilia passa alla pagina, da dove si vedeva nel 3D */
-    function take(from: Spot) {
-      marble.mode = 'page'
-      st.x = st.gx = from.x; st.y = st.gy = from.y + sy; st.r = from.r
-      st.floor = -1
-      marble.invalidate?.()   // il 3D nasconde la sua
-    }
-
-    function land() {
-      marble.enterBench?.()
-      hideIn = 2
+    /** urto con un ostacolo del banco (la base di una scatola): la sposta e la fa rimbalzare */
+    function collide(q: Quad | null) {
+      if (!q) return false
+      // il punto della base piu' vicino al centro della bilia, lato per lato;
+      // la base e' convessa: la bilia e' dentro se sta dalla stessa parte di tutti i lati
+      let inside = true, sign = 0, best = Infinity, bx = 0, by = 0
+      for (let i = 0; i < q.length; i++) {
+        const a = q[i], b = q[(i + 1) % q.length]
+        const ex = b.x - a.x, ey = b.y - a.y
+        const cr = ex * (st.y - a.y) - ey * (st.x - a.x)
+        if (cr !== 0) { if (sign === 0) sign = Math.sign(cr); else if (Math.sign(cr) !== sign) inside = false }
+        const l2 = ex * ex + ey * ey || 1
+        const t = clamp(((st.x - a.x) * ex + (st.y - a.y) * ey) / l2, 0, 1)
+        const cx = a.x + ex * t, cy = a.y + ey * t
+        const d = Math.hypot(st.x - cx, st.y - cy)
+        if (d < best) { best = d; bx = cx; by = cy }
+      }
+      if ((!inside && best >= R) || best < 1e-6) return false
+      // fuori dal bordo verso la bilia; da dentro, la si spinge oltre il lato piu' vicino
+      let nx = (st.x - bx) / best, ny = (st.y - by) / best
+      if (inside) { nx = -nx; ny = -ny }
+      const push = inside ? best + R : R - best
+      st.x += nx * push; st.y += ny * push
+      const vn = st.vx * nx + st.vy * ny
+      if (vn < 0) { st.vx -= (1 + BOUNCE) * vn * nx; st.vy -= (1 + BOUNCE) * vn * ny }
+      return true
     }
 
     function step(dt: number) {
@@ -234,7 +217,7 @@ export function MarblePage() {
         const t = j.t, to = j.to()
         // la base del salto va dritta da qui a li', la bilia sale e scende sopra: l'ombra resta sulla base
         st.gx = j.x0 + (to.x - j.x0) * t
-        st.gy = j.y0 + (to.y + sy - j.y0) * t
+        st.gy = j.y0 + (to.y - j.y0) * t
         st.lift = 4 * j.h * t * (1 - t)
         st.x = st.gx
         st.y = st.gy - st.lift
@@ -249,32 +232,47 @@ export function MarblePage() {
       }
       if (marble.mode !== 'page' || st.drag) return
       st.r += (R - st.r) * Math.min(1, dt * 10)
-      const f = floors[st.floor]
-      if (!f) { st.vx = st.vy = 0; return }
-      // rotola e rallenta; i bordi del piano la respingono
-      const sp = Math.hypot(st.vx, st.vy)
-      if (sp < 4) { st.vx = st.vy = 0; return }
-      st.x += st.vx * dt; st.y += st.vy * dt
+      // rotola e rallenta
       const k = Math.exp(-ROLL_DRAG * dt)
       st.vx *= k; st.vy *= k
-      if (st.x < f.left + R) { st.x = f.left + R; st.vx = Math.abs(st.vx) * BOUNCE }
-      if (st.x > f.right - R) { st.x = f.right - R; st.vx = -Math.abs(st.vx) * BOUNCE }
-      if (st.y < f.top + R) { st.y = f.top + R; st.vy = Math.abs(st.vy) * BOUNCE }
-      if (st.y > f.bottom - R) { st.y = f.bottom - R; st.vy = -Math.abs(st.vy) * BOUNCE }
+      if (Math.hypot(st.vx, st.vy) < 4) { st.vx = st.vy = 0; st.shot = false }
+      st.x += st.vx * dt; st.y += st.vy * dt
+      // i lati della pagina
+      if (st.x < plane.left) { st.x = plane.left; st.vx = Math.abs(st.vx) * BOUNCE }
+      if (st.x > plane.right) { st.x = plane.right; st.vx = -Math.abs(st.vx) * BOUNCE }
+      // i bordi dello schermo spingono come pareti: scorrendo, la bilia viene via con la pagina
+      const top = lo(), bottom = Math.max(top, hi())
+      let pushed = false
+      if (st.y < top) { st.y = top; st.vy = Math.max(Math.abs(st.vy) * BOUNCE, scrollV * 0.9); pushed = scrollV > 30 }
+      if (st.y > bottom) { st.y = bottom; st.vy = Math.min(-Math.abs(st.vy) * BOUNCE, scrollV * 0.9); pushed = scrollV < -30 }
+      if (pushed) st.shot = false
+      // sul banco: il fascicolo e il Game Boy. Portata dallo schermo ci scivola sopra
+      // (fra il bordo e un ostacolo resterebbe schiacciata); tirata, ci sbatte, e il
+      // Game Boy colpito forte se la prende
+      if (!pushed) {
+        const sp = Math.hypot(st.vx, st.vy)
+        collide(marble.obstacles.folder)
+        if (collide(marble.obstacles.console) && st.shot && sp > CONSOLE_HIT) marble.toConsole?.()
+      }
       st.gx = st.x; st.gy = st.y
     }
 
-    const layer = ball.parentElement
     function draw() {
-      // dove sta la bilia, per chi ispeziona la pagina (e per le prove)
       if (layer) {
+        // dove sta la bilia e dove salta, per chi ispeziona la pagina (e per le prove)
         if (layer.dataset.mode !== marble.mode) layer.dataset.mode = marble.mode
-        const f = String(st.jump ? st.jump.kind : st.floor)
-        if (layer.dataset.floor !== f) layer.dataset.floor = f
+        const jk = st.jump?.kind ?? ''
+        if (layer.dataset.jump !== jk) layer.dataset.jump = jk
       }
-      const on = marble.mode === 'page' || hideIn > 0
-      if (hideIn > 0 && marble.mode !== 'page') hideIn--
-      const vis = on && !useStore.getState().gameOpen
+      // dentro il fascicolo, con la tavola piatta sulla pagina, la disegna la mappa;
+      // mentre la camera ci arriva (o se ne va) la si disegna qui, sul tabellone
+      const onBoard = marble.mode === 'board' && !st.jump
+      if (onBoard && !worldHold.on && marble.boardAt.ok) {
+        const p = fromScreen(marble.boardAt)
+        st.x = st.gx = p.x; st.y = st.gy = p.y; st.lift = 0
+      }
+      const vis = (marble.mode === 'page' || !!st.jump || (onBoard && !worldHold.on))
+        && !useStore.getState().gameOpen
       if (vis !== shown) {
         shown = vis
         ball.style.opacity = shadow.style.opacity = vis ? '' : '0'
@@ -298,10 +296,14 @@ export function MarblePage() {
 
     function tick(now: number) {
       // il tempo vero, a passi piccoli: anche con un fotogramma lungo la bilia va giusta
-      let left = Math.min((now - last) / 1000, 0.1)
+      const raw = Math.min((now - last) / 1000, 0.1)
       last = now
       measure()
+      // quanto corre la pagina (px al secondo, verso il basso positivo): e' la spinta dei bordi
+      if (raw > 0) scrollV = scrollV * 0.5 + ((sy - prevSy) / raw) * 0.5
+      prevSy = sy
       route()
+      let left = raw
       while (left > 1e-6) {
         const dt = Math.min(left, 1 / 120)
         left -= dt
@@ -311,11 +313,12 @@ export function MarblePage() {
       raf = requestAnimationFrame(tick)
     }
 
-    /* ── il mirino: il cursore, come sul banco ── */
+    /* ── il mirino: il cursore, dappertutto come sul banco ── */
 
-    const ready = () => marble.mode === 'page' && !st.jump && st.floor >= 0 && !useStore.getState().gameOpen
+    const ready = () => marble.mode === 'page' && !st.jump && !useStore.getState().gameOpen
     /** il punto e' sulla bilia (sullo schermo, con un margine per prenderla bene) */
     const onBall = (cx: number, cy: number) => Math.hypot(cx - st.x, cy - (st.y - sy)) < Math.max(20, st.r * 2.2)
+    const theirs = () => !!(marble.hover?.folder || marble.hover?.console)
     let press: { x: number; y: number } | null = null
 
     const onDown = (e: PointerEvent) => {
@@ -357,20 +360,22 @@ export function MarblePage() {
         if (d > 6) {
           const v = Math.min(SHOT_MAX, d * SHOT)
           st.vx = dx / d * v; st.vy = dy / d * v
+          st.shot = true
         }
         return
       }
       const p = press
       press = null
-      if (!p || !ready() || busy(e.target) || Math.hypot(e.clientX - p.x, e.clientY - p.y) > 8) return
+      if (!p || !ready() || busy(e.target) || theirs() || Math.hypot(e.clientX - p.x, e.clientY - p.y) > 8) return
       // non se si sta selezionando del testo
       if (window.getSelection()?.toString()) return
-      // un clic su un piano: la bilia ci salta, anche da un piano all'altro
-      const x = e.clientX, y = e.clientY + sy
-      const i = floorAt(x, y)
-      if (i < 0) return
-      const f = floors[i]!
-      jumpOnPage(here(), { x: clamp(x, f.left + R, f.right - R), y: clamp(y, f.top + R, f.bottom - R), r: R }, i)
+      // un clic su un punto libero: la bilia ci salta. Si decide appena dopo il clic:
+      // se era sul fascicolo o sul Game Boy (il 3D lo segna) il clic e' loro
+      const at = inView(e.clientX, e.clientY + sy)
+      window.setTimeout(() => {
+        if (performance.now() - marble.clickedAt < 300 || !ready()) return
+        jumpTo(at)
+      }, 0)
     }
 
     window.addEventListener('pointerdown', onDown)
@@ -379,6 +384,7 @@ export function MarblePage() {
     raf = requestAnimationFrame(tick)
     return () => {
       cancelAnimationFrame(raf)
+      marble.toConsole = null
       window.removeEventListener('pointerdown', onDown)
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp)
