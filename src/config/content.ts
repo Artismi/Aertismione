@@ -61,11 +61,11 @@ export const SERVICES = {
   savingsNote: "Se hai già un'identità visiva fatta con Artismi, ogni lavoro successivo costa meno — perché partiamo da qualcosa che esiste già.",
   cta: 'Chiedi un preventivo',
   /*
-   * I quattro servizi, una colonna ciascuno, da leggere tutto d'un fiato:
+   * I cinque servizi, una colonna ciascuno, da leggere tutto d'un fiato:
    * type: l'etichetta sopra il titolo · promise: a cosa serve, in una frase
    * text: cosa succede e cosa ottieni, in poche righe · proof: un lavoro vero.
    * label: il titolo, con *la parola chiave* fra asterischi · seal: il testo che gira
-   * intorno all'adesivo del foglio · paper: che foglio e' (folder, sheet, featured, tag, grid).
+   * intorno all'adesivo del foglio · paper: che foglio e' (folder, sheet, featured, grid, tag).
    * I prezzi non si mostrano.
    */
   cards: [
@@ -101,6 +101,16 @@ export const SERVICES = {
       proof:    'Bicicleria, ciclofficina',
     },
     {
+      id:      'web',
+      seal:    'Online come dal vivo ✦ ',
+      paper:   'grid',
+      type:    'Su misura',
+      label:   'Web, app e *realtà aumentata*',
+      promise: 'Sullo schermo, la stessa attività che la gente incontra dal vivo.',
+      text:    'Siti vetrina, pagine per prenotare o vendere, app e realtà aumentata: personaggi e ambienti 3D che compaiono su una vetrina, un muro, un luogo. Li disegno e li costruisco io partendo dalla tua identità; testi e foto li cambi da solo.',
+      proof:   'Torino Invisibile, Porto Vecchio',
+    },
+    {
       id:      'social',
       seal:    'Ogni settimana ✦ Con la tua voce ✦ ',
       paper:   'tag',
@@ -109,16 +119,6 @@ export const SERVICES = {
       promise: 'I tuoi canali vivi ogni settimana, con la tua voce.',
       text:    'Piano editoriale, contenuti illustrati, pubblicazione e risposte ai messaggi, con un resoconto a fine mese. Tu pensi alla tua attività; la tua identità continua a parlare per te.',
       proof:   'Bicicleria, ciclofficina',
-    },
-    {
-      id:      'web',
-      seal:    'Sul web ✦ Nel telefono ✦ ',
-      paper:   'grid',
-      type:    'Su misura',
-      label:   'Siti web e *app*',
-      promise: 'La tua identità diventa un posto da visitare: sul web, in un\'app, in realtà aumentata.',
-      text:    'Siti vetrina e su misura, piccole app e web app, esperienze in realtà aumentata: un\'etichetta, una vetrina o un murale che prendono vita inquadrandoli col telefono. Disegnati con le tue illustrazioni, veloci e facili da aggiornare.',
-      proof:   'Questo sito e Porto Vecchio, un videogioco nel browser',
     },
   ],
   // la fascia ambra in cima ai fogli, e la riga in fondo

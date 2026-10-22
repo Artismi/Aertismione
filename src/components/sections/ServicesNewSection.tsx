@@ -8,8 +8,9 @@
  * succede e cosa ottieni, un lavoro vero.
  * I contenuti sono in SERVICES.cards (content.ts).
  *
- * Sul telefono le colonne diventano una griglia due per due con titolo e
- * promessa: toccandone una si apre a tutta larghezza, e le altre restano li'.
+ * Sul tablet e sul telefono le colonne diventano una griglia a due, col
+ * percorso completo a tutta larghezza in mezzo; sul telefono si vedono titolo
+ * e promessa: toccandone una si apre a tutta larghezza, e le altre restano li'.
  */
 
 import { useState } from 'react'
@@ -23,7 +24,7 @@ const vp = { once: true, margin: '-60px' }
 type Card = {
   id: string
   seal: string
-  paper: 'folder' | 'sheet' | 'featured' | 'tag' | 'grid'
+  paper: 'folder' | 'sheet' | 'featured' | 'grid' | 'tag'
   type: string
   label: string
   promise: string
@@ -126,8 +127,8 @@ export function ServicesNewSection() {
               transition={{ duration: 0.7, ease: 'easeOut' as const, delay: idx * 0.12 }}
             >
               {c.paper === 'sheet' && <Clip className={styles.clip} />}
-              {c.paper === 'tag' && <><Twine className={styles.twine} /><span className={styles.hole} aria-hidden="true" /></>}
               {c.paper === 'grid' && <span className={styles.tape} aria-hidden="true" />}
+              {c.paper === 'tag' && <><Twine className={styles.twine} /><span className={styles.hole} aria-hidden="true" /></>}
               <Seal id={c.id} text={c.seal} />
               <div className={styles.blockHead}>
                 {c.featured && <span className={styles.badge}>✦ Più richiesto</span>}
