@@ -286,7 +286,7 @@ function Table(props: Props & { images: Images }) {
         metalRough={metalRough}
         board={board}
         onPointer={setHFolder}
-        onClick={props.onFolder}
+        onClick={() => { marble.clickedAt = performance.now(); props.onFolder() }}
       />
       <Console3D
         phase={phase}
@@ -299,7 +299,7 @@ function Table(props: Props & { images: Images }) {
         metalRough={metalRough}
         onPointer={setHConsole}
         // se la bilia e' sul banco ci salta sopra, e il Game Boy si accende quando atterra
-        onClick={() => { if (!marble.toConsole?.()) props.onConsole() }}
+        onClick={() => { marble.clickedAt = performance.now(); if (!marble.toConsole?.()) props.onConsole() }}
       />
       <Marble3D phase={phase} mobile={mobile} grab={grab} stage={props.stage} hover={hover} onConsole={props.onConsole} />
     </>
