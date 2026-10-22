@@ -7,6 +7,8 @@
 
 .root {
   position: relative;
+  /* arrivando dalla home la pagina entra sfumando, non compare di colpo */
+  animation: pageIn 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   --accent: #C4622D; /* overridden per-project from JS */
   --bg: #F2EAF0; /* carta rosata — emerge dal buio come da richiesta */
   --bg-alt: #EAE0E8;
@@ -1418,4 +1420,13 @@
 
 @media (prefers-reduced-motion: reduce) {
   .fregioTrack { animation: none; }
+}
+
+@keyframes pageIn {
+  /* solo l'opacita': uno spostamento muoverebbe anche la barra e le finestre fisse */
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .root { animation: none; }
 }

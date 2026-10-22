@@ -1214,7 +1214,8 @@ export function PortfolioSection() {
  */
 function useGamePreload(on: boolean, section: RefObject<HTMLElement | null>) {
   useEffect(() => {
-    if (!on) return
+    // gia' scaricato in questa visita (si torna da un lavoro alla home): non si riparte
+    if (!on || gameLoad.ready) return
     const net = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection
     // niente anticipo: lo schermo del Game Boy mostra subito la schermata di lancio
     if (net?.saveData || /(^|-)2g$/.test(net?.effectiveType ?? '')) { gameLoad.ready = true; return }
