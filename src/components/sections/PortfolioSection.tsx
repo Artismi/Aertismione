@@ -22,8 +22,8 @@ const Table3D = dynamic(() => import('@/components/canvas/table/Table3D'), { ssr
 
 /* â”€â”€â”€ Costanti â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
-// la bilia 3D sul tabellone (Marble3D: 0,14 × 0,6 unita', il tabellone e' largo 4,46 su 1200)
-const BALL_R        = 22
+// la bilia 3D sul tabellone (Marble3D: 0,125 × 0,6 unita', il tabellone e' largo 4,46 su 1200)
+const BALL_R        = 20
 const FOLDER_KEY    = 'artismi:fascicolo-aperto'   // il fascicolo era aperto quando si e' andati a un lavoro
 const FOLDER_HIT_R  = 74   // raggio collisione/hover cartellina (a misura piena)
 
@@ -467,27 +467,35 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball, lift: number) {
   ctx.fillStyle = caustic
   ctx.beginPath(); ctx.arc(ball.x + R*0.5, ball.y + R*0.4, R*0.9, 0, Math.PI*2); ctx.fill()
 
-  // il corpo: chiaro e trasparente al centro, ambra scuro verso il bordo
-  const body = ctx.createRadialGradient(x - R*0.2, y - R*0.25, R*0.1, x, y, R)
-  body.addColorStop(0,    'rgba(255,240,220,0.55)')
-  body.addColorStop(0.55, 'rgba(243,166,106,0.62)')
-  body.addColorStop(0.88, 'rgba(196,98,45,0.85)')
-  body.addColorStop(1,    'rgba(120,52,18,0.95)')
+  // vetro trasparente, come la bilia del banco: la tavola si vede attraverso,
+  // schiarita (la luce passa nel vetro); piu' spesso e piu' ambra verso il bordo
+  const prev = ctx.globalCompositeOperation
+  ctx.globalCompositeOperation = 'screen'
+  ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI*2)
+  ctx.fillStyle = 'rgba(255,214,170,0.22)'; ctx.fill()
+  ctx.globalCompositeOperation = prev
+  const body = ctx.createRadialGradient(x, y, 0, x, y, R)
+  body.addColorStop(0,    'rgba(243,166,106,0.06)')
+  body.addColorStop(0.5,  'rgba(243,166,106,0.1)')
+  body.addColorStop(0.78, 'rgba(214,120,62,0.3)')
+  body.addColorStop(0.91, 'rgba(150,66,24,0.5)')
+  body.addColorStop(0.96, 'rgba(255,240,225,0.75)')
+  body.addColorStop(1,    'rgba(255,255,255,0.35)')
   ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI*2)
   ctx.fillStyle = body; ctx.fill()
 
-  // la luce rifratta: si raccoglie nella parte bassa, dalla parte opposta al riflesso
-  const refr = ctx.createRadialGradient(x + R*0.25, y + R*0.45, 0, x + R*0.25, y + R*0.45, R*0.6)
-  refr.addColorStop(0, 'rgba(255,214,150,0.85)')
-  refr.addColorStop(1, 'rgba(255,214,150,0)')
+  // la luce raccolta in basso, calda
+  const refr = ctx.createRadialGradient(x + R*0.2, y + R*0.48, 0, x + R*0.2, y + R*0.48, R*0.5)
+  refr.addColorStop(0, 'rgba(255,226,190,0.6)')
+  refr.addColorStop(1, 'rgba(255,226,190,0)')
   ctx.fillStyle = refr
   ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI*2); ctx.fill()
 
-  // il riflesso in alto e un filo di luce sul bordo
-  ctx.beginPath(); ctx.ellipse(x - R*0.38, y - R*0.42, R*0.3, R*0.17, -0.6, 0, Math.PI*2)
-  ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fill()
-  ctx.beginPath(); ctx.arc(x, y, R - 0.8, Math.PI*0.95, Math.PI*1.45)
-  ctx.strokeStyle = 'rgba(255,248,236,0.55)'; ctx.lineWidth = 1.4; ctx.stroke()
+  // i riflessi in alto: la finestra dello studio, come sul banco
+  ctx.beginPath(); ctx.ellipse(x - R*0.32, y - R*0.48, R*0.32, R*0.16, -0.35, 0, Math.PI*2)
+  ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fill()
+  ctx.beginPath(); ctx.ellipse(x + R*0.16, y - R*0.56, R*0.1, R*0.08, 0, 0, Math.PI*2)
+  ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.fill()
   ctx.restore()
 }
 
@@ -866,6 +874,17 @@ export function PortfolioSection() {
     later(() => setPhase('returning'), FADE_MS + COVER_MS)
     later(() => setPhase('closed'), FADE_MS + COVER_MS + SLIDE_MS)
   }
+
+  // a fascicolo aperto la tavola sta ferma sulla pagina: se si scorre (su o giu') il
+  // fascicolo si chiude e la bilia ne esce, poi scende con la pagina
+  useEffect(() => {
+    if (phase !== 'open') return
+    const y0 = window.scrollY
+    const onScroll = () => { if (Math.abs(window.scrollY - y0) > 30) closeFolder() }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase])
 
   useEffect(() => {
     if (phase !== 'open') return

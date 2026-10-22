@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import { useStore } from '../../stores/useStore'
 import { glassUniforms, glassPars, glassComposite } from './table/WorldBackdrop'
 import { marble } from './table/marble'
+import { logoSeen } from './table/shared'
 
 /** Larghezza del logo nel mondo, a scala 1 (logo.glb: 343 × 0,139 × 0,06) */
 const LOGO_W = 2.86
@@ -256,6 +257,7 @@ export function LogoModel({ inWorld = false, ...props }: any) {
             _c.project(camera)
             const perUnit = Math.abs(_u.y - _c.y) / 2   // altezze di schermo per unita' di mondo
             glassUniforms.u_logo.value.set((_c.x + 1) / 2, (_c.y + 1) / 2, LOGO_W * _s.x * perUnit, 1)
+            logoSeen.scroll = window.scrollY
         }
 
         // Il logo resta staticamente ben inquadrato al centro dello schermo.

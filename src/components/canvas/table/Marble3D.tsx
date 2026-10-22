@@ -25,8 +25,9 @@ import { FW, FD, BW, BD, BOARD_Y, MOBILE_Z } from './Folder3D'
 import type { TablePhase } from './Table3D'
 import type { Spot } from './marble'
 
-/** raggio della bilia: quanto il pallino della i del logo */
-export const MARBLE_R = 0.14
+/** raggio della bilia: un po' meno del pallino della i del logo (dalla i al banco ci
+ *  passa la pagina, che la rimpicciolisce saltando) */
+export const MARBLE_R = 0.125
 const GRAVITY = 22
 /** attrito di rotolamento: la velocita' si dimezza in circa mezzo secondo */
 const ROLL_DRAG = 1.4
