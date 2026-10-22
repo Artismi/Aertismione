@@ -102,8 +102,15 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                         // carico; il lilla resta ai fianchi
                         glassTint = mix(vec3(0.97, 0.8, 0.76), vec3(0.52, 0.4, 0.74), smoothstep(0.85, 0.15, nv));
                         // i fianchi di taglio riflettono lo studio: senza questo erano bordi bianchi.
-                        // Si tingono dello stesso lilla del fondo visto attraverso
-                        gl_FragColor.rgb = mix(gl_FragColor.rgb, gl_FragColor.rgb * vec3(0.6, 0.46, 0.74), smoothstep(0.75, 0.05, nv));
+                        // Si fanno lilla scuro
+                        float side = smoothstep(0.9, 0.2, nv);
+                        // i riflessi sui fianchi sono molto piu' forti del bianco: prima si
+                        // smorzano, poi si colorano (altrimenti anche mescolati restano chiari)
+                        vec3 lit = gl_FragColor.rgb / (1.0 + gl_FragColor.rgb * side * 3.0);
+                        gl_FragColor.rgb = mix(lit, vec3(0.36, 0.22, 0.52), side * 0.85);
+                        // e di taglio il vetro e' denso: prima ci si vedeva attraverso il fondo
+                        // chiaro, ed era quello a fare il bordo pallido
+                        gl_FragColor.a = mix(gl_FragColor.a, 1.0, side * 0.85);
                     }
                 `
                 shader.fragmentShader = glassPars + shader.fragmentShader.replace(
