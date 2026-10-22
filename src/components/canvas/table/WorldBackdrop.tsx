@@ -151,14 +151,21 @@ const fragment = pvPars + /* glsl */`
       float e = min((u_bench.x - abs(p.x)) / u_band.x, (u_bench.y - abs(p.z)) / u_band.y);
       k = smoothstep(0.0, 1.0, e);
     }
-    if (k >= 1.0) { outputColor = vec4(inputColor.rgb, 1.0); return; }
-    // la sfumatura: la pagina somma k volte il banco finito (ACES, vignettatura, sRGB;
-    // premoltiplicato) e (1 - k) l'acqua che sta dietro, finita allo stesso modo.
-    // Qui si calcola il banco finito, lo si scala di k, e si torna indietro:
-    // il composer dopo rimette ACES e vignettatura e porta in sRGB
+    // sui bordi delle cose l'antialiasing mescola il pixel con lo sfondo del 3D, che e'
+    // trasparente: il colore arriva premoltiplicato per la copertura (inputColor.a).
+    // Trattarlo come pieno dava un filo nero tutto intorno (al logo, al banco)
+    float cover = inputColor.a;
+    if (cover <= 0.0) { outputColor = vec4(0.0); return; }
+    vec3 c = inputColor.rgb / cover;
+    float a = k * cover;
+    if (a >= 0.999) { outputColor = vec4(c, 1.0); return; }
+    // la sfumatura (e i bordi): la pagina somma a volte la cosa finita (ACES,
+    // vignettatura, sRGB; premoltiplicata) e (1 - a) l'acqua che sta dietro, finita
+    // allo stesso modo. Qui si calcola la cosa finita, la si scala di a, e si torna
+    // indietro: il composer dopo rimette ACES e vignettatura e porta in sRGB
     float vg = max(pvVignette(uv), 1e-3);
-    vec3 shown = k * pvToSrgb(pvAces(inputColor.rgb) * vg);
-    outputColor = vec4(pvAcesInv(fadeToLinear(shown) / vg), k);
+    vec3 shown = a * pvToSrgb(pvAces(c) * vg);
+    outputColor = vec4(pvAcesInv(fadeToLinear(shown) / vg), a);
   }
 `
 

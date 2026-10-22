@@ -92,6 +92,10 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                         vec3 n = normalize(vNormal);
                         float nv = abs(dot(n, normalize(vViewPosition)));
                         glassShift = -n.xy * (1.0 - nv) * 0.035;
+                        // per staccare dal rosa senza linee: dove il vetro e' piu' spesso (i
+                        // fianchi che girano via) il fondo visto attraverso si fa lilla, morbido.
+                        // Niente bordo bianco, niente contorno scuro
+                        glassTint = mix(vec3(1.0), vec3(0.82, 0.76, 0.9), smoothstep(0.75, 0.15, nv));
                     }
                 `
                 shader.fragmentShader = glassPars + shader.fragmentShader.replace(
@@ -112,7 +116,7 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                 ${inWorld
                     // nel mondo: il fronte e' vetro limpido (~0.08) e piu' ci si allontana dai bordi
                     // piu' e' nitido; la forma la disegnano i bordi, densi (~0.9)
-                    ? 'diffuseColor.a *= mix(0.08, 0.9, pow(fresnel, 2.2));'
+                    ? 'diffuseColor.a *= mix(0.08, 0.96, pow(fresnel, 1.5));'
                     // fronte: ~0.92 opaco + riflettente | bordi: ~0.18 sottili
                     : 'diffuseColor.a *= 0.18 + NdotV * NdotV * NdotV * 0.74;'}`
             )
@@ -197,6 +201,9 @@ export function LogoModel({ inWorld = false, ...props }: any) {
             mesh.material = glassMaterial
             mesh.renderOrder = 1
 
+            // nel mondo niente linee sulle punte: un pixel di linea scura sul vetro chiaro
+            // faceva dei micro-bordini neri seghettati
+            if (inWorld) return
             // Il logo e' liscio: solo le pieghe vere (le punte) fanno linea,
             // non gli anelli che costruiscono i bordi tondi.
             const edges = new THREE.EdgesGeometry(mesh.geometry, 50)
