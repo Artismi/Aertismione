@@ -28,7 +28,7 @@ import styles from './MarblePage.module.css'
 /** meta' del lato del disegno: la bilia si fa grande o piccola con scale() */
 const RB = 40
 /** la bilia sullo schermo: la stessa dappertutto (anche la mappa del fascicolo la disegna cosi') */
-export const MARBLE_PX = { desk: 10, touch: 8 }
+export const MARBLE_PX = { desk: 14, touch: 11 }
 /** come sul banco: la velocita' si dimezza in mezzo secondo, i bordi restituiscono poco piu' di meta' */
 const ROLL_DRAG = 1.4
 const BOUNCE = 0.55
