@@ -92,13 +92,10 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                         vec3 n = normalize(vNormal);
                         float nv = abs(dot(n, normalize(vViewPosition)));
                         glassShift = -n.xy * (1.0 - nv) * 0.035;
-                        // per staccare dal rosa: i fianchi che girano via prendono la luce
-                        // (un filo chiaro, come sul vetro vero) e proprio sulla sagoma un
-                        // segno piu' scuro, sottile, che la separa dal fondo
-                        float rimLight = smoothstep(0.65, 0.12, nv);
-                        gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1.35, 1.32, 1.4), rimLight * 0.55);
-                        float edgeLine = smoothstep(0.16, 0.02, nv);
-                        gl_FragColor.rgb *= 1.0 - edgeLine * 0.45;
+                        // per staccare dal rosa senza linee: dove il vetro e' piu' spesso (i
+                        // fianchi che girano via) il fondo visto attraverso si fa lilla, morbido.
+                        // Niente bordo bianco, niente contorno scuro
+                        glassTint = mix(vec3(1.0), vec3(0.82, 0.76, 0.9), smoothstep(0.75, 0.15, nv));
                     }
                 `
                 shader.fragmentShader = glassPars + shader.fragmentShader.replace(
@@ -204,6 +201,9 @@ export function LogoModel({ inWorld = false, ...props }: any) {
             mesh.material = glassMaterial
             mesh.renderOrder = 1
 
+            // nel mondo niente linee sulle punte: un pixel di linea scura sul vetro chiaro
+            // faceva dei micro-bordini neri seghettati
+            if (inWorld) return
             // Il logo e' liscio: solo le pieghe vere (le punte) fanno linea,
             // non gli anelli che costruiscono i bordi tondi.
             const edges = new THREE.EdgesGeometry(mesh.geometry, 50)

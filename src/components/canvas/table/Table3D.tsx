@@ -507,7 +507,7 @@ function World(props: Props & { images: Images | null }) {
       {/* come in un render: occlusione negli angoli e vignettatura. Niente grana qui:
           sgranava il logo (la grana del sito e' gia' sopra tutta la pagina) */}
       {/* niente messa a fuoco: costava piu' di tutto il resto e faceva scattare lo scroll */}
-      <EffectComposer ref={composer} multisampling={mobile ? 0 : 2}>
+      <EffectComposer ref={composer} multisampling={mobile ? 0 : 4}>
         <N8AO aoRadius={0.5} distanceFalloff={0.5} intensity={AO_INTENSITY} quality={mobile ? 'low' : 'medium'} halfRes />
         <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
         <Vignette offset={0.25} darkness={0.55} />
@@ -557,7 +557,9 @@ export default function Table3D(props: Props) {
       <Canvas
         frameloop="demand"
         shadows="soft"
-        dpr={[1, 1.5]}
+        // dal computer fino al doppio dei pixel dello schermo: il vetro del logo e i bordi
+        // del banco nitidi anche sugli schermi retina. Dal telefono resta piu' leggero
+        dpr={props.mobile ? [1, 1.5] : [1, 2]}
         camera={{ fov: 30, position: [0.15, 40, 30], near: 0.1, far: 200 }}
         // trasparente: dietro c'e' l'acqua, sul suo canvas (WaterCanvas)
         gl={{ antialias: false, alpha: true, powerPreference: 'high-performance' }}
