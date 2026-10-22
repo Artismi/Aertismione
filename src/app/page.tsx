@@ -15,8 +15,8 @@ import { MarblePage } from '@/components/ui/MarblePage'
  *
  *  Hero (con Visione)    → in aria, con il logo e lo shader rosa
  *  Progetti              → la camera scende e si ferma sul banco da lavoro
- *  Servizi, Chi sono,    → la camera scende oltre il bordo, il banco esce in alto:
- *  Contatti                 resta lo sfondo rosa e il sito continua come prima
+ *  Servizi, Chi sono,    → la camera scende oltre il bordo, il banco esce in alto;
+ *  Contatti                 da Servizi in giu' un velo viola continuo, senza buchi
  *
  */
 export default function Home() {

@@ -189,15 +189,25 @@ function drawPaths(ctx: CanvasRenderingContext2D, projects: Project[], w: number
 
 /* Cache delle anteprime disegnate dentro le cartelline (file leggeri, ~30KB) */
 const thumbCache = new Map<string, HTMLImageElement>()
+/** cresce ogni volta che un'anteprima e' pronta: lo strato fisso della mappa va rifatto */
+let thumbsVersion = 0
 
 function getThumb(src?: string): HTMLImageElement | null {
   if (!src || typeof window === 'undefined') return null
   const cached = thumbCache.get(src)
   if (cached) return cached.complete && cached.naturalWidth > 0 ? cached : null
   const img = new window.Image()
+  img.decoding = 'async'
   img.src = src
+  // decodificata prima di disegnarla: niente decodifica a meta' apertura
+  img.decode().catch(() => {}).then(() => { thumbsVersion++ })
   thumbCache.set(src, img)
   return null
+}
+
+/** tutte le anteprime, scaricate e decodificate quando il browser e' libero */
+function preloadThumbs() {
+  for (const p of PROJECTS) getThumb((p as { thumb?: string }).thumb)
 }
 
 function roundRectPath(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
@@ -530,6 +540,9 @@ export function PortfolioSection() {
   const redrawRef     = useRef(true)               // la mappa va ridisegnata
   const drawnHoverRef = useRef<string | null>(null) // la cartellina accesa nell'ultimo disegno
   const drawnFlatRef  = useRef(false)               // l'ultimo disegno era per la tavola piatta (con la bilia)
+  // lo strato fisso della mappa (zone, percorsi, cartelline con le anteprime): si
+  // ridisegna solo se cambia; nei fotogrammi in movimento si ricopia e basta
+  const layerRef      = useRef<{ c: HTMLCanvasElement | null; key: string }>({ c: null, key: '' })
   const gridRevealRef = useRef(0)
   const inViewRef     = useRef(false)
   const openRef       = useRef(false)
@@ -607,7 +620,8 @@ export function PortfolioSection() {
 
       // La mappa si vede solo a fascicolo aperto: entra piano, esce svelta
       const visible = inViewRef.current && openRef.current
-      gridRevealRef.current+=((visible?1:0)-gridRevealRef.current)*(visible?0.06:0.2)
+      gridRevealRef.current+=((visible?1:0)-gridRevealRef.current)*(visible?0.1:0.2)
+      if (visible && gridRevealRef.current > 0.99) gridRevealRef.current = 1
 
       // Sezione fuori schermo o fascicolo chiuso: si salta tutto il disegno.
       // Prima la mappa continuava a ridisegnare cartelline, ombre, scia e
@@ -724,6 +738,7 @@ export function PortfolioSection() {
       // la mappa si ridisegna (e la texture si ricarica) solo quando cambia qualcosa
       const reveal = gridRevealRef.current, target = visible ? 1 : 0
       const dirty = redrawRef.current || hoveredRef.current !== drawnHoverRef.current
+        || !layerRef.current.key.includes(`|${thumbsVersion}|`)
         || Math.abs(reveal - target) > 0.003 || particlesRef.current.length > 0
         || trailRef.current.length > 0 || isDraggingRef.current
         || flat !== drawnFlatRef.current || (flat && moving)
@@ -734,9 +749,21 @@ export function PortfolioSection() {
         // la fodera scura del fascicolo: il tabellone e' stampato li' sopra
         ctx.fillStyle='#1E1B24'; ctx.fillRect(0,0,w,h)
         drawBackground(ctx,w,h,reveal)
-        for (let i=0;i<PROJ.length;i++) drawZone(ctx,PROJ[i],ZONE_JITTER[i],w,h)
-        drawPaths(ctx,PROJ,w,h)
-        for (const p of PROJ) drawFolder(ctx,p,w,h,hoveredRef.current===p.id)
+        const L = layerRef.current
+        const key = `${desk}|${w}|${h}|${hoveredRef.current}|${thumbsVersion}|${canvasLoop.width}x${canvasLoop.height}`
+        if (!L.c) L.c = document.createElement('canvas')
+        if (L.key !== key) {
+          L.key = key
+          L.c.width = canvasLoop.width; L.c.height = canvasLoop.height
+          const lc = L.c.getContext('2d')
+          if (lc) {
+            lc.setTransform(ctx.getTransform())
+            for (let i=0;i<PROJ.length;i++) drawZone(lc,PROJ[i],ZONE_JITTER[i],w,h)
+            drawPaths(lc,PROJ,w,h)
+            for (const p of PROJ) drawFolder(lc,p,w,h,hoveredRef.current===p.id)
+          }
+        }
+        ctx.save(); ctx.setTransform(1,0,0,1,0,0); ctx.drawImage(L.c,0,0); ctx.restore()
         drawTrail(ctx,trailRef.current)
         drawParticles(ctx,particlesRef.current)
         if (isDraggingRef.current) drawSlingshot(ctx, ball, dragOriginRef.current, w, h)
@@ -845,8 +872,9 @@ export function PortfolioSection() {
   }
 
   /**
-   * Si apre un lavoro dal fascicolo: il fascicolo se lo ricorda. Tornando indietro
-   * (o con «torna al portfolio») si ritrova la tavola aperta, non il fascicolo chiuso.
+   * Si apre un lavoro dal fascicolo: la pagina se lo ricorda. Tornando indietro
+   * (o con «torna al portfolio») si ritorna al banco, con il fascicolo chiuso e
+   * pronto da riaprire: non si riapre da solo.
    */
   function goProject(id: string) {
     try { sessionStorage.setItem(FOLDER_KEY, '1') } catch { /* niente memoria: pazienza */ }
@@ -854,14 +882,14 @@ export function PortfolioSection() {
   }
 
   useEffect(() => {
-    let open = false
-    try { open = sessionStorage.getItem(FOLDER_KEY) === '1' } catch { /* ignora */ }
-    if (!open) return
-    // di nuovo al banco, con il fascicolo gia' aperto
+    let back = false
+    try { back = sessionStorage.getItem(FOLDER_KEY) === '1'; sessionStorage.removeItem(FOLDER_KEY) } catch { /* ignora */ }
+    if (!back) return
+    // di nuovo al banco, il fascicolo chiuso e pronto
     const center = () => wrapperRef.current?.scrollIntoView({ block: 'center', behavior: 'instant' })
     center()
     const t1 = window.setTimeout(center, 120)
-    const t2 = window.setTimeout(() => { center(); setPhase('open') }, 260)
+    const t2 = window.setTimeout(center, 260)
     return () => { window.clearTimeout(t1); window.clearTimeout(t2) }
   }, [])
 
@@ -934,6 +962,16 @@ export function PortfolioSection() {
     return () => { io.disconnect(); window.clearTimeout(t) }
   }, [])
   useGamePreload(!warm, sectionRef)
+
+  // le anteprime delle cartelline arrivano prima di aprire il fascicolo, quando il browser e' libero
+  useEffect(() => {
+    const go = () => preloadThumbs()
+    const idle = () => typeof window.requestIdleCallback === 'function'
+      ? window.requestIdleCallback(go, { timeout: 3000 }) : window.setTimeout(go, 1500)
+    if (document.readyState === 'complete') idle()
+    else window.addEventListener('load', idle, { once: true })
+    return () => window.removeEventListener('load', idle)
+  }, [])
 
   function centerRect(): Rect {
     const w = window.innerWidth, h = window.innerHeight

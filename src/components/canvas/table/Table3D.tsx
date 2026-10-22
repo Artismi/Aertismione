@@ -33,6 +33,29 @@ import { WorldBackdrop, GlassSync } from './WorldBackdrop'
 import { worldHold, worldNear } from './shared'
 import { WaterCanvas } from './WaterCanvas'
 import { LogoModel } from '../LogoModel'
+
+/**
+ * Come gl.compileAsync, ma non si blocca. Quello di three.js legge il programma di
+ * ogni materiale mentre aspetta: se nel frattempo un materiale viene sostituito o
+ * buttato (il programma non c'e' piu') va in errore («reading 'isReady'»), la
+ * promessa non finisce mai e il banco resta preparato a meta'.
+ */
+function compileSafe(gl: THREE.WebGLRenderer, scene: THREE.Object3D, camera: THREE.Camera) {
+  const pending = gl.compile(scene, camera)
+  return new Promise<void>((done) => {
+    const started = performance.now()
+    const check = () => {
+      for (const mat of pending) {
+        const program = (gl.properties.get(mat) as { currentProgram?: { isReady?: () => boolean } }).currentProgram
+        if (!program?.isReady || program.isReady()) pending.delete(mat)
+      }
+      // al massimo dieci secondi: poi si va avanti comunque
+      if (pending.size === 0 || performance.now() - started > 10000) done()
+      else window.setTimeout(check, 10)
+    }
+    window.setTimeout(check, 10)
+  })
+}
 import styles from './Table3D.module.css'
 
 export type TablePhase = 'closed' | 'sliding' | 'opening' | 'open' | 'closing' | 'returning' | 'list'
@@ -415,7 +438,7 @@ function Warmup({ table, ready, composer }: {
       // erano altri, e quelli giusti si compilavano tutti insieme all'arrivo sul banco
       const prev = gl.getRenderTarget()
       gl.setRenderTarget(composer.current?.inputBuffer ?? null)
-      const job = gl.compileAsync(scene, camera)   // traversata subito, compilazione in parallelo
+      const job = compileSafe(gl, scene, camera)   // traversata subito, compilazione in parallelo
       gl.setRenderTarget(prev)
       g.visible = was
       await job.catch(() => {})

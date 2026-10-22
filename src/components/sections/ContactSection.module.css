@@ -7,14 +7,14 @@
   overflow-x: clip;
 }
 
-/* Il velo entra sfumando dal mondo (sopra c'e' Chi sono, trasparente) e resta fino in fondo */
+/* lo stesso velo viola di Servizi e Chi sono, fino in fondo */
 .section::before {
   content: '';
   position: absolute;
-  inset: -22vh 0 0;
+  inset: 0;
   z-index: -1;
   pointer-events: none;
-  background: linear-gradient(to bottom, var(--veil-0) 0%, var(--veil) 22vh, var(--veil) 100%);
+  background: var(--veil);
 }
 
 /* Override accent-bar on dark background */
