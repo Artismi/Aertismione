@@ -223,28 +223,32 @@ def gonfia(forma):
     return pos.astype(np.float32), nor.astype(np.float32), idx.astype(np.uint32)
 
 
-def scrivi(pos, nor, idx):
-    uv = ((pos[:, :2] - pos[:, :2].min(0)) / (pos[:, :2].max(0) - pos[:, :2].min(0)).max()).astype(np.float32)
+def scrivi(parti):
+    """parti: (nome, pos, nor, idx) per pezzo; tutti con il nodo del vecchio modello."""
     blob = b''
-    viste, acc = [], []
-    for arr, tipo, ct, minmax in ((pos, 'VEC3', 5126, True), (nor, 'VEC3', 5126, False),
-                                  (uv, 'VEC2', 5126, False), (idx.reshape(-1), 'SCALAR', 5125, False)):
-        dati = arr.tobytes()
-        vista = {'buffer': 0, 'byteOffset': len(blob), 'byteLength': len(dati)}
-        vista['target'] = 34963 if tipo == 'SCALAR' else 34962
-        viste.append(vista)
-        a = {'bufferView': len(viste) - 1, 'componentType': ct, 'count': len(arr), 'type': tipo}
-        if minmax:
-            a['min'] = arr.min(0).tolist()
-            a['max'] = arr.max(0).tolist()
-        acc.append(a)
-        blob += dati + b'\0' * (-len(dati) % 4)
+    viste, acc, meshes, nodi = [], [], [], []
+    for nome, pos, nor, idx in parti:
+        uv = ((pos[:, :2] - pos[:, :2].min(0)) / (pos[:, :2].max(0) - pos[:, :2].min(0)).max()).astype(np.float32)
+        prima = len(acc)
+        for arr, tipo, ct, minmax in ((pos, 'VEC3', 5126, True), (nor, 'VEC3', 5126, False),
+                                      (uv, 'VEC2', 5126, False), (idx.reshape(-1), 'SCALAR', 5125, False)):
+            dati = arr.tobytes()
+            vista = {'buffer': 0, 'byteOffset': len(blob), 'byteLength': len(dati)}
+            vista['target'] = 34963 if tipo == 'SCALAR' else 34962
+            viste.append(vista)
+            a = {'bufferView': len(viste) - 1, 'componentType': ct, 'count': len(arr), 'type': tipo}
+            if minmax:
+                a['min'] = arr.min(0).tolist()
+                a['max'] = arr.max(0).tolist()
+            acc.append(a)
+            blob += dati + b'\0' * (-len(dati) % 4)
+        meshes.append({'name': nome, 'primitives': [{'attributes': {'POSITION': prima, 'NORMAL': prima + 1,
+                       'TEXCOORD_0': prima + 2}, 'indices': prima + 3, 'material': 0}]})
+        nodi.append(dict(NODO, name=nome, mesh=len(meshes) - 1))
     js = {'asset': {'version': '2.0', 'generator': 'scripts/logo-3d.py'}, 'scene': 0,
-          'scenes': [{'name': 'Scene', 'nodes': [0]}], 'nodes': [dict(NODO, mesh=0)],
+          'scenes': [{'name': 'Scene', 'nodes': list(range(len(nodi)))}], 'nodes': nodi,
           'materials': [{'doubleSided': True, 'name': 'Bidirectional Reflect Distribution Func'}],
-          'meshes': [{'name': 'aRTISMI 3D', 'primitives': [{'attributes': {'POSITION': 0, 'NORMAL': 1, 'TEXCOORD_0': 2},
-                                                             'indices': 3, 'material': 0}]}],
-          'accessors': acc, 'bufferViews': viste, 'buffers': [{'byteLength': len(blob)}]}
+          'meshes': meshes, 'accessors': acc, 'bufferViews': viste, 'buffers': [{'byteLength': len(blob)}]}
     j = json.dumps(js, separators=(',', ':')).encode()
     j += b' ' * (-len(j) % 4)
     tot = 12 + 8 + len(j) + 8 + len(blob)
@@ -252,8 +256,13 @@ def scrivi(pos, nor, idx):
         f.write(struct.pack('<III', 0x46546C67, 2, tot))
         f.write(struct.pack('<II', len(j), 0x4E4F534A) + j)
         f.write(struct.pack('<II', len(blob), 0x004E4942) + blob)
-    print(f'{OUT}: {len(pos)} vertici, {len(idx)} triangoli, {os.path.getsize(OUT) // 1024} KB')
+    print(f'{OUT}: {sum(len(p[1]) for p in parti)} vertici, {os.path.getsize(OUT) // 1024} KB')
 
 
 if __name__ == '__main__':
-    scrivi(*gonfia(in_file(poligoni(sagoma()))))
+    forma = in_file(poligoni(sagoma()))
+    # il pallino della i e' un pezzo a parte ("pallino"): nel sito al suo posto c'e'
+    # la bilia, il cursore (LogoModel)
+    pezzi = sorted(getattr(forma, 'geoms', [forma]), key=lambda g: g.area)
+    pallino, corpo = pezzi[0], unary_union(pezzi[1:])
+    scrivi([('aRTISMI 3D', *gonfia(corpo)), ('pallino', *gonfia(pallino))])

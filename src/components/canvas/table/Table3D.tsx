@@ -27,6 +27,8 @@ import { loadImage } from './textures'
 import { Bench } from './Bench'
 import { Folder3D, FW, FD, BW, BD, BOARD_Y, MOBILE_Z } from './Folder3D'
 import { Console3D } from './Console3D'
+import { Marble3D } from './Marble3D'
+import { marble } from './marble'
 import { WorldBackdrop, GlassSync } from './WorldBackdrop'
 import { worldHold } from './shared'
 import { LogoModel } from '../LogoModel'
@@ -42,6 +44,8 @@ export type TableApi = {
   toBoard: (clientX: number, clientY: number) => BoardPoint | null
   /** il canvas del tabellone e' stato ridisegnato */
   refresh: () => void
+  /** la bilia si e' mossa sul tabellone: si ridisegna il mondo, la texture no */
+  tick: () => void
 }
 
 type Props = {
@@ -52,7 +56,7 @@ type Props = {
   count: number
   folderLabel: string
   folderHint: string
-  game: { title: string; hint: string; screen: string }
+  game: { title: string; hint: string; screen: string; loading: string }
   onFolder: () => void
   onConsole: () => void
   api: MutableRefObject<TableApi | null>
@@ -229,6 +233,7 @@ function useBoard(board: Props['board'], api: Props['api'], mobile: boolean) {
         tex.needsUpdate = true
         invalidate()
       },
+      tick: () => invalidate(),
     }
     return () => { api.current = null }
   }, [api, camera, gl, invalidate, tex, mobile])
@@ -241,6 +246,10 @@ function Table(props: Props & { images: Images }) {
   const { phase, grab, mobile } = props
   const [hFolder, setHFolder] = useState(false)
   const [hConsole, setHConsole] = useState(false)
+  // la bilia deve sapere se il clic e' del fascicolo o del Game Boy
+  const hover = useRef({ folder: false, console: false })
+  hover.current.folder = hFolder
+  hover.current.console = hConsole
   const board = useBoard(props.board, props.api, mobile)
   // rugosita' fotografiche (CC0): carta, metallo spazzolato, plastica
   const [paperRough, metalRough, plasticRough] = useLoader(THREE.TextureLoader, [
@@ -282,8 +291,10 @@ function Table(props: Props & { images: Images }) {
         plasticRough={plasticRough}
         metalRough={metalRough}
         onPointer={setHConsole}
-        onClick={props.onConsole}
+        // se la bilia e' sul banco ci salta sopra, e il Game Boy si accende quando atterra
+        onClick={() => { if (!marble.toConsole?.()) props.onConsole() }}
       />
+      <Marble3D phase={phase} mobile={mobile} grab={grab} stage={props.stage} hover={hover} onConsole={props.onConsole} />
     </>
   )
 }
@@ -425,7 +436,7 @@ function World(props: Props & { images: Images | null }) {
           si carica subito, e' la prima cosa che si vede */}
       <group ref={logo}>
         <Suspense fallback={null}>
-          <LogoModel inWorld scale={mobile ? 0.75 : 1} />
+          <LogoModel inWorld scale={mobile ? 0.95 : 1.4} />
         </Suspense>
         <GlassSync />
       </group>
