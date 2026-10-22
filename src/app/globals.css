@@ -4,6 +4,9 @@
    ============================================ */
 
 :root {
+  /* il punto del cursore: ambra; su link e bottoni piu' piccolo e lime (vedi CustomCursor) */
+  --cursor-dot: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'%3E%3Ccircle cx='6' cy='6' r='4' fill='%23C4622D'/%3E%3C/svg%3E") 6 6, auto;
+  --cursor-hover: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'%3E%3Ccircle cx='6' cy='6' r='2.5' fill='%23E2FF00'/%3E%3C/svg%3E") 6 6, pointer;
   /* --- Palette: Notte d'Inchiostro --- */
   /* Viola bordeaux quasi nero — la carta diventa testo, il rosa diventa luce */
   --color-bg: rgba(18, 8, 28, 0.94);
@@ -96,8 +99,10 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: clip;
-  /* Cursore nascosto su desktop per custom cursor */
-  cursor: none;
+  /* Il punto del cursore lo disegna il sistema (un'immagine, --cursor-dot): resta
+     attaccato al mouse anche quando il 3D tiene occupata la pagina. L'anello che
+     lo segue e' di CustomCursor */
+  cursor: var(--cursor-dot);
 }
 
 /* Ripristina cursore su touch device */
@@ -106,7 +111,7 @@ body {
   a, button { cursor: pointer; }
 }
 
-a, button { cursor: none; }
+a, button { cursor: var(--cursor-hover); }
 
 h1 {
   font-family: var(--font-display);

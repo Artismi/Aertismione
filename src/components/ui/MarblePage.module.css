@@ -1,0 +1,48 @@
+/* La bilia sulla pagina (MarblePage): vetro ambra come quella della mappa
+   (drawBall in PortfolioSection), disegnata una volta sola e spostata con
+   transform, senza ridisegnarla. Sopra il testo, sotto i modali e il menu. */
+
+.layer {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.ball,
+.shadow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 80px;
+  height: 80px;
+  will-change: transform, opacity;
+  transform-origin: 50% 50%;
+  transition: opacity 0.18s linear;
+}
+
+.ball {
+  border-radius: 50%;
+  background:
+    /* il riflesso in alto */
+    radial-gradient(ellipse 30% 17% at 31% 29%, rgba(255, 255, 255, 0.92) 0 55%, rgba(255, 255, 255, 0) 100%),
+    /* la luce rifratta: si raccoglie in basso, dalla parte opposta */
+    radial-gradient(circle at 62% 72%, rgba(255, 214, 150, 0.9) 0, rgba(255, 214, 150, 0) 32%),
+    /* il corpo: chiaro e trasparente al centro, ambra scuro verso il bordo */
+    radial-gradient(circle at 40% 37%,
+      rgba(255, 240, 220, 0.7) 5%,
+      rgba(243, 166, 106, 0.78) 50%,
+      rgba(196, 98, 45, 0.92) 82%,
+      rgba(120, 52, 18, 0.98) 98%);
+  /* un filo di luce sul bordo in alto a sinistra */
+  box-shadow: inset 2px 2px 0 -0.5px rgba(255, 248, 236, 0.5);
+}
+
+/* l'ombra a terra, calda e sfumata */
+.shadow {
+  border-radius: 50%;
+  height: 34px;
+  margin-top: 23px;
+  background: radial-gradient(closest-side, rgba(20, 10, 4, 0.42), rgba(20, 10, 4, 0));
+}

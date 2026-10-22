@@ -355,7 +355,9 @@ function Budget({ stage, table, composer }: {
  * e' ancora fuori schermo. Altrimenti si preparavano tutti insieme nel primo
  * fotogramma in cui il banco compare, e lo scroll scattava proprio li'.
  */
-function Warmup({ table, ready }: { table: RefObject<THREE.Group | null>; ready: boolean }) {
+function Warmup({ table, ready, composer }: {
+  table: RefObject<THREE.Group | null>; ready: boolean; composer: RefObject<Composer | null>
+}) {
   const { gl, scene, camera } = useThree()
   const done = useRef(false)
   useEffect(() => {
@@ -374,7 +376,13 @@ function Warmup({ table, ready }: { table: RefObject<THREE.Group | null>; ready:
       done.current = true
       const was = g.visible
       g.visible = true
+      // si compila per dove il banco si disegna davvero: nel buffer del composer (lineare,
+      // senza correzione colore), non sullo schermo. Compilati per lo schermo i programmi
+      // erano altri, e quelli giusti si compilavano tutti insieme all'arrivo sul banco
+      const prev = gl.getRenderTarget()
+      gl.setRenderTarget(composer.current?.inputBuffer ?? null)
       const job = gl.compileAsync(scene, camera)   // traversata subito, compilazione in parallelo
+      gl.setRenderTarget(prev)
       g.visible = was
       await job.catch(() => {})
       const texs = new Set<THREE.Texture>()
@@ -390,10 +398,25 @@ function Warmup({ table, ready }: { table: RefObject<THREE.Group | null>; ready:
         await new Promise<void>((ok) => idle(ok))
         gl.initTexture(tx)
       }
+      // e un fotogramma intero col banco acceso, ancora fuori dall'inquadratura: l'occlusione
+      // (N8AO) e l'ombra del sole preparano i loro programmi la prima volta che lavorano,
+      // e sul banco quella prima volta faceva scattare l'arrivo
+      await new Promise<void>((ok) => idle(ok))
+      const c = composer.current
+      const tg = table.current
+      if (!alive || !c || !tg || tg.visible) return
+      const ao = c.passes.filter((p) => 'configuration' in p)
+      tg.visible = true
+      ao.forEach((p) => { p.enabled = true })
+      gl.shadowMap.needsUpdate = true
+      c.render()
+      tg.visible = false
+      ao.forEach((p) => { p.enabled = false })
+      gl.shadowMap.needsUpdate = true
     })
     t = window.setTimeout(attempt, 800)
     return () => { alive = false; window.clearTimeout(t) }
-  }, [ready, gl, scene, camera, table])
+  }, [ready, gl, scene, camera, table, composer])
   return null
 }
 
@@ -445,7 +468,7 @@ function World(props: Props & { images: Images | null }) {
         {props.images && <Suspense fallback={null}><Table {...props} images={props.images} /></Suspense>}
       </group>
       <Budget stage={props.stage} table={table} composer={composer} />
-      <Warmup table={table} ready={!!props.images} />
+      <Warmup table={table} ready={!!props.images} composer={composer} />
 
       {/* come in un render: occlusione negli angoli e vignettatura. Niente grana qui:
           sgranava il logo (la grana del sito e' gia' sopra tutta la pagina) */}
@@ -504,7 +527,12 @@ export default function Table3D(props: Props) {
         gl={{ antialias: false, alpha: false, powerPreference: 'high-performance' }}
         // la plastica trasparente del Game Boy ridisegna la scena dietro di se':
         // a meta' risoluzione, sotto un guscio satinato non si vede la differenza
-        onCreated={({ gl }) => { gl.transmissionResolutionScale = 0.5 }}
+        onCreated={({ gl }) => {
+          gl.transmissionResolutionScale = 0.5
+          // il controllo degli errori dei programmi aspetta che la scheda video li abbia
+          // compilati, e intanto la pagina si blocca: serve solo mentre si sviluppa
+          gl.debug.checkShaderErrors = process.env.NODE_ENV !== 'production'
+        }}
         eventSource={document.body}
         eventPrefix="client"
       >

@@ -6,7 +6,7 @@
  * 2. DRAG   â€” tieni premuto sulla pallina e trascina per mirare.
  */
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, type RefObject } from 'react'
 import { useRouter } from 'next/navigation'
 import styles from './PortfolioSection.module.css'
 import { PORTFOLIO, PROGETTI } from '@/config/content'
@@ -885,18 +885,27 @@ export function PortfolioSection() {
   useEffect(() => {
     if (!gameWarmable()) return
     setWarm(true)
-    // finito di caricare il sito, quando il browser e' libero
+    // il gioco si scalda quando il banco e' a uno schermo di distanza, non appena
+    // aperto il sito: sono ~20 MB e un secondo mondo 3D da preparare, che nei primi
+    // secondi rubavano processore, memoria e banda alla home, anche a chi il Game Boy
+    // non lo prende mai. Arrivati al banco ha gia' cominciato, e lo schermo della
+    // console mostra a che punto e'
+    const section = sectionRef.current
+    if (!section) return
     let t = 0
-    const start = () => { t = window.setTimeout(() => {
+    const io = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return
+      io.disconnect()
       const go = () => setGameOn(true)
-      if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(go, { timeout: 4000 })
-      else go()
-    }, 2500) }
-    if (document.readyState === 'complete') start()
-    else window.addEventListener('load', start, { once: true })
-    return () => { window.clearTimeout(t); window.removeEventListener('load', start) }
+      t = window.setTimeout(() => {
+        if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(go, { timeout: 1500 })
+        else go()
+      }, 300)
+    }, { rootMargin: '100% 0px' })
+    io.observe(section)
+    return () => { io.disconnect(); window.clearTimeout(t) }
   }, [])
-  useGamePreload(!warm)
+  useGamePreload(!warm, sectionRef)
 
   function centerRect(): Rect {
     const w = window.innerWidth, h = window.innerHeight
@@ -1131,13 +1140,13 @@ export function PortfolioSection() {
 }
 
 /**
- * Porto Vecchio si carica in sottofondo, dopo il sito: si aspetta che la pagina
- * abbia finito (e il banco 3D abbia avuto il suo tempo), poi un file alla volta,
- * a bassa priorita', solo quando il browser e' libero. Cosi' il sito non ne
- * risente e, aprendo il gioco, i file arrivano dalla cache.
- * Niente con il risparmio dati o la rete lenta.
+ * Porto Vecchio si carica in sottofondo quando il banco e' a uno schermo di
+ * distanza (prima, 4 secondi dopo l'apertura: ~18 MB anche a chi non arriva mai
+ * al banco), un file alla volta, a bassa priorita', solo quando il browser e'
+ * libero. Cosi' il sito non ne risente e, aprendo il gioco, i file arrivano
+ * dalla cache. Niente con il risparmio dati o la rete lenta.
  */
-function useGamePreload(on: boolean) {
+function useGamePreload(on: boolean, section: RefObject<HTMLElement | null>) {
   useEffect(() => {
     if (!on) return
     const net = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection
@@ -1165,9 +1174,12 @@ function useGamePreload(on: boolean) {
       }
       gameLoad.ready = true
     }
-    function start() { timer = window.setTimeout(run, 4000) }
-    if (document.readyState === 'complete') start()
-    else window.addEventListener('load', start, { once: true })
-    return () => { ctrl.abort(); window.clearTimeout(timer); window.removeEventListener('load', start) }
-  }, [on])
+    const io = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return
+      io.disconnect()
+      timer = window.setTimeout(run, 300)
+    }, { rootMargin: '100% 0px' })
+    if (section.current) io.observe(section.current)
+    return () => { ctrl.abort(); window.clearTimeout(timer); io.disconnect() }
+  }, [on, section])
 }

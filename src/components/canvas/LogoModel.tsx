@@ -178,6 +178,10 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                 }
             `,
             side: THREE.BackSide,
+            // disegnato dopo il vetro (che scrive la profondita'): dentro la sagoma i
+            // pixel si scartano prima di calcolarli e resta solo il filo intorno.
+            // Il colore esce gia' pieno (alpha 1), quindi la fusione non cambia nulla
+            transparent: true,
         }) : null
 
         const added: THREE.Object3D[] = []
@@ -220,7 +224,7 @@ export function LogoModel({ inWorld = false, ...props }: any) {
 
             if (outlineMat) {
                 const hull = new THREE.Mesh(mesh.geometry, outlineMat)
-                hull.renderOrder = 0
+                hull.renderOrder = 1.5
                 mesh.add(hull)
                 added.push(hull)
             }
