@@ -102,6 +102,11 @@ const V = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z)
 
 /** dove sta il logo nella prima schermata, in frazione dell'altezza dello schermo */
 const LOGO_AT = 0.45
+/** in movimento il 3D si disegna con questa frazione dei pixel (al minimo uno per pixel dello schermo) */
+const MOVING_DPR = 0.6
+/** quanto deve restare tutto fermo prima di tornare alla risoluzione piena (ms) */
+const STILL_MS = 220
+const STILL_FRAMES = 6
 /** quanto scurisce l'occlusione negli angoli del banco (N8AO) */
 const AO_INTENSITY = 3.5
 
@@ -344,12 +349,17 @@ function Budget({ stage, table, composer }: {
   table: RefObject<THREE.Group | null>
   composer: RefObject<Composer | null>
 }) {
-  const { gl, camera, invalidate } = useThree()
+  const { gl, camera, invalidate, size } = useThree()
+  const fullDpr = useThree((st) => st.viewport.dpr)
   const was = useRef<boolean | null>(null)
   const sig = useRef(0)
   const cam = useRef(0)
   /** quanta occlusione: 0 mentre qualcosa si muove, poi torna piano a 1 */
   const ao = useRef(1)
+  /** da quando e' tutto fermo (ms) e da quanti fotogrammi: oltre STILL_MS e STILL_FRAMES
+   *  si torna alla risoluzione piena */
+  const still = useRef(0)
+  const stillFrames = useRef(0)
 
   useEffect(() => {
     gl.shadowMap.autoUpdate = false
@@ -390,6 +400,20 @@ function Budget({ stage, table, composer }: {
     // movimento finito torna sfumando in un terzo di secondo, senza scatti
     if (moving) ao.current = 0
     else if (ao.current < 1) { ao.current = Math.min(1, ao.current + dt / 0.35); invalidate() }
+
+    // Risoluzione: mentre la camera o le cose si muovono si disegna con meno pixel
+    // (sugli schermi retina e' il costo piu' grosso, e in movimento non si vede);
+    // ferma da un attimo, si torna alla risoluzione piena, nitida
+    const now = performance.now()
+    if (moving) { still.current = now; stillFrames.current = 0 } else stillFrames.current++
+    const settled = now - still.current >= STILL_MS && stillFrames.current >= STILL_FRAMES
+    const want = settled ? fullDpr : Math.max(1, fullDpr * MOVING_DPR)
+    if (Math.abs(gl.getPixelRatio() - want) > 0.01) {
+      gl.setPixelRatio(want)
+      gl.setSize(size.width, size.height, false)
+      composer.current?.setSize(size.width, size.height)
+    }
+    if (!moving && want !== fullDpr) invalidate()   // si torna nitidi anche se nulla chiede un fotogramma
     composer.current?.passes.forEach((pass) => {
       // N8AOPostPass: solo sul banco. Sul vetro del logo l'occlusione, a meta' risoluzione, lo sgranava
       if ('configuration' in pass) {
