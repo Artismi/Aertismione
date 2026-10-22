@@ -79,6 +79,8 @@ const V = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z)
 
 /** dove sta il logo nella prima schermata, in frazione dell'altezza dello schermo */
 const LOGO_AT = 0.45
+/** quanto scurisce l'occlusione negli angoli del banco (N8AO) */
+const AO_INTENSITY = 3.5
 
 /**
  * La camera guarda il banco sempre dalla stessa angolazione e scorre con la
@@ -319,9 +321,12 @@ function Budget({ stage, table, composer }: {
   table: RefObject<THREE.Group | null>
   composer: RefObject<Composer | null>
 }) {
-  const gl = useThree((s) => s.gl)
+  const { gl, camera, invalidate } = useThree()
   const was = useRef<boolean | null>(null)
   const sig = useRef(0)
+  const cam = useRef(0)
+  /** quanta occlusione: 0 mentre qualcosa si muove, poi torna piano a 1 */
+  const ao = useRef(1)
 
   useEffect(() => {
     gl.shadowMap.autoUpdate = false
@@ -330,7 +335,7 @@ function Budget({ stage, table, composer }: {
   }, [gl])
 
   // dopo le animazioni (priorita' 0), prima del composer (1)
-  useFrame(() => {
+  useFrame((_, dt) => {
     const vh = window.innerHeight
     const r = stage.current?.getBoundingClientRect()
     const onTable = !!r && r.bottom > -60 && r.top < vh + 60
@@ -340,20 +345,37 @@ function Budget({ stage, table, composer }: {
     // chiedere un fotogramma lo stesso (lo schermo del Game Boy che si accende, il
     // caricamento del gioco) e costa solo questo giro. L'ultima immagine e' gia' vuota
     const near = worldNear(stage.current)
-    composer.current?.passes.forEach((p) => {
+
+    // si muove qualcosa? la camera (scroll, fascicolo che si apre) o le cose sul banco
+    let k = 0
+    if (onTable && g) {
+      g.updateMatrixWorld()
+      g.traverse((o) => {
+        if (!(o as THREE.Mesh).isMesh || !o.castShadow) return
+        const m = o.matrixWorld.elements
+        k += m[12] * 1.31 + m[13] * 1.73 + m[14] * 2.11 + m[0] * 0.37 + m[1] * 0.53 + m[2] * 0.71 + m[4] * 0.97 + m[6] * 1.19 + m[9] * 1.43
+      })
+    }
+    const p = camera.position, q = camera.quaternion
+    const c = p.x * 1.31 + p.y * 1.73 + p.z * 2.11 + q.x * 3.7 + q.y * 5.3 + q.z * 7.1 + q.w * 1.9
+    // (lo spostamento di pochi millimetri del mouse non conta: e' sotto 0,03)
+    const moving = Math.abs(c - cam.current) > 0.03 || Math.abs(k - sig.current) > 1e-3
+    cam.current = c
+
+    // L'occlusione (N8AO) e' l'effetto che costa di piu': mentre la camera o le cose si
+    // muovono (le aperture del fascicolo e del Game Boy, lo scroll) si ferma, e a
+    // movimento finito torna sfumando in un terzo di secondo, senza scatti
+    if (moving) ao.current = 0
+    else if (ao.current < 1) { ao.current = Math.min(1, ao.current + dt / 0.35); invalidate() }
+    composer.current?.passes.forEach((pass) => {
       // N8AOPostPass: solo sul banco. Sul vetro del logo l'occlusione, a meta' risoluzione, lo sgranava
-      if ('configuration' in p) p.enabled = near && onTable
-      else p.enabled = near
+      if ('configuration' in pass) {
+        pass.enabled = near && onTable && ao.current > 0.01
+        ;(pass as unknown as { configuration: { intensity: number } }).configuration.intensity = AO_INTENSITY * ao.current
+      } else pass.enabled = near
     })
 
     if (!onTable || !g) { was.current = onTable; return }
-    g.updateMatrixWorld()
-    let k = 0
-    g.traverse((o) => {
-      if (!(o as THREE.Mesh).isMesh || !o.castShadow) return
-      const m = o.matrixWorld.elements
-      k += m[12] * 1.31 + m[13] * 1.73 + m[14] * 2.11 + m[0] * 0.37 + m[1] * 0.53 + m[2] * 0.71 + m[4] * 0.97 + m[6] * 1.19 + m[9] * 1.43
-    })
     if (was.current !== onTable || Math.abs(k - sig.current) > 1e-5) gl.shadowMap.needsUpdate = true
     sig.current = k
     was.current = onTable
@@ -486,7 +508,7 @@ function World(props: Props & { images: Images | null }) {
           sgranava il logo (la grana del sito e' gia' sopra tutta la pagina) */}
       {/* niente messa a fuoco: costava piu' di tutto il resto e faceva scattare lo scroll */}
       <EffectComposer ref={composer} multisampling={mobile ? 0 : 2}>
-        <N8AO aoRadius={0.5} distanceFalloff={0.5} intensity={3.5} quality={mobile ? 'low' : 'medium'} halfRes />
+        <N8AO aoRadius={0.5} distanceFalloff={0.5} intensity={AO_INTENSITY} quality={mobile ? 'low' : 'medium'} halfRes />
         <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
         <Vignette offset={0.25} darkness={0.55} />
         {/* il fondale: la piscina rosata, dietro al tavolo e alle cose che ha sopra */}

@@ -60,12 +60,16 @@ export function MarblePage() {
   const ballRef = useRef<HTMLDivElement>(null)
   const shadowRef = useRef<HTMLDivElement>(null)
   const bandRef = useRef<HTMLDivElement>(null)
+  const aimRef = useRef<HTMLDivElement>(null)
+  const coreRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!ballRef.current || !shadowRef.current || !bandRef.current) return
+    if (!ballRef.current || !shadowRef.current || !bandRef.current || !aimRef.current || !coreRef.current) return
     const ball: HTMLDivElement = ballRef.current
     const shadow: HTMLDivElement = shadowRef.current
     const band: HTMLDivElement = bandRef.current
+    const aim: HTMLDivElement = aimRef.current
+    const core: HTMLDivElement = coreRef.current
     const body = document.body
     const layer = ball.parentElement
 
@@ -78,6 +82,8 @@ export function MarblePage() {
       jump: null as Jump | null, drag: false, px: 0, py: 0,
       /** si muove perche' e' stata tirata (fionda), non perche' la spinge lo schermo */
       shot: false,
+      /** quanto ha rotolato (px sul piano): la spirale dentro il vetro gira di tanto */
+      rx: 0, ry: 0,
     }
     let shown = false, raf = 0, last = performance.now()
     let sy = window.scrollY, prevSy = sy, scrollV = 0
@@ -97,8 +103,41 @@ export function MarblePage() {
     const lo = () => Math.max(plane.top, sy + NAV + R)
     const hi = () => Math.min(plane.bottom, sy + window.innerHeight - R - 6)
     const inView = (x: number, y: number): P => ({ x: clamp(x, plane.left, plane.right), y: clamp(y, lo(), Math.max(lo(), hi())), r: R })
+    /** I punti che misura il 3D arrivano ai suoi fotogrammi, che sono meno di quelli
+     *  della pagina: seguirli cosi' com'e' fa scattare la bilia. La si fa andare verso
+     *  di loro morbida, e se saltano lontano (un'altra inquadratura) li si prende subito */
+    const smooth = new Map<Spot, { x: number; y: number }>()
+    function follow(dt: number) {
+      const k = 1 - Math.exp(-dt * 28)
+      for (const s of [marble.logoAt, marble.boardAt, marble.boardMid, marble.consoleAt, marble.consoleOut]) {
+        if (!s.ok) continue
+        const m = smooth.get(s)
+        if (!m || Math.hypot(s.x - m.x, s.y - m.y) > 260) { smooth.set(s, { x: s.x, y: s.y }); continue }
+        m.x += (s.x - m.x) * k; m.y += (s.y - m.y) * k
+      }
+    }
     /** un punto dello schermo (dal 3D) in coordinate della pagina */
-    const fromScreen = (s: Spot): P => ({ x: s.x, y: s.y + sy, r: R })
+    const fromScreen = (s: Spot): P => {
+      const m = smooth.get(s) ?? s
+      return { x: m.x, y: m.y + sy, r: R }
+    }
+
+    /** la visuale segue il tiro: la pagina scorre per tenere la bilia nella fascia di
+     *  mezzo dello schermo. Si ferma appena si scorre a mano (rotella, dito, tasti) */
+    let userAt = 0
+    function chase(dt: number) {
+      if (!st.shot || st.drag || st.jump || marble.mode !== 'page') return
+      if (performance.now() - userAt < 600) return
+      const vh = window.innerHeight, y = st.y - sy
+      const want = y < vh * 0.35 ? y - vh * 0.35 : y > vh * 0.65 ? y - vh * 0.65 : 0
+      if (Math.abs(want) < 0.5) return
+      const max = document.documentElement.scrollHeight - vh
+      const to = clamp(sy + want * Math.min(1, dt * 9), 0, max)
+      const lenis = (window as unknown as { __lenis?: { scrollTo: (y: number, o: object) => void } }).__lenis
+      if (lenis) lenis.scrollTo(to, { immediate: true, force: true })
+      else window.scrollTo(0, to)
+      sy = window.scrollY
+    }
     const here = (): P => ({ x: st.x, y: st.y, r: st.r })
 
     function jump(kind: Jump['kind'], from: P, to: Jump['to'], then: Jump['then'] = null, dur?: number) {
@@ -216,8 +255,11 @@ export function MarblePage() {
         j.t = Math.min(1, j.t + dt / j.dur)
         const t = j.t, to = j.to()
         // la base del salto va dritta da qui a li', la bilia sale e scende sopra: l'ombra resta sulla base
-        st.gx = j.x0 + (to.x - j.x0) * t
-        st.gy = j.y0 + (to.y - j.y0) * t
+        const gx = j.x0 + (to.x - j.x0) * t, gy = j.y0 + (to.y - j.y0) * t
+        // in volo gira ancora, piano: lo slancio che aveva
+        st.rx += (gx - st.gx) * 0.5; st.ry += (gy - st.gy) * 0.5
+        st.gx = gx
+        st.gy = gy
         st.lift = 4 * j.h * t * (1 - t)
         st.x = st.gx
         st.y = st.gy - st.lift
@@ -237,6 +279,7 @@ export function MarblePage() {
       st.vx *= k; st.vy *= k
       if (Math.hypot(st.vx, st.vy) < 4) { st.vx = st.vy = 0; st.shot = false }
       st.x += st.vx * dt; st.y += st.vy * dt
+      st.rx += st.vx * dt; st.ry += st.vy * dt
       // i lati della pagina
       if (st.x < plane.left) { st.x = plane.left; st.vx = Math.abs(st.vx) * BOUNCE }
       if (st.x > plane.right) { st.x = plane.right; st.vx = -Math.abs(st.vx) * BOUNCE }
@@ -277,8 +320,11 @@ export function MarblePage() {
         shown = vis
         ball.style.opacity = shadow.style.opacity = vis ? '' : '0'
       }
-      band.style.opacity = vis && st.drag ? '1' : '0'
+      band.style.opacity = aim.style.opacity = vis && st.drag ? '1' : '0'
       if (!vis) return
+      // la spirale: la superficie scorre di quanto ha rotolato (nel disegno grande RB, la bilia e' st.r)
+      const kr = RB / Math.max(1, st.r)
+      core.style.backgroundPosition = `0 0, ${(-st.rx * kr) % 68}px ${(-st.ry * kr) % 68}px`
       const s = st.r / RB
       const x = st.x, y = st.y - sy
       ball.style.transform = `translate3d(${(x - RB).toFixed(2)}px,${(y - RB).toFixed(2)}px,0) scale(${s.toFixed(4)})`
@@ -289,8 +335,13 @@ export function MarblePage() {
       if (st.drag) {
         // l'elastico della fionda, dalla bilia al punto tirato
         const dx = st.px - x, dy = st.py - y
-        band.style.width = `${Math.hypot(dx, dy).toFixed(1)}px`
+        const d = Math.hypot(dx, dy)
+        band.style.width = `${d.toFixed(1)}px`
         band.style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0) rotate(${Math.atan2(dy, dx).toFixed(4)}rad)`
+        // la mira, dall'altra parte: lunga quanto la corsa che fara' (un terzo, per restare sullo schermo)
+        const run = Math.min(SHOT_MAX, d * SHOT) / ROLL_DRAG / 3
+        aim.style.width = `${(d > 6 ? run : 0).toFixed(1)}px`
+        aim.style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0) rotate(${Math.atan2(-dy, -dx).toFixed(4)}rad)`
       }
     }
 
@@ -302,6 +353,7 @@ export function MarblePage() {
       // quanto corre la pagina (px al secondo, verso il basso positivo): e' la spinta dei bordi
       if (raw > 0) scrollV = scrollV * 0.5 + ((sy - prevSy) / raw) * 0.5
       prevSy = sy
+      follow(raw)
       route()
       let left = raw
       while (left > 1e-6) {
@@ -309,6 +361,7 @@ export function MarblePage() {
         left -= dt
         step(dt)
       }
+      chase(raw)
       draw()
       raf = requestAnimationFrame(tick)
     }
@@ -317,7 +370,7 @@ export function MarblePage() {
 
     const ready = () => marble.mode === 'page' && !st.jump && !useStore.getState().gameOpen
     /** il punto e' sulla bilia (sullo schermo, con un margine per prenderla bene) */
-    const onBall = (cx: number, cy: number) => Math.hypot(cx - st.x, cy - (st.y - sy)) < Math.max(20, st.r * 2.2)
+    const onBall = (cx: number, cy: number) => Math.hypot(cx - st.x, cy - (st.y - sy)) < Math.max(30, st.r * 2.6)
     const theirs = () => !!(marble.hover?.folder || marble.hover?.console)
     let press: { x: number; y: number } | null = null
 
@@ -378,12 +431,24 @@ export function MarblePage() {
       }, 0)
     }
 
+    // si scorre a mano: la visuale smette di seguire la bilia
+    const byHand = () => { userAt = performance.now() }
+    const byKey = (e: KeyboardEvent) => {
+      if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(e.key)) byHand()
+    }
+
     window.addEventListener('pointerdown', onDown)
     window.addEventListener('pointermove', onMove, { passive: true })
     window.addEventListener('pointerup', onUp, { passive: true })
+    window.addEventListener('wheel', byHand, { passive: true })
+    window.addEventListener('touchmove', byHand, { passive: true })
+    window.addEventListener('keydown', byKey)
     raf = requestAnimationFrame(tick)
     return () => {
       cancelAnimationFrame(raf)
+      window.removeEventListener('wheel', byHand)
+      window.removeEventListener('touchmove', byHand)
+      window.removeEventListener('keydown', byKey)
       marble.toConsole = null
       window.removeEventListener('pointerdown', onDown)
       window.removeEventListener('pointermove', onMove)
@@ -395,8 +460,12 @@ export function MarblePage() {
   return (
     <div className={styles.layer} aria-hidden="true">
       <div ref={bandRef} className={styles.band} style={{ opacity: 0 }} />
+      <div ref={aimRef} className={styles.aim} style={{ opacity: 0 }} />
       <div ref={shadowRef} className={styles.shadow} style={{ opacity: 0 }} />
-      <div ref={ballRef} className={styles.ball} style={{ opacity: 0 }} data-marble="" />
+      <div ref={ballRef} className={styles.ball} style={{ opacity: 0 }} data-marble="">
+        <div ref={coreRef} className={styles.core} />
+        <div className={styles.gloss} />
+      </div>
     </div>
   )
 }
