@@ -30,7 +30,8 @@ import { Console3D } from './Console3D'
 import { Marble3D } from './Marble3D'
 import { marble } from './marble'
 import { WorldBackdrop, GlassSync } from './WorldBackdrop'
-import { worldHold } from './shared'
+import { worldHold, worldNear } from './shared'
+import { WaterCanvas } from './WaterCanvas'
 import { LogoModel } from '../LogoModel'
 import styles from './Table3D.module.css'
 
@@ -98,17 +99,23 @@ function Rig({ phase, mobile, stage, look, logo }: {
     right: new THREE.Vector3(), m: new THREE.Matrix4(), camUp: new THREE.Vector3(0, 1, 0),
   })
   useEffect(() => { invalidate() }, [phase, mobile, size, invalidate])
-  // lo scroll muove il mondo, il mouse lo sposta appena: si ridisegna solo allora
+  // lo scroll muove il mondo, il mouse lo sposta appena: si ridisegna solo allora,
+  // e solo se il logo o il banco sono sullo schermo (altrove si vede solo l'acqua).
+  // Per il mouse basta mezzo fotogramma ogni due: lo spostamento e' di pochi millimetri
   useEffect(() => {
-    const on = () => invalidate()
+    let lastMove = 0
+    const on = () => { if (worldNear(stage.current)) invalidate() }
     const move = (e: PointerEvent) => {
       mouse.current.set(e.clientX / window.innerWidth * 2 - 1, e.clientY / window.innerHeight * 2 - 1)
-      if (!worldHold.on) invalidate()
+      const now = performance.now()
+      if (worldHold.on || now - lastMove < 33 || !worldNear(stage.current)) return
+      lastMove = now
+      invalidate()
     }
     window.addEventListener('scroll', on, { passive: true })
     window.addEventListener('pointermove', move, { passive: true })
     return () => { window.removeEventListener('scroll', on); window.removeEventListener('pointermove', move) }
-  }, [invalidate])
+  }, [invalidate, stage])
 
   useFrame((_, dt) => {
     const cam = camera as THREE.PerspectiveCamera
@@ -329,9 +336,14 @@ function Budget({ stage, table, composer }: {
     const onTable = !!r && r.bottom > -60 && r.top < vh + 60
     const g = table.current
     if (g) g.visible = onTable
+    // ne' logo ne' banco sullo schermo: il composer non disegna niente. Qualcuno puo'
+    // chiedere un fotogramma lo stesso (lo schermo del Game Boy che si accende, il
+    // caricamento del gioco) e costa solo questo giro. L'ultima immagine e' gia' vuota
+    const near = worldNear(stage.current)
     composer.current?.passes.forEach((p) => {
       // N8AOPostPass: solo sul banco. Sul vetro del logo l'occlusione, a meta' risoluzione, lo sgranava
-      if ('configuration' in p) p.enabled = onTable
+      if ('configuration' in p) p.enabled = near && onTable
+      else p.enabled = near
     })
 
     if (!onTable || !g) { was.current = onTable; return }
@@ -405,13 +417,13 @@ function Warmup({ table, ready, composer }: {
       const c = composer.current
       const tg = table.current
       if (!alive || !c || !tg || tg.visible) return
-      const ao = c.passes.filter((p) => 'configuration' in p)
+      const before = c.passes.map((p) => p.enabled)
       tg.visible = true
-      ao.forEach((p) => { p.enabled = true })
+      c.passes.forEach((p) => { p.enabled = true })
       gl.shadowMap.needsUpdate = true
       c.render()
       tg.visible = false
-      ao.forEach((p) => { p.enabled = false })
+      c.passes.forEach((p, i) => { p.enabled = before[i] })
       gl.shadowMap.needsUpdate = true
     })
     t = window.setTimeout(attempt, 800)
@@ -519,12 +531,14 @@ export default function Table3D(props: Props) {
 
   return createPortal(
     <div className={styles.world} aria-hidden="true">
+      <WaterCanvas mobile={props.mobile} />
       <Canvas
         frameloop="demand"
         shadows="soft"
         dpr={[1, 1.5]}
         camera={{ fov: 30, position: [0.15, 40, 30], near: 0.1, far: 200 }}
-        gl={{ antialias: false, alpha: false, powerPreference: 'high-performance' }}
+        // trasparente: dietro c'e' l'acqua, sul suo canvas (WaterCanvas)
+        gl={{ antialias: false, alpha: true, powerPreference: 'high-performance' }}
         // la plastica trasparente del Game Boy ridisegna la scena dietro di se':
         // a meta' risoluzione, sotto un guscio satinato non si vede la differenza
         onCreated={({ gl }) => {
@@ -536,7 +550,6 @@ export default function Table3D(props: Props) {
         eventSource={document.body}
         eventPrefix="client"
       >
-        <color attach="background" args={['#2a1f17']} />
         <World {...props} images={images} />
       </Canvas>
     </div>,

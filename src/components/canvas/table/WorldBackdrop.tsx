@@ -3,15 +3,16 @@
 /**
  * Il fondale del mondo: la piscina rosata (lo shader di CausticsPlane).
  *
- * E' un effetto di post-produzione, applicato per ultimo e solo dove non c'e'
- * niente davanti (profondita' vuota): il tavolo e le cose che ha sopra hanno i
- * loro colori, e il rosa resta identico a quello di sempre, senza la
- * correzione colore da render che lo smorzava. E' lo stesso per tutta la
- * pagina (il mondo e' uno solo) e scorre piano con lo scroll, come uno sfondo
- * lontano.
+ * L'acqua si disegna da sola, su un suo canvas dietro al 3D (WaterCanvas): un
+ * passaggio solo, leggero. Prima era l'ultimo effetto del composer, e per farla
+ * muovere si ridisegnava 24 volte al secondo tutto il mondo, banco, ombre,
+ * occlusione e plastica del Game Boy comprese. Ora il 3D e' trasparente dove
+ * non c'e' niente e si ridisegna solo quando qualcosa cambia.
  *
- * Il mondo disegna solo a richiesta: per far muovere l'acqua lo si ridisegna
- * circa 24 volte al secondo, mai con la pagina nascosta o il gioco aperto.
+ * Questo effetto resta per l'ultimo tocco del 3D: dove non c'e' niente lo lascia
+ * trasparente, e vicino ai bordi il banco sfuma nell'acqua che sta dietro.
+ * Il vetro del logo invece l'acqua la calcola da se' (glassComposite), con gli
+ * stessi valori del canvas: quello che si vede attraverso e' identico.
  */
 
 import { useEffect, useMemo } from 'react'
@@ -94,15 +95,51 @@ const common = causticsFragment
   }
 `
 
-const fragment = common + /* glsl */`
+/**
+ * La correzione colore del composer, a mano: ACES (ToneMapping) e poi la vignettatura
+ * (Vignette, offset 0.25 e darkness 0.55 come in Table3D). Il composer mette per primo
+ * l'effetto che legge la profondita' (questo), quindi tutto quello che esce di qui,
+ * acqua compresa, passava poi per ACES e vignettatura: il canvas dell'acqua le rifa'
+ * uguali, e la sfumatura del banco e il vetro del logo le tolgono e le rimettono.
+ */
+const pvPars = /* glsl */`
+  const mat3 PV_IN = mat3(vec3(0.59719, 0.07600, 0.02840), vec3(0.35458, 0.90834, 0.13383), vec3(0.04823, 0.01566, 0.83777));
+  const mat3 PV_OUT = mat3(vec3(1.60475, -0.10208, -0.00327), vec3(-0.53108, 1.10813, -0.07276), vec3(-0.07367, -0.00605, 1.07602));
+  const mat3 PV_IN_INV = mat3(vec3(1.764741, -0.147028, -0.036337), vec3(-0.675778, 1.160252, -0.162436), vec3(-0.088963, -0.013224, 1.198773));
+  const mat3 PV_OUT_INV = mat3(vec3(0.643038, 0.059269, 0.005962), vec3(0.311187, 0.931436, 0.063929), vec3(0.045775, 0.009295, 0.930118));
+  vec3 pvToSrgb(vec3 c) {
+    c = clamp(c, 0.0, 1.0);
+    return mix(c * 12.92, 1.055 * pow(c, vec3(1.0 / 2.4)) - 0.055, step(0.0031308, c));
+  }
+  vec3 pvAces(vec3 c) {
+    c = PV_IN * (c / 0.6);
+    c = (c * (c + 0.0245786) - 0.000090537) / (c * (0.983729 * c + 0.4329510) + 0.238081);
+    return clamp(PV_OUT * c, 0.0, 1.0);
+  }
+  vec3 pvAcesInv(vec3 y) {
+    vec3 v = clamp(PV_OUT_INV * clamp(y, 0.0, 0.985), 0.0, 0.99);
+    vec3 A = 1.0 - 0.983729 * v, B = 0.0245786 - 0.4329510 * v, C = -0.000090537 - 0.238081 * v;
+    vec3 x = (-B + sqrt(max(B * B - 4.0 * A * C, 0.0))) / (2.0 * A);
+    return PV_IN_INV * x * 0.6;
+  }
+  float pvVignette(vec2 uv) {
+    return smoothstep(0.8, 0.25 * 0.799, distance(uv, vec2(0.5)) * (0.55 + 0.25));
+  }
+`
+
+const fragment = pvPars + /* glsl */`
   uniform mat4 u_invProj;
   uniform mat4 u_camWorld;
   uniform vec2 u_bench;   // meta' larghezza e meta' profondita' del piano del banco
   uniform vec2 u_band;    // quanto e' larga la sfumatura sui lati e davanti/dietro
   uniform float u_top;    // sotto questa altezza si sfuma: il banco, e sul computer anche le cose sopra
+  vec3 fadeToLinear(vec3 c) {
+    return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c));
+  }
   void mainImage(const in vec4 inputColor, const in vec2 uv, const in float depth, out vec4 outputColor) {
+    // niente davanti: trasparente, si vede l'acqua del canvas dietro
     if (depth >= 0.99999) {
-      outputColor = vec4(backdrop(uv), 1.0);
+      outputColor = vec4(0.0);
       return;
     }
     // il banco sfuma nel fondale vicino ai bordi, invece di finire con un taglio:
@@ -114,14 +151,20 @@ const fragment = common + /* glsl */`
       float e = min((u_bench.x - abs(p.x)) / u_band.x, (u_bench.y - abs(p.z)) / u_band.y);
       k = smoothstep(0.0, 1.0, e);
     }
-    if (k >= 1.0) { outputColor = inputColor; return; }
-    vec3 bg = backdrop(uv);
-    outputColor = vec4(mix(bg, inputColor.rgb, k), 1.0);
+    if (k >= 1.0) { outputColor = vec4(inputColor.rgb, 1.0); return; }
+    // la sfumatura: la pagina somma k volte il banco finito (ACES, vignettatura, sRGB;
+    // premoltiplicato) e (1 - k) l'acqua che sta dietro, finita allo stesso modo.
+    // Qui si calcola il banco finito, lo si scala di k, e si torna indietro:
+    // il composer dopo rimette ACES e vignettatura e porta in sRGB
+    float vg = max(pvVignette(uv), 1e-3);
+    vec3 shown = k * pvToSrgb(pvAces(inputColor.rgb) * vg);
+    outputColor = vec4(pvAcesInv(fadeToLinear(shown) / vg), k);
   }
 `
 
-/** I valori dell'acqua, gli stessi per il fondale e per il pezzo dietro al logo */
-const water = {
+/** I valori dell'acqua, gli stessi per il canvas dell'acqua e per il vetro del logo.
+ *  Il tempo, lo scroll e la scala li scrive WaterCanvas; il logo (u_logo) LogoModel */
+export const water = {
   u_time: new THREE.Uniform(0),
   u_fade: new THREE.Uniform(1),
   u_white: new THREE.Uniform(0),
@@ -132,7 +175,7 @@ const water = {
 }
 
 /** La scala della scena del logo di una volta: piano 16 × 10 a 7,5 di distanza, fov 35 (piu' largo sotto il 16:9) */
-function waterScale(w: number, h: number, out: THREE.Vector2) {
+export function waterScale(w: number, h: number, out: THREE.Vector2) {
   const a = w / Math.max(1, h)
   const ref = 16 / 9, base = THREE.MathUtils.degToRad(35)
   let fov = base
@@ -149,7 +192,6 @@ class BackdropEffect extends Effect {
     super('BackdropEffect', fragment, {
       attributes: EffectAttribute.DEPTH,
       uniforms: new Map<string, THREE.Uniform>([
-        ...Object.entries(water),
         ['u_invProj', new THREE.Uniform(new THREE.Matrix4())],
         ['u_camWorld', new THREE.Uniform(new THREE.Matrix4())],
         ['u_bench', new THREE.Uniform(new THREE.Vector2(BENCH.w / 2, BENCH.d / 2))],
@@ -160,24 +202,36 @@ class BackdropEffect extends Effect {
   }
 }
 
+/** L'acqua da sola, per il suo canvas (WaterCanvas): lo stesso disegno che il vetro del logo vede attraverso */
+export const waterFragment = 'precision highp float;\n' + common + pvPars + /* glsl */`
+  uniform vec2 u_px;
+  void main() {
+    // come usciva dal composer: ACES, vignettatura, sRGB
+    vec2 uv = gl_FragCoord.xy / u_px;
+    gl_FragColor = vec4(pvToSrgb(pvAces(backdrop(uv)) * pvVignette(uv)), 1.0);
+  }
+` 
+
 /** Va messo dentro <EffectComposer>, per ultimo */
 export function WorldBackdrop({ mobile = false }: { mobile?: boolean }) {
   const invalidate = useThree((s) => s.invalidate)
   const effect = useMemo(() => new BackdropEffect(), [])
 
+  // in cima il logo galleggia e attraverso il vetro si vede l'acqua muoversi: li' il
+  // mondo si ridisegna 30 volte al secondo. Altrove (banco compreso) solo quando cambia qualcosa
   useEffect(() => {
     const id = window.setInterval(() => {
-      if (!document.hidden && !useStore.getState().gameOpen && !worldHold.on) invalidate()
-    }, 42)
+      if (document.hidden || useStore.getState().gameOpen || worldHold.on) return
+      if (window.scrollY < window.innerHeight * 1.1) invalidate()
+    }, 33)
     return () => { window.clearInterval(id); effect.dispose() }
   }, [invalidate, effect])
 
-  useFrame(({ size, camera }, delta) => {
+  useFrame(({ size, camera }) => {
     const u = effect.uniforms
     camera.updateMatrixWorld()   // la camera si e' appena mossa (Rig): niente bordo in ritardo di un fotogramma
     ;(u.get('u_invProj')!.value as THREE.Matrix4).copy(camera.projectionMatrixInverse)
     ;(u.get('u_camWorld')!.value as THREE.Matrix4).copy(camera.matrixWorld)
-    water.u_time.value += Math.min(delta, 0.1)
     water.u_res.value.set(size.width, size.height)
     waterScale(size.width, size.height, water.u_scale.value)
     // da telefono la camera e' vicina e il banco riempie lo schermo: una fascia
@@ -205,26 +259,7 @@ export const glassUniforms = { ...water, u_px: new THREE.Uniform(new THREE.Vecto
 
 export const glassPars = common + /* glsl */`
   uniform vec2 u_px;
-  const mat3 PV_IN = mat3(vec3(0.59719, 0.07600, 0.02840), vec3(0.35458, 0.90834, 0.13383), vec3(0.04823, 0.01566, 0.83777));
-  const mat3 PV_OUT = mat3(vec3(1.60475, -0.10208, -0.00327), vec3(-0.53108, 1.10813, -0.07276), vec3(-0.07367, -0.00605, 1.07602));
-  const mat3 PV_IN_INV = mat3(vec3(1.764741, -0.147028, -0.036337), vec3(-0.675778, 1.160252, -0.162436), vec3(-0.088963, -0.013224, 1.198773));
-  const mat3 PV_OUT_INV = mat3(vec3(0.643038, 0.059269, 0.005962), vec3(0.311187, 0.931436, 0.063929), vec3(0.045775, 0.009295, 0.930118));
-  vec3 pvToSrgb(vec3 c) {
-    c = clamp(c, 0.0, 1.0);
-    return mix(c * 12.92, 1.055 * pow(c, vec3(1.0 / 2.4)) - 0.055, step(0.0031308, c));
-  }
-  vec3 pvAces(vec3 c) {
-    c = PV_IN * (c / 0.6);
-    c = (c * (c + 0.0245786) - 0.000090537) / (c * (0.983729 * c + 0.4329510) + 0.238081);
-    return clamp(PV_OUT * c, 0.0, 1.0);
-  }
-  vec3 pvAcesInv(vec3 y) {
-    vec3 v = clamp(PV_OUT_INV * clamp(y, 0.0, 0.985), 0.0, 0.99);
-    vec3 A = 1.0 - 0.983729 * v, B = 0.0245786 - 0.4329510 * v, C = -0.000090537 - 0.238081 * v;
-    vec3 x = (-B + sqrt(max(B * B - 4.0 * A * C, 0.0))) / (2.0 * A);
-    return PV_IN_INV * x * 0.6;
-  }
-`
+` + pvPars
 
 /** Va in fondo al fragment del vetro (dopo dithering_fragment). Chi lo usa dichiara
  *  prima vec2 glassShift (di quanto si sposta il fondale visto attraverso: rifrazione)
