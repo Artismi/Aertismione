@@ -38,16 +38,17 @@ export function LogoModel({ inWorld = false, ...props }: any) {
             // vetro chiaro, fuso con il rosa che ha dietro: quello di prima del vetro ambra
             // (piu' bello, e il logo si legge meglio)
             // nel mondo il vetro e' rosa ambrato, caldo: bianco-azzurro si perdeva nel fondale
-            color: new THREE.Color(inWorld ? '#f4a99a' : '#eef5ff'),
-            emissive: new THREE.Color(inWorld ? '#e88a72' : '#c8e8ff'),
+            color: new THREE.Color(inWorld ? '#f2c2bc' : '#eef5ff'),
+            emissive: new THREE.Color(inWorld ? '#e8a090' : '#c8e8ff'),
             // nel mondo poco bagliore proprio: il vetro e' limpido, non latteo
-            emissiveIntensity: inWorld ? 0.14 : 0.32,
+            emissiveIntensity: inWorld ? 0.1 : 0.32,
             roughness: 0.0,
             metalness: 0.0,
-            clearcoat: 1.0,
+            // nel mondo meno lucidatura: i fianchi di taglio riflettevano lo studio, bianchi
+            clearcoat: inWorld ? 0.45 : 1.0,
             clearcoatRoughness: 0.0,
             // nel mondo riflessi piu' bassi: il bianco dello studio copriva il colore
-            envMapIntensity: inWorld ? 3.0 : 5.5,
+            envMapIntensity: inWorld ? 2.2 : 5.5,
             // fuori dal mondo, un velo di arcobaleno dove la luce lo prende di sbieco
             iridescence: inWorld ? 0 : 0.45,
             iridescenceIOR: 1.35,
@@ -99,7 +100,10 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                         // Niente bordo bianco, niente contorno scuro
                         // Al centro, dove si guarda il vetro di fronte, il fondo si fa rosa ambrato,
                         // carico; il lilla resta ai fianchi
-                        glassTint = mix(vec3(1.0, 0.7, 0.6), vec3(0.5, 0.36, 0.72), smoothstep(0.85, 0.15, nv));
+                        glassTint = mix(vec3(0.97, 0.8, 0.76), vec3(0.52, 0.4, 0.74), smoothstep(0.85, 0.15, nv));
+                        // i fianchi di taglio riflettono lo studio: senza questo erano bordi bianchi.
+                        // Si tingono dello stesso lilla del fondo visto attraverso
+                        gl_FragColor.rgb = mix(gl_FragColor.rgb, gl_FragColor.rgb * vec3(0.6, 0.46, 0.74), smoothstep(0.75, 0.05, nv));
                     }
                 `
                 shader.fragmentShader = glassPars + shader.fragmentShader.replace(
