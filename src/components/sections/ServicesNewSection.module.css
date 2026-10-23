@@ -14,13 +14,13 @@
   content: '';
   position: absolute;
   inset: 0;
-  /* il velo entra e esce sfumando: sopra e sotto si vede il mondo */
+  /* il velo entra sfumando dal banco e resta: sotto continuano Chi sono e
+     Contatti, sullo stesso viola, senza buchi da cui si veda il mondo chiaro */
   background: linear-gradient(
     to bottom,
     var(--veil-0) 0%,
     var(--veil) 22vh,
-    var(--veil) calc(100% - 22vh),
-    var(--veil-0) 100%
+    var(--veil) 100%
   );
   z-index: -1;
   pointer-events: none;

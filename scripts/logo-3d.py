@@ -1,15 +1,13 @@
-"""Ricostruisce public/models/logo.glb (il logo 3D della home) dal disegno
-originale public/artismi-logo.png, cosi' la forma e' quella della mano:
-pallino della i compreso, punte della M e della i lunghe come nel tag.
+"""Ricostruisce public/models/logo.glb (il logo 3D della home) dal logo
+ridisegnato scripts/logo-forma.svg: solo archi di cerchio e rette, ricalcato
+sul disegno originale (public/artismi-logo.png), con i pallini delle due i.
 
-Il disegno e' un contorno chiuso: le zone bianche a un tratto dal fondo sono
-le lettere (e il pallino), quelle piu' dentro sono i buchi. Il contorno
-passa a meta' del tratto. Poi il pieno si gonfia come una membrana tesa sul
-bordo: sezione tonda, nessuno spigolo, il bordo va a filo come una goccia
-di metallo; lo spessore massimo e' quello del modello di prima.
+Il pieno si gonfia come una membrana tesa sul bordo: sezione tonda, nessuno
+spigolo, il bordo va a filo come una goccia di metallo; lo spessore massimo
+e' quello del modello di prima.
 Scala, posizione e materiale restano quelli del vecchio file: il sito lo
 carica senza toccare il codice.
-    pip install numpy pillow scipy scikit-image shapely triangle
+    pip install numpy pillow scipy shapely triangle
     python scripts/logo-3d.py
     npx @gltf-transform/cli@4.1.1 meshopt public/models/logo.glb public/models/logo.glb \
         --quantize-position 16 --quantize-normal 12 --quantize-texcoord 12
@@ -17,23 +15,21 @@ Il secondo comando comprime il file (da 5 MB a meno di 1) per la home; la
 precisione alta serve: gli anelli del bordo distano centesimi e su un vetro
 lucido le normali a 8 bit fanno bande.
 """
-import json, os, struct
+import json, os, re, struct
 import numpy as np
 from PIL import Image, ImageDraw
 from scipy import ndimage as nd, sparse
 from scipy.ndimage import map_coordinates
 from scipy.sparse.linalg import spsolve
-from skimage import measure
 from shapely import affinity
 from shapely.geometry import Point, Polygon
 from shapely.ops import unary_union
 import shapely
 import triangle
 
-SRC = 'public/artismi-logo.png'
+SRC = 'scripts/logo-forma.svg'
 OUT = 'public/models/logo.glb'
-S = 4                # sovracampionamento del disegno
-TRATTO = 4.0 * S     # spessore della linea del disegno, in pixel sovracampionati
+RIPIENO = 'public/models/logo-ripieno.png'
 # il vecchio modello: larghezza, angolo in alto a sinistra e spessore (unita' del file)
 X0, Y0, LARGO = -455.91943, 2.7719905, 342.87055
 Z0, Z1 = -62.32643, -17.774971
@@ -41,57 +37,46 @@ SPESSORE = Z1 - Z0
 PASSO = 1.0          # distanza tra i punti del bordo, unita' del file
 GRIGLIA = 0.3        # lato delle celle della membrana
 BANDA, ANELLI = 8.0, 24   # fascia vicino al bordo e quanti anelli la riempiono
-SATURA = 3.0         # quanto presto il bordo tondo arriva allo spessore pieno
+SATURA = 1.3         # quanto presto il bordo tondo arriva allo spessore pieno: basso, il vetro si gonfia piano fino al centro (smusso morbido, forma organica)
 LETTURA = 1.5        # sotto questa distanza dal bordo la membrana si legge piu' dentro
 NODO = {'name': 'aRTISMI 3D', 'rotation': [0.00022664666175842285, 0, 0, 1],
         'scale': [-0.1392299383878708] * 3,
         'translation': [-37.87819290161133, 17.077905654907227, -5.590789318084717]}
 
 
-def sagoma():
-    """Il pieno delle lettere, con il bordo a meta' del tratto."""
-    im = Image.open(SRC).convert('RGBA')
-    fondo = Image.new('RGBA', im.size, 'white')
-    fondo.alpha_composite(im)
-    w = 1000                                   # a destra c'e' DESIGN STUDIO
-    g = fondo.convert('L').crop((0, 0, w, im.height)).resize((w * S, im.height * S), Image.LANCZOS)
-    inchiostro = np.array(g) < 150
-    lab, n = nd.label(~inchiostro)
-    bordo = set(np.unique(np.concatenate([lab[0], lab[-1], lab[:, 0], lab[:, -1]]))) - {0}
-    fuori = np.isin(lab, list(bordo))
-    vicino = nd.binary_dilation(fuori, iterations=int(TRATTO * 1.5))
-    # a un tratto dal fondo: lettere e pallino; il resto sono buchi
-    buchi = np.zeros_like(fuori)
-    for i in range(1, n + 1):
-        if i in bordo:
-            continue
-        r = lab == i
-        if not (r & vicino).any():
-            buchi |= r
-    vuoto = fuori | buchi
-    pieno = nd.distance_transform_edt(~vuoto) > TRATTO / 2
-    return nd.gaussian_filter(pieno.astype(float), S * 0.8)
+def arco(p0, r, grande, verso, p1, passo=0.25):
+    """Un arco di cerchio del path SVG (rx = ry, senza rotazione) in punti."""
+    m = (p0 + p1) / 2
+    corda = np.linalg.norm(p1 - p0)
+    r = max(r, corda / 2)
+    h = np.sqrt(max(r * r - corda * corda / 4, 0))
+    n = np.array([-(p1 - p0)[1], (p1 - p0)[0]]) / corda
+    c = m + n * h * (1 if grande != verso else -1)
+    a0 = np.arctan2(*(p0 - c)[::-1])
+    da = (np.arctan2(*(p1 - c)[::-1]) - a0) % (2 * np.pi)
+    if not verso:
+        da -= 2 * np.pi
+    t = a0 + da * np.linspace(0, 1, max(2, int(abs(da) * r / passo)))[1:]
+    return c + r * np.column_stack([np.cos(t), np.sin(t)])
 
 
-def liscia(c, passo=1.0 * S, sigma=3.5 * S):
-    """Ricampiona l'anello a passo costante e lo ammorbidisce lungo il bordo:
-    il tremolio del tratto sparisce (il sito lo disegnerebbe come spigoli),
-    le punte del tag restano."""
-    if np.allclose(c[0], c[-1]):
-        c = c[:-1]
-    seg = np.linalg.norm(np.diff(np.vstack([c, c[:1]]), axis=0), axis=1)
-    s = np.concatenate([[0], np.cumsum(seg)])
-    n = max(8, int(s[-1] / passo))
-    t = np.linspace(0, s[-1], n, endpoint=False)
-    chiuso = np.vstack([c, c[:1]])
-    r = np.column_stack([np.interp(t, s, chiuso[:, k]) for k in (0, 1)])
-    return nd.gaussian_filter1d(r, sigma / passo, axis=0, mode='wrap')
-
-
-def poligoni(campo):
-    """Contorni lisci -> poligoni con i buchi (in pixel sovracampionati)."""
-    anelli = [Polygon(liscia(c[:, ::-1])) for c in measure.find_contours(campo, 0.5)]
-    anelli = [a for a in anelli if a.is_valid and a.area > (7 * S) ** 2]   # via le macchioline del foglio
+def forma_del_logo():
+    """Il path del logo -> poligoni con i buchi (in pixel del disegno)."""
+    d = re.search(r' d="([^"]+)"', open(SRC).read()).group(1)
+    anelli, pt = [], None
+    for cmd, arg in re.findall(r'([MLAZ])([^MLAZ]*)', d):
+        v = [float(x) for x in re.findall(r'-?[\d.]+', arg)]
+        if cmd == 'M':
+            pt = np.array(v[:2]); anelli.append([pt])
+        elif cmd == 'L':
+            pt = np.array(v[:2]); anelli[-1].append(pt)
+        elif cmd == 'A':
+            q = np.array(v[5:7]); anelli[-1] += list(arco(pt, v[0], v[3], v[4], q)); pt = q
+    # dove due archi si incontrano su una punta il bordo puo' fare un ricciolino
+    # che si incrocia: resta solo il pezzo grande
+    anelli = [max(getattr(g, 'geoms', [g]), key=lambda p: p.area)
+              for g in (shapely.make_valid(Polygon(np.array(a))) for a in anelli)]
+    anelli = [Polygon(a.exterior.coords) for a in anelli]
     # pari/dispari: un anello dentro un numero dispari di altri e' un buco,
     # e appartiene al piu' piccolo degli anelli pieni che lo contengono
     punti = [a.representative_point() for a in anelli]
@@ -223,12 +208,14 @@ def gonfia(forma):
     return pos.astype(np.float32), nor.astype(np.float32), idx.astype(np.uint32)
 
 
-def scrivi(parti):
-    """parti: (nome, pos, nor, idx) per pezzo; tutti con il nodo del vecchio modello."""
+def scrivi(parti, ingombro):
+    """parti: (nome, pos, nor, idx) per pezzo; tutti con il nodo del vecchio modello.
+    TEXCOORD_0: il punto nell'ingombro del logo (0..1 in x e in y), lo stesso di RIPIENO."""
+    x0, y0, x1, y1 = ingombro
     blob = b''
     viste, acc, meshes, nodi = [], [], [], []
     for nome, pos, nor, idx in parti:
-        uv = ((pos[:, :2] - pos[:, :2].min(0)) / (pos[:, :2].max(0) - pos[:, :2].min(0)).max()).astype(np.float32)
+        uv = ((pos[:, :2] - [x0, y0]) / [x1 - x0, y1 - y0]).astype(np.float32)
         prima = len(acc)
         for arr, tipo, ct, minmax in ((pos, 'VEC3', 5126, True), (nor, 'VEC3', 5126, False),
                                       (uv, 'VEC2', 5126, False), (idx.reshape(-1), 'SCALAR', 5125, False)):
@@ -259,10 +246,31 @@ def scrivi(parti):
     print(f'{OUT}: {sum(len(p[1]) for p in parti)} vertici, {os.path.getsize(OUT) // 1024} KB')
 
 
+def ripieno(forma, larghezza=1024):
+    """Quanto ogni punto e' dentro il logo, come immagine: il vetro ci disegna il ripieno
+    rosa, piu' in profondita' della superficie. 0 fuori e sul bordo, 1 a 12 unita' dal
+    bordo; sfumato, il ripieno non ha contorni netti. Riga 0 = y minima (flipY off)."""
+    x0, y0, x1, y1 = forma.bounds
+    k = larghezza / (x1 - x0)
+    alto = int(round((y1 - y0) * k))
+    im = Image.new('L', (larghezza, alto), 0)
+    disegna = ImageDraw.Draw(im)
+    for p in getattr(forma, 'geoms', [forma]):
+        disegna.polygon([((x - x0) * k, (y - y0) * k) for x, y in p.exterior.coords], fill=255)
+        for h in p.interiors:
+            disegna.polygon([((x - x0) * k, (y - y0) * k) for x, y in h.coords], fill=0)
+    d = nd.distance_transform_edt(np.array(im) > 127) / k
+    d = nd.gaussian_filter(np.clip(d / 12.0, 0, 1), 1.5 * k)
+    Image.fromarray((d * 255).astype(np.uint8)).save(RIPIENO)
+
+
 if __name__ == '__main__':
-    forma = in_file(poligoni(sagoma()))
-    # il pallino della i e' un pezzo a parte ("pallino"): nel sito al suo posto c'e'
-    # la bilia, il cursore (LogoModel)
+    forma = in_file(forma_del_logo())
+    # i pallini delle due i sono pezzi a parte: nel sito al loro posto ci sono due
+    # bilie di vetro (LogoModel). Quello della i finale ("pallino") e' la bilia che
+    # cade sul piano di gioco, l'altro ("pallino-i") resta sulla prima i
     pezzi = sorted(getattr(forma, 'geoms', [forma]), key=lambda g: g.area)
-    pallino, corpo = pezzi[0], unary_union(pezzi[1:])
-    scrivi([('aRTISMI 3D', *gonfia(corpo)), ('pallino', *gonfia(pallino))])
+    corpo, primo, pallino = pezzi[-1], *sorted(pezzi[:-1], key=lambda g: g.centroid.x)
+    scrivi([('aRTISMI 3D', *gonfia(corpo)), ('pallino-i', *gonfia(primo)), ('pallino', *gonfia(pallino))],
+           forma.bounds)
+    ripieno(forma)

@@ -24,6 +24,10 @@ interface AppState {
     /** Porto Vecchio aperto a tutto schermo: il 3D dietro si ferma. */
     gameOpen: boolean
     setGameOpen: (open: boolean) => void
+    /** La pagina di un lavoro e' aperta sopra la home: la home resta montata ma nascosta,
+     *  il 3D si ferma e al ritorno e' gia' li' (HomeShell). */
+    away: boolean
+    setAway: (away: boolean) => void
     loadingProgress: number
     setLoadingProgress: (progress: number) => void
 
@@ -89,6 +93,8 @@ export const useStore = create<AppState>((set) => ({
     setAmbienceTrack: (ambienceTrack) => set({ ambienceTrack }),
     gameOpen: false,
     setGameOpen: (gameOpen) => set({ gameOpen }),
+    away: false,
+    setAway: (away) => set({ away }),
     loadingProgress: 0,
     setLoadingProgress: (loadingProgress) => set({ loadingProgress }),
 

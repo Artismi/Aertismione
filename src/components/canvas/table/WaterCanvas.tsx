@@ -14,7 +14,7 @@
 
 import { useEffect, useRef } from 'react'
 import { useStore } from '@/stores/useStore'
-import { water, waterFragment, waterScale } from './WorldBackdrop'
+import { water, waterFragment, waterScale, neutralAt } from './WorldBackdrop'
 import { logoSeen } from './shared'
 
 const VERT = 'attribute vec2 p; void main() { gl_Position = vec4(p, 0.0, 1.0); }'
@@ -55,6 +55,7 @@ export function WaterCanvas({ mobile }: { mobile: boolean }) {
     const U = {
       time: u('u_time'), fade: u('u_fade'), white: u('u_white'), res: u('u_res'),
       scroll: u('u_scroll'), scale: u('u_scale'), logo: u('u_logo'), px: u('u_px'),
+      neutral: u('u_neutral'),
     }
 
     let w = 0, h = 0
@@ -71,7 +72,8 @@ export function WaterCanvas({ mobile }: { mobile: boolean }) {
     let raf = 0, last = 0, dirty = true, lastScroll = -1
     const draw = (now: number) => {
       raf = requestAnimationFrame(draw)
-      if (document.hidden || useStore.getState().gameOpen) return
+      const st = useStore.getState()
+      if (document.hidden || st.gameOpen || st.away) return
       const y = window.scrollY
       // si muove a 30 fotogrammi al secondo, e subito quando la pagina scorre
       if (!dirty && y === lastScroll && now - last < FRAME_MS) return
@@ -81,6 +83,7 @@ export function WaterCanvas({ mobile }: { mobile: boolean }) {
       water.u_res.value.set(w, h)
       waterScale(w, h, water.u_scale.value)
       water.u_scroll.value = y / Math.max(1, h) * 0.12
+      water.u_neutral.value = neutralAt(y, h)
       const L = water.u_logo.value
       gl.uniform1f(U.time, water.u_time.value)
       gl.uniform1f(U.fade, water.u_fade.value)
@@ -91,6 +94,7 @@ export function WaterCanvas({ mobile }: { mobile: boolean }) {
       // il logo sale con la pagina: dall'ultima volta che il 3D l'ha misurato si sposta di quanto e' scorsa
       gl.uniform4f(U.logo, L.x, L.y + (y - logoSeen.scroll) / Math.max(1, h), L.z, L.w)
       gl.uniform2f(U.px, canvas.width, canvas.height)
+      gl.uniform1f(U.neutral, water.u_neutral.value)
       gl.drawArrays(gl.TRIANGLES, 0, 3)
     }
 

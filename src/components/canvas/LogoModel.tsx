@@ -1,4 +1,4 @@
-import { useGLTF, useEnvironment, Center, Float } from '@react-three/drei'
+import { useGLTF, useEnvironment, useTexture, Center, Float } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { useEffect, useMemo, useRef } from 'react'
@@ -27,6 +27,13 @@ export function LogoModel({ inWorld = false, ...props }: any) {
     // la sua luce di studio, quella di sempre (il preset "studio" di drei, servito dal sito):
     // nel mondo del banco la luce e' piu' calda e il vetro diventava grigio
     const studio = useEnvironment({ files: '/models/studio_logo.hdr' })
+    // il ripieno del vetro: quanto ogni punto e' dentro il logo (scripts/logo-3d.py)
+    const ripieno = useTexture('/models/logo-ripieno.png', (t) => {
+        const tx = t as THREE.Texture
+        tx.flipY = false
+        tx.colorSpace = THREE.NoColorSpace
+        tx.wrapS = tx.wrapT = THREE.ClampToEdgeWrapping
+    }) as THREE.Texture
     const rotatingRef = useRef<THREE.Group>(null)
     const groupRef = useRef<THREE.Group>(null)
     const timeRef = useRef(0)
@@ -37,6 +44,7 @@ export function LogoModel({ inWorld = false, ...props }: any) {
         const mat = new THREE.MeshPhysicalMaterial({
             // vetro chiaro, fuso con il rosa che ha dietro: quello di prima del vetro ambra
             // (piu' bello, e il logo si legge meglio)
+            // vetro chiaro, fuso con il rosa che ha dietro
             color: new THREE.Color('#eef5ff'),
             emissive: new THREE.Color('#c8e8ff'),
             // nel mondo poco bagliore proprio: il vetro e' limpido, non latteo
@@ -88,17 +96,100 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                 const liquid = /* glsl */`
                     vec2 glassShift = vec2(0.0);
                     vec3 glassTint = vec3(1.0);
+                    float glassGlint = 0.0;
+                    vec3 glassSheen = vec3(0.0);
                     {
                         vec3 n = normalize(vNormal);
                         float nv = abs(dot(n, normalize(vViewPosition)));
-                        glassShift = -n.xy * (1.0 - nv) * 0.035;
-                        // per staccare dal rosa senza linee: dove il vetro e' piu' spesso (i
-                        // fianchi che girano via) il fondo visto attraverso si fa lilla, morbido.
-                        // Niente bordo bianco, niente contorno scuro
-                        glassTint = mix(vec3(1.0), vec3(0.82, 0.76, 0.9), smoothstep(0.75, 0.15, nv));
+                        // Vetro cavo, soffiato: una pelle sottile intorno al vuoto. Attraverso il
+                        // fronte il fondo passa quasi pulito; il vetro si vede solo dove la pelle
+                        // e' presa di taglio: un orlo stretto e carico sul contorno e, piu' dentro
+                        // e piu' tenue, la linea della parete di dietro. E' l'orlo sottile a dire
+                        // "cavo": la fascia larga e colorata di prima lo faceva sembrare pieno
+                        float side = smoothstep(0.42, 0.06, nv);
+                        float back = exp(-pow((nv - 0.5) / 0.07, 2.0));
+                        // rifrazione: forte solo dove la pelle e' di taglio (il fondo si piega
+                        // lungo i contorni), appena accennata sul fronte
+                        glassShift = -n.xy * (pow(1.0 - nv, 2.2) * 0.11 + 0.003);
+                        // sul fronte il fondo passa com'e' intorno (la pagina lo vede un po' piu' scuro
+                        // della parete calcolata qui), appena velato di rosa
+                        glassTint = mix(vec3(0.93, 0.885, 0.875), vec3(1.05, 0.58, 0.49), side);
+                        glassTint *= 1.0 - 0.1 * back;
+                        // la profondita': una sfumatura rosa che sta DENTRO il vetro, sotto uno
+                        // strato limpido. La sua forma e' la mappa di
+                        // logo-ripieno.png (quanto il punto e' dentro il logo), letta piu' in
+                        // profondita' lungo lo sguardo: girando il logo la sfumatura scorre sotto la
+                        // superficie (parallasse) e tra i due si vede il trasparente
+                        vec3 dp1 = dFdx(-vViewPosition), dp2 = dFdy(-vViewPosition);
+                        vec2 du1 = dFdx(vRip), du2 = dFdy(vRip);
+                        vec3 e1 = normalize(dp1 - n * dot(dp1, n) + 1e-6), e2 = cross(n, e1);
+                        // dal piano della superficie (vista) alla mappa; asse y in larghezze del logo
+                        vec2 asp = vec2(1.0, u_ripAspect);
+                        mat2 J = mat2(du1 * asp, du2 * asp) * inverse(mat2(dot(dp1, e1), dot(dp1, e2), dot(dp2, e1), dot(dp2, e2)));
+                        float perView = sqrt(abs(determinant(J)));   // larghezze del logo per unita' di vista
+                        vec3 into = normalize(vViewPosition);         // verso la camera
+                        vec3 o = -into / max(dot(into, n), 0.25);     // dentro il vetro, di 1 in profondita'
+                        vec2 o2 = vec2(dot(o, e1), dot(o, e2));
+                        // tre letture a profondita' crescenti, mediate: una sfumatura sola, morbida
+                        float rip = 0.0;
+                        for (int i = 0; i < 3; i++) {
+                            float dz = 0.03 + 0.02 * float(i);        // profondita', in larghezze del logo
+                            vec2 duv = J * o2 * (dz / max(perView, 1e-6)) / asp;
+                            rip += texture2D(u_ripieno, vRip + duv).r;
+                        }
+                        // lieve, rosa magenta, piu' carica verso il centro: non si vede come
+                        // colore, fa sentire quanto il vetro e' profondo
+                        float core = smoothstep(0.0, 0.85, rip / 3.0) * (1.0 - 0.6 * side);
+                        glassTint = mix(glassTint, vec3(0.96, 0.7, 0.86), 0.32 * core);
+                        // le linee dell'acqua viste attraverso: fili netti e poco accesi
+                        glassTint *= 1.0 + 0.1 * smoothstep(0.3, 0.8, lightWaves(gl_FragCoord.xy / u_px + glassShift));
+                        // riflessi piccoli e nitidi, come in un render: due luci da studio che si
+                        // specchiano nella superficie tonda. Sono loro a dire "vetro", non i bordi bianchi
+                        vec3 vdir = normalize(-vViewPosition);
+                        vec3 rf = reflect(-vdir, n);
+                        glassGlint = pow(max(dot(rf, normalize(vec3(-0.45, 0.8, 0.4))), 0.0), 160.0) * 0.9
+                                   + pow(max(dot(rf, normalize(vec3(0.7, 0.35, 0.6))), 0.0), 420.0) * 0.55;
+                        // il fronte e' plexiglass tagliato a laser e lucidato: riflessi netti e
+                        // colorati che stanno sopra (glassSheen), mentre quello che si vede
+                        // attraverso (l'interno, il retro) e' satinato, morbido (glassComposite).
+                        // Chiazze appena piu' vive, perche' la lucidatura non e' mai uniforme
+                        float wet = smoothstep(0.02, 0.4, field(vObjPos.xy / 55.0, 0.0)
+                                  + 0.35 * field(vObjPos.xy / 17.0 + 3.1, 0.0));
+                        float front = smoothstep(0.55, 0.92, nv);
+                        glassGlint *= mix(0.75, 1.15, wet);
+                        // il softbox dello studio specchiato nel fronte: una lama netta, fredda,
+                        // con l'orlo appena iridato, e un alone caldo intorno
+                        float win = dot(rf, normalize(vec3(-0.25, 0.35, 0.9)));
+                        float lama = smoothstep(0.9, 0.93, win) * (1.0 - smoothstep(0.975, 0.99, win));
+                        glassSheen = (vec3(0.82, 0.9, 1.0) * lama * 0.34
+                                   + vec3(1.0, 0.8, 0.85) * pow(max(win, 0.0), 30.0) * 0.12) * front;
+                        // l'orlo tagliato e lucidato: dove la superficie gira, un filo di luce che
+                        // cambia colore come il taglio del plexi (dispersione)
+                        float taglio = smoothstep(0.42, 0.24, nv) * smoothstep(0.06, 0.2, nv);
+                        vec3 iride = 0.5 + 0.5 * cos(6.2832 * (n.x * 0.6 + n.y * 0.4 + vec3(0.0, 0.33, 0.67)));
+                        glassSheen += mix(vec3(1.0), iride, 0.55) * taglio * 0.16;
+                        // le bilie (uv -1, fuori dalla mappa) sono vetro come il resto, ma una sfera
+                        // non ha i fianchi del logo che di sbieco fanno il contorno scuro: glielo da'
+                        // un orlo corallo piu' largo, cosi' staccano come le lettere
+                        if (vRip.x < -0.5) {
+                            // piu' pieno in basso, dove nelle lettere si vede il fianco
+                            float giu = 0.55 + 0.45 * smoothstep(-0.3, 0.7, -n.y);
+                            glassTint = mix(glassTint, vec3(0.74, 0.42, 0.38), smoothstep(0.8, 0.3, nv) * giu);
+                        }
+                        // i riflessi dello studio sui fianchi bruciavano in bianco: si smorzano
+                        gl_FragColor.rgb /= 1.0 + gl_FragColor.rgb * side * 4.0;
                     }
                 `
-                shader.fragmentShader = glassPars + shader.fragmentShader.replace(
+                // la posizione sul logo: le chiazze bagnate restano ferme sul vetro
+                // e il punto nell'ingombro del logo (primo uv di logo.glb), per la mappa del ripieno
+                shader.vertexShader = 'varying vec3 vObjPos;\nvarying vec2 vRip;\n' + shader.vertexShader.replace(
+                    '#include <begin_vertex>',
+                    '#include <begin_vertex>\nvObjPos = position;\nvRip = uv;',
+                )
+                shader.uniforms.u_ripieno = { value: ripieno }
+                const im = ripieno.image as HTMLImageElement | undefined
+                shader.uniforms.u_ripAspect = { value: im ? im.height / im.width : 0.6 }
+                shader.fragmentShader = 'varying vec3 vObjPos;\nvarying vec2 vRip;\nuniform sampler2D u_ripieno;\nuniform float u_ripAspect;\n' + glassPars + shader.fragmentShader.replace(
                     '#include <dithering_fragment>',
                     '#include <dithering_fragment>\n' + liquid + glassComposite,
                 )
@@ -114,16 +205,16 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                 float NdotV = abs(dot(normalize(vNormal), normalize(vViewPosition)));
                 float fresnel = 1.0 - NdotV;
                 ${inWorld
-                    // nel mondo: il fronte e' vetro limpido (~0.08) e piu' ci si allontana dai bordi
-                    // piu' e' nitido; la forma la disegnano i bordi, densi (~0.9)
-                    ? 'diffuseColor.a *= mix(0.08, 0.96, pow(fresnel, 1.5));'
+                    // nel mondo: vetro cavo, il fronte e' limpido (~0.03) e la densita' sale solo
+                    // vicino al taglio, in fretta: un orlo sottile, non una fascia
+                    ? 'diffuseColor.a *= mix(0.03, 0.5, pow(fresnel, 2.6));'
                     // fronte: ~0.92 opaco + riflettente | bordi: ~0.18 sottili
                     : 'diffuseColor.a *= 0.18 + NdotV * NdotV * NdotV * 0.74;'}`
             )
         }
 
         return mat
-    }, [inWorld])
+    }, [inWorld, ripieno])
 
     useEffect(() => {
         glassMaterial.envMap = studio
@@ -173,29 +264,40 @@ export function LogoModel({ inWorld = false, ...props }: any) {
 
         const added: THREE.Object3D[] = []
 
-        // La bilia al posto del pallino della i: il pallino del disegno (nodo
-        // "pallino" di logo.glb) si nasconde e al suo centro c'e' una sfera di vetro
-        const dot = scene.getObjectByName('pallino') as THREE.Mesh | undefined
-        let ball: THREE.Mesh | null = null
-        if (dot?.parent) {
+        // Le bilie al posto dei pallini delle i: i pallini del disegno (nodi "pallino"
+        // e "pallino-i" di logo.glb) si nascondono e al loro centro c'e' una sfera di
+        // vetro, grande quanto il pallino
+        const sfera = (dot: THREE.Mesh | undefined) => {
+            if (!dot?.parent) return null
             dot.updateMatrix()
             dot.geometry.computeBoundingBox()
             const b = dot.geometry.boundingBox!.clone().applyMatrix4(dot.matrix)
             const size = b.getSize(new THREE.Vector3())
-            ball = new THREE.Mesh(new THREE.SphereGeometry(Math.sqrt(size.x * size.y) / 2 * 1.6, 48, 32), glassMaterial)
-            ball.name = 'bilia'
-            b.getCenter(ball.position)
-            dot.parent.add(ball)
+            const g = new THREE.SphereGeometry(Math.sqrt(size.x * size.y) / 2 * 1.1, 48, 32)
+            // fuori dalla mappa del ripieno: la bilia e' vetro limpido
+            g.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(g.attributes.uv.count * 2).fill(-1), 2))
+            const s = new THREE.Mesh(g, glassMaterial)
+            b.getCenter(s.position)
+            dot.parent.add(s)
             dot.visible = false
+            return s
+        }
+        const dot = scene.getObjectByName('pallino') as THREE.Mesh | undefined
+        const dotI = scene.getObjectByName('pallino-i') as THREE.Mesh | undefined
+        const ball = sfera(dot)
+        const ballI = sfera(dotI)
+        if (ball) {
+            ball.name = 'bilia'
             // appena la pagina sale la bilia lascia la i e cade sul piano di gioco (MarblePage)
             if (inWorld) marble.logoBall = ball
         }
+        if (ballI) ballI.name = 'bilia-i'
 
         // prima si raccolgono le mesh: le linee aggiunte sono a loro volta mesh e il
         // traverse le visiterebbe
         const meshes: THREE.Mesh[] = []
         scene.traverse((child: any) => {
-            if ((child as THREE.Mesh).isMesh && child !== dot) meshes.push(child)
+            if ((child as THREE.Mesh).isMesh && child !== dot && child !== dotI) meshes.push(child)
         })
         meshes.forEach((mesh) => {
             mesh.material = glassMaterial
@@ -215,9 +317,10 @@ export function LogoModel({ inWorld = false, ...props }: any) {
         })
 
         return () => {
-            if (ball) { ball.removeFromParent(); ball.geometry.dispose() }
+            for (const b of [ball, ballI]) if (b) { b.removeFromParent(); b.geometry.dispose() }
             if (marble.logoBall === ball) marble.logoBall = null
             if (dot) dot.visible = true
+            if (dotI) dotI.visible = true
             added.forEach(l => l.parent?.remove(l))
             edgeMatRef.current = null
         }
@@ -225,8 +328,9 @@ export function LogoModel({ inWorld = false, ...props }: any) {
 
     useFrame(({ camera }, delta) => {
         if (rotatingRef.current) {
-            timeRef.current += delta * 0.4
-            rotatingRef.current.rotation.y = Math.sin(timeRef.current) * (Math.PI / 6)
+            // ondeggia appena (±10°): girando di piu' le lettere di taglio non si leggevano
+            timeRef.current += delta * 0.3
+            rotatingRef.current.rotation.y = Math.sin(timeRef.current) * (Math.PI / 18)
         }
 
         // dove sta il logo sullo schermo e quanto e' grande: la luce dall'alto e il

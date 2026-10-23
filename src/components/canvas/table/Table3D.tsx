@@ -33,6 +33,30 @@ import { WorldBackdrop, GlassSync } from './WorldBackdrop'
 import { worldHold, worldNear } from './shared'
 import { WaterCanvas } from './WaterCanvas'
 import { LogoModel } from '../LogoModel'
+import { useStore } from '@/stores/useStore'
+
+/**
+ * Come gl.compileAsync, ma non si blocca. Quello di three.js legge il programma di
+ * ogni materiale mentre aspetta: se nel frattempo un materiale viene sostituito o
+ * buttato (il programma non c'e' piu') va in errore («reading 'isReady'»), la
+ * promessa non finisce mai e il banco resta preparato a meta'.
+ */
+function compileSafe(gl: THREE.WebGLRenderer, scene: THREE.Object3D, camera: THREE.Camera) {
+  const pending = gl.compile(scene, camera)
+  return new Promise<void>((done) => {
+    const started = performance.now()
+    const check = () => {
+      for (const mat of pending) {
+        const program = (gl.properties.get(mat) as { currentProgram?: { isReady?: () => boolean } }).currentProgram
+        if (!program?.isReady || program.isReady()) pending.delete(mat)
+      }
+      // al massimo dieci secondi: poi si va avanti comunque
+      if (pending.size === 0 || performance.now() - started > 10000) done()
+      else window.setTimeout(check, 10)
+    }
+    window.setTimeout(check, 10)
+  })
+}
 import styles from './Table3D.module.css'
 
 export type TablePhase = 'closed' | 'sliding' | 'opening' | 'open' | 'closing' | 'returning' | 'list'
@@ -79,6 +103,11 @@ const V = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z)
 
 /** dove sta il logo nella prima schermata, in frazione dell'altezza dello schermo */
 const LOGO_AT = 0.45
+/** in movimento il 3D si disegna con questa frazione dei pixel (al minimo uno per pixel dello schermo) */
+const MOVING_DPR = 0.6
+/** quanto deve restare tutto fermo prima di tornare alla risoluzione piena (ms) */
+const STILL_MS = 220
+const STILL_FRAMES = 6
 /** quanto scurisce l'occlusione negli angoli del banco (N8AO) */
 const AO_INTENSITY = 3.5
 
@@ -321,12 +350,17 @@ function Budget({ stage, table, composer }: {
   table: RefObject<THREE.Group | null>
   composer: RefObject<Composer | null>
 }) {
-  const { gl, camera, invalidate } = useThree()
+  const { gl, camera, invalidate, size } = useThree()
+  const fullDpr = useThree((st) => st.viewport.dpr)
   const was = useRef<boolean | null>(null)
   const sig = useRef(0)
   const cam = useRef(0)
   /** quanta occlusione: 0 mentre qualcosa si muove, poi torna piano a 1 */
   const ao = useRef(1)
+  /** da quando e' tutto fermo (ms) e da quanti fotogrammi: oltre STILL_MS e STILL_FRAMES
+   *  si torna alla risoluzione piena */
+  const still = useRef(0)
+  const stillFrames = useRef(0)
 
   useEffect(() => {
     gl.shadowMap.autoUpdate = false
@@ -367,6 +401,20 @@ function Budget({ stage, table, composer }: {
     // movimento finito torna sfumando in un terzo di secondo, senza scatti
     if (moving) ao.current = 0
     else if (ao.current < 1) { ao.current = Math.min(1, ao.current + dt / 0.35); invalidate() }
+
+    // Risoluzione: mentre la camera o le cose si muovono si disegna con meno pixel
+    // (sugli schermi retina e' il costo piu' grosso, e in movimento non si vede);
+    // ferma da un attimo, si torna alla risoluzione piena, nitida
+    const now = performance.now()
+    if (moving) { still.current = now; stillFrames.current = 0 } else stillFrames.current++
+    const settled = now - still.current >= STILL_MS && stillFrames.current >= STILL_FRAMES
+    const want = settled ? fullDpr : Math.max(1, fullDpr * MOVING_DPR)
+    if (Math.abs(gl.getPixelRatio() - want) > 0.01) {
+      gl.setPixelRatio(want)
+      gl.setSize(size.width, size.height, false)
+      composer.current?.setSize(size.width, size.height)
+    }
+    if (!moving && want !== fullDpr) invalidate()   // si torna nitidi anche se nulla chiede un fotogramma
     composer.current?.passes.forEach((pass) => {
       // N8AOPostPass: solo sul banco. Sul vetro del logo l'occlusione, a meta' risoluzione, lo sgranava
       if ('configuration' in pass) {
@@ -415,7 +463,7 @@ function Warmup({ table, ready, composer }: {
       // erano altri, e quelli giusti si compilavano tutti insieme all'arrivo sul banco
       const prev = gl.getRenderTarget()
       gl.setRenderTarget(composer.current?.inputBuffer ?? null)
-      const job = gl.compileAsync(scene, camera)   // traversata subito, compilazione in parallelo
+      const job = compileSafe(gl, scene, camera)   // traversata subito, compilazione in parallelo
       gl.setRenderTarget(prev)
       g.visible = was
       await job.catch(() => {})
@@ -551,15 +599,20 @@ export default function Table3D(props: Props) {
     return () => { alive = false }
   }, [near])
 
+  // con la pagina di un lavoro aperta sopra la home il mondo resta pronto ma non si
+  // vede e non disegna: al ritorno e' gia' li', senza ricaricarsi
+  const away = useStore((s) => s.away)
+
   return createPortal(
-    <div className={styles.world} aria-hidden="true">
+    <div className={styles.world} aria-hidden="true" style={away ? { visibility: 'hidden' } : undefined}>
       <WaterCanvas mobile={props.mobile} />
       <Canvas
-        frameloop="demand"
+        frameloop={away ? 'never' : 'demand'}
         shadows="soft"
-        // dal computer fino al doppio dei pixel dello schermo: il vetro del logo e i bordi
-        // del banco nitidi anche sugli schermi retina. Dal telefono resta piu' leggero
-        dpr={props.mobile ? [1, 1.5] : [1, 2]}
+        // dal computer almeno una volta e mezza i pixel dello schermo, fino al doppio: il vetro
+        // del logo e i bordi del banco nitidi anche sugli schermi normali (sovracampionato) e
+        // sui retina. In movimento scende (Budget). Dal telefono resta piu' leggero
+        dpr={props.mobile ? [1, 1.5] : [1.5, 2]}
         camera={{ fov: 30, position: [0.15, 40, 30], near: 0.1, far: 200 }}
         // trasparente: dietro c'e' l'acqua, sul suo canvas (WaterCanvas)
         gl={{ antialias: false, alpha: true, powerPreference: 'high-performance' }}

@@ -5,7 +5,8 @@
 .section {
   position: relative;
   min-height: 100vh;
-  background: transparent;
+  /* lo stesso velo viola di Servizi e Contatti, senza interruzioni */
+  background: var(--veil);
   display: flex;
   flex-direction: column;
   justify-content: center;
