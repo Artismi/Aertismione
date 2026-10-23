@@ -196,6 +196,10 @@ def gonfia(forma):
     idx = np.vstack([tri, unico[tri[:, ::-1] + n]])
     usati, idx = np.unique(idx, return_inverse=True)
     pos = pos[usati]
+    # quanto ogni punto e' dentro la forma (distanza dal bordo, in 16 unita' del file:
+    # resta tra 0 e 1, la compressione lo vuole li'): al vetro serve per accendere il
+    # ripieno dove il corpo e' spesso (TEXCOORD_0.x)
+    dentro = np.minimum(np.concatenate([d, d])[usati] / 16.0, 1.0)
     idx = idx.reshape(-1, 3)
     # normali dei vertici dalle facce, pesate per area
     f = pos[idx]
@@ -204,15 +208,16 @@ def gonfia(forma):
     for k in range(3):
         np.add.at(nor, idx[:, k], nf)
     nor /= np.linalg.norm(nor, axis=1, keepdims=True) + 1e-12
-    return pos.astype(np.float32), nor.astype(np.float32), idx.astype(np.uint32)
+    return pos.astype(np.float32), nor.astype(np.float32), idx.astype(np.uint32), dentro.astype(np.float32)
 
 
 def scrivi(parti):
-    """parti: (nome, pos, nor, idx) per pezzo; tutti con il nodo del vecchio modello."""
+    """parti: (nome, pos, nor, idx, dentro) per pezzo; tutti con il nodo del vecchio modello.
+    TEXCOORD_0 = (distanza dal bordo / 16, 0): il vetro la legge per il ripieno ambra."""
     blob = b''
     viste, acc, meshes, nodi = [], [], [], []
-    for nome, pos, nor, idx in parti:
-        uv = ((pos[:, :2] - pos[:, :2].min(0)) / (pos[:, :2].max(0) - pos[:, :2].min(0)).max()).astype(np.float32)
+    for nome, pos, nor, idx, dentro in parti:
+        uv = np.column_stack([dentro, np.zeros_like(dentro)]).astype(np.float32)
         prima = len(acc)
         for arr, tipo, ct, minmax in ((pos, 'VEC3', 5126, True), (nor, 'VEC3', 5126, False),
                                       (uv, 'VEC2', 5126, False), (idx.reshape(-1), 'SCALAR', 5125, False)):

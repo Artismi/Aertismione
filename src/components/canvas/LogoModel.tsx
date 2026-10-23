@@ -107,6 +107,12 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                         // della parete calcolata qui), appena velato di rosa
                         glassTint = mix(vec3(0.93, 0.885, 0.875), vec3(1.05, 0.58, 0.49), side);
                         glassTint *= 1.0 - 0.1 * back;
+                        // il ripieno, come in un orsetto gommoso: dentro la pelle un alone ambra
+                        // che si accende dove il corpo e' spesso (lontano dal bordo, vDepth) e
+                        // un po' di piu' in alto, da dove viene la luce; i tratti sottili restano chiari
+                        float halo = smoothstep(0.08, 0.5, vDepth) * (0.65 + 0.35 * smoothstep(-0.4, 0.7, n.y)) * (1.0 - side);
+                        glassTint = mix(glassTint, vec3(1.04, 0.62, 0.3), 0.6 * halo);
+                        glassTint *= 1.0 + 0.05 * halo;
                         // le linee dell'acqua viste attraverso: fili netti e poco accesi
                         glassTint *= 1.0 + 0.1 * smoothstep(0.3, 0.8, lightWaves(gl_FragCoord.xy / u_px + glassShift));
                         // riflessi piccoli e nitidi, come in un render: due luci da studio che si
@@ -131,11 +137,12 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                     }
                 `
                 // la posizione sul logo: le chiazze bagnate restano ferme sul vetro
-                shader.vertexShader = 'varying vec3 vObjPos;\n' + shader.vertexShader.replace(
+                // e quanto il punto e' dentro la forma (distanza dal bordo, nel primo uv di logo.glb)
+                shader.vertexShader = 'varying vec3 vObjPos;\nvarying float vDepth;\n' + shader.vertexShader.replace(
                     '#include <begin_vertex>',
-                    '#include <begin_vertex>\nvObjPos = position;',
+                    '#include <begin_vertex>\nvObjPos = position;\nvDepth = uv.x;',
                 )
-                shader.fragmentShader = 'varying vec3 vObjPos;\n' + glassPars + shader.fragmentShader.replace(
+                shader.fragmentShader = 'varying vec3 vObjPos;\nvarying float vDepth;\n' + glassPars + shader.fragmentShader.replace(
                     '#include <dithering_fragment>',
                     '#include <dithering_fragment>\n' + liquid + glassComposite,
                 )
