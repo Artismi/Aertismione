@@ -94,9 +94,23 @@ const common = causticsFragment
   }
   // La parete dello studio, in cima: chiara e neutra, appena piu' scura in basso
   // (valori di luce, non colori: la correzione del composer, ACES, li porta a un bianco
-  // caldo). L'ombra colorata del logo ci cade sopra dal 3D (LogoModel)
+  // caldo). Sopra cade la luce passata nel vetro del logo, come quella di una lastra
+  // colorata sul muro: una pozza corallo morbida, senza contorni, accanto e sotto il
+  // logo, con dentro le increspature dell'acqua che si muovono
   vec3 studioWall(vec2 uv) {
-    return mix(vec3(1.05, 1.02, 1.0), vec3(1.4, 1.37, 1.33), smoothstep(0.0, 1.0, uv.y));
+    vec3 wall = mix(vec3(1.05, 1.02, 1.0), vec3(1.4, 1.37, 1.33), smoothstep(0.0, 1.0, uv.y));
+    if (u_logo.z <= 0.0) return wall;
+    vec2 p = (uv - u_logo.xy) * vec2(u_res.x / max(1.0, u_res.y), 1.0) / max(u_logo.z, 1e-3);
+    // coordinate in larghezze del logo, centro del logo in (0, 0), y in su
+    vec2 e = (p - vec2(0.42, -0.24)) / vec2(0.85, 0.42);
+    float pool = exp(-dot(e, e) * 1.2);
+    if (pool < 0.003) return wall;
+    float wl = dot(water(uv * 0.92 + 0.04), vec3(0.3, 0.55, 0.15));
+    float ripple = smoothstep(0.6, 0.86, wl);
+    // la luce colorata tinge il muro; le increspature la raccolgono in fili piu' chiari
+    // (colori pieni e profondi: sulle tinte chiare ACES desatura, e il corallo diventava pesca)
+    vec3 light = mix(vec3(0.95, 0.36, 0.28), vec3(1.35, 0.72, 0.55), ripple);
+    return mix(wall, light, pool * 0.8);
   }
   vec3 backdrop(vec2 uv) {
     vec3 pink = hazedBy(water(uv), haze(uv));
@@ -293,7 +307,12 @@ export const glassComposite = /* glsl */`
     // il vapore una volta sola, nel punto del vetro: serve al fondo visto attraverso
     // (spostato di poco dalla rifrazione) e al velo davanti
     vec2 hz = haze(gl_FragCoord.xy / u_px);
-    vec3 bgc = pvToSrgb(hazedBy(water(gl_FragCoord.xy / u_px + glassShift), hz)) * glassTint;
+    vec2 seenUv = gl_FragCoord.xy / u_px + glassShift;
+    vec3 seen = hazedBy(water(seenUv), hz);
+    // in cima, sulla parete neutra, attraverso il vetro si vede soprattutto la parete:
+    // il vetro e' trasparente, tinto di rosa, e l'acqua resta un velo che si muove dentro
+    if (u_neutral > 0.001) seen = mix(seen, studioWall(seenUv), u_neutral * 0.72);
+    vec3 bgc = pvToSrgb(seen) * glassTint;
     vec3 g = pvToSrgb(pvAces(gl_FragColor.rgb));
     // sulla tela di una volta si vedevano anche i fianchi delle lettere dietro al fronte:
     // due strati di vetro, piu' bianchi di uno
