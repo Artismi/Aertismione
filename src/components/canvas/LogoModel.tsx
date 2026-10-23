@@ -168,13 +168,13 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                         float taglio = smoothstep(0.42, 0.24, nv) * smoothstep(0.06, 0.2, nv);
                         vec3 iride = 0.5 + 0.5 * cos(6.2832 * (n.x * 0.6 + n.y * 0.4 + vec3(0.0, 0.33, 0.67)));
                         glassSheen += mix(vec3(1.0), iride, 0.55) * taglio * 0.16;
-                        // le bilie (uv -1, fuori dalla mappa): vetro pieno rosa magenta, piu' carico
-                        // al centro e con riflessi piu' accesi, cosi' spiccano sul logo limpido
+                        // le bilie (uv -1, fuori dalla mappa) sono vetro come il resto, ma una sfera
+                        // non ha i fianchi del logo che di sbieco fanno il contorno scuro: glielo da'
+                        // un orlo corallo piu' largo, cosi' staccano come le lettere
                         if (vRip.x < -0.5) {
-                            float pieno = smoothstep(0.15, 1.0, nv);
-                            glassTint = mix(glassTint, vec3(0.9, 0.48, 0.74), 0.35 + 0.45 * pieno);
-                            glassGlint *= 1.8;
-                            glassSheen *= 1.6;
+                            // piu' pieno in basso, dove nelle lettere si vede il fianco
+                            float giu = 0.55 + 0.45 * smoothstep(-0.3, 0.7, -n.y);
+                            glassTint = mix(glassTint, vec3(0.74, 0.42, 0.38), smoothstep(0.8, 0.3, nv) * giu);
                         }
                         // i riflessi dello studio sui fianchi bruciavano in bianco: si smorzano
                         gl_FragColor.rgb /= 1.0 + gl_FragColor.rgb * side * 4.0;
