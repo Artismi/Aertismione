@@ -129,14 +129,20 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                         vec3 into = normalize(vViewPosition);         // verso la camera
                         vec3 o = -into / max(dot(into, n), 0.25);     // dentro il vetro, di 1 in profondita'
                         vec2 o2 = vec2(dot(o, e1), dot(o, e2));
-                        float core = 0.0;
+                        // tre letture a profondita' crescenti: la prima (piu' in alto) da' l'alone,
+                        // l'ultima (la piu' profonda, che scorre di piu') il cuore scuro
+                        float rip[3];
                         for (int i = 0; i < 3; i++) {
-                            float dz = 0.03 + 0.015 * float(i);       // profondita', in larghezze del logo
+                            float dz = 0.03 + 0.02 * float(i);        // profondita', in larghezze del logo
                             vec2 duv = J * o2 * (dz / max(perView, 1e-6)) / asp;
-                            core += texture2D(u_ripieno, vRip + duv).r;
+                            rip[i] = texture2D(u_ripieno, vRip + duv).r;
                         }
-                        core = smoothstep(0.3, 0.8, core / 3.0) * (1.0 - side);
-                        glassTint = mix(glassTint, vec3(0.97, 0.73, 0.93), 0.5 * core);
+                        float clear = 1.0 - side;
+                        float core = smoothstep(0.25, 0.75, (rip[0] + rip[1] + rip[2]) / 3.0) * clear;
+                        // verso il centro si scurisce, da rosa violetto a un violetto bordo'
+                        float deep = smoothstep(0.32, 0.9, (rip[1] + 2.0 * rip[2]) / 3.0) * clear;
+                        glassTint = mix(glassTint, vec3(0.95, 0.68, 0.9), 0.6 * core);
+                        glassTint = mix(glassTint, vec3(0.52, 0.22, 0.4), 0.55 * deep);
                         // le linee dell'acqua viste attraverso: fili netti e poco accesi
                         glassTint *= 1.0 + 0.1 * smoothstep(0.3, 0.8, lightWaves(gl_FragCoord.xy / u_px + glassShift));
                         // riflessi piccoli e nitidi, come in un render: due luci da studio che si
