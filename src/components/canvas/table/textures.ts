@@ -6,15 +6,10 @@
  */
 
 import * as THREE from 'three'
+import { rng, pcbPaint } from './consolePaint'
 
 /** Seme fisso: il banco e la carta sono gli stessi a ogni visita */
-export function rng(seed: number) {
-  let s = seed
-  return () => {
-    s = (s * 16807) % 2147483647
-    return (s - 1) / 2147483646
-  }
-}
+export { rng }
 
 function canvas(w: number, h: number) {
   const c = document.createElement('canvas')
@@ -393,6 +388,13 @@ export function pagesTexture() {
 }
 
 /* ── Console ─────────────────────────────────────────────────────────────── */
+
+/** Scheda elettronica: piste dorate, piazzole, serigrafia */
+export function pcbTexture() {
+  const [c, ctx] = canvas(1024, 1024)
+  pcbPaint(ctx, 1024, 1024, fonts().mono)   // la stessa del Game Boy a tutto schermo (consolePaint)
+  return toTexture(c)
+}
 
 /** Le misure della faccia della console, in unita' del mondo (vedi Console3D) */
 export type SlabFace = {
