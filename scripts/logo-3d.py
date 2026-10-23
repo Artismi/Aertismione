@@ -71,6 +71,7 @@ def sagoma():
     vuoto = fuori | buchi
     pieno = nd.distance_transform_edt(~vuoto) > TRATTO / 2
     pieno = punta_della_i(pieno)
+    pieno = gambe_piene(pieno)
     pieno = apri_fessure(pieno, inchiostro)
     return nd.gaussian_filter(pieno.astype(float), S * 0.8)
 
@@ -92,7 +93,24 @@ PUNTA = [(895, 261), (906, 256), (917, 250), (927, 244), (935, 239),
 # avvicinano e ai lati restano gli spessori delle lettere. Per ognuno: un riquadro
 # del disegno dove c'e' il suo tratto (pixel del disegno, x0 y0 x1 y1)
 FESSURE = [(225, 280, 255, 330), (443, 378, 470, 440)]
-STRINGI = 1.1   # di quanto si stringe la forma del tratto, pixel del disegno
+STRINGI = -1.8  # di quanto si stringe (o, se negativo, si allarga) la forma del tratto, pixel del disegno
+
+
+# Le gambe della M e della i colano sottili fino alla punta: nel 3D sembravano fili.
+# Si ingrossano di GAMBE pixel per lato (pixel del disegno), cosi' arrivano a circa lo
+# spessore dell'anello della A; l'aumento cresce piano da dove si staccano dalle
+# lettere, l'attacco resta morbido e tra una gamba e l'altra resta aria
+GAMBE = 7.0
+ZONA_GAMBE = (670, 900, 330, 390)   # x0, x1; y da cui comincia a crescere, y da cui e' pieno
+
+
+def gambe_piene(pieno):
+    x0, x1, ya, yb = ZONA_GAMBE
+    yy = np.arange(pieno.shape[0])[:, None] / S
+    xx = np.arange(pieno.shape[1])[None, :] / S
+    quanto = np.clip((yy - ya) / (yb - ya), 0, 1) * ((xx >= x0) & (xx <= x1))
+    fuori = nd.distance_transform_edt(~pieno) / S
+    return pieno | ((fuori <= GAMBE * quanto) & (quanto > 0))
 
 
 def apri_fessure(pieno, inchiostro):
@@ -103,7 +121,10 @@ def apri_fessure(pieno, inchiostro):
         dentro = lab[y0 * S:y1 * S, x0 * S:x1 * S]
         k = np.bincount(dentro[dentro > 0]).argmax()
         forma = nd.binary_fill_holes(lab == k)
-        via |= nd.distance_transform_edt(forma) > STRINGI * S
+        if STRINGI >= 0:
+            via |= nd.distance_transform_edt(forma) > STRINGI * S
+        else:   # il foro un po' piu' largo della linea: le lettere non si fondono
+            via |= nd.distance_transform_edt(~forma) <= -STRINGI * S
     return pieno & ~via
 
 
