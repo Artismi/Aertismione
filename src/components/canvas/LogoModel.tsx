@@ -1,4 +1,4 @@
-import { useGLTF, useEnvironment, Center, Float } from '@react-three/drei'
+import { useGLTF, useEnvironment, useTexture, Center, Float } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { useEffect, useMemo, useRef } from 'react'
@@ -27,6 +27,13 @@ export function LogoModel({ inWorld = false, ...props }: any) {
     // la sua luce di studio, quella di sempre (il preset "studio" di drei, servito dal sito):
     // nel mondo del banco la luce e' piu' calda e il vetro diventava grigio
     const studio = useEnvironment({ files: '/models/studio_logo.hdr' })
+    // il ripieno del vetro: quanto ogni punto e' dentro il logo (scripts/logo-3d.py)
+    const ripieno = useTexture('/models/logo-ripieno.png', (t) => {
+        const tx = t as THREE.Texture
+        tx.flipY = false
+        tx.colorSpace = THREE.NoColorSpace
+        tx.wrapS = tx.wrapT = THREE.ClampToEdgeWrapping
+    }) as THREE.Texture
     const rotatingRef = useRef<THREE.Group>(null)
     const groupRef = useRef<THREE.Group>(null)
     const timeRef = useRef(0)
@@ -107,12 +114,29 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                         // della parete calcolata qui), appena velato di rosa
                         glassTint = mix(vec3(0.93, 0.885, 0.875), vec3(1.05, 0.58, 0.49), side);
                         glassTint *= 1.0 - 0.1 * back;
-                        // il ripieno, come in un orsetto gommoso: dentro la pelle un alone ambra
-                        // che si accende dove il corpo e' spesso (lontano dal bordo, vDepth) e
-                        // un po' di piu' in alto, da dove viene la luce; i tratti sottili restano chiari
-                        float halo = smoothstep(0.08, 0.5, vDepth) * (0.65 + 0.35 * smoothstep(-0.4, 0.7, n.y)) * (1.0 - side);
-                        glassTint = mix(glassTint, vec3(1.04, 0.62, 0.3), 0.6 * halo);
-                        glassTint *= 1.0 + 0.05 * halo;
+                        // il ripieno, come in un orsetto gommoso: un cuore rosa violetto che sta
+                        // DENTRO il vetro, sotto uno strato limpido. La sua forma e' la mappa di
+                        // logo-ripieno.png (quanto il punto e' dentro il logo), letta piu' in
+                        // profondita' lungo lo sguardo: girando il logo il cuore scorre sotto la
+                        // superficie (parallasse) e tra i due si vede il trasparente
+                        vec3 dp1 = dFdx(-vViewPosition), dp2 = dFdy(-vViewPosition);
+                        vec2 du1 = dFdx(vRip), du2 = dFdy(vRip);
+                        vec3 e1 = normalize(dp1 - n * dot(dp1, n) + 1e-6), e2 = cross(n, e1);
+                        // dal piano della superficie (vista) alla mappa; asse y in larghezze del logo
+                        vec2 asp = vec2(1.0, u_ripAspect);
+                        mat2 J = mat2(du1 * asp, du2 * asp) * inverse(mat2(dot(dp1, e1), dot(dp1, e2), dot(dp2, e1), dot(dp2, e2)));
+                        float perView = sqrt(abs(determinant(J)));   // larghezze del logo per unita' di vista
+                        vec3 into = normalize(vViewPosition);         // verso la camera
+                        vec3 o = -into / max(dot(into, n), 0.25);     // dentro il vetro, di 1 in profondita'
+                        vec2 o2 = vec2(dot(o, e1), dot(o, e2));
+                        float core = 0.0;
+                        for (int i = 0; i < 3; i++) {
+                            float dz = 0.03 + 0.015 * float(i);       // profondita', in larghezze del logo
+                            vec2 duv = J * o2 * (dz / max(perView, 1e-6)) / asp;
+                            core += texture2D(u_ripieno, vRip + duv).r;
+                        }
+                        core = smoothstep(0.3, 0.8, core / 3.0) * (1.0 - side);
+                        glassTint = mix(glassTint, vec3(0.97, 0.73, 0.93), 0.5 * core);
                         // le linee dell'acqua viste attraverso: fili netti e poco accesi
                         glassTint *= 1.0 + 0.1 * smoothstep(0.3, 0.8, lightWaves(gl_FragCoord.xy / u_px + glassShift));
                         // riflessi piccoli e nitidi, come in un render: due luci da studio che si
@@ -137,12 +161,15 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                     }
                 `
                 // la posizione sul logo: le chiazze bagnate restano ferme sul vetro
-                // e quanto il punto e' dentro la forma (distanza dal bordo, nel primo uv di logo.glb)
-                shader.vertexShader = 'varying vec3 vObjPos;\nvarying float vDepth;\n' + shader.vertexShader.replace(
+                // e il punto nell'ingombro del logo (primo uv di logo.glb), per la mappa del ripieno
+                shader.vertexShader = 'varying vec3 vObjPos;\nvarying vec2 vRip;\n' + shader.vertexShader.replace(
                     '#include <begin_vertex>',
-                    '#include <begin_vertex>\nvObjPos = position;\nvDepth = uv.x;',
+                    '#include <begin_vertex>\nvObjPos = position;\nvRip = uv;',
                 )
-                shader.fragmentShader = 'varying vec3 vObjPos;\nvarying float vDepth;\n' + glassPars + shader.fragmentShader.replace(
+                shader.uniforms.u_ripieno = { value: ripieno }
+                const im = ripieno.image as HTMLImageElement | undefined
+                shader.uniforms.u_ripAspect = { value: im ? im.height / im.width : 0.6 }
+                shader.fragmentShader = 'varying vec3 vObjPos;\nvarying vec2 vRip;\nuniform sampler2D u_ripieno;\nuniform float u_ripAspect;\n' + glassPars + shader.fragmentShader.replace(
                     '#include <dithering_fragment>',
                     '#include <dithering_fragment>\n' + liquid + glassComposite,
                 )
@@ -167,7 +194,7 @@ export function LogoModel({ inWorld = false, ...props }: any) {
         }
 
         return mat
-    }, [inWorld])
+    }, [inWorld, ripieno])
 
     useEffect(() => {
         glassMaterial.envMap = studio
@@ -226,7 +253,10 @@ export function LogoModel({ inWorld = false, ...props }: any) {
             dot.geometry.computeBoundingBox()
             const b = dot.geometry.boundingBox!.clone().applyMatrix4(dot.matrix)
             const size = b.getSize(new THREE.Vector3())
-            const s = new THREE.Mesh(new THREE.SphereGeometry(Math.sqrt(size.x * size.y) / 2 * 1.1, 48, 32), glassMaterial)
+            const g = new THREE.SphereGeometry(Math.sqrt(size.x * size.y) / 2 * 1.1, 48, 32)
+            // fuori dalla mappa del ripieno: la bilia e' vetro limpido
+            g.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(g.attributes.uv.count * 2).fill(-1), 2))
+            const s = new THREE.Mesh(g, glassMaterial)
             b.getCenter(s.position)
             dot.parent.add(s)
             dot.visible = false

@@ -29,6 +29,7 @@ import triangle
 
 SRC = 'scripts/logo-forma.svg'
 OUT = 'public/models/logo.glb'
+RIPIENO = 'public/models/logo-ripieno.png'
 # il vecchio modello: larghezza, angolo in alto a sinistra e spessore (unita' del file)
 X0, Y0, LARGO = -455.91943, 2.7719905, 342.87055
 Z0, Z1 = -62.32643, -17.774971
@@ -196,10 +197,6 @@ def gonfia(forma):
     idx = np.vstack([tri, unico[tri[:, ::-1] + n]])
     usati, idx = np.unique(idx, return_inverse=True)
     pos = pos[usati]
-    # quanto ogni punto e' dentro la forma (distanza dal bordo, in 16 unita' del file:
-    # resta tra 0 e 1, la compressione lo vuole li'): al vetro serve per accendere il
-    # ripieno dove il corpo e' spesso (TEXCOORD_0.x)
-    dentro = np.minimum(np.concatenate([d, d])[usati] / 16.0, 1.0)
     idx = idx.reshape(-1, 3)
     # normali dei vertici dalle facce, pesate per area
     f = pos[idx]
@@ -208,16 +205,17 @@ def gonfia(forma):
     for k in range(3):
         np.add.at(nor, idx[:, k], nf)
     nor /= np.linalg.norm(nor, axis=1, keepdims=True) + 1e-12
-    return pos.astype(np.float32), nor.astype(np.float32), idx.astype(np.uint32), dentro.astype(np.float32)
+    return pos.astype(np.float32), nor.astype(np.float32), idx.astype(np.uint32)
 
 
-def scrivi(parti):
-    """parti: (nome, pos, nor, idx, dentro) per pezzo; tutti con il nodo del vecchio modello.
-    TEXCOORD_0 = (distanza dal bordo / 16, 0): il vetro la legge per il ripieno ambra."""
+def scrivi(parti, ingombro):
+    """parti: (nome, pos, nor, idx) per pezzo; tutti con il nodo del vecchio modello.
+    TEXCOORD_0: il punto nell'ingombro del logo (0..1 in x e in y), lo stesso di RIPIENO."""
+    x0, y0, x1, y1 = ingombro
     blob = b''
     viste, acc, meshes, nodi = [], [], [], []
-    for nome, pos, nor, idx, dentro in parti:
-        uv = np.column_stack([dentro, np.zeros_like(dentro)]).astype(np.float32)
+    for nome, pos, nor, idx in parti:
+        uv = ((pos[:, :2] - [x0, y0]) / [x1 - x0, y1 - y0]).astype(np.float32)
         prima = len(acc)
         for arr, tipo, ct, minmax in ((pos, 'VEC3', 5126, True), (nor, 'VEC3', 5126, False),
                                       (uv, 'VEC2', 5126, False), (idx.reshape(-1), 'SCALAR', 5125, False)):
@@ -248,6 +246,24 @@ def scrivi(parti):
     print(f'{OUT}: {sum(len(p[1]) for p in parti)} vertici, {os.path.getsize(OUT) // 1024} KB')
 
 
+def ripieno(forma, larghezza=1024):
+    """Quanto ogni punto e' dentro il logo, come immagine: il vetro ci disegna il ripieno
+    rosa, piu' in profondita' della superficie. 0 fuori e sul bordo, 1 a 12 unita' dal
+    bordo; sfumato, il ripieno non ha contorni netti. Riga 0 = y minima (flipY off)."""
+    x0, y0, x1, y1 = forma.bounds
+    k = larghezza / (x1 - x0)
+    alto = int(round((y1 - y0) * k))
+    im = Image.new('L', (larghezza, alto), 0)
+    disegna = ImageDraw.Draw(im)
+    for p in getattr(forma, 'geoms', [forma]):
+        disegna.polygon([((x - x0) * k, (y - y0) * k) for x, y in p.exterior.coords], fill=255)
+        for h in p.interiors:
+            disegna.polygon([((x - x0) * k, (y - y0) * k) for x, y in h.coords], fill=0)
+    d = nd.distance_transform_edt(np.array(im) > 127) / k
+    d = nd.gaussian_filter(np.clip(d / 12.0, 0, 1), 1.5 * k)
+    Image.fromarray((d * 255).astype(np.uint8)).save(RIPIENO)
+
+
 if __name__ == '__main__':
     forma = in_file(forma_del_logo())
     # i pallini delle due i sono pezzi a parte: nel sito al loro posto ci sono due
@@ -255,4 +271,6 @@ if __name__ == '__main__':
     # cade sul piano di gioco, l'altro ("pallino-i") resta sulla prima i
     pezzi = sorted(getattr(forma, 'geoms', [forma]), key=lambda g: g.area)
     corpo, primo, pallino = pezzi[-1], *sorted(pezzi[:-1], key=lambda g: g.centroid.x)
-    scrivi([('aRTISMI 3D', *gonfia(corpo)), ('pallino-i', *gonfia(primo)), ('pallino', *gonfia(pallino))])
+    scrivi([('aRTISMI 3D', *gonfia(corpo)), ('pallino-i', *gonfia(primo)), ('pallino', *gonfia(pallino))],
+           forma.bounds)
+    ripieno(forma)
