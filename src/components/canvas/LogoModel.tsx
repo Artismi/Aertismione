@@ -89,6 +89,7 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                 const liquid = /* glsl */`
                     vec2 glassShift = vec2(0.0);
                     vec3 glassTint = vec3(1.0);
+                    float glassGlint = 0.0;
                     {
                         vec3 n = normalize(vNormal);
                         float nv = abs(dot(n, normalize(vViewPosition)));
@@ -100,7 +101,8 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                         // rifrazione: sui fianchi tondi il fondo si piega di piu', come in una lente
                         glassShift = -n.xy * pow(1.0 - nv, 1.4) * 0.075;
                         // il fronte acceso, rosa ambrato: prima tirava al grigio
-                        glassTint = mix(vec3(1.06, 0.93, 0.92), vec3(1.15, 0.56, 0.46), side);
+                        // al centro quasi incolore: il colore sta dove il vetro e' spesso
+                        glassTint = mix(vec3(1.03, 0.97, 0.96), vec3(1.15, 0.56, 0.46), side);
                         // le linee dell'acqua, rosa chiaro su rosa, si vedevano appena: dentro
                         // il vetro si accendono di piu' e il fondo tra una e l'altra si carica
                         // onde continue: attraversano tutto il logo (la piscina ha zone spente)
@@ -109,6 +111,12 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                         // piano, senza salti; dove la superficie guarda in alto una luce morbida
                         glassTint *= mix(1.04, 0.84, smoothstep(0.98, 0.35, nv));
                         glassTint += vec3(0.1, 0.08, 0.08) * smoothstep(0.2, 0.85, n.y) * smoothstep(0.2, 0.7, nv);
+                        // riflessi piccoli e nitidi, come in un render: due luci da studio che si
+                        // specchiano nella superficie tonda. Sono loro a dire "vetro", non i bordi bianchi
+                        vec3 vdir = normalize(-vViewPosition);
+                        vec3 rf = reflect(-vdir, n);
+                        glassGlint = pow(max(dot(rf, normalize(vec3(-0.45, 0.8, 0.4))), 0.0), 160.0) * 0.9
+                                   + pow(max(dot(rf, normalize(vec3(0.7, 0.35, 0.6))), 0.0), 420.0) * 0.55;
                         // i riflessi dello studio sui fianchi bruciavano in bianco: si smorzano
                         gl_FragColor.rgb /= 1.0 + gl_FragColor.rgb * side * 4.0;
                     }

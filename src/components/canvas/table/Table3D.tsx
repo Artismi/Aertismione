@@ -604,9 +604,10 @@ export default function Table3D(props: Props) {
       <Canvas
         frameloop="demand"
         shadows="soft"
-        // dal computer fino al doppio dei pixel dello schermo: il vetro del logo e i bordi
-        // del banco nitidi anche sugli schermi retina. Dal telefono resta piu' leggero
-        dpr={props.mobile ? [1, 1.5] : [1, 2]}
+        // dal computer almeno una volta e mezza i pixel dello schermo, fino al doppio: il vetro
+        // del logo e i bordi del banco nitidi anche sugli schermi normali (sovracampionato) e
+        // sui retina. In movimento scende (Budget). Dal telefono resta piu' leggero
+        dpr={props.mobile ? [1, 1.5] : [1.5, 2]}
         camera={{ fov: 30, position: [0.15, 40, 30], near: 0.1, far: 200 }}
         // trasparente: dietro c'e' l'acqua, sul suo canvas (WaterCanvas)
         gl={{ antialias: false, alpha: true, powerPreference: 'high-performance' }}

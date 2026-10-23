@@ -308,22 +308,37 @@ export const glassUniforms = { ...water, u_px: new THREE.Uniform(new THREE.Vecto
 
 export const glassPars = common + /* glsl */`
   uniform vec2 u_px;
+  // il fondo visto attraverso il vetro in un punto: in cima soprattutto la parete
+  vec3 glassSeen(vec2 uv, vec2 hz) {
+    vec3 s = hazedBy(water(uv), hz);
+    // quasi solo la parete vera (con la luce corallo): dentro il vetro deve vedersi quello
+    // che c'e' intorno, piegato. Se dentro e' diverso l'occhio lo legge come materiale pieno
+    if (u_neutral > 0.001) s = mix(s, studioWall(uv), u_neutral * 0.95);
+    return s;
+  }
 ` + pvPars
 
 /** Va in fondo al fragment del vetro (dopo dithering_fragment). Chi lo usa dichiara
  *  prima vec2 glassShift (di quanto si sposta il fondale visto attraverso: rifrazione)
- *  e vec3 glassTint (come il vetro colorato filtra il fondale) */
+ *  e vec3 glassTint (come il vetro colorato filtra il fondale), float glassGlint (riflessi nitidi) */
 export const glassComposite = /* glsl */`
   {
     // come sulla tela di una volta: fusione sui colori gia' pronti per lo schermo (sRGB)
     // il vapore una volta sola, nel punto del vetro: serve al fondo visto attraverso
     // (spostato di poco dalla rifrazione) e al velo davanti
     vec2 hz = haze(gl_FragCoord.xy / u_px);
-    vec2 seenUv = gl_FragCoord.xy / u_px + glassShift;
-    vec3 seen = hazedBy(water(seenUv), hz);
     // in cima, sulla parete neutra, attraverso il vetro si vede soprattutto la parete:
-    // il vetro e' trasparente, tinto di rosa, e l'acqua resta un velo che si muove dentro
-    if (u_neutral > 0.001) seen = mix(seen, studioWall(seenUv), u_neutral * 0.72);
+    // il vetro e' trasparente, tinto di rosa, e l'acqua resta un velo che si muove dentro.
+    // Dove la rifrazione e' forte (i fianchi tondi) i tre colori si piegano di poco
+    // diverso: la dispersione di un prisma, l'orlo iridato del vetro vero
+    vec2 baseUv = gl_FragCoord.xy / u_px;
+    vec3 seen;
+    if (length(glassShift) > 0.004) {
+      vec3 sr = glassSeen(baseUv + glassShift * 1.12, hz);
+      vec3 sg = glassSeen(baseUv + glassShift, hz);
+      vec3 sb = glassSeen(baseUv + glassShift * 0.88, hz);
+      seen = vec3(sr.r, sg.g, sb.b);
+    } else seen = glassSeen(baseUv + glassShift, hz);
     vec3 bgc = pvToSrgb(seen) * glassTint;
     vec3 g = pvToSrgb(pvAces(gl_FragColor.rgb));
     // sulla tela di una volta si vedevano anche i fianchi delle lettere dietro al fronte:
@@ -332,6 +347,8 @@ export const glassComposite = /* glsl */`
     vec3 c = mix(bgc, g, a2);
     // un velo del vapore passa anche davanti al vetro: l'aria e' spessa
     c = 1.0 - (1.0 - c) * (1.0 - hz.x * 0.28);
+    // i riflessi nitidi sopra a tutto
+    c = 1.0 - (1.0 - c) * (1.0 - clamp(glassGlint, 0.0, 1.0));
     gl_FragColor = vec4(pvAcesInv(srgbToLinearBg(c)), 1.0);
   }
 `
