@@ -98,18 +98,20 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                         // il movimento dello shader sta nel logo. Il taglio si accende: la luce
                         // corre nello spessore ed esce di lato, corallo saturo e luminoso
                         float side = smoothstep(0.95, 0.15, nv);
-                        // rifrazione: sui fianchi tondi il fondo si piega di piu', come in una lente
-                        glassShift = -n.xy * pow(1.0 - nv, 1.4) * 0.075;
+                        // rifrazione: sui fianchi tondi il fondo si piega di piu', come in una lente;
+                        // un po' anche dove il vetro e' piatto: e' spesso, si sente la profondita'
+                        glassShift = -n.xy * (pow(1.0 - nv, 1.4) * 0.095 + 0.006);
                         // il fronte acceso, rosa ambrato: prima tirava al grigio
                         // al centro quasi incolore: il colore sta dove il vetro e' spesso
                         glassTint = mix(vec3(1.03, 0.97, 0.96), vec3(1.15, 0.56, 0.46), side);
                         // le linee dell'acqua, rosa chiaro su rosa, si vedevano appena: dentro
                         // il vetro si accendono di piu' e il fondo tra una e l'altra si carica
                         // onde continue: attraversano tutto il logo (la piscina ha zone spente)
-                        glassTint *= 1.0 + 0.24 * lightWaves(gl_FragCoord.xy / u_px + glassShift);
+                        // fili netti e poco accesi: solo il cuore della linea, non il suo alone
+                        glassTint *= 1.0 + 0.1 * smoothstep(0.3, 0.8, lightWaves(gl_FragCoord.xy / u_px + glassShift));
                         // volume: verso i bordi tondi il vetro e' piu' spesso e il colore si carica
                         // piano, senza salti; dove la superficie guarda in alto una luce morbida
-                        glassTint *= mix(1.04, 0.84, smoothstep(0.98, 0.35, nv));
+                        glassTint *= mix(1.04, 0.78, smoothstep(0.98, 0.3, nv));
                         glassTint += vec3(0.1, 0.08, 0.08) * smoothstep(0.2, 0.85, n.y) * smoothstep(0.2, 0.7, nv);
                         // riflessi piccoli e nitidi, come in un render: due luci da studio che si
                         // specchiano nella superficie tonda. Sono loro a dire "vetro", non i bordi bianchi
@@ -117,11 +119,27 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                         vec3 rf = reflect(-vdir, n);
                         glassGlint = pow(max(dot(rf, normalize(vec3(-0.45, 0.8, 0.4))), 0.0), 160.0) * 0.9
                                    + pow(max(dot(rf, normalize(vec3(0.7, 0.35, 0.6))), 0.0), 420.0) * 0.55;
+                        // il fronte e' bagnato solo a chiazze: li' i riflessi sono pieni e c'e' il
+                        // velo lucido di una finestra; dove e' asciutto la luce si spegne, cosi'
+                        // la superficie non brilla tutta uguale
+                        float wet = smoothstep(0.02, 0.4, field(vObjPos.xy / 55.0, 0.0)
+                                  + 0.35 * field(vObjPos.xy / 17.0 + 3.1, 0.0));
+                        float front = smoothstep(0.55, 0.92, nv);
+                        glassGlint *= mix(0.3, 1.25, wet);
+                        // la finestra dello studio specchiata nel bagnato: una lama netta e un alone
+                        float win = dot(rf, normalize(vec3(-0.25, 0.35, 0.9)));
+                        glassGlint += (smoothstep(0.9, 0.95, win) * 0.32 + pow(max(win, 0.0), 40.0) * 0.16) * wet * front;
+                        gl_FragColor.rgb *= mix(0.86, 1.0, max(wet, 1.0 - front));
                         // i riflessi dello studio sui fianchi bruciavano in bianco: si smorzano
                         gl_FragColor.rgb /= 1.0 + gl_FragColor.rgb * side * 4.0;
                     }
                 `
-                shader.fragmentShader = glassPars + shader.fragmentShader.replace(
+                // la posizione sul logo: le chiazze bagnate restano ferme sul vetro
+                shader.vertexShader = 'varying vec3 vObjPos;\n' + shader.vertexShader.replace(
+                    '#include <begin_vertex>',
+                    '#include <begin_vertex>\nvObjPos = position;',
+                )
+                shader.fragmentShader = 'varying vec3 vObjPos;\n' + glassPars + shader.fragmentShader.replace(
                     '#include <dithering_fragment>',
                     '#include <dithering_fragment>\n' + liquid + glassComposite,
                 )
@@ -137,11 +155,11 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                 float NdotV = abs(dot(normalize(vNormal), normalize(vViewPosition)));
                 float fresnel = 1.0 - NdotV;
                 ${inWorld
-                    // nel mondo: il fronte e' vetro limpido (~0.08) e piu' ci si allontana dai bordi
+                    // nel mondo: il fronte e' vetro limpido (~0.05) e piu' ci si allontana dai bordi
                     // piu' e' nitido; la forma la disegnano i bordi, densi (~0.9)
                     // di taglio non piu' quasi opaco (era il riflesso bianco a fare il bordo):
                     // resta trasparente e si vede il fondo, tinto dallo spessore
-                    ? 'diffuseColor.a *= mix(0.08, 0.5, pow(fresnel, 1.5));'
+                    ? 'diffuseColor.a *= mix(0.05, 0.42, pow(fresnel, 1.5));'
                     // fronte: ~0.92 opaco + riflettente | bordi: ~0.18 sottili
                     : 'diffuseColor.a *= 0.18 + NdotV * NdotV * NdotV * 0.74;'}`
             )

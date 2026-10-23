@@ -110,7 +110,9 @@ const common = causticsFragment
   // colorata sul muro: una pozza corallo morbida, senza contorni, proprio dietro il
   // logo (appena in basso a destra), con dentro le increspature dell'acqua che si
   // muovono. Si vede intorno alle lettere e, piegata, attraverso il vetro
-  vec3 studioWall(vec2 uv) {
+  // crisp (0..1): visto attraverso il vetro del logo i fili delle increspature sono piu'
+  // netti e meno accesi; il fondale vero li tiene morbidi (crisp 0)
+  vec3 studioWall(vec2 uv, float crisp) {
     vec3 wall = mix(vec3(1.05, 1.02, 1.0), vec3(1.4, 1.37, 1.33), smoothstep(0.0, 1.0, uv.y));
     if (u_logo.z <= 0.0) return wall;
     vec2 p = (uv - u_logo.xy) * vec2(u_res.x / max(1.0, u_res.y), 1.0) / max(u_logo.z, 1e-3);
@@ -119,11 +121,13 @@ const common = causticsFragment
     float pool = exp(-dot(e, e) * 1.2);
     if (pool < 0.003) return wall;
     float ripple = lightWaves(uv * 0.92 + 0.04);
+    ripple = mix(ripple, smoothstep(0.3, 0.8, ripple), crisp);
     // la luce colorata tinge il muro; le increspature la raccolgono in fili piu' chiari
     // (colori pieni e profondi: sulle tinte chiare ACES desatura, e il corallo diventava pesca)
-    vec3 light = mix(vec3(0.95, 0.36, 0.28), vec3(1.35, 0.72, 0.55), ripple);
+    vec3 light = mix(mix(vec3(0.95, 0.36, 0.28), vec3(1.0, 0.44, 0.35), crisp), mix(vec3(1.35, 0.72, 0.55), vec3(1.15, 0.62, 0.49), crisp), ripple);
     return mix(wall, light, pool * 0.72);
   }
+  vec3 studioWall(vec2 uv) { return studioWall(uv, 0.0); }
   vec3 backdrop(vec2 uv) {
     vec3 pink = hazedBy(water(uv), haze(uv));
     if (u_neutral <= 0.001) return pink;
@@ -313,7 +317,7 @@ export const glassPars = common + /* glsl */`
     vec3 s = hazedBy(water(uv), hz);
     // quasi solo la parete vera (con la luce corallo): dentro il vetro deve vedersi quello
     // che c'e' intorno, piegato. Se dentro e' diverso l'occhio lo legge come materiale pieno
-    if (u_neutral > 0.001) s = mix(s, studioWall(uv), u_neutral * 0.95);
+    if (u_neutral > 0.001) s = mix(s, studioWall(uv, 1.0), u_neutral * 0.95);
     return s;
   }
 ` + pvPars
