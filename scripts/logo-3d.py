@@ -245,9 +245,9 @@ def scrivi(parti):
 
 if __name__ == '__main__':
     forma = in_file(forma_del_logo())
-    # il pallino della i finale e' un pezzo a parte ("pallino"): nel sito al suo posto
-    # c'e' la bilia, il cursore (LogoModel). E' il piu' a destra dei pezzi piccoli
+    # i pallini delle due i sono pezzi a parte: nel sito al loro posto ci sono due
+    # bilie di vetro (LogoModel). Quello della i finale ("pallino") e' la bilia che
+    # cade sul piano di gioco, l'altro ("pallino-i") resta sulla prima i
     pezzi = sorted(getattr(forma, 'geoms', [forma]), key=lambda g: g.area)
-    pallino = max(pezzi[:-1], key=lambda g: g.centroid.x)
-    corpo = unary_union([g for g in pezzi if g is not pallino])
-    scrivi([('aRTISMI 3D', *gonfia(corpo)), ('pallino', *gonfia(pallino))])
+    corpo, primo, pallino = pezzi[-1], *sorted(pezzi[:-1], key=lambda g: g.centroid.x)
+    scrivi([('aRTISMI 3D', *gonfia(corpo)), ('pallino-i', *gonfia(primo)), ('pallino', *gonfia(pallino))])

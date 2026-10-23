@@ -198,29 +198,37 @@ export function LogoModel({ inWorld = false, ...props }: any) {
 
         const added: THREE.Object3D[] = []
 
-        // La bilia al posto del pallino della i: il pallino del disegno (nodo
-        // "pallino" di logo.glb) si nasconde e al suo centro c'e' una sfera di vetro
-        const dot = scene.getObjectByName('pallino') as THREE.Mesh | undefined
-        let ball: THREE.Mesh | null = null
-        if (dot?.parent) {
+        // Le bilie al posto dei pallini delle i: i pallini del disegno (nodi "pallino"
+        // e "pallino-i" di logo.glb) si nascondono e al loro centro c'e' una sfera di
+        // vetro, grande quanto il pallino
+        const sfera = (dot: THREE.Mesh | undefined) => {
+            if (!dot?.parent) return null
             dot.updateMatrix()
             dot.geometry.computeBoundingBox()
             const b = dot.geometry.boundingBox!.clone().applyMatrix4(dot.matrix)
             const size = b.getSize(new THREE.Vector3())
-            ball = new THREE.Mesh(new THREE.SphereGeometry(Math.sqrt(size.x * size.y) / 2 * 1.6, 48, 32), glassMaterial)
-            ball.name = 'bilia'
-            b.getCenter(ball.position)
-            dot.parent.add(ball)
+            const s = new THREE.Mesh(new THREE.SphereGeometry(Math.sqrt(size.x * size.y) / 2 * 1.1, 48, 32), glassMaterial)
+            b.getCenter(s.position)
+            dot.parent.add(s)
             dot.visible = false
+            return s
+        }
+        const dot = scene.getObjectByName('pallino') as THREE.Mesh | undefined
+        const dotI = scene.getObjectByName('pallino-i') as THREE.Mesh | undefined
+        const ball = sfera(dot)
+        const ballI = sfera(dotI)
+        if (ball) {
+            ball.name = 'bilia'
             // appena la pagina sale la bilia lascia la i e cade sul piano di gioco (MarblePage)
             if (inWorld) marble.logoBall = ball
         }
+        if (ballI) ballI.name = 'bilia-i'
 
         // prima si raccolgono le mesh: le linee aggiunte sono a loro volta mesh e il
         // traverse le visiterebbe
         const meshes: THREE.Mesh[] = []
         scene.traverse((child: any) => {
-            if ((child as THREE.Mesh).isMesh && child !== dot) meshes.push(child)
+            if ((child as THREE.Mesh).isMesh && child !== dot && child !== dotI) meshes.push(child)
         })
         meshes.forEach((mesh) => {
             mesh.material = glassMaterial
@@ -240,9 +248,10 @@ export function LogoModel({ inWorld = false, ...props }: any) {
         })
 
         return () => {
-            if (ball) { ball.removeFromParent(); ball.geometry.dispose() }
+            for (const b of [ball, ballI]) if (b) { b.removeFromParent(); b.geometry.dispose() }
             if (marble.logoBall === ball) marble.logoBall = null
             if (dot) dot.visible = true
+            if (dotI) dotI.visible = true
             added.forEach(l => l.parent?.remove(l))
             edgeMatRef.current = null
         }
