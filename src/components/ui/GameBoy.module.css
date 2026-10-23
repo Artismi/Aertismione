@@ -526,6 +526,33 @@
   text-shadow: var(--deboss);
 }
 
+/* sotto la croce, cosa fanno le frecce adesso: una riga per coppia («◄► gira» / «▲▼ zoom») */
+.crossHint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-height: 2em;
+}
+
+/* sotto B: quello che hai in mano, che B usa */
+.hand {
+  max-width: calc(var(--u) * 16);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--mono);
+  font-size: clamp(6.5px, calc(var(--u) * 1.5), 8.5px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--ink-soft);
+  text-shadow: var(--deboss);
+}
+
+.hand::before { content: '◆ '; }
+
 /* ── gli incavi tondi della levetta e della croce: plastica piu' scura, il bordo che prende la luce ── */
 .stick,
 .cross {
@@ -723,7 +750,7 @@
 .ab {
   position: relative;
   width: calc(var(--u) * 30);
-  height: calc(var(--u) * 29);
+  height: calc(var(--u) * 31);   /* sotto B c'e' spazio per quello che hai in mano */
 }
 
 .abPlate {

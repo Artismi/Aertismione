@@ -6,7 +6,7 @@
  * Gli stessi materiali del Game Boy 3D sul banco (Console3D): croce nera
  * nell'incavo, A e B corallo laccati, gomma scura. Compatta, sotto lo schermo
  * (di traverso: negli angoli in basso, ai lati): la levetta per camminare e
- * guidare, la croce per la visuale (◄ ► la gira, ▲ ▼ lo zoom), A e B, e tre tasti
+ * guidare, la croce (la visuale; in BMX i trick: la scritta sotto dice cosa fa), A e B, e tre tasti
  * veri in rilievo con la loro icona e una lucina: la bomboletta (i graffiti), la
  * bici, lo zaino (il menu, dove sta tutto il resto). Nella tesa la rotella
  * dell'audio e il display con giorno, ora e soldi (Rotella, Display).
@@ -22,9 +22,12 @@ import { useEffect, useRef, useState, type PointerEvent as RPointerEvent, type R
 import { PROGETTI } from '@/config/content'
 import styles from './GameBoy.module.css'
 
-export type PadKey = 'a' | 'b' | 'bomboletta' | 'bici' | 'zaino'
-/** Quello che il gioco dice dei tasti: la scritta di ognuno (null = ora non fa niente), quali sono accesi, le cose da fare qui, l'audio */
-export type Tasti = { t: Partial<Record<PadKey, string | null>>; on?: Partial<Record<PadKey, boolean>>; n: number; audio: boolean }
+export type PadKey = 'a' | 'b' | 'croce' | 'bomboletta' | 'bici' | 'zaino'
+/**
+ * Quello che il gioco dice dei tasti: la scritta di ognuno (null = ora non fa niente; per la croce cosa fanno le frecce),
+ * quali sono accesi, quello che hai in mano (lo usa B), le cose da fare qui, l'audio
+ */
+export type Tasti = { t: Partial<Record<PadKey, string | null>>; on?: Partial<Record<PadKey, boolean>>; mano?: string | null; n: number; audio: boolean }
 /** Quello che il gioco dice di se', per il display: giorno, ora, soldi, debito, ore alla scadenza (null = nessuna), stelle */
 export type Stato = { giorno: string; ora: string; soldi: string; debito: string; scade: number | null; ricercato: number }
 export type Send = (m: { pvc: string; [k: string]: unknown }) => void
@@ -248,13 +251,17 @@ function Funzione({ k, send, name, label, lit, badge }: {
   )
 }
 
-/** A e B: le calotte corallo, la lettera e la scritta di adesso */
-function Bottone({ k, send, label }: { k: 'a' | 'b'; send: Send; label?: string | null }) {
+/** A e B: le calotte corallo, la lettera e la scritta di adesso; sotto B anche quello che hai in mano */
+function Bottone({ k, send, label, hand }: { k: 'a' | 'b'; send: Send; label?: string | null; hand?: string | null }) {
   const name = k.toUpperCase()
   return (
     <div className={styles.abKey} data-k={k}>
-      <Tasto k={k} send={send} className={styles.abBtn} name={name} label={label} />
-      <span className={styles.abPrint}><b>{name}</b><span className={styles.fn}>{label ?? ''}</span></span>
+      <Tasto k={k} send={send} className={styles.abBtn} name={hand && label ? `${name} (${hand})` : name} label={label} />
+      <span className={styles.abPrint}>
+        <b>{name}</b>
+        <span className={styles.fn}>{label ?? ''}</span>
+        {hand && <span className={styles.hand}>{hand}</span>}
+      </span>
     </div>
   )
 }
@@ -306,12 +313,14 @@ export function GameBoyPad({ send, tasti }: { send: Send; tasti: Tasti | null })
       </div>
       <div className={styles.padX} role="group" aria-label={pad.label} onContextMenu={hush}>
         <Croce send={send} />
-        <span className={styles.print}>{pad.cross}</span>
+        <span className={`${styles.print} ${styles.crossHint}`}>
+          {(t.croce === undefined ? pad.cross : t.croce ?? '').split(' · ').map((r) => <span key={r}>{r}</span>)}
+        </span>
       </div>
       <div className={styles.padR} role="group" aria-label={pad.label} onContextMenu={hush}>
         <div className={styles.ab}>
           <span className={styles.abPlate} aria-hidden="true" />
-          <Bottone k="b" send={send} label={t.b} />
+          <Bottone k="b" send={send} label={t.b} hand={tasti?.mano} />
           <Bottone k="a" send={send} label={t.a} />
         </div>
       </div>
