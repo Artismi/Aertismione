@@ -102,8 +102,8 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                         glassTint = mix(vec3(1.06, 0.93, 0.92), vec3(1.15, 0.56, 0.46), side);
                         // le linee dell'acqua, rosa chiaro su rosa, si vedevano appena: dentro
                         // il vetro si accendono di piu' e il fondo tra una e l'altra si carica
-                        float wl = dot(water(gl_FragCoord.xy / u_px + glassShift), vec3(0.3, 0.55, 0.15));
-                        glassTint *= mix(1.0, 1.3, smoothstep(0.62, 0.84, wl));
+                        // onde continue: attraversano tutto il logo (la piscina ha zone spente)
+                        glassTint *= 1.0 + 0.4 * lightWaves(gl_FragCoord.xy / u_px + glassShift);
                         // i riflessi dello studio sui fianchi bruciavano in bianco: si smorzano
                         gl_FragColor.rgb /= 1.0 + gl_FragColor.rgb * side * 4.0;
                     }

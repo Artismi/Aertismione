@@ -92,25 +92,37 @@ const common = causticsFragment
   vec3 water(vec2 uv) {
     return srgbToLinearBg(causticsColor(0.5 + (uv - 0.5) * u_scale + vec2(0.0, u_scroll)).rgb);
   }
+  // Le onde di luce: lo stesso disegno e lo stesso moto dell'acqua (field), ma senza le
+  // zone spente che la piscina ha di proposito. Servono al vetro del logo e alla luce
+  // dietro: devono attraversare tutto il logo, non solo una parte. 0 = niente, 1 = filo pieno
+  float lightWaves(vec2 uv) {
+    float t = u_time * 0.22;
+    vec2 q = uv * vec2(u_res.x / max(1.0, u_res.y), 1.0) * 14.0;
+    vec2 flow = vec2(field(q * 0.18, t * 0.18), field(q * 0.18 + vec2(3.9, 2.2), t * 0.18)) * 1.4;
+    float f = field(q + flow, t);
+    float a = max(0.0, 1.0 - abs(f) / 0.12);
+    float b = max(0.0, 1.0 - abs(abs(f) - 0.5) / 0.1);
+    return clamp(a * a * a + 0.55 * b * b * b, 0.0, 1.0);
+  }
   // La parete dello studio, in cima: chiara e neutra, appena piu' scura in basso
   // (valori di luce, non colori: la correzione del composer, ACES, li porta a un bianco
   // caldo). Sopra cade la luce passata nel vetro del logo, come quella di una lastra
-  // colorata sul muro: una pozza corallo morbida, senza contorni, accanto e sotto il
-  // logo, con dentro le increspature dell'acqua che si muovono
+  // colorata sul muro: una pozza corallo morbida, senza contorni, proprio dietro il
+  // logo (appena in basso a destra), con dentro le increspature dell'acqua che si
+  // muovono. Si vede intorno alle lettere e, piegata, attraverso il vetro
   vec3 studioWall(vec2 uv) {
     vec3 wall = mix(vec3(1.05, 1.02, 1.0), vec3(1.4, 1.37, 1.33), smoothstep(0.0, 1.0, uv.y));
     if (u_logo.z <= 0.0) return wall;
     vec2 p = (uv - u_logo.xy) * vec2(u_res.x / max(1.0, u_res.y), 1.0) / max(u_logo.z, 1e-3);
     // coordinate in larghezze del logo, centro del logo in (0, 0), y in su
-    vec2 e = (p - vec2(0.42, -0.24)) / vec2(0.85, 0.42);
+    vec2 e = (p - vec2(0.12, -0.08)) / vec2(0.95, 0.5);
     float pool = exp(-dot(e, e) * 1.2);
     if (pool < 0.003) return wall;
-    float wl = dot(water(uv * 0.92 + 0.04), vec3(0.3, 0.55, 0.15));
-    float ripple = smoothstep(0.6, 0.86, wl);
+    float ripple = lightWaves(uv * 0.92 + 0.04);
     // la luce colorata tinge il muro; le increspature la raccolgono in fili piu' chiari
     // (colori pieni e profondi: sulle tinte chiare ACES desatura, e il corallo diventava pesca)
     vec3 light = mix(vec3(0.95, 0.36, 0.28), vec3(1.35, 0.72, 0.55), ripple);
-    return mix(wall, light, pool * 0.8);
+    return mix(wall, light, pool * 0.72);
   }
   vec3 backdrop(vec2 uv) {
     vec3 pink = hazedBy(water(uv), haze(uv));
