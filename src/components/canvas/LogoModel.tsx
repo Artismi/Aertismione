@@ -93,26 +93,22 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                     {
                         vec3 n = normalize(vNormal);
                         float nv = abs(dot(n, normalize(vViewPosition)));
-                        // Dentro il vetro si vede l'acqua rosa, con le sue linee che si muovono
-                        // (glassComposite usa sempre la piscina, anche sopra la parete neutra):
-                        // il movimento dello shader sta nel logo. Il taglio si accende: la luce
-                        // corre nello spessore ed esce di lato, corallo saturo e luminoso
-                        float side = smoothstep(0.95, 0.15, nv);
-                        // rifrazione: sui fianchi tondi il fondo si piega di piu', come in una lente;
-                        // un po' anche dove il vetro e' piatto: e' spesso, si sente la profondita'
-                        glassShift = -n.xy * (pow(1.0 - nv, 1.4) * 0.095 + 0.006);
-                        // il fronte acceso, rosa ambrato: prima tirava al grigio
-                        // al centro quasi incolore: il colore sta dove il vetro e' spesso
-                        glassTint = mix(vec3(1.03, 0.97, 0.96), vec3(1.15, 0.56, 0.46), side);
-                        // le linee dell'acqua, rosa chiaro su rosa, si vedevano appena: dentro
-                        // il vetro si accendono di piu' e il fondo tra una e l'altra si carica
-                        // onde continue: attraversano tutto il logo (la piscina ha zone spente)
-                        // fili netti e poco accesi: solo il cuore della linea, non il suo alone
+                        // Vetro cavo, soffiato: una pelle sottile intorno al vuoto. Attraverso il
+                        // fronte il fondo passa quasi pulito; il vetro si vede solo dove la pelle
+                        // e' presa di taglio: un orlo stretto e carico sul contorno e, piu' dentro
+                        // e piu' tenue, la linea della parete di dietro. E' l'orlo sottile a dire
+                        // "cavo": la fascia larga e colorata di prima lo faceva sembrare pieno
+                        float side = smoothstep(0.42, 0.06, nv);
+                        float back = exp(-pow((nv - 0.5) / 0.07, 2.0));
+                        // rifrazione: forte solo dove la pelle e' di taglio (il fondo si piega
+                        // lungo i contorni), appena accennata sul fronte
+                        glassShift = -n.xy * (pow(1.0 - nv, 2.2) * 0.11 + 0.003);
+                        // sul fronte il fondo passa com'e' intorno (la pagina lo vede un po' piu' scuro
+                        // della parete calcolata qui), appena velato di rosa
+                        glassTint = mix(vec3(0.93, 0.885, 0.875), vec3(1.05, 0.58, 0.49), side);
+                        glassTint *= 1.0 - 0.1 * back;
+                        // le linee dell'acqua viste attraverso: fili netti e poco accesi
                         glassTint *= 1.0 + 0.1 * smoothstep(0.3, 0.8, lightWaves(gl_FragCoord.xy / u_px + glassShift));
-                        // volume: verso i bordi tondi il vetro e' piu' spesso e il colore si carica
-                        // piano, senza salti; dove la superficie guarda in alto una luce morbida
-                        glassTint *= mix(1.04, 0.78, smoothstep(0.98, 0.3, nv));
-                        glassTint += vec3(0.1, 0.08, 0.08) * smoothstep(0.2, 0.85, n.y) * smoothstep(0.2, 0.7, nv);
                         // riflessi piccoli e nitidi, come in un render: due luci da studio che si
                         // specchiano nella superficie tonda. Sono loro a dire "vetro", non i bordi bianchi
                         vec3 vdir = normalize(-vViewPosition);
@@ -155,11 +151,9 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                 float NdotV = abs(dot(normalize(vNormal), normalize(vViewPosition)));
                 float fresnel = 1.0 - NdotV;
                 ${inWorld
-                    // nel mondo: il fronte e' vetro limpido (~0.05) e piu' ci si allontana dai bordi
-                    // piu' e' nitido; la forma la disegnano i bordi, densi (~0.9)
-                    // di taglio non piu' quasi opaco (era il riflesso bianco a fare il bordo):
-                    // resta trasparente e si vede il fondo, tinto dallo spessore
-                    ? 'diffuseColor.a *= mix(0.05, 0.42, pow(fresnel, 1.5));'
+                    // nel mondo: vetro cavo, il fronte e' limpido (~0.03) e la densita' sale solo
+                    // vicino al taglio, in fretta: un orlo sottile, non una fascia
+                    ? 'diffuseColor.a *= mix(0.03, 0.5, pow(fresnel, 2.6));'
                     // fronte: ~0.92 opaco + riflettente | bordi: ~0.18 sottili
                     : 'diffuseColor.a *= 0.18 + NdotV * NdotV * NdotV * 0.74;'}`
             )

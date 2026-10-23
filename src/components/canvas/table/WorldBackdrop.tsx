@@ -124,8 +124,10 @@ const common = causticsFragment
     ripple = mix(ripple, smoothstep(0.3, 0.8, ripple), crisp);
     // la luce colorata tinge il muro; le increspature la raccolgono in fili piu' chiari
     // (colori pieni e profondi: sulle tinte chiare ACES desatura, e il corallo diventava pesca)
-    vec3 light = mix(mix(vec3(0.95, 0.36, 0.28), vec3(1.0, 0.44, 0.35), crisp), mix(vec3(1.35, 0.72, 0.55), vec3(1.15, 0.62, 0.49), crisp), ripple);
-    return mix(wall, light, pool * 0.72);
+    vec3 light = mix(vec3(0.95, 0.36, 0.28), mix(vec3(1.35, 0.72, 0.55), vec3(1.15, 0.62, 0.49), crisp), ripple);
+    // attraverso il vetro (crisp) la pozza resta solo un riflesso: il vetro e' cavo, deve
+    // vedersi la parete che c'e' intorno, appena tinta; una pozza piena lo faceva sembrare pieno
+    return mix(wall, light, pool * 0.72 * (1.0 - 0.85 * crisp));
   }
   vec3 studioWall(vec2 uv) { return studioWall(uv, 0.0); }
   vec3 backdrop(vec2 uv) {
@@ -315,9 +317,9 @@ export const glassPars = common + /* glsl */`
   // il fondo visto attraverso il vetro in un punto: in cima soprattutto la parete
   vec3 glassSeen(vec2 uv, vec2 hz) {
     vec3 s = hazedBy(water(uv), hz);
-    // quasi solo la parete vera (con la luce corallo): dentro il vetro deve vedersi quello
-    // che c'e' intorno, piegato. Se dentro e' diverso l'occhio lo legge come materiale pieno
-    if (u_neutral > 0.001) s = mix(s, studioWall(uv, 1.0), u_neutral * 0.95);
+    // la parete vera (con la luce corallo), come il fondale: dentro il vetro deve vedersi
+    // quello che c'e' intorno, piegato. Se dentro e' diverso l'occhio lo legge come materiale pieno
+    if (u_neutral > 0.001) s = mix(s, studioWall(uv, 1.0), u_neutral);
     return s;
   }
 ` + pvPars
