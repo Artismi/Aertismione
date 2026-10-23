@@ -97,13 +97,18 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                         // il movimento dello shader sta nel logo. Il taglio si accende: la luce
                         // corre nello spessore ed esce di lato, corallo saturo e luminoso
                         float side = smoothstep(0.95, 0.15, nv);
-                        glassShift = -n.xy * (1.0 - nv) * 0.035;
+                        // rifrazione: sui fianchi tondi il fondo si piega di piu', come in una lente
+                        glassShift = -n.xy * pow(1.0 - nv, 1.4) * 0.075;
                         // il fronte acceso, rosa ambrato: prima tirava al grigio
                         glassTint = mix(vec3(1.06, 0.93, 0.92), vec3(1.15, 0.56, 0.46), side);
                         // le linee dell'acqua, rosa chiaro su rosa, si vedevano appena: dentro
                         // il vetro si accendono di piu' e il fondo tra una e l'altra si carica
                         // onde continue: attraversano tutto il logo (la piscina ha zone spente)
-                        glassTint *= 1.0 + 0.4 * lightWaves(gl_FragCoord.xy / u_px + glassShift);
+                        glassTint *= 1.0 + 0.24 * lightWaves(gl_FragCoord.xy / u_px + glassShift);
+                        // volume: verso i bordi tondi il vetro e' piu' spesso e il colore si carica
+                        // piano, senza salti; dove la superficie guarda in alto una luce morbida
+                        glassTint *= mix(1.04, 0.84, smoothstep(0.98, 0.35, nv));
+                        glassTint += vec3(0.1, 0.08, 0.08) * smoothstep(0.2, 0.85, n.y) * smoothstep(0.2, 0.7, nv);
                         // i riflessi dello studio sui fianchi bruciavano in bianco: si smorzano
                         gl_FragColor.rgb /= 1.0 + gl_FragColor.rgb * side * 4.0;
                     }
