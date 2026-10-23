@@ -37,18 +37,16 @@ export function LogoModel({ inWorld = false, ...props }: any) {
         const mat = new THREE.MeshPhysicalMaterial({
             // vetro chiaro, fuso con il rosa che ha dietro: quello di prima del vetro ambra
             // (piu' bello, e il logo si legge meglio)
-            // nel mondo il vetro e' rosa ambrato, caldo: bianco-azzurro si perdeva nel fondale
-            color: new THREE.Color(inWorld ? '#f2c2bc' : '#eef5ff'),
-            emissive: new THREE.Color(inWorld ? '#e8a090' : '#c8e8ff'),
+            // vetro chiaro, fuso con il rosa che ha dietro
+            color: new THREE.Color('#eef5ff'),
+            emissive: new THREE.Color('#c8e8ff'),
             // nel mondo poco bagliore proprio: il vetro e' limpido, non latteo
-            emissiveIntensity: inWorld ? 0.1 : 0.32,
+            emissiveIntensity: inWorld ? 0.08 : 0.32,
             roughness: 0.0,
             metalness: 0.0,
-            // nel mondo meno lucidatura: i fianchi di taglio riflettevano lo studio, bianchi
-            clearcoat: inWorld ? 0.45 : 1.0,
+            clearcoat: 1.0,
             clearcoatRoughness: 0.0,
-            // nel mondo riflessi piu' bassi: il bianco dello studio copriva il colore
-            envMapIntensity: inWorld ? 2.2 : 5.5,
+            envMapIntensity: 5.5,
             // fuori dal mondo, un velo di arcobaleno dove la luce lo prende di sbieco
             iridescence: inWorld ? 0 : 0.45,
             iridescenceIOR: 1.35,
@@ -95,23 +93,13 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                         vec3 n = normalize(vNormal);
                         float nv = abs(dot(n, normalize(vViewPosition)));
                         glassShift = -n.xy * (1.0 - nv) * 0.035;
-                        // per staccare dal rosa senza linee: dove il vetro e' piu' spesso (i
-                        // fianchi che girano via) il fondo visto attraverso si fa lilla, morbido.
-                        // Niente bordo bianco, niente contorno scuro
-                        // Al centro, dove si guarda il vetro di fronte, il fondo si fa rosa ambrato,
-                        // carico; il lilla resta ai fianchi
-                        glassTint = mix(vec3(0.97, 0.8, 0.76), vec3(0.86, 0.56, 0.66), smoothstep(0.9, 0.1, nv));
-                        // i fianchi di taglio riflettono lo studio: senza questo erano bordi bianchi.
-                        // Si fanno lilla scuro
+                        // Come il vetro colorato vero: piu' e' spesso, piu' il colore si carica.
+                        // Di fronte e' limpido; di taglio il fondo si vede attraverso, tinto di
+                        // un rosa malva profondo: il bordo si legge e resta vetro, trasparente
                         float side = smoothstep(0.95, 0.15, nv);
-                        // i riflessi sui fianchi sono molto piu' forti del bianco: prima si
-                        // smorzano, poi si colorano (altrimenti anche mescolati restano chiari)
-                        vec3 lit = gl_FragColor.rgb / (1.0 + gl_FragColor.rgb * side * 3.0);
-                        // un malva a meta' fra il rosa ambrato del centro e il lilla: lo stesso vetro, piu' spesso
-                        gl_FragColor.rgb = mix(lit, vec3(0.78, 0.42, 0.5), side * 0.75);
-                        // e di taglio il vetro e' denso: prima ci si vedeva attraverso il fondo
-                        // chiaro, ed era quello a fare il bordo pallido
-                        gl_FragColor.a = mix(gl_FragColor.a, 1.0, side * 0.85);
+                        glassTint = pow(vec3(0.86, 0.6, 0.74), vec3(3.2 * side));
+                        // i riflessi dello studio sui fianchi bruciavano in bianco: si smorzano
+                        gl_FragColor.rgb /= 1.0 + gl_FragColor.rgb * side * 4.0;
                     }
                 `
                 shader.fragmentShader = glassPars + shader.fragmentShader.replace(
@@ -132,7 +120,9 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                 ${inWorld
                     // nel mondo: il fronte e' vetro limpido (~0.08) e piu' ci si allontana dai bordi
                     // piu' e' nitido; la forma la disegnano i bordi, densi (~0.9)
-                    ? 'diffuseColor.a *= mix(0.16, 0.97, pow(fresnel, 1.3));'
+                    // di taglio non piu' quasi opaco (era il riflesso bianco a fare il bordo):
+                    // resta trasparente e si vede il fondo, tinto dallo spessore
+                    ? 'diffuseColor.a *= mix(0.08, 0.5, pow(fresnel, 1.5));'
                     // fronte: ~0.92 opaco + riflettente | bordi: ~0.18 sottili
                     : 'diffuseColor.a *= 0.18 + NdotV * NdotV * NdotV * 0.74;'}`
             )
@@ -313,7 +303,7 @@ export function LogoModel({ inWorld = false, ...props }: any) {
             {inWorld && <pointLight position={[0, 1.7, -0.6]} intensity={14} color="#fff0e0" />}
 
             {/* Luce chiave: dall'alto-fronte, definisce i piani superiori */}
-            <pointLight position={[0, 4, 3]} intensity={inWorld ? 11 : 18} color="#ffffff" />
+            <pointLight position={[0, 4, 3]} intensity={18} color="#ffffff" />
             {/* Rim light: da dietro, illumina i bordi — leggibilità del contorno */}
             <pointLight position={[0, 0, -4]} intensity={12} color="#e8f4ff" />
             {/* Fill: lato sinistro, blush caldo per contrasto cromatico */}
