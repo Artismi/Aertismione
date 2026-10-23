@@ -94,4 +94,4 @@ Defined in `src/app/globals.css`:
 
 ## Deployment
 
-Vercel. Security headers and asset cache config are in `vercel.json`.
+Vercel or Netlify (`netlify.toml`). Security headers and asset cache config are in `next.config.mjs` (`headers()`); Porto Vecchio's address is in `src/config/porto-vecchio.mjs` (override with `NEXT_PUBLIC_PORTO_VECCHIO_URL`).
