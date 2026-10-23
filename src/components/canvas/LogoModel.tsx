@@ -100,14 +100,15 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                         // Niente bordo bianco, niente contorno scuro
                         // Al centro, dove si guarda il vetro di fronte, il fondo si fa rosa ambrato,
                         // carico; il lilla resta ai fianchi
-                        glassTint = mix(vec3(0.97, 0.8, 0.76), vec3(0.52, 0.4, 0.74), smoothstep(0.85, 0.15, nv));
+                        glassTint = mix(vec3(0.97, 0.8, 0.76), vec3(0.86, 0.56, 0.66), smoothstep(0.9, 0.1, nv));
                         // i fianchi di taglio riflettono lo studio: senza questo erano bordi bianchi.
                         // Si fanno lilla scuro
-                        float side = smoothstep(0.9, 0.2, nv);
+                        float side = smoothstep(0.95, 0.15, nv);
                         // i riflessi sui fianchi sono molto piu' forti del bianco: prima si
                         // smorzano, poi si colorano (altrimenti anche mescolati restano chiari)
                         vec3 lit = gl_FragColor.rgb / (1.0 + gl_FragColor.rgb * side * 3.0);
-                        gl_FragColor.rgb = mix(lit, vec3(0.36, 0.22, 0.52), side * 0.85);
+                        // un malva a meta' fra il rosa ambrato del centro e il lilla: lo stesso vetro, piu' spesso
+                        gl_FragColor.rgb = mix(lit, vec3(0.78, 0.42, 0.5), side * 0.75);
                         // e di taglio il vetro e' denso: prima ci si vedeva attraverso il fondo
                         // chiaro, ed era quello a fare il bordo pallido
                         gl_FragColor.a = mix(gl_FragColor.a, 1.0, side * 0.85);
