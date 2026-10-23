@@ -72,7 +72,8 @@ export function WaterCanvas({ mobile }: { mobile: boolean }) {
     let raf = 0, last = 0, dirty = true, lastScroll = -1
     const draw = (now: number) => {
       raf = requestAnimationFrame(draw)
-      if (document.hidden || useStore.getState().gameOpen) return
+      const st = useStore.getState()
+      if (document.hidden || st.gameOpen || st.away) return
       const y = window.scrollY
       // si muove a 30 fotogrammi al secondo, e subito quando la pagina scorre
       if (!dirty && y === lastScroll && now - last < FRAME_MS) return

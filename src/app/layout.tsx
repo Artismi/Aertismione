@@ -66,8 +66,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
+  modal,
 }: {
   children: React.ReactNode
+  /** la pagina di un lavoro aperta sopra la home (app/@modal) */
+  modal: React.ReactNode
 }) {
   return (
     <html
@@ -90,6 +93,7 @@ export default function RootLayout({
         <CustomCursor />
         <Ambience />
         {children}
+        {modal}
       </body>
     </html>
   )

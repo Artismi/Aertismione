@@ -47,7 +47,8 @@ function ScrollSync() {
       if (scrollRaf !== null) return
       scrollRaf = requestAnimationFrame(() => {
         scrollRaf = null
-        setScrollY(window.scrollY)
+        // sopra la home c'e' la pagina di un lavoro: il suo scroll non muove il mondo
+        if (!useStore.getState().away) setScrollY(window.scrollY)
       })
     }
 

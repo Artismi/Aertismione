@@ -33,6 +33,7 @@ import { WorldBackdrop, GlassSync } from './WorldBackdrop'
 import { worldHold, worldNear } from './shared'
 import { WaterCanvas } from './WaterCanvas'
 import { LogoModel } from '../LogoModel'
+import { useStore } from '@/stores/useStore'
 
 /**
  * Come gl.compileAsync, ma non si blocca. Quello di three.js legge il programma di
@@ -598,11 +599,15 @@ export default function Table3D(props: Props) {
     return () => { alive = false }
   }, [near])
 
+  // con la pagina di un lavoro aperta sopra la home il mondo resta pronto ma non si
+  // vede e non disegna: al ritorno e' gia' li', senza ricaricarsi
+  const away = useStore((s) => s.away)
+
   return createPortal(
-    <div className={styles.world} aria-hidden="true">
+    <div className={styles.world} aria-hidden="true" style={away ? { visibility: 'hidden' } : undefined}>
       <WaterCanvas mobile={props.mobile} />
       <Canvas
-        frameloop="demand"
+        frameloop={away ? 'never' : 'demand'}
         shadows="soft"
         // dal computer almeno una volta e mezza i pixel dello schermo, fino al doppio: il vetro
         // del logo e i bordi del banco nitidi anche sugli schermi normali (sovracampionato) e
