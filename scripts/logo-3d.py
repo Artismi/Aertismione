@@ -71,7 +71,7 @@ def sagoma():
     vuoto = fuori | buchi
     pieno = nd.distance_transform_edt(~vuoto) > TRATTO / 2
     pieno = punta_della_i(pieno)
-    pieno = apri_fessure(pieno)
+    pieno = apri_fessure(pieno, inchiostro)
     return nd.gaussian_filter(pieno.astype(float), S * 0.8)
 
 
@@ -85,22 +85,26 @@ PUNTA = [(895, 261), (906, 256), (917, 250), (927, 244), (935, 239),
          (928, 249), (918, 261), (908, 273), (900, 282), (895, 288)]
 
 
-# Due buchi del disegno tracciati sottili a mano: nel 3D si chiudevano e le lettere si
-# impastavano. Si riaprono con una forma pulita e affusolata, stretta quanto basta a
-# leggersi: ai lati restano gli spessori delle lettere. Pixel del disegno (x, y)
-FESSURE = [
-    # la coda della fessura nella A: scende fino in fondo come nel tratto
-    [(238, 279), (252, 278), (261, 303), (269, 331), (275, 357), (271, 370), (259, 345), (250, 320), (242, 300)],
-    # il buco stretto nella gamba della R: una fessura sola, dall'alto fino in fondo
-    [(453, 342), (458, 360), (464, 390), (467, 425), (466, 447), (458, 450), (449, 432), (443, 412), (447, 385), (450, 360)],
-]
+# Due buchi del disegno tracciati sottili a mano (la coda della fessura della A, il
+# buco nella gamba della R): nel 3D si chiudevano e le lettere si impastavano. Il
+# taglio nasce dal tratto stesso: la forma chiusa dalla linea (interno piu' linea),
+# appena ristretta. Segue le curve del disegno, si assottiglia dove le due linee si
+# avvicinano e ai lati restano gli spessori delle lettere. Per ognuno: un riquadro
+# del disegno dove c'e' il suo tratto (pixel del disegno, x0 y0 x1 y1)
+FESSURE = [(225, 280, 255, 330), (443, 378, 470, 440)]
+STRINGI = 1.1   # di quanto si stringe la forma del tratto, pixel del disegno
 
 
-def apri_fessure(pieno):
-    via = Image.new('1', (pieno.shape[1], pieno.shape[0]), 0)
-    for f in FESSURE:
-        ImageDraw.Draw(via).polygon([(x * S, y * S) for x, y in f], fill=1)
-    return pieno & ~np.array(via)
+def apri_fessure(pieno, inchiostro):
+    # la linea del buco da sola (e' un tratto staccato dagli altri), poi riempita
+    lab, _ = nd.label(inchiostro)
+    via = np.zeros_like(pieno)
+    for x0, y0, x1, y1 in FESSURE:
+        dentro = lab[y0 * S:y1 * S, x0 * S:x1 * S]
+        k = np.bincount(dentro[dentro > 0]).argmax()
+        forma = nd.binary_fill_holes(lab == k)
+        via |= nd.distance_transform_edt(forma) > STRINGI * S
+    return pieno & ~via
 
 
 def punta_della_i(pieno):
