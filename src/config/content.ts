@@ -11,6 +11,8 @@
  * ============================================================
  */
 
+import { PORTO_VECCHIO } from './porto-vecchio.mjs'
+
 /* ─── BRAND ──────────────────────────────────────────────────────────────── */
 
 export const BRAND = {
@@ -148,7 +150,7 @@ export const PROGETTI = {
     id:    'porto-vecchio',
     title: 'Porto Vecchio',
     hint:  'Videogioco · aprila',
-    url:   'https://porto-vecchio.vercel.app/v7/',
+    url:   `${PORTO_VECCHIO}/v7/`,      // il suo sito (src/config/porto-vecchio.mjs)
     path:  '/gioco/index.html',   // lo stesso gioco, dall'indirizzo del sito
     page:  '/porto-vecchio',      // la pagina del sito con il gioco
     back:  'Torna al tavolo',
