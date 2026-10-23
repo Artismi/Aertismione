@@ -70,7 +70,28 @@ def sagoma():
             buchi |= r
     vuoto = fuori | buchi
     pieno = nd.distance_transform_edt(~vuoto) > TRATTO / 2
+    pieno = punta_della_i(pieno)
     return nd.gaussian_filter(pieno.astype(float), S * 0.8)
+
+
+# Il braccio della i finale nel disegno finisce spezzato: due punte con una tacca in
+# mezzo, sembrava mozzato. Dove comincia la punta (da x = 895 del disegno) si toglie
+# quel pezzo e al suo posto il braccio prosegue la curva e si assottiglia in una punta
+# sola, come le altre punte del tag. Coordinate in pixel del disegno originale (x, y)
+PUNTA_DA_X = 895
+# (entro l'ingombro del disegno: oltre, tutto il logo si rimpicciolirebbe per restare largo uguale)
+PUNTA = [(895, 261), (906, 256), (917, 250), (927, 244), (935, 239),
+         (928, 249), (918, 261), (908, 273), (900, 282), (895, 288)]
+
+
+def punta_della_i(pieno):
+    zona = Image.new('1', (pieno.shape[1], pieno.shape[0]), 0)
+    ImageDraw.Draw(zona).rectangle([PUNTA_DA_X * S, 225 * S, 990 * S, 300 * S], fill=1)
+    via = np.array(zona)
+    nuova = Image.new('1', (pieno.shape[1], pieno.shape[0]), 0)
+    ImageDraw.Draw(nuova).polygon([(x * S, y * S) for x, y in PUNTA], fill=1)
+    # la nuova punta si attacca al braccio rimasto: sovrapposta di un tratto
+    return (pieno & ~via) | np.array(nuova)
 
 
 def liscia(c, passo=1.0 * S, sigma=3.5 * S):
