@@ -97,6 +97,7 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                     vec2 glassShift = vec2(0.0);
                     vec3 glassTint = vec3(1.0);
                     float glassGlint = 0.0;
+                    vec3 glassSheen = vec3(0.0);
                     {
                         vec3 n = normalize(vNormal);
                         float nv = abs(dot(n, normalize(vViewPosition)));
@@ -114,10 +115,10 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                         // della parete calcolata qui), appena velato di rosa
                         glassTint = mix(vec3(0.93, 0.885, 0.875), vec3(1.05, 0.58, 0.49), side);
                         glassTint *= 1.0 - 0.1 * back;
-                        // il ripieno, come in un orsetto gommoso: un cuore rosa violetto che sta
-                        // DENTRO il vetro, sotto uno strato limpido. La sua forma e' la mappa di
+                        // la profondita': una sfumatura rosa che sta DENTRO il vetro, sotto uno
+                        // strato limpido. La sua forma e' la mappa di
                         // logo-ripieno.png (quanto il punto e' dentro il logo), letta piu' in
-                        // profondita' lungo lo sguardo: girando il logo il cuore scorre sotto la
+                        // profondita' lungo lo sguardo: girando il logo la sfumatura scorre sotto la
                         // superficie (parallasse) e tra i due si vede il trasparente
                         vec3 dp1 = dFdx(-vViewPosition), dp2 = dFdy(-vViewPosition);
                         vec2 du1 = dFdx(vRip), du2 = dFdy(vRip);
@@ -129,20 +130,17 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                         vec3 into = normalize(vViewPosition);         // verso la camera
                         vec3 o = -into / max(dot(into, n), 0.25);     // dentro il vetro, di 1 in profondita'
                         vec2 o2 = vec2(dot(o, e1), dot(o, e2));
-                        // tre letture a profondita' crescenti: la prima (piu' in alto) da' l'alone,
-                        // l'ultima (la piu' profonda, che scorre di piu') il cuore scuro
-                        float rip[3];
+                        // tre letture a profondita' crescenti, mediate: una sfumatura sola, morbida
+                        float rip = 0.0;
                         for (int i = 0; i < 3; i++) {
                             float dz = 0.03 + 0.02 * float(i);        // profondita', in larghezze del logo
                             vec2 duv = J * o2 * (dz / max(perView, 1e-6)) / asp;
-                            rip[i] = texture2D(u_ripieno, vRip + duv).r;
+                            rip += texture2D(u_ripieno, vRip + duv).r;
                         }
-                        float clear = 1.0 - side;
-                        float core = smoothstep(0.25, 0.75, (rip[0] + rip[1] + rip[2]) / 3.0) * clear;
-                        // verso il centro si scurisce, da rosa violetto a un violetto bordo'
-                        float deep = smoothstep(0.32, 0.9, (rip[1] + 2.0 * rip[2]) / 3.0) * clear;
-                        glassTint = mix(glassTint, vec3(0.95, 0.68, 0.9), 0.6 * core);
-                        glassTint = mix(glassTint, vec3(0.52, 0.22, 0.4), 0.55 * deep);
+                        // lieve, rosa magenta, piu' carica verso il centro: non si vede come
+                        // colore, fa sentire quanto il vetro e' profondo
+                        float core = smoothstep(0.0, 0.85, rip / 3.0) * (1.0 - 0.6 * side);
+                        glassTint = mix(glassTint, vec3(0.96, 0.7, 0.86), 0.32 * core);
                         // le linee dell'acqua viste attraverso: fili netti e poco accesi
                         glassTint *= 1.0 + 0.1 * smoothstep(0.3, 0.8, lightWaves(gl_FragCoord.xy / u_px + glassShift));
                         // riflessi piccoli e nitidi, come in un render: due luci da studio che si
@@ -151,17 +149,25 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                         vec3 rf = reflect(-vdir, n);
                         glassGlint = pow(max(dot(rf, normalize(vec3(-0.45, 0.8, 0.4))), 0.0), 160.0) * 0.9
                                    + pow(max(dot(rf, normalize(vec3(0.7, 0.35, 0.6))), 0.0), 420.0) * 0.55;
-                        // il fronte e' bagnato solo a chiazze: li' i riflessi sono pieni e c'e' il
-                        // velo lucido di una finestra; dove e' asciutto la luce si spegne, cosi'
-                        // la superficie non brilla tutta uguale
+                        // il fronte e' plexiglass tagliato a laser e lucidato: riflessi netti e
+                        // colorati che stanno sopra (glassSheen), mentre quello che si vede
+                        // attraverso (l'interno, il retro) e' satinato, morbido (glassComposite).
+                        // Chiazze appena piu' vive, perche' la lucidatura non e' mai uniforme
                         float wet = smoothstep(0.02, 0.4, field(vObjPos.xy / 55.0, 0.0)
                                   + 0.35 * field(vObjPos.xy / 17.0 + 3.1, 0.0));
                         float front = smoothstep(0.55, 0.92, nv);
-                        glassGlint *= mix(0.3, 1.25, wet);
-                        // la finestra dello studio specchiata nel bagnato: una lama netta e un alone
+                        glassGlint *= mix(0.75, 1.15, wet);
+                        // il softbox dello studio specchiato nel fronte: una lama netta, fredda,
+                        // con l'orlo appena iridato, e un alone caldo intorno
                         float win = dot(rf, normalize(vec3(-0.25, 0.35, 0.9)));
-                        glassGlint += (smoothstep(0.9, 0.95, win) * 0.32 + pow(max(win, 0.0), 40.0) * 0.16) * wet * front;
-                        gl_FragColor.rgb *= mix(0.86, 1.0, max(wet, 1.0 - front));
+                        float lama = smoothstep(0.9, 0.93, win) * (1.0 - smoothstep(0.975, 0.99, win));
+                        glassSheen = (vec3(0.82, 0.9, 1.0) * lama * 0.34
+                                   + vec3(1.0, 0.8, 0.85) * pow(max(win, 0.0), 30.0) * 0.12) * front;
+                        // l'orlo tagliato e lucidato: dove la superficie gira, un filo di luce che
+                        // cambia colore come il taglio del plexi (dispersione)
+                        float taglio = smoothstep(0.42, 0.24, nv) * smoothstep(0.06, 0.2, nv);
+                        vec3 iride = 0.5 + 0.5 * cos(6.2832 * (n.x * 0.6 + n.y * 0.4 + vec3(0.0, 0.33, 0.67)));
+                        glassSheen += mix(vec3(1.0), iride, 0.55) * taglio * 0.16;
                         // i riflessi dello studio sui fianchi bruciavano in bianco: si smorzano
                         gl_FragColor.rgb /= 1.0 + gl_FragColor.rgb * side * 4.0;
                     }

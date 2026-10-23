@@ -37,7 +37,7 @@ SPESSORE = Z1 - Z0
 PASSO = 1.0          # distanza tra i punti del bordo, unita' del file
 GRIGLIA = 0.3        # lato delle celle della membrana
 BANDA, ANELLI = 8.0, 24   # fascia vicino al bordo e quanti anelli la riempiono
-SATURA = 3.0         # quanto presto il bordo tondo arriva allo spessore pieno
+SATURA = 1.3         # quanto presto il bordo tondo arriva allo spessore pieno: basso, il vetro si gonfia piano fino al centro (smusso morbido, forma organica)
 LETTURA = 1.5        # sotto questa distanza dal bordo la membrana si legge piu' dentro
 NODO = {'name': 'aRTISMI 3D', 'rotation': [0.00022664666175842285, 0, 0, 1],
         'scale': [-0.1392299383878708] * 3,

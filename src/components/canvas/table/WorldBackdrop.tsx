@@ -326,7 +326,8 @@ export const glassPars = common + /* glsl */`
 
 /** Va in fondo al fragment del vetro (dopo dithering_fragment). Chi lo usa dichiara
  *  prima vec2 glassShift (di quanto si sposta il fondale visto attraverso: rifrazione)
- *  e vec3 glassTint (come il vetro colorato filtra il fondale), float glassGlint (riflessi nitidi) */
+ *  e vec3 glassTint (come il vetro colorato filtra il fondale), float glassGlint (riflessi nitidi)
+ *  e vec3 glassSheen (i riflessi colorati del fronte lucidato) */
 export const glassComposite = /* glsl */`
   {
     // come sulla tela di una volta: fusione sui colori gia' pronti per lo schermo (sRGB)
@@ -338,13 +339,16 @@ export const glassComposite = /* glsl */`
     // Dove la rifrazione e' forte (i fianchi tondi) i tre colori si piegano di poco
     // diverso: la dispersione di un prisma, l'orlo iridato del vetro vero
     vec2 baseUv = gl_FragCoord.xy / u_px;
-    vec3 seen;
-    if (length(glassShift) > 0.004) {
-      vec3 sr = glassSeen(baseUv + glassShift * 1.12, hz);
-      vec3 sg = glassSeen(baseUv + glassShift, hz);
-      vec3 sb = glassSeen(baseUv + glassShift * 0.88, hz);
-      seen = vec3(sr.r, sg.g, sb.b);
-    } else seen = glassSeen(baseUv + glassShift, hz);
+    // il retro e' satinato: quello che si vede attraverso arriva morbido, quattro letture
+    // intorno al punto (in larghezze dello schermo, ~0.4%), con i colori appena separati
+    // dalla rifrazione (la dispersione di un prisma) dove il vetro piega di piu'
+    vec2 fr = vec2(0.004, 0.004 * u_px.x / max(u_px.y, 1.0));
+    vec3 s0 = glassSeen(baseUv + glassShift * 1.12 + fr * vec2(-0.7, -0.3), hz);
+    vec3 s1 = glassSeen(baseUv + glassShift * 1.04 + fr * vec2(0.3, -0.7), hz);
+    vec3 s2 = glassSeen(baseUv + glassShift * 0.96 + fr * vec2(0.7, 0.3), hz);
+    vec3 s3 = glassSeen(baseUv + glassShift * 0.88 + fr * vec2(-0.3, 0.7), hz);
+    vec3 seen = vec3(s0.r * 0.6 + s1.r * 0.4, (s1.g + s2.g) * 0.5, s2.b * 0.4 + s3.b * 0.6);
+    seen = mix((s0 + s1 + s2 + s3) * 0.25, seen, clamp(length(glassShift) * 60.0, 0.0, 1.0));
     vec3 bgc = pvToSrgb(seen) * glassTint;
     vec3 g = pvToSrgb(pvAces(gl_FragColor.rgb));
     // sulla tela di una volta si vedevano anche i fianchi delle lettere dietro al fronte:
@@ -355,6 +359,8 @@ export const glassComposite = /* glsl */`
     c = 1.0 - (1.0 - c) * (1.0 - hz.x * 0.28);
     // i riflessi nitidi sopra a tutto
     c = 1.0 - (1.0 - c) * (1.0 - clamp(glassGlint, 0.0, 1.0));
+    // e la lucidatura del fronte (glassSheen): riflessi colorati, sopra al satinato di dietro
+    c = 1.0 - (1.0 - c) * (1.0 - clamp(glassSheen, 0.0, 1.0));
     gl_FragColor = vec4(pvAcesInv(srgbToLinearBg(c)), 1.0);
   }
 `
