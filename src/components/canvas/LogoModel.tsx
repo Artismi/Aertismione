@@ -92,12 +92,18 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                     {
                         vec3 n = normalize(vNormal);
                         float nv = abs(dot(n, normalize(vViewPosition)));
-                        glassShift = -n.xy * (1.0 - nv) * 0.035;
-                        // Come il vetro colorato vero: piu' e' spesso, piu' il colore si carica.
-                        // Di fronte e' limpido; di taglio il fondo si vede attraverso, tinto di
-                        // un rosa malva profondo: il bordo si legge e resta vetro, trasparente
+                        // Dentro il vetro si vede l'acqua rosa, con le sue linee che si muovono
+                        // (glassComposite usa sempre la piscina, anche sopra la parete neutra):
+                        // il movimento dello shader sta nel logo. Il taglio si accende: la luce
+                        // corre nello spessore ed esce di lato, corallo saturo e luminoso
                         float side = smoothstep(0.95, 0.15, nv);
-                        glassTint = pow(vec3(0.86, 0.6, 0.74), vec3(3.2 * side));
+                        glassShift = -n.xy * (1.0 - nv) * 0.035;
+                        // il fronte acceso, rosa ambrato: prima tirava al grigio
+                        glassTint = mix(vec3(1.1, 0.88, 0.86), vec3(1.15, 0.56, 0.46), side);
+                        // le linee dell'acqua, rosa chiaro su rosa, si vedevano appena: dentro
+                        // il vetro si accendono di piu' e il fondo tra una e l'altra si carica
+                        float wl = dot(water(gl_FragCoord.xy / u_px + glassShift), vec3(0.3, 0.55, 0.15));
+                        glassTint *= mix(1.0, 1.3, smoothstep(0.62, 0.84, wl));
                         // i riflessi dello studio sui fianchi bruciavano in bianco: si smorzano
                         gl_FragColor.rgb /= 1.0 + gl_FragColor.rgb * side * 4.0;
                     }
@@ -130,6 +136,27 @@ export function LogoModel({ inWorld = false, ...props }: any) {
 
         return mat
     }, [inWorld])
+
+    // l'ombra colorata: il colore finale (sRGB) si calcola qui e si toglie la correzione
+    // del composer (ACES), che la rimette identica, come per il vetro
+    const castMat = useMemo(() => new THREE.ShaderMaterial({
+        uniforms: glassUniforms,
+        transparent: true,
+        // scrive la profondita': senza, il fondale (WorldBackdrop) la tratterebbe come vuoto
+        depthWrite: true,
+        vertexShader: /* glsl */`void main() { gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+        fragmentShader: glassPars + /* glsl */`
+            void main() {
+                vec2 uv = gl_FragCoord.xy / u_px;
+                float wl = dot(water(uv), vec3(0.3, 0.55, 0.15));
+                float lines = smoothstep(0.62, 0.86, wl);
+                // corallo, piu' chiaro e acceso dove le linee raccolgono la luce
+                vec3 c = mix(vec3(0.95, 0.56, 0.5), vec3(1.0, 0.8, 0.7), lines);
+                gl_FragColor = vec4(pvAcesInv(srgbToLinearBg(c)), mix(0.38, 0.62, lines));
+            }
+        `,
+    }), [])
+    useEffect(() => () => castMat.dispose(), [castMat])
 
     useEffect(() => {
         glassMaterial.envMap = studio
@@ -197,11 +224,30 @@ export function LogoModel({ inWorld = false, ...props }: any) {
             if (inWorld) marble.logoBall = ball
         }
 
+        // L'ombra colorata sulla parete, come quella delle lastre di vetro in studio: una
+        // copia piatta del logo dietro al vetro, spostata come se la luce venisse dall'alto
+        // a sinistra. E' la luce passata nel vetro: corallo, con dentro le stesse linee
+        // dell'acqua che si muovono. Il gruppo e' girato di 180°: +z e' lontano dalla
+        // camera e -x e' a destra sullo schermo (unita' del modello: 1 del mondo = 1/0,06)
+        let shade: THREE.Group | null = null
+        if (inWorld) {
+            shade = new THREE.Group()
+            shade.name = 'ombra'
+            scene.children.slice().forEach((c) => {
+                const k = c.clone(true)
+                k.traverse((o) => { if ((o as THREE.Mesh).isMesh) { (o as THREE.Mesh).material = castMat; o.renderOrder = 0 } })
+                shade!.add(k)
+            })
+            shade.position.set(-6.5, -6.5, 22)
+            shade.scale.set(1.08, 1.08, 0.02)
+            scene.add(shade)
+        }
+
         // prima si raccolgono le mesh: le linee aggiunte sono a loro volta mesh e il
         // traverse le visiterebbe
         const meshes: THREE.Mesh[] = []
         scene.traverse((child: any) => {
-            if ((child as THREE.Mesh).isMesh && child !== dot) meshes.push(child)
+            if ((child as THREE.Mesh).isMesh && child !== dot && child.material !== castMat) meshes.push(child)
         })
         meshes.forEach((mesh) => {
             mesh.material = glassMaterial
@@ -222,12 +268,13 @@ export function LogoModel({ inWorld = false, ...props }: any) {
 
         return () => {
             if (ball) { ball.removeFromParent(); ball.geometry.dispose() }
+            shade?.removeFromParent()
             if (marble.logoBall === ball) marble.logoBall = null
             if (dot) dot.visible = true
             added.forEach(l => l.parent?.remove(l))
             edgeMatRef.current = null
         }
-    }, [scene, glassMaterial, inWorld])
+    }, [scene, glassMaterial, inWorld, castMat])
 
     useFrame(({ camera }, delta) => {
         if (rotatingRef.current) {

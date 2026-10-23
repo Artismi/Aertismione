@@ -37,6 +37,8 @@ const common = causticsFragment
   }
   uniform float u_scroll;
   uniform vec2 u_scale;
+  // 1 in cima alla pagina: la parete chiara e neutra dello studio; 0 piu' giu': la piscina rosa
+  uniform float u_neutral;
   // il logo sullo schermo: centro (uv), larghezza (in altezze di schermo), quanta luce
   uniform vec4 u_logo;
 
@@ -90,8 +92,16 @@ const common = causticsFragment
   vec3 water(vec2 uv) {
     return srgbToLinearBg(causticsColor(0.5 + (uv - 0.5) * u_scale + vec2(0.0, u_scroll)).rgb);
   }
+  // La parete dello studio, in cima: chiara e neutra, appena piu' scura in basso
+  // (valori di luce, non colori: la correzione del composer, ACES, li porta a un bianco
+  // caldo). L'ombra colorata del logo ci cade sopra dal 3D (LogoModel)
+  vec3 studioWall(vec2 uv) {
+    return mix(vec3(1.05, 1.02, 1.0), vec3(1.4, 1.37, 1.33), smoothstep(0.0, 1.0, uv.y));
+  }
   vec3 backdrop(vec2 uv) {
-    return hazedBy(water(uv), haze(uv));
+    vec3 pink = hazedBy(water(uv), haze(uv));
+    if (u_neutral <= 0.001) return pink;
+    return mix(pink, studioWall(uv), u_neutral);
   }
 `
 
@@ -179,6 +189,12 @@ export const water = {
   u_scroll: new THREE.Uniform(0),
   u_scale: new THREE.Uniform(new THREE.Vector2(1, 1)),
   u_logo: new THREE.Uniform(new THREE.Vector4(0.5, 0.5, 0.3, 0)),   // lo aggiorna LogoModel
+  u_neutral: new THREE.Uniform(1),   // la parete neutra in cima: lo scrive WaterCanvas
+}
+
+/** Quanto si vede la parete neutra dello studio: tutta in cima, sfuma nella piscina rosa scendendo verso il banco */
+export function neutralAt(scrollY: number, h: number) {
+  return 1 - THREE.MathUtils.smoothstep(scrollY / Math.max(1, h), 0.55, 1.25)
 }
 
 /** La scala della scena del logo di una volta: piano 16 × 10 a 7,5 di distanza, fov 35 (piu' largo sotto il 16:9) */
