@@ -109,23 +109,25 @@ const LOGO_AT = 0.45
 const AO_INTENSITY = 3.5
 
 export type Quality = 'high' | 'medium' | 'low'
-type QualityLevel = { dpr: [number, number]; msaa: number; ao: 'low' | 'medium' }
+type QualityLevel = { dpr: [number, number]; msaa: number; ao: 'low' | 'medium'; glass: boolean }
 /**
- * Fasce di qualita': quanti pixel (dpr), quanto antialiasing (msaa), che occlusione.
+ * Fasce di qualita': quanti pixel (dpr), quanto antialiasing (msaa), che occlusione, e se
+ * la plastica del Game Boy e' trasparente davvero (glass: ridisegna la scena dietro di se'
+ * a ogni fotogramma; senza, la scheda e' stampata sotto il velo rosa).
  * Da computer l'alta e' sovracampionata: il vetro del logo e i bordi del banco nitidi
  * anche sugli schermi normali. Ogni fascia ha la sua risoluzione fissa: cambiarla a ogni
  * inizio e fine di movimento riallocava i buffer, e ogni animazione partiva con uno scatto.
  */
 const QUALITY: Record<'desktop' | 'mobile', Record<Quality, QualityLevel>> = {
   desktop: {
-    high: { dpr: [1.5, 2], msaa: 4, ao: 'medium' },
-    medium: { dpr: [1, 1.25], msaa: 2, ao: 'low' },
-    low: { dpr: [1, 1], msaa: 0, ao: 'low' },
+    high: { dpr: [1.5, 2], msaa: 4, ao: 'medium', glass: true },
+    medium: { dpr: [1, 1.25], msaa: 2, ao: 'low', glass: false },
+    low: { dpr: [1, 1], msaa: 0, ao: 'low', glass: false },
   },
   mobile: {
-    high: { dpr: [1, 1.5], msaa: 0, ao: 'low' },
-    medium: { dpr: [1, 1.5], msaa: 0, ao: 'low' },
-    low: { dpr: [1, 1], msaa: 0, ao: 'low' },
+    high: { dpr: [1, 1.5], msaa: 0, ao: 'low', glass: false },
+    medium: { dpr: [1, 1.5], msaa: 0, ao: 'low', glass: false },
+    low: { dpr: [1, 1], msaa: 0, ao: 'low', glass: false },
   },
 }
 const LOWER: Record<Quality, Quality> = { high: 'medium', medium: 'low', low: 'low' }
@@ -302,7 +304,7 @@ function useBoard(board: Props['board'], api: Props['api'], mobile: boolean) {
 }
 
 /** Gli oggetti del tavolo: si caricano quando ci si avvicina alla sezione */
-function Table(props: Props & { images: Images }) {
+function Table(props: Props & { images: Images; level: QualityLevel }) {
   const { phase, grab, mobile } = props
   const [hFolder, setHFolder] = useState(false)
   const [hConsole, setHConsole] = useState(false)
@@ -346,9 +348,11 @@ function Table(props: Props & { images: Images }) {
         mobile={mobile}
         grab={grab}
         hovered={hConsole}
+        glass={props.level.glass}
         game={props.game}
         logo={props.images.logo}
         plasticRough={plasticRough}
+        metalRough={metalRough}
         onPointer={(h) => { setHConsole(h); if (h) props.onConsoleHover() }}
         // se la bilia e' sul banco ci salta sopra, e il Game Boy si accende quando atterra
         onClick={() => { marble.clickedAt = performance.now(); if (!marble.toConsole?.()) props.onConsole() }}

@@ -6,7 +6,7 @@
  */
 
 import * as THREE from 'three'
-import { rng, pcbPaint } from './consolePaint'
+import { rng, pcbPaint, insideChips } from './consolePaint'
 
 /** Seme fisso: il banco e la carta sono gli stessi a ogni visita */
 export { rng }
@@ -396,16 +396,6 @@ export function pcbTexture() {
   return toTexture(c)
 }
 
-/** Le misure della faccia della console, in unita' del mondo (vedi Console3D) */
-export type SlabFace = {
-  w: number
-  d: number
-  /** la finestra: centro (verso il lato lontano = +), misure, raggio, cornice nera e filo chiaro */
-  screen: { cy: number; w: number; h: number; r: number; ring: number; rim: number }
-  /** la tesa: la sua riga di mezzo, la lucina, le pillole (centri, lunghezza, raggio, riga) e le scritte */
-  brow: { cy: number; led: number; pills: number[]; pillLen: number; pillR: number; pillCy: number; labelCy: number }
-}
-
 /** Testo spaziato come il letter-spacing del CSS (em: frazione della misura del font) */
 function spaced(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, size: number, em: number, center = false) {
   const chars = [...text]
@@ -418,89 +408,275 @@ function spaced(ctx: CanvasRenderingContext2D, text: string, x: number, y: numbe
   ctx.textAlign = align
 }
 
+/** Dove stanno le cose sulla base della console, in unita' del mondo (vedi Console3D): x a destra, z verso chi guarda */
+export type PadLayout = {
+  w: number
+  d: number
+  brand: number
+  keys: { x: number[]; z: number; r: number; lamp: number; label: number }
+  stick: { x: number; z: number; r: number; label: number }
+  cross: { x: number; z: number; r: number; label: number }
+  a: { x: number; z: number }
+  b: { x: number; z: number }
+  abLabel: number
+}
+
+/** Le scritte della pulsantiera (PROGETTI.game.pad) */
+type PadPrints = { stick: string; cross: string; spray: string; bike: string; bag: string; brand: string }
+
 /**
- * La faccia della console, come la cornice del gioco a tutto schermo
- * (GameBoy.module.css): plastica rosa satinata con il suo sfumato e il riflesso
- * in alto a sinistra; nella tesa POWER accanto alla lucina, il nome inciso al
- * centro, SCHERMO ed ESCI sotto le pillole; sotto, la finestra scura con la
- * cornice nera e il filo chiaro. La tela copre esattamente la faccia: PX pixel
- * per unita', centro della faccia = centro della tela, in alto il lato lontano.
+ * La faccia della base della console, come la pulsantiera del Game Boy a tutto
+ * schermo (GameBoyPad): il nome con ARTISMI, le scritte sotto i tre tasti, sotto
+ * la levetta e la croce, A e B. La tela copre la base (PX pixel per unita',
+ * centro della base = centro della tela, in alto la cerniera).
+ * inside: sotto le scritte la scheda sfocata e il velo rosa, con la ricetta del
+ * Game Boy a tutto schermo (.shell): la plastica sembra trasparente anche dove la
+ * trasparenza vera costa troppo. Senza, solo le scritte su fondo trasparente.
  */
-export function slabTexture(title: string, labels: string[], f: SlabFace) {
-  const PX = 1500
-  const W = Math.round(f.w * PX), H = Math.round(f.d * PX)
+export function faceTexture(title: string, pad: PadPrints, l: PadLayout, inside: boolean) {
+  const PX = 1200
+  const W = Math.round(l.w * PX), H = Math.round(l.d * PX)
   const [c, ctx] = canvas(W, H)
-  const { display, mono } = fonts()
+  const { mono, display } = fonts()
   const X = (x: number) => W / 2 + x * PX
-  const Y = (y: number) => H / 2 - y * PX
+  const Y = (z: number) => H / 2 + z * PX
 
-  // lo sfumato della plastica (linear-gradient 165deg) e il riflesso (radial-gradient 120% 80% at 20% 0%).
-  // Rosa piu' carichi di quelli della cornice: la luce del banco e il tone mapping li schiariscono,
-  // e cosi' a schermo tornano gli stessi
-  const a = 165 * Math.PI / 180, dx = Math.sin(a), dy = -Math.cos(a)
-  const L = Math.abs(W * dx) + Math.abs(H * dy)
-  const g = ctx.createLinearGradient(W / 2 - dx * L / 2, H / 2 - dy * L / 2, W / 2 + dx * L / 2, H / 2 + dy * L / 2)
-  g.addColorStop(0, '#f2bccd'); g.addColorStop(0.55, '#e79cb5'); g.addColorStop(1, '#dc86a3')
-  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H)
-  ctx.save()
-  ctx.translate(W * 0.2, 0); ctx.scale(W * 1.2, H * 0.8)
-  const hl = ctx.createRadialGradient(0, 0, 0, 0, 0, 1)
-  // (piu' tenue della cornice: la lampada del banco ci aggiunge il suo riflesso)
-  hl.addColorStop(0, 'rgba(255,255,255,0.2)'); hl.addColorStop(0.55, 'rgba(255,255,255,0)')
-  ctx.fillStyle = hl; ctx.fillRect(-1, -1, 2, 2)
-  ctx.restore()
-
-  // la finestra: filo chiaro, cornice nera, vetro scuro
-  const s = f.screen
-  const win = (grow: number, fill: string) => {
-    ctx.fillStyle = fill
-    roundRect(ctx, X(-s.w / 2 - grow), Y(s.cy + s.h / 2 + grow), (s.w + grow * 2) * PX, (s.h + grow * 2) * PX, (s.r + grow) * PX)
-    ctx.fill()
+  if (inside) {
+    ctx.fillStyle = '#cf98ad'; ctx.fillRect(0, 0, W, H)
+    // la scheda coi chip, sfocata come la si vede attraverso la plastica (dove il browser sa sfocare)
+    const S = 1024
+    const [ic, ictx] = canvas(S, S)
+    insidePaint(ictx, S, mono)
+    ctx.filter = 'blur(3px)'
+    const k = Math.max(W, H) / S
+    ctx.drawImage(ic, (W - S * k) / 2, (H - S * k) / 2, S * k, S * k)
+    ctx.filter = 'none'
+    // il velo rosa della plastica, piu' carico verso chi guarda (un filo piu' leggero di quello
+    // del Game Boy a tutto schermo: sotto la lampada del banco il velo schiariva la scheda)
+    const v = ctx.createLinearGradient(0, 0, 0, H)
+    v.addColorStop(0, 'rgba(249,221,229,0.64)'); v.addColorStop(0.55, 'rgba(242,196,211,0.6)'); v.addColorStop(1, 'rgba(236,159,181,0.58)')
+    ctx.fillStyle = v; ctx.fillRect(0, 0, W, H)
   }
-  win(s.ring + s.rim, 'rgba(255,255,255,0.35)')
-  win(s.ring, '#231c26')
-  win(0, '#0d0b1a')
 
-  // la tesa
-  const b = f.brow
-  const ink = 'rgba(100,34,62,0.85)'
+  // la serigrafia del Game Boy 3D, incisa: un filo di luce sotto ogni scritta
+  const ink = 'rgba(70,30,48,0.82)', soft = 'rgba(70,30,48,0.66)'
+  const print = (draw: () => void, color: string) => {
+    ctx.save(); ctx.translate(0, 2); ctx.fillStyle = 'rgba(255,255,255,0.5)'; draw(); ctx.restore()
+    ctx.fillStyle = color; draw()
+  }
   ctx.textBaseline = 'middle'
-  // la lucina nel suo foro, e POWER accanto
-  ctx.fillStyle = 'rgba(110,40,65,0.28)'
-  ctx.beginPath(); ctx.arc(X(b.led), Y(b.cy), 0.017 * PX, 0, Math.PI * 2); ctx.fill()
+
+  // il nome, e ARTISMI spaziato accanto
+  const big = Math.round(0.046 * PX), tiny = Math.round(0.017 * PX)
+  ctx.font = `italic 800 ${big}px ${display}`
+  const tw = ctx.measureText(title).width
+  ctx.font = `700 ${tiny}px ${mono}`
+  const bw = [...pad.brand.toUpperCase()].reduce((s, ch) => s + ctx.measureText(ch).width, 0) + tiny * 0.3 * (pad.brand.length - 1)
+  const gap = 0.02 * PX, x0 = X(0) - (tw + gap + bw) / 2
+  print(() => { ctx.font = `italic 800 ${big}px ${display}`; ctx.textAlign = 'left'; ctx.fillText(title, x0, Y(l.brand)) }, ink)
+  print(() => { ctx.font = `700 ${tiny}px ${mono}`; spaced(ctx, pad.brand.toUpperCase(), x0 + tw + gap, Y(l.brand) + big * 0.08, tiny, 0.3) }, ink)
+
+  // sotto i tre tasti, sotto la levetta e la croce
   const small = Math.round(0.018 * PX)
-  ctx.font = `700 ${small}px ${mono}`
-  ctx.fillStyle = ink
-  spaced(ctx, 'POWER', X(b.led + 0.03), Y(b.cy), small, 0.18)
-  // il nome inciso nella plastica, con il filo di luce sotto
-  ctx.textAlign = 'center'
-  ctx.font = `800 ${Math.round(0.05 * PX)}px ${display}`
-  ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.fillText(title, X(0), Y(b.cy) + 3)
-  ctx.fillStyle = 'rgba(112,36,68,0.9)'; ctx.fillText(title, X(0), Y(b.cy))
-  // le fessure delle pillole, con il filo chiaro sotto, e le scritte
-  const label = Math.round(0.016 * PX)
-  ctx.font = `700 ${label}px ${mono}`
-  b.pills.forEach((px, i) => {
-    const slot = (dy: number, fill: string) => {
-      ctx.fillStyle = fill
-      roundRect(ctx, X(px - b.pillLen / 2 - 0.005), Y(b.pillCy + b.pillR + 0.005) + dy, (b.pillLen + 0.01) * PX, (b.pillR * 2 + 0.01) * PX, (b.pillR + 0.005) * PX)
-      ctx.fill()
-    }
-    slot(2, 'rgba(255,255,255,0.5)')
-    slot(0, 'rgba(110,40,65,0.24)')
-    ctx.fillStyle = ink
-    spaced(ctx, (labels[i] ?? '').toUpperCase(), X(px), Y(b.labelCy), label, 0.16, true)
-  })
+  const label = (text: string, x: number, z: number) =>
+    print(() => { ctx.font = `700 ${small}px ${mono}`; spaced(ctx, text.toUpperCase(), X(x), Y(z), small, 0.1, true) }, soft)
+  ;[pad.spray, pad.bike, pad.bag].forEach((t, i) => label(t, l.keys.x[i], l.keys.label))
+  label(pad.stick, l.stick.x, l.stick.label)
+  label(pad.cross, l.cross.x, l.cross.label)
+
+  // A e B
+  const ab = Math.round(0.03 * PX)
+  for (const [k, p] of [['A', l.a], ['B', l.b]] as const) {
+    print(() => { ctx.font = `800 ${ab}px ${display}`; ctx.textAlign = 'center'; ctx.fillText(k, X(p.x), Y(p.z + l.abLabel)) }, ink)
+  }
   return toTexture(c)
 }
 
-/** L'alone della lucina accesa: un punto di luce morbido */
-export function haloTexture() {
+/** La scheda coi chip sotto la plastica (consolePaint): la stessa del Game Boy a tutto schermo */
+function insidePaint(ctx: CanvasRenderingContext2D, S: number, mono: string) {
+  pcbPaint(ctx, S, S, mono)
+  insideChips(ctx)
+}
+
+/**
+ * La tesa del coperchio, sopra lo schermo, come quella del Game Boy a tutto
+ * schermo: la feritoia della rotella con VOL, SCHERMO sotto la pillola, la guida
+ * dell'interruttore con OFF e ON. Fondo trasparente; la rotella, la pillola, la
+ * levetta dell'interruttore e il display sono pezzi a parte (Console3D).
+ * La tela copre la tesa (w × d unita', centro = centro della tela, in alto il bordo).
+ */
+export function stripTexture(s: { w: number; d: number; wheel: number; vol: number; pill: number; sw: number }, pad: { audio: string; off: string; on: string }, screen: string) {
+  const PX = 1200
+  const W = Math.round(s.w * PX), H = Math.round(s.d * PX)
+  const [c, ctx] = canvas(W, H)
+  const { mono } = fonts()
+  const X = (x: number) => W / 2 + x * PX
+  const cy = H / 2
+  const pill = (x: number, w: number, h: number, fill: string | CanvasGradient, dy = 0) => {
+    ctx.fillStyle = fill
+    roundRect(ctx, X(x - w / 2), cy - h / 2 * PX + dy, w * PX, h * PX, h / 2 * PX)
+    ctx.fill()
+  }
+  // la feritoia della rotella
+  const slot = ctx.createLinearGradient(0, cy - 0.025 * PX, 0, cy + 0.025 * PX)
+  slot.addColorStop(0, '#5a2a3c'); slot.addColorStop(1, '#8a4a62')
+  pill(s.wheel, 0.105, 0.042, 'rgba(255,255,255,0.6)', 2)
+  pill(s.wheel, 0.105, 0.042, slot)
+  // la fessura della pillola e la guida dell'interruttore
+  pill(s.pill, 0.1, 0.038, 'rgba(255,255,255,0.55)', 2)
+  pill(s.pill, 0.1, 0.038, 'rgba(110,40,65,0.26)')
+  pill(s.sw, 0.064, 0.026, 'rgba(255,255,255,0.6)', 2)
+  pill(s.sw, 0.064, 0.026, 'rgba(217,142,164,0.85)')
+  // le scritte
+  const small = Math.round(0.018 * PX)
+  ctx.font = `700 ${small}px ${mono}`
+  ctx.textBaseline = 'middle'
+  const print = (text: string, x: number, y: number, center = false) => {
+    ctx.fillStyle = 'rgba(255,255,255,0.5)'; spaced(ctx, text.toUpperCase(), X(x), y + 2, small, 0.14, center)
+    ctx.fillStyle = 'rgba(70,30,48,0.66)'; spaced(ctx, text.toUpperCase(), X(x), y, small, 0.14, center)
+  }
+  print(pad.audio, s.vol, cy)
+  print(screen, s.pill, cy + 0.04 * PX, true)
+  print(pad.off, s.sw - 0.072, cy)
+  print(pad.on, s.sw + 0.042, cy)
+  return toTexture(c)
+}
+
+/** Lo stato del gioco per il display: giorno, ora, soldi, ore alla scadenza, stelle (vedi GameBoyPad, Stato) */
+type LcdStato = { giorno: string; ora: string; soldi: string; scade: number | null; ricercato: number }
+
+/**
+ * Il display nella tesa, come quello del Game Boy a tutto schermo: LCD chiaro
+ * con le righe, la cornice scura. Giorno e ora, i soldi, le stelle quando ti
+ * cercano; --:-- finche' il gioco non e' caricato. draw(stato) lo ridisegna.
+ */
+export function lcdTexture() {
+  const W = 512, H = 128
+  const [c, ctx] = canvas(W, H)
+  const tex = toTexture(c)
+  const { mono } = fonts()
+  const draw = (stato: LcdStato | null) => {
+    ctx.clearRect(0, 0, W, H)
+    ctx.fillStyle = 'rgba(255,255,255,0.55)'; roundRect(ctx, 0, 2, W, H - 2, 14); ctx.fill()
+    ctx.fillStyle = '#2b2430'; roundRect(ctx, 2, 0, W - 4, H - 6, 12); ctx.fill()
+    ctx.fillStyle = '#f4eaee'; roundRect(ctx, 12, 10, W - 24, H - 26, 6); ctx.fill()
+    ctx.fillStyle = 'rgba(0,0,0,0.05)'
+    for (let y = 12; y < H - 16; y += 4) ctx.fillRect(12, y, W - 24, 1)
+    const g = ctx.createLinearGradient(0, 10, 0, H / 2)
+    g.addColorStop(0, 'rgba(255,255,255,0.35)'); g.addColorStop(1, 'rgba(255,255,255,0)')
+    ctx.fillStyle = g; ctx.fillRect(12, 10, W - 24, H / 2 - 10)
+    ctx.textBaseline = 'middle'
+    ctx.font = `700 46px ${mono}`
+    const y = (H - 16) / 2 + 3
+    if (!stato) {
+      ctx.fillStyle = '#2b2430'; ctx.textAlign = 'center'; ctx.fillText('--:--', W / 2, y)
+    } else {
+      // come la riga del Game Boy a tutto schermo: LUN 21:40 ₤12K ★1
+      const parts: [string, string][] = [
+        [stato.giorno.slice(0, 3).toUpperCase(), '#2b2430'],
+        [stato.ora, stato.scade !== null && stato.scade <= 6 ? '#d22e44' : '#2b2430'],
+        [`₤${stato.soldi.replace(/\.000$/, 'K')}`, '#2b2430'],
+      ]
+      if (stato.ricercato > 0) parts.push([`★${stato.ricercato}`, '#d22e44'])
+      ctx.textAlign = 'left'
+      const gap = 22
+      const widths = parts.map(([t]) => ctx.measureText(t).width)
+      let x = (W - widths.reduce((s, w) => s + w, 0) - gap * (parts.length - 1)) / 2
+      parts.forEach(([t, col], i) => { ctx.fillStyle = col; ctx.fillText(t, x, y); x += widths[i] + gap })
+    }
+    tex.needsUpdate = true
+  }
+  draw(null)
+  return { tex, draw }
+}
+
+/** Le icone sui tre tasti (24×24, a tratto, quelle della pulsantiera): [percorso, spessore] */
+const KEY_ICONS: Record<'bomboletta' | 'bici' | 'zaino', [string, number][]> = {
+  bomboletta: [
+    ['M9 9h4a2 2 0 0 1 2 2v8.5a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V11a2 2 0 0 1 2-2z', 2],
+    ['M8.5 9V6.8a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1V9M10 5.8V4h2.5', 2],
+    ['M17.5 4.5h.01M19.5 6.5h.01M19.5 2.5h.01M21 4.5h.01', 2.6],
+  ],
+  bici: [
+    ['M1.7 16a3.8 3.8 0 1 0 7.6 0a3.8 3.8 0 1 0-7.6 0M14.7 16a3.8 3.8 0 1 0 7.6 0a3.8 3.8 0 1 0-7.6 0', 2],
+    ['M5.5 16l4.2-7.5h6.6L18.5 16M9.7 8.5L12 16h1.2l3.1-7.5M8.4 6h3', 2],
+  ],
+  zaino: [
+    ['M6 10a6 6 0 0 1 12 0v9.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 6 19.5z', 2],
+    ['M9.5 4.6V3.5h5v1.1M8.5 14.5h7v4h-7zM12 14.5v1.6', 2],
+  ],
+}
+
+/** L'icona chiara stampata sulla gomma di un tasto, su fondo trasparente */
+export function keyIconTexture(k: keyof typeof KEY_ICONS) {
   const S = 128
   const [c, ctx] = canvas(S, S)
-  const g = ctx.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2)
-  g.addColorStop(0, 'rgba(255,90,105,0.85)'); g.addColorStop(0.35, 'rgba(255,77,94,0.3)'); g.addColorStop(1, 'rgba(255,77,94,0)')
-  ctx.fillStyle = g; ctx.fillRect(0, 0, S, S)
+  ctx.scale(S / 24, S / 24)
+  ctx.strokeStyle = 'rgba(236,230,238,0.92)'
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round'
+  for (const [d, w] of KEY_ICONS[k]) { ctx.lineWidth = w; ctx.stroke(new Path2D(d)) }
+  return toTexture(c)
+}
+
+/** Il numero rosso sullo zaino: le cose da fare qui. draw(n) lo ridisegna */
+export function badgeTexture() {
+  const S = 64
+  const [c, ctx] = canvas(S, S)
+  const tex = toTexture(c)
+  const { mono } = fonts()
+  const draw = (n: number) => {
+    ctx.clearRect(0, 0, S, S)
+    ctx.fillStyle = 'rgba(249,221,229,0.9)'
+    ctx.beginPath(); ctx.arc(S / 2, S / 2, S / 2 - 1, 0, Math.PI * 2); ctx.fill()
+    const g = ctx.createLinearGradient(0, 4, 0, S - 4)
+    g.addColorStop(0, '#ff6b7a'); g.addColorStop(0.5, '#ff4d5e'); g.addColorStop(1, '#d22e44')
+    ctx.fillStyle = g
+    ctx.beginPath(); ctx.arc(S / 2, S / 2, S / 2 - 5, 0, Math.PI * 2); ctx.fill()
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+    ctx.font = `700 ${n > 9 ? 22 : 30}px ${mono}`
+    ctx.fillText(n > 9 ? '9+' : String(n), S / 2, S / 2 + 2)
+    tex.needsUpdate = true
+  }
+  return { tex, draw }
+}
+
+/** L'alone di una lucina accesa: un punto di luce morbido del suo colore (r, g, b) */
+export function haloTexture(r: number, g: number, b: number) {
+  const S = 128
+  const [c, ctx] = canvas(S, S)
+  const gr = ctx.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2)
+  gr.addColorStop(0, `rgba(${r},${g},${b},0.85)`); gr.addColorStop(0.35, `rgba(${r},${g},${b},0.3)`); gr.addColorStop(1, `rgba(${r},${g},${b},0)`)
+  ctx.fillStyle = gr; ctx.fillRect(0, 0, S, S)
+  return toTexture(c)
+}
+
+/** Cornice rosa dello schermo (faccia interna del coperchio), come quella del Game Boy a tutto schermo: in alto BATTERY e le righe, la finestra scura, sotto la scritta */
+export function bezelTexture(title: string, battery: string, lens: string) {
+  const W = 1024, H = 786
+  const [c, ctx] = canvas(W, H)
+  const { mono, display } = fonts()
+  const rand = rng(41)
+  ctx.fillStyle = '#E7A6B8'
+  roundRect(ctx, 0, 0, W, H, 46); ctx.fill()
+  fibres(ctx, null, W, H, rand, 1500, '#f4c8d5', '#c98aa1')
+  // finestra scura attorno all'LCD
+  const g = ctx.createLinearGradient(0, 0, 0, H)
+  g.addColorStop(0, '#2b2430'); g.addColorStop(1, '#1d1822')
+  ctx.fillStyle = g
+  roundRect(ctx, 512 - 381, 333 - 262, 762, 524, 16); ctx.fill()
+  // in alto: il foro della lucina, BATTERY e le righe fino in fondo
+  ctx.fillStyle = 'rgba(70,30,48,0.35)'
+  ctx.beginPath(); ctx.arc(60, 38, 13, 0, Math.PI * 2); ctx.fill()
+  ctx.fillStyle = 'rgba(70,30,48,0.75)'
+  ctx.font = `700 22px ${mono}`; ctx.textBaseline = 'middle'
+  spaced(ctx, battery.toUpperCase(), 86, 39, 22, 0.14)
+  const lx = 86 + ctx.measureText(battery.toUpperCase()).width + 22 * 0.14 * battery.length + 18
+  ctx.fillStyle = 'rgba(70,30,48,0.7)'
+  ctx.fillRect(lx, 31, W - 40 - lx, 4); ctx.fillRect(lx, 43, W - 40 - lx, 2)
+  // sotto, la scritta
+  ctx.textAlign = 'center'
+  ctx.font = `800 30px ${display}`
+  ctx.fillText(`${title.toUpperCase()}  ✦  ${lens.toUpperCase()}`, W / 2, H - 48)
   return toTexture(c)
 }
 
@@ -513,8 +689,8 @@ export function haloTexture() {
 export const BOOT_SECONDS = 2.6
 
 export function screenTexture(src: string, logo: HTMLImageElement | null, loading: string, onReady: () => void) {
-  // 16:10, come lo schermo della console
-  const W = 1024, H = 640
+  // 3:2, come lo schermo della console e la schermata di lancio
+  const W = 960, H = 640
   const [c, ctx] = canvas(W, H)
   const tex = toTexture(c)
   const { mono } = fonts()

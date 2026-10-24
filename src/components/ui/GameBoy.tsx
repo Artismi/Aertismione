@@ -40,7 +40,7 @@ import styles from './GameBoy.module.css'
 import { Display, GameBoyPad, Rotella, type Send, type Stato, type Tasti } from './GameBoyPad'
 import pre from './Preloader.module.css'
 import { MatrixGrid } from './Preloader'
-import { gameLoad } from '@/components/canvas/table/gameLoad'
+import { gameLoad, gameInfo } from '@/components/canvas/table/gameLoad'
 import { plasticInside } from '@/components/canvas/table/consolePaint'
 
 export type Rect = { top: number; left: number; width: number; height: number }
@@ -114,8 +114,9 @@ export function GameBoy({ from, onClose, page = false, warm = false }: {
       if (e.source !== frameRef.current?.contentWindow || !e.data || typeof e.data.pv !== 'string') return
       talks.current = true
       if (e.data.pv === 'console') { hello.current = true; setPad('si'); return }
-      if (e.data.pv === 'tasti') { setTasti(e.data as Tasti); return }
-      if (e.data.pv === 'stato') { setStato(e.data as Stato); return }
+      // le scritte dei tasti e lo stato vanno anche al Game Boy del banco (display e lucine)
+      if (e.data.pv === 'tasti') { setTasti(e.data as Tasti); gameInfo.tasti = e.data as Tasti; gameLoad.onChange?.(); return }
+      if (e.data.pv === 'stato') { setStato(e.data as Stato); gameInfo.stato = e.data as Stato; gameLoad.onChange?.(); return }
       if (!hello.current) send({ pvc: 'ciao' })   // il saluto, finche' il gioco non risponde
       if (typeof e.data.p === 'number') real.current = Math.max(real.current, e.data.p)
       if (e.data.pv === 'pronto') setReady(true)
@@ -143,11 +144,12 @@ export function GameBoy({ from, onClose, page = false, warm = false }: {
     return () => { document.removeEventListener('visibilitychange', hide); send({ pvc: 'lascia' }) }
   }, [send])
 
-  // da computer, smontato il gioco non e' piu' caricato: lo schermo e la lucina della console
-  // tornano spenti (da telefono il caricamento e' quello dei file, che restano in cache)
+  // smontato il gioco non dice piu' niente: il display del banco torna a --:-- e le lucine
+  // si spengono. Da computer non e' piu' caricato, e tornano spenti anche lo schermo e la
+  // lucina della console (da telefono il caricamento e' quello dei file, che restano in cache)
   useEffect(() => () => {
-    if (!warm) return
-    gameLoad.p = 0; gameLoad.ready = false
+    gameInfo.stato = null; gameInfo.tasti = null
+    if (warm) { gameLoad.p = 0; gameLoad.ready = false }
     gameLoad.onChange?.()
   }, [warm])
 
