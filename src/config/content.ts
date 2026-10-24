@@ -600,8 +600,7 @@ export const ABOUT = {
     `Sono <strong>Andrea</strong>, designer e illustratore.`,
     `Credo che ogni attività abbia già un'identità — un mondo immaginario che esiste dentro le persone, gli oggetti e le storie che la abitano. Il mio lavoro è ascoltarlo e dargli forma visiva.`,
     `Non parto da un foglio bianco. Parto da te, dal tuo spazio, da chi lo vive. Attraverso un percorso strutturato di ascolto e co-progettazione, tiriamo fuori quello che c'è già — e lo rendiamo un linguaggio visivo che puoi usare ovunque.`,
-    `Ho studiato Design e Comunicazione al Politecnico di Torino, con una tesi sul ruolo dei mulini ad acqua nell'economia dei paesi di montagna. Ho imparato lavorando: in una serigrafia, in un'officina di biciclette artigianali, in un anno di servizio civile in uno spazio culturale indipendente a Torino. Oggi porto tutto questo in <strong>Artismi Design Studio</strong>, il mio lavoro da freelance. Ho dipinto muri e fatto ricerca sul campo. Ho capito che il design che dura nasce dall'ascolto, non dalla tastiera.`,
-    `Vado in bici, sono scout da quando avevo dieci anni. Mi piace vedere il mondo lentamente. Probabilmente si vede nel lavoro.`,
+    `Ho studiato Design e Comunicazione al Politecnico di Torino, con una tesi sul ruolo dei mulini ad acqua nell'economia dei paesi di montagna. Ho imparato lavorando: in una serigrafia, in un'officina di biciclette artigianali, in un anno di servizio civile in uno spazio culturale indipendente a Torino. Oggi porto tutto questo in <strong>Artismi Design Studio</strong>, il mio lavoro da freelance. Ho dipinto muri e fatto ricerca sul campo. Ho capito che il design che dura nasce dall'ascolto.`,
   ],
   socials: [
     { label: 'Instagram', href: 'https://instagram.com/angea_pangea',       aria: 'Instagram @angea_pangea' },
