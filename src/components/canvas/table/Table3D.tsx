@@ -112,8 +112,8 @@ export type Quality = 'high' | 'medium' | 'low'
 type QualityLevel = { dpr: [number, number]; msaa: number; ao: 'low' | 'medium'; glass: boolean }
 /**
  * Fasce di qualita': quanti pixel (dpr), quanto antialiasing (msaa), che occlusione, e se
- * la plastica del Game Boy e' trasparente davvero (glass: ridisegna la scena dietro di se'
- * a ogni fotogramma; senza, la scheda e' stampata sotto il velo rosa).
+ * la plastica del Game Boy lascia vedere l'elettronica (glass; senza, la scheda e' stampata
+ * sotto il velo rosa).
  * Da computer l'alta e' sovracampionata: il vetro del logo e i bordi del banco nitidi
  * anche sugli schermi normali. Ogni fascia ha la sua risoluzione fissa: cambiarla a ogni
  * inizio e fine di movimento riallocava i buffer, e ogni animazione partiva con uno scatto.
@@ -653,9 +653,6 @@ export default function Table3D(props: Props) {
         // trasparente: dietro c'e' l'acqua, sul suo canvas (WaterCanvas)
         gl={{ antialias: false, alpha: true, powerPreference: 'high-performance' }}
         onCreated={({ gl }) => {
-          // la plastica trasparente del Game Boy ridisegna la scena dietro di se':
-          // a meta' risoluzione, sotto un guscio satinato non si vede la differenza
-          gl.transmissionResolutionScale = 0.5
           // il controllo degli errori dei programmi aspetta che la scheda video li abbia
           // compilati, e intanto la pagina si blocca: serve solo mentre si sviluppa
           gl.debug.checkShaderErrors = process.env.NODE_ENV !== 'production'

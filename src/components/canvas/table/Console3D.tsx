@@ -13,10 +13,9 @@
  * Il display e le lucine dei tasti dicono quello che dice il gioco quando e'
  * caricato (gameInfo); prima il display segna --:--.
  *
- * La plastica e' trasparente davvero solo nella fascia di qualita' alta (glass):
- * la trasparenza ridisegna tutta la scena dietro la console a ogni fotogramma.
- * Nelle altre la scheda e' stampata sotto il velo rosa, come nel Game Boy a tutto
- * schermo: lo stesso aspetto, senza quel costo.
+ * La plastica e' un velo rosa trasparente sopra l'elettronica (glass); nella fascia
+ * di qualita' piu' bassa la scheda e' stampata sotto il velo rosa, come nel Game Boy
+ * a tutto schermo.
  *
  * Presa in mano viene verso chi guarda, il coperchio si alza e lo schermo si
  * accende; da li' PortfolioSection allarga il gioco a tutto schermo.
@@ -235,14 +234,12 @@ export function Console3D({ phase, mobile, grab, hovered, glass, game, logo, pla
 
   const mats = useMemo(() => {
     const plastic = glass
-      // plastica rosa trasparente e lucida: si vede l'elettronica attraverso
+      // plastica rosa trasparente e lucida: si vede l'elettronica attraverso. Un velo rosa sopra
+      // la scheda, come nel Game Boy a tutto schermo: niente trasmissione vera, che ridisegnava
+      // tutta la scena dietro la console a ogni fotogramma e faceva scattare lo scroll
       ? new THREE.MeshPhysicalMaterial({
-        // spessore sottile: con uno spessore grosso la rifrazione spostava cio' che sta dietro
-        // e i tasti A/B ricomparivano, sfalsati, sulla scheda dentro. Il rosa resta lo stesso
-        // (attenuazione nella stessa proporzione dello spessore)
-        color: '#f9dde5', transmission: 0.9, thickness: 0.03, roughness: 0.22, ior: 1.47,
-        attenuationColor: new THREE.Color('#ec9fb5'), attenuationDistance: 0.8 * 0.03 / 0.35,
-        clearcoat: 0.3, clearcoatRoughness: 0.3, roughnessMap: plasticRough,
+        color: '#e07f9c', transparent: true, opacity: 0.3, depthWrite: false,
+        roughness: 0.22, roughnessMap: plasticRough, clearcoat: 0.4, clearcoatRoughness: 0.2,
       })
       // la stessa plastica, piena e lucida: dentro non si vede, la scheda e' stampata sulla faccia
       : new THREE.MeshPhysicalMaterial({ color: '#e3a1b6', roughness: 0.26, roughnessMap: plasticRough, clearcoat: 1, clearcoatRoughness: 0.14 })
@@ -441,7 +438,7 @@ export function Console3D({ phase, mobile, grab, hovered, glass, game, logo, pla
       </mesh>
       <group>
         {/* ── Base ── */}
-        <RoundedBox args={[CW, BH, CD]} radius={CR} smoothness={6} position={[0, BH / 2, 0]} material={mats.shell} castShadow receiveShadow />
+        <RoundedBox args={[CW, BH, CD]} radius={CR} smoothness={6} position={[0, BH / 2, 0]} material={mats.shell} renderOrder={-1} castShadow receiveShadow />
         <mesh geometry={geo.seamBase} position={[0, BH * 0.45, 0]} material={mats.seam} />
 
         {/* dentro: scheda, chip, batteria, connettore, viti (si vedono solo con la plastica trasparente) */}
@@ -529,7 +526,7 @@ export function Console3D({ phase, mobile, grab, hovered, glass, game, logo, pla
           <mesh rotation={[0, 0, Math.PI / 2]} material={mats.shell} castShadow>
             <cylinderGeometry args={[0.046, 0.046, 0.42, 32]} />
           </mesh>
-          <RoundedBox args={[CW, LH, LID_D]} radius={CR} smoothness={6} position={[0, LH / 2, LID_D / 2]} material={mats.shell} castShadow receiveShadow />
+          <RoundedBox args={[CW, LH, LID_D]} radius={CR} smoothness={6} position={[0, LH / 2, LID_D / 2]} material={mats.shell} renderOrder={-1} castShadow receiveShadow />
           <mesh geometry={geo.seamLid} position={[0, LH * 0.5, LID_D / 2]} material={mats.seam} />
           {/* scheda dello schermo, dentro il coperchio */}
           {glass && (
