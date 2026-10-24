@@ -653,6 +653,9 @@ export default function Table3D(props: Props) {
         // trasparente: dietro c'e' l'acqua, sul suo canvas (WaterCanvas)
         gl={{ antialias: false, alpha: true, powerPreference: 'high-performance' }}
         onCreated={({ gl }) => {
+          // la plastica trasparente del Game Boy ridisegna la scena dietro di se':
+          // a meta' risoluzione, sotto un guscio satinato non si vede la differenza
+          gl.transmissionResolutionScale = 0.5
           // il controllo degli errori dei programmi aspetta che la scheda video li abbia
           // compilati, e intanto la pagina si blocca: serve solo mentre si sviluppa
           gl.debug.checkShaderErrors = process.env.NODE_ENV !== 'production'
