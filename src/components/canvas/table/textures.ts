@@ -500,28 +500,23 @@ function insidePaint(ctx: CanvasRenderingContext2D, S: number, mono: string) {
 
 /**
  * La tesa del coperchio, sopra lo schermo, come quella del Game Boy a tutto
- * schermo: la feritoia della rotella con VOL, SCHERMO sotto la pillola, la guida
- * dell'interruttore con OFF e ON. Fondo trasparente; la rotella, la pillola, la
- * levetta dell'interruttore e il display sono pezzi a parte (Console3D).
+ * schermo: SCHERMO sotto la pillola, la guida dell'interruttore con OFF e ON.
+ * Fondo trasparente; la pillola, la levetta dell'interruttore e il display sono
+ * pezzi a parte (Console3D).
  * La tela copre la tesa (w × d unita', centro = centro della tela, in alto il bordo).
  */
-export function stripTexture(s: { w: number; d: number; wheel: number; vol: number; pill: number; sw: number }, pad: { audio: string; off: string; on: string }, screen: string) {
+export function stripTexture(s: { w: number; d: number; pill: number; sw: number }, pad: { off: string; on: string }, screen: string) {
   const PX = 1200
   const W = Math.round(s.w * PX), H = Math.round(s.d * PX)
   const [c, ctx] = canvas(W, H)
   const { mono } = fonts()
   const X = (x: number) => W / 2 + x * PX
   const cy = H / 2
-  const pill = (x: number, w: number, h: number, fill: string | CanvasGradient, dy = 0) => {
+  const pill = (x: number, w: number, h: number, fill: string, dy = 0) => {
     ctx.fillStyle = fill
     roundRect(ctx, X(x - w / 2), cy - h / 2 * PX + dy, w * PX, h * PX, h / 2 * PX)
     ctx.fill()
   }
-  // la feritoia della rotella
-  const slot = ctx.createLinearGradient(0, cy - 0.025 * PX, 0, cy + 0.025 * PX)
-  slot.addColorStop(0, '#5a2a3c'); slot.addColorStop(1, '#8a4a62')
-  pill(s.wheel, 0.105, 0.042, 'rgba(255,255,255,0.6)', 2)
-  pill(s.wheel, 0.105, 0.042, slot)
   // la fessura della pillola e la guida dell'interruttore
   pill(s.pill, 0.1, 0.038, 'rgba(255,255,255,0.55)', 2)
   pill(s.pill, 0.1, 0.038, 'rgba(110,40,65,0.26)')
@@ -535,7 +530,6 @@ export function stripTexture(s: { w: number; d: number; wheel: number; vol: numb
     ctx.fillStyle = 'rgba(255,255,255,0.5)'; spaced(ctx, text.toUpperCase(), X(x), y + 2, small, 0.14, center)
     ctx.fillStyle = 'rgba(70,30,48,0.66)'; spaced(ctx, text.toUpperCase(), X(x), y, small, 0.14, center)
   }
-  print(pad.audio, s.vol, cy)
   print(screen, s.pill, cy + 0.04 * PX, true)
   print(pad.off, s.sw - 0.072, cy)
   print(pad.on, s.sw + 0.042, cy)

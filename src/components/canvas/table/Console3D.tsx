@@ -8,8 +8,7 @@
  * lucina (la bomboletta, la bici, lo zaino col numero delle cose da fare), la
  * levetta nel suo incavo, la croce nera, A e B corallo sulla piastra inclinata,
  * l'altoparlante. Coperchio: la cornice rosa dello schermo con BATTERY e la
- * lucina; sopra, la tesa con la rotella del volume, il display, la pillola
- * SCHERMO e l'interruttore. Cerniera a tre cilindri.
+ * lucina; sopra, la tesa con il display, la pillola SCHERMO e l'interruttore. Cerniera a tre cilindri.
  *
  * Il display e le lucine dei tasti dicono quello che dice il gioco quando e'
  * caricato (gameInfo); prima il display segna --:--.
@@ -41,8 +40,8 @@ const LID_D = CD - 0.04
 const SCREEN = { w: 0.6, h: 0.4 }
 /** la cornice dello schermo sul coperchio, dalla cerniera: un po' sotto la meta', sopra ci sta la tesa */
 const BEZEL_Z = 0.43
-/** la tesa del coperchio: la sua riga di mezzo, le misure, e dove stanno rotella, VOL, display, pillola, interruttore */
-const STRIP = { z: 0.855, w: 0.92, d: 0.16, wheel: -0.37, vol: -0.3, lcd: -0.02, pill: 0.2, sw: 0.37 }
+/** la tesa del coperchio: la sua riga di mezzo, le misure, e dove stanno display, pillola, interruttore */
+const STRIP = { z: 0.855, w: 0.92, d: 0.16, lcd: -0.02, pill: 0.2, sw: 0.37 }
 /** la base, come la pulsantiera (le scritte le stampa faceTexture negli stessi posti) */
 const PAD: PadLayout = {
   w: 0.96, d: 0.94, brand: -0.335,
@@ -328,14 +327,13 @@ export function Console3D({ phase, mobile, grab, hovered, glass, game, logo, pla
     let tx = away ? 6.5 : home.x, ty = 0, tz = away ? 0.8 : home.z
     let rx = 0, ry = home.ry, sc = home.s
     if (grab) {
-      // presa in mano: la console viene davanti alla camera, con lo schermo dritto verso chi guarda.
-      // Si vede tutto il coperchio, tesa compresa (display, rotella, interruttore): alto quanto
-      // l'inquadratura sotto la barra del sito, e senza uscire dai lati (da telefono decide la larghezza)
+      // presa in mano: la console viene davanti alla camera, con lo schermo dritto verso chi guarda,
+      // alto poco piu' di meta' dell'inquadratura e senza uscire dai lati (da telefono decide la larghezza)
       const cam = state.camera as THREE.PerspectiveCamera
       const g = group.current
       const s = mobile ? 0.85 : 0.95
       const tan = Math.tan(THREE.MathUtils.degToRad(cam.fov / 2))
-      const d = Math.max((LID_D * s) / (0.86 * 2 * tan), (CW * s) / (0.95 * 2 * tan * cam.aspect))
+      const d = Math.max((SCREEN.h * s) / (0.58 * 2 * tan), (SCREEN.w * s) / (0.88 * 2 * tan * cam.aspect))
       cam.getWorldDirection(k.fwd)
       k.want.copy(cam.position).addScaledVector(k.fwd, d)
       // dove sta adesso lo schermo, rispetto al centro della console: la si sposta di quella differenza
@@ -557,14 +555,10 @@ export function Console3D({ phase, mobile, grab, hovered, glass, game, logo, pla
           <mesh position={[-0.375, -0.01, BEZEL_Z + 0.296]} material={mats.led}><sphereGeometry args={[0.011, 16, 16]} /></mesh>
           <mesh ref={ledHalo} geometry={geo.halo} position={[-0.375, -0.016, BEZEL_Z + 0.296]} rotation={[Math.PI, 0, 0]} material={mats.haloRed} visible={false} />
 
-          {/* la tesa sopra lo schermo: la rotella del volume nella sua feritoia, il display, la pillola SCHERMO, l'interruttore */}
+          {/* la tesa sopra lo schermo: il display, la pillola SCHERMO, l'interruttore */}
           <mesh position={[0, -0.0012, STRIP.z]} rotation={UNDER} material={mats.strip}>
             <planeGeometry args={[STRIP.w, STRIP.d]} />
           </mesh>
-          <mesh position={[STRIP.wheel, 0.032, STRIP.z]} rotation={[0, 0, Math.PI / 2]} material={mats.metal} castShadow>
-            <cylinderGeometry args={[0.045, 0.045, 0.085, 40]} />
-          </mesh>
-          <mesh position={[STRIP.wheel + 0.024, -0.012, STRIP.z]} material={mats.switch}><boxGeometry args={[0.012, 0.004, 0.034]} /></mesh>
           <mesh position={[STRIP.lcd, -0.0018, STRIP.z]} rotation={UNDER} material={mats.lcd}>
             <planeGeometry args={[0.27, 0.0675]} />
           </mesh>

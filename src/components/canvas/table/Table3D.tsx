@@ -121,12 +121,12 @@ type QualityLevel = { dpr: [number, number]; msaa: number; ao: 'low' | 'medium';
 const QUALITY: Record<'desktop' | 'mobile', Record<Quality, QualityLevel>> = {
   desktop: {
     high: { dpr: [1.5, 2], msaa: 4, ao: 'medium', glass: true },
-    medium: { dpr: [1, 1.25], msaa: 2, ao: 'low', glass: false },
+    medium: { dpr: [1, 1.25], msaa: 2, ao: 'low', glass: true },
     low: { dpr: [1, 1], msaa: 0, ao: 'low', glass: false },
   },
   mobile: {
-    high: { dpr: [1, 1.5], msaa: 0, ao: 'low', glass: false },
-    medium: { dpr: [1, 1.5], msaa: 0, ao: 'low', glass: false },
+    high: { dpr: [1, 1.5], msaa: 0, ao: 'low', glass: true },
+    medium: { dpr: [1, 1.5], msaa: 0, ao: 'low', glass: true },
     low: { dpr: [1, 1], msaa: 0, ao: 'low', glass: false },
   },
 }
