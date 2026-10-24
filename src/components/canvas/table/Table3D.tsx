@@ -81,7 +81,7 @@ type Props = {
   count: number
   folderLabel: string
   folderHint: string
-  game: { title: string; hint: string; screen: string; loading: string }
+  game: { title: string; hint: string; close: string; screen: string; loading: string }
   onFolder: () => void
   onConsole: () => void
   api: MutableRefObject<TableApi | null>
@@ -327,7 +327,6 @@ function Table(props: Props & { images: Images }) {
         game={props.game}
         logo={props.images.logo}
         plasticRough={plasticRough}
-        metalRough={metalRough}
         onPointer={setHConsole}
         // se la bilia e' sul banco ci salta sopra, e il Game Boy si accende quando atterra
         onClick={() => { marble.clickedAt = performance.now(); if (!marble.toConsole?.()) props.onConsole() }}
@@ -616,10 +615,7 @@ export default function Table3D(props: Props) {
         camera={{ fov: 30, position: [0.15, 40, 30], near: 0.1, far: 200 }}
         // trasparente: dietro c'e' l'acqua, sul suo canvas (WaterCanvas)
         gl={{ antialias: false, alpha: true, powerPreference: 'high-performance' }}
-        // la plastica trasparente del Game Boy ridisegna la scena dietro di se':
-        // a meta' risoluzione, sotto un guscio satinato non si vede la differenza
         onCreated={({ gl }) => {
-          gl.transmissionResolutionScale = 0.5
           // il controllo degli errori dei programmi aspetta che la scheda video li abbia
           // compilati, e intanto la pagina si blocca: serve solo mentre si sviluppa
           gl.debug.checkShaderErrors = process.env.NODE_ENV !== 'production'

@@ -394,106 +394,111 @@ export function pagesTexture() {
 
 /* ── Console ─────────────────────────────────────────────────────────────── */
 
-/** Scheda elettronica: piste dorate, piazzole, serigrafia */
-export function pcbTexture() {
-  const W = 1024, H = 1024
-  const rand = rng(31)
-  const [c, ctx] = canvas(W, H)
-  const { mono } = fonts()
-  ctx.fillStyle = '#26322C'; ctx.fillRect(0, 0, W, H)
-  ctx.lineCap = 'round'
-  for (let i = 0; i < 180; i++) {
-    let x = rand() * W, y = rand() * H
-    ctx.strokeStyle = `rgba(214,180,96,${0.35 + rand() * 0.4})`
-    ctx.lineWidth = 2 + rand() * 4
-    ctx.beginPath(); ctx.moveTo(x, y)
-    for (let s = 0; s < 4; s++) {
-      const len = 30 + rand() * 160
-      const dir = Math.floor(rand() * 8) * Math.PI / 4
-      x += Math.cos(dir) * len; y += Math.sin(dir) * len
-      ctx.lineTo(x, y)
-    }
-    ctx.stroke()
-    ctx.fillStyle = 'rgba(226,196,110,0.9)'
-    ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fill()
-  }
-  for (let i = 0; i < 260; i++) {
-    ctx.fillStyle = 'rgba(226,196,110,0.8)'
-    ctx.fillRect(rand() * W, rand() * H, 6, 10)
-  }
-  ctx.fillStyle = 'rgba(240,240,255,0.7)'
-  ctx.font = `700 22px ${mono}`
-  ctx.fillText('PV-86 REV.B', 60, 80)
-  ctx.fillText('ARTISMI ✦ 2026', W - 260, H - 50)
-  ctx.fillText('C12  R4  U3', 420, 520)
-  return toTexture(c)
+/** Le misure della faccia della console, in unita' del mondo (vedi Console3D) */
+export type SlabFace = {
+  w: number
+  d: number
+  /** la finestra: centro (verso il lato lontano = +), misure, raggio, cornice nera e filo chiaro */
+  screen: { cy: number; w: number; h: number; r: number; ring: number; rim: number }
+  /** la tesa: la sua riga di mezzo, la lucina, le pillole (centri, lunghezza, raggio, riga) e le scritte */
+  brow: { cy: number; led: number; pills: number[]; pillLen: number; pillR: number; pillCy: number; labelCy: number }
+}
+
+/** Testo spaziato come il letter-spacing del CSS (em: frazione della misura del font) */
+function spaced(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, size: number, em: number, center = false) {
+  const chars = [...text]
+  const gap = size * em
+  const widths = chars.map((ch) => ctx.measureText(ch).width)
+  let cx = center ? x - (widths.reduce((s, w) => s + w, 0) + gap * (chars.length - 1)) / 2 : x
+  const align = ctx.textAlign
+  ctx.textAlign = 'left'
+  chars.forEach((ch, i) => { ctx.fillText(ch, cx, y); cx += widths[i] + gap })
+  ctx.textAlign = align
 }
 
 /**
- * Serigrafia sulla base della console: copre la base intera
- * (0,96 × 0,94 unita', 1000 px per unita', centro della base = centro della tela).
+ * La faccia della console, come la cornice del gioco a tutto schermo
+ * (GameBoy.module.css): plastica rosa satinata con il suo sfumato e il riflesso
+ * in alto a sinistra; nella tesa POWER accanto alla lucina, il nome inciso al
+ * centro, SCHERMO ed ESCI sotto le pillole; sotto, la finestra scura con la
+ * cornice nera e il filo chiaro. La tela copre esattamente la faccia: PX pixel
+ * per unita', centro della faccia = centro della tela, in alto il lato lontano.
  */
-export function faceTexture(title: string) {
-  const W = 960, H = 940
+export function slabTexture(title: string, labels: string[], f: SlabFace) {
+  const PX = 1500
+  const W = Math.round(f.w * PX), H = Math.round(f.d * PX)
   const [c, ctx] = canvas(W, H)
-  const { mono, display } = fonts()
-  const P = (x: number, z: number) => [x * 1000 + W / 2, z * 1000 + H / 2] as const
-  ctx.fillStyle = 'rgba(70,30,48,0.82)'
+  const { display, mono } = fonts()
+  const X = (x: number) => W / 2 + x * PX
+  const Y = (y: number) => H / 2 - y * PX
 
-  // il nome, vicino alla cerniera, come un logo
-  let [x, y] = P(0, -0.33)
-  ctx.textAlign = 'center'
-  ctx.font = `italic 800 40px ${display}`
-  ctx.fillText(title, x, y)
-  ctx.font = `700 15px ${mono}`
-  ctx.fillText('A R T I S M I', x, y + 24)
+  // lo sfumato della plastica (linear-gradient 165deg) e il riflesso (radial-gradient 120% 80% at 20% 0%).
+  // Rosa piu' carichi di quelli della cornice: la luce del banco e il tone mapping li schiariscono,
+  // e cosi' a schermo tornano gli stessi
+  const a = 165 * Math.PI / 180, dx = Math.sin(a), dy = -Math.cos(a)
+  const L = Math.abs(W * dx) + Math.abs(H * dy)
+  const g = ctx.createLinearGradient(W / 2 - dx * L / 2, H / 2 - dy * L / 2, W / 2 + dx * L / 2, H / 2 + dy * L / 2)
+  g.addColorStop(0, '#f2bccd'); g.addColorStop(0.55, '#e79cb5'); g.addColorStop(1, '#dc86a3')
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H)
+  ctx.save()
+  ctx.translate(W * 0.2, 0); ctx.scale(W * 1.2, H * 0.8)
+  const hl = ctx.createRadialGradient(0, 0, 0, 0, 0, 1)
+  // (piu' tenue della cornice: la lampada del banco ci aggiunge il suo riflesso)
+  hl.addColorStop(0, 'rgba(255,255,255,0.2)'); hl.addColorStop(0.55, 'rgba(255,255,255,0)')
+  ctx.fillStyle = hl; ctx.fillRect(-1, -1, 2, 2)
+  ctx.restore()
 
-  // POWER sotto il LED
-  ctx.font = `700 15px ${mono}`
-  ;[x, y] = P(-0.05, -0.15); ctx.fillText('POWER', x, y)
-
-  // A e B
-  ctx.font = `800 26px ${display}`
-  ;[x, y] = P(0.345, 0.075); ctx.fillText('A', x, y)
-  ;[x, y] = P(0.2, 0.175); ctx.fillText('B', x, y)
-
-  // SELECT e START, inclinate come i tasti
-  ctx.font = `700 16px ${mono}`
-  for (const [lx, label] of [[-0.08, 'SELECT'], [0.07, 'START']] as const) {
-    ;[x, y] = P(lx, 0.395)
-    ctx.save(); ctx.translate(x, y); ctx.rotate(-0.3)
-    ctx.fillText(label, 0, 0)
-    ctx.restore()
+  // la finestra: filo chiaro, cornice nera, vetro scuro
+  const s = f.screen
+  const win = (grow: number, fill: string) => {
+    ctx.fillStyle = fill
+    roundRect(ctx, X(-s.w / 2 - grow), Y(s.cy + s.h / 2 + grow), (s.w + grow * 2) * PX, (s.h + grow * 2) * PX, (s.r + grow) * PX)
+    ctx.fill()
   }
+  win(s.ring + s.rim, 'rgba(255,255,255,0.35)')
+  win(s.ring, '#231c26')
+  win(0, '#0d0b1a')
 
-  ctx.textAlign = 'left'
-  ctx.font = `700 14px ${mono}`
-  ;[x, y] = P(-0.44, 0.43); ctx.fillText('◖ PHONES', x, y)
+  // la tesa
+  const b = f.brow
+  const ink = 'rgba(100,34,62,0.85)'
+  ctx.textBaseline = 'middle'
+  // la lucina nel suo foro, e POWER accanto
+  ctx.fillStyle = 'rgba(110,40,65,0.28)'
+  ctx.beginPath(); ctx.arc(X(b.led), Y(b.cy), 0.017 * PX, 0, Math.PI * 2); ctx.fill()
+  const small = Math.round(0.018 * PX)
+  ctx.font = `700 ${small}px ${mono}`
+  ctx.fillStyle = ink
+  spaced(ctx, 'POWER', X(b.led + 0.03), Y(b.cy), small, 0.18)
+  // il nome inciso nella plastica, con il filo di luce sotto
+  ctx.textAlign = 'center'
+  ctx.font = `800 ${Math.round(0.05 * PX)}px ${display}`
+  ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.fillText(title, X(0), Y(b.cy) + 3)
+  ctx.fillStyle = 'rgba(112,36,68,0.9)'; ctx.fillText(title, X(0), Y(b.cy))
+  // le fessure delle pillole, con il filo chiaro sotto, e le scritte
+  const label = Math.round(0.016 * PX)
+  ctx.font = `700 ${label}px ${mono}`
+  b.pills.forEach((px, i) => {
+    const slot = (dy: number, fill: string) => {
+      ctx.fillStyle = fill
+      roundRect(ctx, X(px - b.pillLen / 2 - 0.005), Y(b.pillCy + b.pillR + 0.005) + dy, (b.pillLen + 0.01) * PX, (b.pillR * 2 + 0.01) * PX, (b.pillR + 0.005) * PX)
+      ctx.fill()
+    }
+    slot(2, 'rgba(255,255,255,0.5)')
+    slot(0, 'rgba(110,40,65,0.24)')
+    ctx.fillStyle = ink
+    spaced(ctx, (labels[i] ?? '').toUpperCase(), X(px), Y(b.labelCy), label, 0.16, true)
+  })
   return toTexture(c)
 }
 
-/** Cornice rosa dello schermo (faccia interna del coperchio), con la finestra scura e la scritta */
-export function bezelTexture(title: string) {
-  const W = 1024, H = 786
-  const [c, ctx] = canvas(W, H)
-  const { mono, display } = fonts()
-  const rand = rng(41)
-  ctx.fillStyle = '#E7A6B8'
-  roundRect(ctx, 0, 0, W, H, 46); ctx.fill()
-  fibres(ctx, null, W, H, rand, 1500, '#f4c8d5', '#c98aa1')
-  // finestra scura attorno all'LCD
-  const g = ctx.createLinearGradient(0, 0, 0, H)
-  g.addColorStop(0, '#2b2430'); g.addColorStop(1, '#1d1822')
-  ctx.fillStyle = g
-  roundRect(ctx, 512 - 381, 333 - 262, 762, 524, 16); ctx.fill()
-  // righe sottili come sul vetro originale
-  ctx.fillStyle = 'rgba(70,30,48,0.7)'
-  ctx.fillRect(40, 28, W - 80, 4); ctx.fillRect(40, 40, W - 80, 2)
-  ctx.font = `700 20px ${mono}`
-  ctx.fillText('BATTERY', 16, 400)
-  ctx.textAlign = 'center'
-  ctx.font = `800 32px ${display}`
-  ctx.fillText(`${title.toUpperCase()}  ✦  STEREO SOUND`, W / 2, H - 52)
+/** L'alone della lucina accesa: un punto di luce morbido */
+export function haloTexture() {
+  const S = 128
+  const [c, ctx] = canvas(S, S)
+  const g = ctx.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2)
+  g.addColorStop(0, 'rgba(255,90,105,0.85)'); g.addColorStop(0.35, 'rgba(255,77,94,0.3)'); g.addColorStop(1, 'rgba(255,77,94,0)')
+  ctx.fillStyle = g; ctx.fillRect(0, 0, S, S)
   return toTexture(c)
 }
 
@@ -506,7 +511,8 @@ export function bezelTexture(title: string) {
 export const BOOT_SECONDS = 2.6
 
 export function screenTexture(src: string, logo: HTMLImageElement | null, loading: string, onReady: () => void) {
-  const W = 960, H = 640
+  // 16:10, come lo schermo della console
+  const W = 1024, H = 640
   const [c, ctx] = canvas(W, H)
   const tex = toTexture(c)
   const { mono } = fonts()
@@ -516,6 +522,12 @@ export function screenTexture(src: string, logo: HTMLImageElement | null, loadin
     ctx.fillStyle = 'rgba(0,0,0,0.08)'
     for (let y = 0; y < H; y += 4) ctx.fillRect(0, y, W, 1)
     for (let x = 0; x < W; x += 4) ctx.fillRect(x, 0, 1, H)
+    // l'ombra dentro la finestra, come nella cornice del gioco
+    ctx.save()
+    ctx.beginPath(); ctx.rect(-60, -60, W + 120, H + 120); ctx.rect(0, 0, W, H)
+    ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 26
+    ctx.fillStyle = '#000'; ctx.fill('evenodd')
+    ctx.restore()
   }
   /** load: il caricamento del gioco (gameLoad); finche' non e' pronto lo schermo lo mostra */
   const draw = (t: number, load: { p: number; ready: boolean } = { p: 1, ready: true }) => {
@@ -541,7 +553,9 @@ export function screenTexture(src: string, logo: HTMLImageElement | null, loadin
       if (launch) {
         // mentre il gioco si carica la schermata di lancio resta in penombra
         ctx.globalAlpha = Math.min(1, (t - 2.1) / 0.4) * (load.ready ? 1 : 0.32)
-        ctx.drawImage(launch, 0, 0, W, H)
+        // la schermata di lancio riempie lo schermo senza deformarsi
+        const k = Math.max(W / launch.width, H / launch.height)
+        ctx.drawImage(launch, (W - launch.width * k) / 2, (H - launch.height * k) / 2, launch.width * k, launch.height * k)
         ctx.globalAlpha = 1
       }
       if (!load.ready) {

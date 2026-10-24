@@ -18,6 +18,7 @@ import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { marble, type Spot, type Quad } from './marble'
 import { FW, FD, BW, BD, BOARD_Y, MOBILE_Z } from './Folder3D'
+import { consoleBase, consoleTop } from './Console3D'
 import type { TablePhase } from './Table3D'
 
 /** raggio della bilia nel mondo, per l'altezza a cui si misurano gli ostacoli */
@@ -28,10 +29,8 @@ type Box = { x: number; z: number; hx: number; hz: number; ry: number }
 /** il fascicolo chiuso e la base del Game Boy, sul banco (vedi Folder3D e Console3D) */
 function obstacles(mobile: boolean): { folder: Box; console: Box } {
   return mobile
-    ? { folder: { x: 0, z: MOBILE_Z, hx: FW / 2, hz: FD / 2, ry: 0 },
-        console: { x: 0.3, z: 1.75, hx: 0.5 * 1.1, hz: 0.49 * 1.1, ry: -0.3 } }
-    : { folder: { x: -1.55, z: 0.05, hx: FW / 2, hz: FD / 2, ry: 0.07 },
-        console: { x: 2.15, z: 0.4, hx: 0.5 * 1.25, hz: 0.49 * 1.25, ry: -0.4 } }
+    ? { folder: { x: 0, z: MOBILE_Z, hx: FW / 2, hz: FD / 2, ry: 0 }, console: consoleBase(true) }
+    : { folder: { x: -1.55, z: 0.05, hx: FW / 2, hz: FD / 2, ry: 0.07 }, console: consoleBase(false) }
 }
 
 export function Marble3D({ phase, mobile, grab, stage, hover, onConsole }: {
@@ -99,10 +98,10 @@ export function Marble3D({ phase, mobile, grab, stage, hover, onConsole }: {
     toScreen(k.p.set(0, BOARD_Y + MARBLE_R, zc), MARBLE_R, marble.boardMid)
     const b = marble.board
     toScreen(k.p.set((b.u - 0.5) * BW, BOARD_Y + MARBLE_R + b.lift * BW, zc + (b.v - 0.5) * BD), MARBLE_R, marble.boardAt)
-    // sopra la base del Game Boy, davanti al coperchio; e un passo a sinistra, per scenderne
-    const cb = o.console
-    toScreen(k.p.set(cb.x + 0.18 * Math.sin(cb.ry), 0.145 + MARBLE_R, cb.z + 0.18 * Math.cos(cb.ry)), MARBLE_R, marble.consoleAt)
-    toScreen(k.p.set(cb.x - Math.cos(cb.ry) * 0.95, MARBLE_R, cb.z + Math.sin(cb.ry) * 0.95 + 0.18 * Math.cos(cb.ry)), MARBLE_R, marble.consoleOut)
+    // sopra il Game Boy, al centro della faccia inclinata; e un passo a sinistra, per scenderne
+    const cb = o.console, top = consoleTop(mobile), side = cb.hx + 0.32
+    toScreen(k.p.set(cb.x + top.fwd * Math.sin(cb.ry), top.y + MARBLE_R, cb.z + top.fwd * Math.cos(cb.ry)), MARBLE_R, marble.consoleAt)
+    toScreen(k.p.set(cb.x - Math.cos(cb.ry) * side, MARBLE_R, cb.z + Math.sin(cb.ry) * side + top.fwd * Math.cos(cb.ry)), MARBLE_R, marble.consoleOut)
 
     // gli ostacoli: a fascicolo chiuso e con il Game Boy sul banco
     const closed = phase === 'closed'
