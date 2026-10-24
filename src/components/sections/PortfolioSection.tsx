@@ -932,36 +932,29 @@ export function PortfolioSection() {
 
   // Il gioco si apre dentro il Game Boy, qui sulla home (vedi GameBoy): la console
   // si prende in mano, viene davanti alla camera, e dal suo schermo nasce il gioco.
-  // Da computer il gioco e' gia' partito in sottofondo, nascosto: arriva al menu subito.
+  // Da computer comincia a caricarsi quando lo si vuole: il mouse sul Game Boy, il suo
+  // tasto col fuoco. Si carica nascosto, in un processo suo, e lo schermo della console
+  // mostra a che punto e'. Scaldato in sottofondo per tutta la visita, il gioco (un
+  // secondo mondo 3D) dimezzava i fotogrammi di tutto il sito, anche a chi non lo apriva.
   const [warm, setWarm] = useState(false)
   const [gameOn, setGameOn] = useState(false)      // il gioco e' montato (anche nascosto)
   const [gameFrom, setGameFrom] = useState<Rect | null>(null)
-  const [gameKey, setGameKey] = useState(0)
 
-  useEffect(() => {
-    if (!gameWarmable()) return
-    setWarm(true)
-    // il gioco si scalda quando il banco e' a uno schermo di distanza, non appena
-    // aperto il sito: sono ~20 MB e un secondo mondo 3D da preparare, che nei primi
-    // secondi rubavano processore, memoria e banda alla home, anche a chi il Game Boy
-    // non lo prende mai. Arrivati al banco ha gia' cominciato, e lo schermo della
-    // console mostra a che punto e'
-    const section = sectionRef.current
-    if (!section) return
-    let t = 0
-    const io = new IntersectionObserver(([e]) => {
-      if (!e.isIntersecting) return
-      io.disconnect()
-      const go = () => setGameOn(true)
-      t = window.setTimeout(() => {
-        if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(go, { timeout: 1500 })
-        else go()
-      }, 300)
-    }, { rootMargin: '100% 0px' })
-    io.observe(section)
-    return () => { io.disconnect(); window.clearTimeout(t) }
-  }, [])
+  useEffect(() => { setWarm(gameWarmable()) }, [])
   useGamePreload(!warm, sectionRef)
+
+  /** il mouse o il fuoco sul Game Boy: da computer il gioco comincia a caricarsi */
+  function wantGame() { if (warm) setGameOn(true) }
+
+  // usciti dal banco senza giocare il gioco si spegne: fermo in sottofondo continuava a
+  // disegnare. Ripassando sul Game Boy riparte, dai file ormai in cache
+  useEffect(() => {
+    const section = sectionRef.current
+    if (!gameOn || gameFrom || !section) return
+    const io = new IntersectionObserver(([e]) => { if (!e.isIntersecting) setGameOn(false) })
+    io.observe(section)
+    return () => io.disconnect()
+  }, [gameOn, gameFrom])
 
   // le anteprime delle cartelline arrivano prima di aprire il fascicolo, quando il browser e' libero
   useEffect(() => {
@@ -992,9 +985,8 @@ export function PortfolioSection() {
     if (window.location.hash === `#${PROGETTI.game.id}`) {
       history.replaceState(null, '', window.location.pathname + window.location.search)
     }
-    // il gioco si rimonta da capo (si ferma, musica compresa); da computer riparte in sottofondo
-    if (warm) setGameKey((k) => k + 1)
-    else setGameOn(false)
+    // il gioco si smonta (si ferma, musica compresa); ripassando sul Game Boy si ricarica
+    setGameOn(false)
   }
 
   // Link diretto (/#porto-vecchio): si arriva al tavolo e il Game Boy arriva subito in mano
@@ -1148,6 +1140,7 @@ export function PortfolioSection() {
           game={PROGETTI.game}
           onFolder={() => { if (atTable()) openFolder() }}
           onConsole={() => { if (atTable()) grabGamepad() }}
+          onConsoleHover={() => { if (atTable()) wantGame() }}
           api={tableRef}
           board={canvasRef}
           stage={wrapperRef}
@@ -1168,6 +1161,7 @@ export function PortfolioSection() {
           type="button"
           className={`${styles.hit} ${styles.hitConsole}`}
           onClick={grabGamepad}
+          onFocus={wantGame}
           tabIndex={phase === 'closed' || phase === 'list' ? 0 : -1}
         >
           {PROGETTI.game.title} — {PROGETTI.game.hint}
@@ -1182,7 +1176,7 @@ export function PortfolioSection() {
 
       </div>
 
-      {gameOn && <GameBoy key={gameKey} from={gameFrom} onClose={closeGame} warm={warm} />}
+      {gameOn && <GameBoy from={gameFrom} onClose={closeGame} warm={warm} />}
 
       <div className={styles.mobileGrid} data-show={phase === 'list' ? 'true' : undefined}>
         {PROJECTS.map(p=>(
@@ -1238,8 +1232,10 @@ function useGamePreload(on: boolean, section: RefObject<HTMLElement | null>) {
         } catch { if (ctrl.signal.aborted) return }
         // lo schermo del Game Boy sul banco segue lo scaricamento
         gameLoad.p = (i + 1) / files.length
+        gameLoad.onChange?.()
       }
       gameLoad.ready = true
+      gameLoad.onChange?.()
     }
     const io = new IntersectionObserver(([e]) => {
       if (!e.isIntersecting) return

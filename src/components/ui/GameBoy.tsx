@@ -7,13 +7,13 @@
  * in alto la tesa del Game Boy, con la lucina, il nome e due tasti di gomma
  * (schermo intero, esci). Niente barra del sito: si e' dentro la console.
  *
- * Caricamento: da computer il gioco parte gia' in sottofondo, poco dopo
- * l'apertura della home, nascosto fuori schermo. Viene dal suo sito
- * (PROGETTI.game.url): un'origine diversa, quindi il browser lo fa girare in un
- * processo suo e la pagina resta fluida; fuori schermo il browser non lo
- * disegna, quindi non costa niente. Prendendo in mano il Game Boy e' gia' al
- * menu. Da telefono (meno memoria) parte quando si prende la console, dal sito
- * stesso (PROGETTI.game.path), con i file gia' in cache.
+ * Caricamento: da computer il gioco parte quando si va sul Game Boy (il mouse
+ * sopra, il tasto col fuoco), nascosto fuori schermo, e lo schermo della console
+ * ne mostra il caricamento. Viene dal suo sito (PROGETTI.game.url): un'origine
+ * diversa, quindi il browser lo fa girare in un processo suo. Scaldato per tutta
+ * la visita costava comunque: e' un secondo mondo 3D, e il sito andava a meta'
+ * fotogrammi. Da telefono (meno memoria) parte quando si prende la console, dal
+ * sito stesso (PROGETTI.game.path), con i file gia' in cache.
  *
  * Il gioco dice a che punto e' con postMessage ('carico', 'pronto'): finche'
  * il menu non e' disegnato si vede un caricamento solo, quello del sito.
@@ -81,10 +81,19 @@ export function GameBoy({ from, onClose, page = false, warm = false }: {
       // (e 'pronto' arriva solo quando si vede): per lo schermo basta il caricamento finito
       gameLoad.p = e.data.pv === 'pronto' ? 1 : real.current
       if (e.data.pv === 'pronto' || real.current >= 0.99) gameLoad.ready = true
+      gameLoad.onChange?.()
     }
     window.addEventListener('message', onMsg)
     return () => window.removeEventListener('message', onMsg)
   }, [])
+
+  // da computer, smontato il gioco non e' piu' caricato: lo schermo e la lucina della console
+  // tornano spenti (da telefono il caricamento e' quello dei file, che restano in cache)
+  useEffect(() => () => {
+    if (!warm) return
+    gameLoad.p = 0; gameLoad.ready = false
+    gameLoad.onChange?.()
+  }, [warm])
 
   // un gioco che non parla: basta la pagina caricata. E se il messaggio non arriva, dopo un po' si mostra.
   // Il menu si disegna solo quando si vede (fuori schermo il browser non disegna): l'attesa conta da li'

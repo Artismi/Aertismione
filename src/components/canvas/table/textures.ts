@@ -517,18 +517,16 @@ export function screenTexture(src: string, logo: HTMLImageElement | null, loadin
   const tex = toTexture(c)
   const { mono } = fonts()
   let launch: HTMLImageElement | null = null
-  const lcd = () => {
-    // griglia dei pixel, leggera
-    ctx.fillStyle = 'rgba(0,0,0,0.08)'
-    for (let y = 0; y < H; y += 4) ctx.fillRect(0, y, W, 1)
-    for (let x = 0; x < W; x += 4) ctx.fillRect(x, 0, 1, H)
-    // l'ombra dentro la finestra, come nella cornice del gioco
-    ctx.save()
-    ctx.beginPath(); ctx.rect(-60, -60, W + 120, H + 120); ctx.rect(0, 0, W, H)
-    ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 26
-    ctx.fillStyle = '#000'; ctx.fill('evenodd')
-    ctx.restore()
-  }
+  // la griglia dei pixel, leggera, e l'ombra dentro la finestra (come nella cornice del gioco)
+  // non cambiano: si disegnano una volta, e a ogni fotogramma dell'accensione si ricopiano
+  const [glassC, gctx] = canvas(W, H)
+  gctx.fillStyle = 'rgba(0,0,0,0.08)'
+  for (let y = 0; y < H; y += 4) gctx.fillRect(0, y, W, 1)
+  for (let x = 0; x < W; x += 4) gctx.fillRect(x, 0, 1, H)
+  gctx.beginPath(); gctx.rect(-60, -60, W + 120, H + 120); gctx.rect(0, 0, W, H)
+  gctx.shadowColor = 'rgba(0,0,0,0.6)'; gctx.shadowBlur = 26
+  gctx.fillStyle = '#000'; gctx.fill('evenodd')
+  const lcd = () => ctx.drawImage(glassC, 0, 0)
   /** load: il caricamento del gioco (gameLoad); finche' non e' pronto lo schermo lo mostra */
   const draw = (t: number, load: { p: number; ready: boolean } = { p: 1, ready: true }) => {
     if (t < 2.1) {

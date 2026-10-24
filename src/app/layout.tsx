@@ -3,6 +3,7 @@ import { Bricolage_Grotesque, Courier_Prime, JetBrains_Mono, Space_Grotesk } fro
 import './globals.css'
 import { CustomCursor } from '@/components/ui/CustomCursor'
 import { Ambience } from '@/components/ui/Ambience'
+import { MotionPrefs } from '@/components/ui/MotionPrefs'
 
 /*
  * Bricolage Grotesque: grottesco variabile con le forme leggermente storte,
@@ -92,8 +93,10 @@ export default function RootLayout({
       <body>
         <CustomCursor />
         <Ambience />
-        {children}
-        {modal}
+        <MotionPrefs>
+          {children}
+          {modal}
+        </MotionPrefs>
       </body>
     </html>
   )

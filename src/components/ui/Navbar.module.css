@@ -136,11 +136,10 @@
   transition: transform 0.2s;
 }
 
-/* Mobile drawer */
+/* Mobile drawer: fondo pieno, niente sfocatura (sopra l'acqua e il 3D che si muovono
+   si ricalcolava a ogni fotogramma, e il menu si apriva a scatti) */
 .drawer {
-  background: rgba(242, 224, 232, 0.92);
-  backdrop-filter: blur(28px) saturate(180%);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  background: rgba(242, 224, 232, 0.97);
   border-bottom: 1px solid rgba(232, 168, 191, 0.45);
   padding: 24px clamp(20px, 5vw, 60px);
   display: flex;

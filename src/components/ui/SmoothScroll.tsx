@@ -6,7 +6,8 @@
  * una gru invece che a scatti di rotella.
  *
  * Si ferma quando Porto Vecchio e' aperto a tutto schermo; dentro le finestre
- * (dialog) lo scroll resta quello normale.
+ * (dialog) lo scroll resta quello normale. Chi ha chiesto al sistema meno
+ * movimento ha lo scroll normale, senza inerzia.
  */
 
 import { useEffect } from 'react'
@@ -18,6 +19,7 @@ export function SmoothScroll() {
   const gameOpen = useStore((s) => s.gameOpen)
 
   useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const lenis = new Lenis({
       autoRaf: true,
       lerp: 0.085,

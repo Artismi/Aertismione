@@ -273,8 +273,10 @@ export function WorldBackdrop({ mobile = false }: { mobile?: boolean }) {
   const effect = useMemo(() => new BackdropEffect(), [])
 
   // in cima il logo galleggia e attraverso il vetro si vede l'acqua muoversi: li' il
-  // mondo si ridisegna 30 volte al secondo. Altrove (banco compreso) solo quando cambia qualcosa
+  // mondo si ridisegna 30 volte al secondo. Altrove (banco compreso) solo quando cambia qualcosa,
+  // e anche in cima per chi ha chiesto al sistema meno movimento (l'acqua sta ferma, WaterCanvas)
   useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return () => effect.dispose()
     const id = window.setInterval(() => {
       if (document.hidden || useStore.getState().gameOpen || worldHold.on) return
       if (window.scrollY < window.innerHeight * 1.1) invalidate()

@@ -16,7 +16,7 @@
  * diventa la stampa dentro il fascicolo, e il mouse viene riportato sul tabellone.
  */
 
-import { Suspense, useEffect, useMemo, useRef, useState, type MutableRefObject, type RefObject } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject, type RefObject } from 'react'
 import { createPortal } from 'react-dom'
 import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber'
 import { Environment } from '@react-three/drei'
@@ -84,6 +84,8 @@ type Props = {
   game: { title: string; hint: string; close: string; screen: string; loading: string }
   onFolder: () => void
   onConsole: () => void
+  /** il mouse e' arrivato sul Game Boy: da computer il gioco comincia a caricarsi */
+  onConsoleHover: () => void
   api: MutableRefObject<TableApi | null>
   /** il canvas 2D su cui PortfolioSection disegna il tabellone */
   board: RefObject<HTMLCanvasElement | null>
@@ -103,13 +105,33 @@ const V = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z)
 
 /** dove sta il logo nella prima schermata, in frazione dell'altezza dello schermo */
 const LOGO_AT = 0.45
-/** in movimento il 3D si disegna con questa frazione dei pixel (al minimo uno per pixel dello schermo) */
-const MOVING_DPR = 0.6
-/** quanto deve restare tutto fermo prima di tornare alla risoluzione piena (ms) */
-const STILL_MS = 220
-const STILL_FRAMES = 6
 /** quanto scurisce l'occlusione negli angoli del banco (N8AO) */
 const AO_INTENSITY = 3.5
+
+export type Quality = 'high' | 'medium' | 'low'
+type QualityLevel = { dpr: [number, number]; msaa: number; ao: 'low' | 'medium' }
+/**
+ * Fasce di qualita': quanti pixel (dpr), quanto antialiasing (msaa), che occlusione.
+ * Da computer l'alta e' sovracampionata: il vetro del logo e i bordi del banco nitidi
+ * anche sugli schermi normali. Ogni fascia ha la sua risoluzione fissa: cambiarla a ogni
+ * inizio e fine di movimento riallocava i buffer, e ogni animazione partiva con uno scatto.
+ */
+const QUALITY: Record<'desktop' | 'mobile', Record<Quality, QualityLevel>> = {
+  desktop: {
+    high: { dpr: [1.5, 2], msaa: 4, ao: 'medium' },
+    medium: { dpr: [1, 1.25], msaa: 2, ao: 'low' },
+    low: { dpr: [1, 1], msaa: 0, ao: 'low' },
+  },
+  mobile: {
+    high: { dpr: [1, 1.5], msaa: 0, ao: 'low' },
+    medium: { dpr: [1, 1.5], msaa: 0, ao: 'low' },
+    low: { dpr: [1, 1], msaa: 0, ao: 'low' },
+  },
+}
+const LOWER: Record<Quality, Quality> = { high: 'medium', medium: 'low', low: 'low' }
+/** in movimento sul banco, se piu' di un fotogramma su cinque va sotto i 45 al secondo
+ *  la fascia scende: sono quelli che si vedono come scatti, anche con la mediana a 60 */
+const SLOW_DT = 1 / 45
 
 /**
  * La camera guarda il banco sempre dalla stessa angolazione e scorre con la
@@ -327,7 +349,7 @@ function Table(props: Props & { images: Images }) {
         game={props.game}
         logo={props.images.logo}
         plasticRough={plasticRough}
-        onPointer={setHConsole}
+        onPointer={(h) => { setHConsole(h); if (h) props.onConsoleHover() }}
         // se la bilia e' sul banco ci salta sopra, e il Game Boy si accende quando atterra
         onClick={() => { marble.clickedAt = performance.now(); if (!marble.toConsole?.()) props.onConsole() }}
       />
@@ -342,24 +364,25 @@ function Table(props: Props & { images: Images }) {
  * Per gran parte della pagina il mondo e' solo il fondale rosa: banco e logo
  * sono fuori schermo. Allora il banco non si disegna e l'occlusione (N8AO) si
  * ferma, tanto il fondale copre tutto. L'ombra del sole si ricalcola solo
- * quando qualcosa sul banco si muove, non a ogni fotogramma.
+ * quando qualcosa sul banco si muove, non a ogni fotogramma. E se muovendosi
+ * sul banco i fotogrammi restano lenti, la fascia di qualita' scende (onSlow).
  */
-function Budget({ stage, table, composer }: {
+function Budget({ stage, table, composer, onSlow }: {
   stage: RefObject<HTMLDivElement | null>
   table: RefObject<THREE.Group | null>
   composer: RefObject<Composer | null>
+  onSlow: () => void
 }) {
-  const { gl, camera, invalidate, size } = useThree()
-  const fullDpr = useThree((st) => st.viewport.dpr)
+  const { gl, camera, invalidate } = useThree()
   const was = useRef<boolean | null>(null)
   const sig = useRef(0)
   const cam = useRef(0)
+  const scroll = useRef(-1)
   /** quanta occlusione: 0 mentre qualcosa si muove, poi torna piano a 1 */
   const ao = useRef(1)
-  /** da quando e' tutto fermo (ms) e da quanti fotogrammi: oltre STILL_MS e STILL_FRAMES
-   *  si torna alla risoluzione piena */
-  const still = useRef(0)
-  const stillFrames = useRef(0)
+  /** i fotogrammi in movimento sul banco (s), e da quando si misura: dopo un cambio di
+   *  fascia si aspetta che la nuova si sia sistemata */
+  const slow = useRef({ dts: [] as number[], since: performance.now() })
 
   useEffect(() => {
     gl.shadowMap.autoUpdate = false
@@ -391,8 +414,13 @@ function Budget({ stage, table, composer }: {
     }
     const p = camera.position, q = camera.quaternion
     const c = p.x * 1.31 + p.y * 1.73 + p.z * 2.11 + q.x * 3.7 + q.y * 5.3 + q.z * 7.1 + q.w * 1.9
-    // (lo spostamento di pochi millimetri del mouse non conta: e' sotto 0,03)
-    const moving = Math.abs(c - cam.current) > 0.03 || Math.abs(k - sig.current) > 1e-3
+    // la pagina che scorre conta sempre: scorrendo la camera scende lungo il suo «alto» e
+    // nella somma pesata y e z quasi si annullano, cosi' uno scroll medio sembrava fermo
+    // e l'occlusione restava accesa (il passaggio piu' caro). Per il resto (il fascicolo
+    // che si apre) la camera: lo spostamento di pochi millimetri del mouse non conta, e' sotto 0,03
+    const sy = window.scrollY
+    const moving = sy !== scroll.current || Math.abs(c - cam.current) > 0.03 || Math.abs(k - sig.current) > 1e-3
+    scroll.current = sy
     cam.current = c
 
     // L'occlusione (N8AO) e' l'effetto che costa di piu': mentre la camera o le cose si
@@ -401,19 +429,17 @@ function Budget({ stage, table, composer }: {
     if (moving) ao.current = 0
     else if (ao.current < 1) { ao.current = Math.min(1, ao.current + dt / 0.35); invalidate() }
 
-    // Risoluzione: mentre la camera o le cose si muovono si disegna con meno pixel
-    // (sugli schermi retina e' il costo piu' grosso, e in movimento non si vede);
-    // ferma da un attimo, si torna alla risoluzione piena, nitida
+    // la fascia di qualita' regge? Si guardano 40 fotogrammi in movimento sul banco (non
+    // gli scatti lunghi: programmi che si compilano, immagini che arrivano)
     const now = performance.now()
-    if (moving) { still.current = now; stillFrames.current = 0 } else stillFrames.current++
-    const settled = now - still.current >= STILL_MS && stillFrames.current >= STILL_FRAMES
-    const want = settled ? fullDpr : Math.max(1, fullDpr * MOVING_DPR)
-    if (Math.abs(gl.getPixelRatio() - want) > 0.01) {
-      gl.setPixelRatio(want)
-      gl.setSize(size.width, size.height, false)
-      composer.current?.setSize(size.width, size.height)
+    if (moving && onTable && dt < 0.25 && now - slow.current.since > 2000) {
+      const s = slow.current.dts
+      s.push(dt)
+      if (s.length >= 40) {
+        if ([...s].sort((a, b) => a - b)[32] > SLOW_DT) { onSlow(); slow.current.since = now }
+        s.length = 0
+      }
     }
-    if (!moving && want !== fullDpr) invalidate()   // si torna nitidi anche se nulla chiede un fotogramma
     composer.current?.passes.forEach((pass) => {
       // N8AOPostPass: solo sul banco. Sul vetro del logo l'occlusione, a meta' risoluzione, lo sgranava
       if ('configuration' in pass) {
@@ -501,8 +527,8 @@ function Warmup({ table, ready, composer }: {
   return null
 }
 
-function World(props: Props & { images: Images | null }) {
-  const { mobile } = props
+function World(props: Props & { images: Images | null; level: QualityLevel; onSlow: () => void }) {
+  const { mobile, level } = props
   const look = useRef(new THREE.Vector3(0, 0, 0))
   const logo = useRef<THREE.Group>(null)
   const table = useRef<THREE.Group>(null)
@@ -548,14 +574,14 @@ function World(props: Props & { images: Images | null }) {
       <group ref={table}>
         {props.images && <Suspense fallback={null}><Table {...props} images={props.images} /></Suspense>}
       </group>
-      <Budget stage={props.stage} table={table} composer={composer} />
+      <Budget stage={props.stage} table={table} composer={composer} onSlow={props.onSlow} />
       <Warmup table={table} ready={!!props.images} composer={composer} />
 
       {/* come in un render: occlusione negli angoli e vignettatura. Niente grana qui:
           sgranava il logo (la grana del sito e' gia' sopra tutta la pagina) */}
       {/* niente messa a fuoco: costava piu' di tutto il resto e faceva scattare lo scroll */}
-      <EffectComposer ref={composer} multisampling={mobile ? 0 : 4}>
-        <N8AO aoRadius={0.5} distanceFalloff={0.5} intensity={AO_INTENSITY} quality={mobile ? 'low' : 'medium'} halfRes />
+      <EffectComposer ref={composer} multisampling={level.msaa}>
+        <N8AO aoRadius={0.5} distanceFalloff={0.5} intensity={AO_INTENSITY} quality={level.ao} halfRes />
         <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
         <Vignette offset={0.25} darkness={0.55} />
         {/* il fondale: la piscina rosata, dietro al tavolo e alle cose che ha sopra */}
@@ -602,16 +628,23 @@ export default function Table3D(props: Props) {
   // vede e non disegna: al ritorno e' gia' li', senza ricaricarsi
   const away = useStore((s) => s.away)
 
+  // la fascia di qualita': da computer l'alta, da telefono la media; scende da sola se
+  // non regge (Budget). ?quality=high|medium|low la fissa, per provare
+  const [fixed] = useState<Quality | null>(() => {
+    const q = typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('quality')
+    return q === 'high' || q === 'medium' || q === 'low' ? q : null
+  })
+  const [quality, setQuality] = useState<Quality>(fixed ?? (props.mobile ? 'medium' : 'high'))
+  const level = QUALITY[props.mobile ? 'mobile' : 'desktop'][quality]
+  const onSlow = useCallback(() => { if (!fixed) setQuality((q) => LOWER[q]) }, [fixed])
+
   return createPortal(
     <div className={styles.world} aria-hidden="true" style={away ? { visibility: 'hidden' } : undefined}>
       <WaterCanvas mobile={props.mobile} />
       <Canvas
         frameloop={away ? 'never' : 'demand'}
         shadows="soft"
-        // dal computer almeno una volta e mezza i pixel dello schermo, fino al doppio: il vetro
-        // del logo e i bordi del banco nitidi anche sugli schermi normali (sovracampionato) e
-        // sui retina. In movimento scende (Budget). Dal telefono resta piu' leggero
-        dpr={props.mobile ? [1, 1.5] : [1.5, 2]}
+        dpr={level.dpr}
         camera={{ fov: 30, position: [0.15, 40, 30], near: 0.1, far: 200 }}
         // trasparente: dietro c'e' l'acqua, sul suo canvas (WaterCanvas)
         gl={{ antialias: false, alpha: true, powerPreference: 'high-performance' }}
@@ -619,11 +652,17 @@ export default function Table3D(props: Props) {
           // il controllo degli errori dei programmi aspetta che la scheda video li abbia
           // compilati, e intanto la pagina si blocca: serve solo mentre si sviluppa
           gl.debug.checkShaderErrors = process.env.NODE_ENV !== 'production'
+          // da computer, con una scheda video integrata, si parte dalla fascia media
+          if (props.mobile || fixed) return
+          const ctx = gl.getContext()
+          const info = ctx.getExtension('WEBGL_debug_renderer_info')
+          const gpu = info ? String(ctx.getParameter(info.UNMASKED_RENDERER_WEBGL)) : ''
+          if (/Intel|SwiftShader|llvmpipe|Basic Render/i.test(gpu) && !/Arc/i.test(gpu)) setQuality((q) => (q === 'high' ? 'medium' : q))
         }}
         eventSource={document.body}
         eventPrefix="client"
       >
-        <World {...props} images={images} />
+        <World {...props} images={images} level={level} onSlow={onSlow} />
       </Canvas>
     </div>,
     document.body,

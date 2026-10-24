@@ -182,6 +182,11 @@ export function Console3D({ phase, mobile, grab, hovered, game, logo, plasticRou
   const screenMat = useMemo(() => new THREE.MeshBasicMaterial({ map: lcd.tex, toneMapped: false }), [lcd])
   // si riaccende quando entra in scena e ogni volta che lo si prende in mano
   useEffect(() => { boot.current = 0; invalidate() }, [grab, invalidate])
+  // il caricamento del gioco va avanti anche col 3D fermo: lo schermo lo segue
+  useEffect(() => {
+    gameLoad.onChange = invalidate
+    return () => { gameLoad.onChange = null }
+  }, [invalidate])
 
   useEffect(() => () => {
     Object.values(geo).forEach((g) => g.dispose())

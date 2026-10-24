@@ -229,3 +229,15 @@ body::after {
   background: var(--color-amber);
   color: #1A1A1A;
 }
+
+/* --- Meno movimento: chi lo chiede al sistema non vede animazioni ne' transizioni --- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

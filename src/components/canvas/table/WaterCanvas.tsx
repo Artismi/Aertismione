@@ -69,17 +69,23 @@ export function WaterCanvas({ mobile }: { mobile: boolean }) {
     }
 
     const t0 = performance.now()
+    // meno movimento chiesto al sistema: l'acqua sta ferma, si ridisegna solo scorrendo
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     let raf = 0, last = 0, dirty = true, lastScroll = -1
     const draw = (now: number) => {
       raf = requestAnimationFrame(draw)
       const st = useStore.getState()
       if (document.hidden || st.gameOpen || st.away) return
       const y = window.scrollY
-      // si muove a 30 fotogrammi al secondo, e subito quando la pagina scorre
-      if (!dirty && y === lastScroll && now - last < FRAME_MS) return
+      // si muove a 30 fotogrammi al secondo. Vicino al logo segue lo scroll a ogni fotogramma:
+      // il vetro la mostra piegata e deve combaciare. Piu' giu' scorre lenta (parallasse) e
+      // anche scorrendo bastano 30 volte al secondo: la scheda video resta al banco, che
+      // con lo scroll si ridisegna tutto
+      const moved = y !== lastScroll, due = now - last >= FRAME_MS
+      if (!dirty && !(moved && (y < h * 1.3 || due)) && (still || !due)) return
       dirty = false; last = now; lastScroll = y
 
-      water.u_time.value = (now - t0) / 1000
+      water.u_time.value = still ? 0 : (now - t0) / 1000
       water.u_res.value.set(w, h)
       waterScale(w, h, water.u_scale.value)
       water.u_scroll.value = y / Math.max(1, h) * 0.12
@@ -104,7 +110,10 @@ export function WaterCanvas({ mobile }: { mobile: boolean }) {
     return () => {
       cancelAnimationFrame(raf)
       window.removeEventListener('resize', resize)
-      gl.getExtension('WEBGL_lose_context')?.loseContext()
+      // si liberano programma e buffer, non il contesto: rimontato sullo stesso canvas (in
+      // sviluppo React monta gli effetti due volte) riceverebbe il contesto perso, e niente acqua
+      gl.deleteBuffer(buf)
+      gl.deleteProgram(prog)
     }
   }, [mobile])
 
