@@ -13,9 +13,9 @@
  * Il display e le lucine dei tasti dicono quello che dice il gioco quando e'
  * caricato (gameInfo); prima il display segna --:--.
  *
- * La plastica e' un velo rosa trasparente sopra l'elettronica (glass); nella fascia
- * di qualita' piu' bassa la scheda e' stampata sotto il velo rosa, come nel Game Boy
- * a tutto schermo.
+ * La plastica e' un velo rosa trasparente sopra l'elettronica, come nel Game Boy a
+ * tutto schermo: niente trasmissione vera, che ridisegnava tutta la scena dietro la
+ * console a ogni fotogramma e faceva scattare lo scroll.
  *
  * Presa in mano viene verso chi guarda, il coperchio si alza e lo schermo si
  * accende; da li' PortfolioSection allarga il gioco a tutto schermo.
@@ -164,10 +164,8 @@ function stickCapGeometry() {
   return new THREE.LatheGeometry(pts, 48)
 }
 
-export function Console3D({ phase, mobile, grab, hovered, glass, game, logo, plasticRough, metalRough, onPointer, onClick }: {
+export function Console3D({ phase, mobile, grab, hovered, game, logo, plasticRough, metalRough, onPointer, onClick }: {
   phase: TablePhase; mobile: boolean; grab: boolean; hovered: boolean
-  /** la plastica trasparente davvero (fascia di qualita' alta); se no la scheda e' stampata */
-  glass: boolean
   logo: HTMLImageElement | null; plasticRough: THREE.Texture; metalRough: THREE.Texture
   game: { title: string; hint: string; screen: string; loading: string }
   onPointer: (h: boolean) => void; onClick: () => void
@@ -217,38 +215,29 @@ export function Console3D({ phase, mobile, grab, hovered, glass, game, logo, pla
     const bezel = bezelTexture(game.title, pad.battery, pad.lens)
     bezel.repeat.set(1 / 0.86, 1 / 0.66); bezel.offset.set(0.5, 0.5)
     return {
-      // con la plastica trasparente si vede la scheda vera; se no la si stampa sotto il velo rosa
-      face: faceTexture(game.title, { stick: pad.stick, cross: pad.cross, spray: pad.spray, bike: pad.bike, bag: pad.bag, brand: pad.brand }, PAD, !glass),
+      face: faceTexture(game.title, { stick: pad.stick, cross: pad.cross, spray: pad.spray, bike: pad.bike, bag: pad.bag, brand: pad.brand }, PAD),
       bezel,
       strip: stripTexture(STRIP, pad, 'Schermo'),
       icons: KEYS.map((k) => keyIconTexture(k)),
       green: haloTexture(91, 227, 138),
       red: haloTexture(255, 77, 94),
-      ...(glass ? { pcb: pcbTexture() } : {}),
+      pcb: pcbTexture(),
     }
-  }, [game.title, pad, glass])
+  }, [game.title, pad])
 
   // il display e il numero sullo zaino si ridisegnano quando il gioco dice qualcosa
   const lcd = useMemo(() => lcdTexture(), [])
   const badgeTex = useMemo(() => badgeTexture(), [])
 
   const mats = useMemo(() => {
-    const plastic = glass
-      // plastica rosa trasparente e lucida: si vede l'elettronica attraverso. Un velo rosa sopra
-      // la scheda, come nel Game Boy a tutto schermo: niente trasmissione vera, che ridisegnava
-      // tutta la scena dietro la console a ogni fotogramma e faceva scattare lo scroll
-      ? new THREE.MeshPhysicalMaterial({
+    return {
+      // plastica rosa trasparente e lucida: un velo sopra l'elettronica, che si vede attraverso
+      shell: new THREE.MeshPhysicalMaterial({
         color: '#e07f9c', transparent: true, opacity: 0.3, depthWrite: false,
         roughness: 0.22, roughnessMap: plasticRough, clearcoat: 0.4, clearcoatRoughness: 0.2,
-      })
-      // la stessa plastica, piena e lucida: dentro non si vede, la scheda e' stampata sulla faccia
-      : new THREE.MeshPhysicalMaterial({ color: '#e3a1b6', roughness: 0.26, roughnessMap: plasticRough, clearcoat: 1, clearcoatRoughness: 0.14 })
-    return {
-      shell: plastic,
-      // la faccia della base: le scritte sopra la plastica trasparente, o la plastica stampata con la scheda sotto
-      face: glass
-        ? new THREE.MeshBasicMaterial({ map: tex.face, transparent: true, depthWrite: false })
-        : new THREE.MeshPhysicalMaterial({ map: tex.face, roughness: 0.22, roughnessMap: plasticRough, clearcoat: 1, clearcoatRoughness: 0.12 }),
+      }),
+      // le scritte della pulsantiera sopra la plastica
+      face: new THREE.MeshBasicMaterial({ map: tex.face, transparent: true, depthWrite: false }),
       // la giuntura tra i due gusci, una riga scura tutt'attorno
       seam: new THREE.MeshStandardMaterial({ color: '#b07c8c', roughness: 0.6, transparent: true, opacity: 0.7 }),
       // incavi e piastre: plastica un po' piu' scura e satinata, non un adesivo chiaro
@@ -263,7 +252,7 @@ export function Console3D({ phase, mobile, grab, hovered, glass, game, logo, pla
         color: '#ffffff', transparent: true, opacity: 0.05, roughness: 0.04, metalness: 0,
         clearcoat: 1, clearcoatRoughness: 0.02, envMapIntensity: 2.5, depthWrite: false,
       }),
-      pcb: new THREE.MeshStandardMaterial({ map: tex.pcb ?? null, roughness: 0.5, metalness: 0.25 }),
+      pcb: new THREE.MeshStandardMaterial({ map: tex.pcb, roughness: 0.5, metalness: 0.25 }),
       chip: new THREE.MeshStandardMaterial({ color: '#141218', roughness: 0.45, metalness: 0.2 }),
       metal: new THREE.MeshStandardMaterial({ color: '#c9c4bb', roughnessMap: metalRough, roughness: 0.55, metalness: 1 }),
       battery: new THREE.MeshStandardMaterial({ color: '#9a94a0', roughness: 0.35, metalness: 0.7 }),
@@ -281,7 +270,7 @@ export function Console3D({ phase, mobile, grab, hovered, glass, game, logo, pla
       haloGreen: new THREE.MeshBasicMaterial({ map: tex.green, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }),
       haloRed: new THREE.MeshBasicMaterial({ map: tex.red, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }),
     }
-  }, [tex, glass, plasticRough, metalRough, lcd, badgeTex])
+  }, [tex, plasticRough, metalRough, lcd, badgeTex])
 
   // lo schermo si accende con il logo Artismi, poi la schermata di lancio
   const screenLcd = useMemo(() => screenTexture(game.screen, logo, game.loading, () => invalidate()), [game.screen, logo, game.loading, invalidate])
@@ -441,23 +430,21 @@ export function Console3D({ phase, mobile, grab, hovered, glass, game, logo, pla
         <RoundedBox args={[CW, BH, CD]} radius={CR} smoothness={6} position={[0, BH / 2, 0]} material={mats.shell} renderOrder={-1} castShadow receiveShadow />
         <mesh geometry={geo.seamBase} position={[0, BH * 0.45, 0]} material={mats.seam} />
 
-        {/* dentro: scheda, chip, batteria, connettore, viti (si vedono solo con la plastica trasparente) */}
-        {glass && (
-          <>
-            <mesh position={[0, 0.03, 0.02]} rotation={FLAT} material={mats.pcb}>
-              <planeGeometry args={[CW * 0.86, CD * 0.82]} />
-            </mesh>
-            <mesh position={[0.1, 0.044, -0.1]} material={mats.chip}><boxGeometry args={[0.16, 0.02, 0.16]} /></mesh>
-            <mesh position={[-0.2, 0.042, -0.18]} material={mats.chip}><boxGeometry args={[0.1, 0.016, 0.08]} /></mesh>
-            <mesh position={[0, 0.05, 0.28]} material={mats.battery}><boxGeometry args={[0.48, 0.032, 0.18]} /></mesh>
-            <mesh position={[0, 0.045, -CD / 2 + 0.1]} material={mats.chip}><boxGeometry args={[0.56, 0.03, 0.05]} /></mesh>
-            {[[-0.41, -0.39], [0.41, -0.39], [-0.41, 0.41], [0.41, 0.41]].map(([x, z], i) => (
-              <mesh key={i} position={[x, 0.058, z]} material={mats.metal}><cylinderGeometry args={[0.017, 0.017, 0.05, 16]} /></mesh>
-            ))}
-          </>
-        )}
+        {/* dentro, sotto la plastica trasparente: scheda, chip, batteria, connettore, viti */}
+        <>
+          <mesh position={[0, 0.03, 0.02]} rotation={FLAT} material={mats.pcb}>
+            <planeGeometry args={[CW * 0.86, CD * 0.82]} />
+          </mesh>
+          <mesh position={[0.1, 0.044, -0.1]} material={mats.chip}><boxGeometry args={[0.16, 0.02, 0.16]} /></mesh>
+          <mesh position={[-0.2, 0.042, -0.18]} material={mats.chip}><boxGeometry args={[0.1, 0.016, 0.08]} /></mesh>
+          <mesh position={[0, 0.05, 0.28]} material={mats.battery}><boxGeometry args={[0.48, 0.032, 0.18]} /></mesh>
+          <mesh position={[0, 0.045, -CD / 2 + 0.1]} material={mats.chip}><boxGeometry args={[0.56, 0.03, 0.05]} /></mesh>
+          {[[-0.41, -0.39], [0.41, -0.39], [-0.41, 0.41], [0.41, 0.41]].map(([x, z], i) => (
+            <mesh key={i} position={[x, 0.058, z]} material={mats.metal}><cylinderGeometry args={[0.017, 0.017, 0.05, 16]} /></mesh>
+          ))}
+        </>
 
-        {/* la faccia: il nome, le scritte della pulsantiera (e, senza trasparenza, la scheda stampata sotto il velo rosa) */}
+        {/* la faccia: il nome, le scritte della pulsantiera */}
         <mesh geometry={geo.face} position={[0, top + 0.0012, 0]} rotation={FLAT} material={mats.face} />
 
         {/* i tre tasti di gomma con l'icona, la lucina sopra; sullo zaino il numero delle cose da fare */}
@@ -529,11 +516,9 @@ export function Console3D({ phase, mobile, grab, hovered, glass, game, logo, pla
           <RoundedBox args={[CW, LH, LID_D]} radius={CR} smoothness={6} position={[0, LH / 2, LID_D / 2]} material={mats.shell} renderOrder={-1} castShadow receiveShadow />
           <mesh geometry={geo.seamLid} position={[0, LH * 0.5, LID_D / 2]} material={mats.seam} />
           {/* scheda dello schermo, dentro il coperchio */}
-          {glass && (
-            <mesh position={[0, LH * 0.45, LID_D * 0.55]} rotation={UNDER} material={mats.chip}>
-              <planeGeometry args={[0.72, 0.5]} />
-            </mesh>
-          )}
+          <mesh position={[0, LH * 0.45, LID_D * 0.55]} rotation={UNDER} material={mats.chip}>
+            <planeGeometry args={[0.72, 0.5]} />
+          </mesh>
           {/* emblema in rilievo sul coperchio */}
           <mesh position={[0, LH + 0.002, LID_D / 2]} material={mats.recess}>
             <cylinderGeometry args={[0.14, 0.145, 0.006, 64]} />

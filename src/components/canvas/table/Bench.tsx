@@ -47,7 +47,9 @@ export function Bench({ mobile, metal, metalRough }: { mobile: boolean; metal: H
       map: woodMap, normalMap: woodNormal, roughnessMap: woodRough, roughness: 1, metalness: 0,
       normalScale: new THREE.Vector2(1.2, 1.2),
     }),
-    stains: new THREE.MeshStandardMaterial({ map: tex.stains, transparent: true, roughness: 0.55, depthWrite: false }),
+    // le macchie sono piccole e la lampada le cambia poco: senza luce ne' ombre, su tutto il banco
+    // costavano un secondo strato illuminato sopra il legno, 4 ms a fotogramma su una scheda integrata
+    stains: new THREE.MeshBasicMaterial({ map: tex.stains, transparent: true, depthWrite: false, color: new THREE.Color(0.8, 0.8, 0.8) }),
     woodSide: new THREE.MeshStandardMaterial({ color: '#4a2f1c', roughness: 0.85 }),
     mat: new THREE.MeshStandardMaterial({ map: tex.mat, roughness: 0.82 }),
     matSide: new THREE.MeshStandardMaterial({ color: '#141216', roughness: 0.9 }),
@@ -77,7 +79,7 @@ export function Bench({ mobile, metal, metalRough }: { mobile: boolean; metal: H
         material={[mats.woodSide, mats.woodSide, mats.wood, mats.woodSide, mats.woodSide, mats.woodSide]}>
         <boxGeometry args={[BENCH.w, BENCH.h, BENCH.d]} />
       </mesh>
-      <mesh position={[0, 0.0008, 0]} rotation={FLAT} material={mats.stains} receiveShadow>
+      <mesh position={[0, 0.0008, 0]} rotation={FLAT} material={mats.stains}>
         <planeGeometry args={[10, BENCH.d - 0.1]} />
       </mesh>
       </group>

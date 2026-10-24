@@ -20,7 +20,7 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type Mutab
 import { createPortal } from 'react-dom'
 import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber'
 import { Environment } from '@react-three/drei'
-import { EffectComposer, N8AO, Vignette, ToneMapping } from '@react-three/postprocessing'
+import { EffectComposer, N8AO, Vignette, ToneMapping, FXAA } from '@react-three/postprocessing'
 import { ToneMappingMode, type EffectComposer as Composer } from 'postprocessing'
 import * as THREE from 'three'
 import { loadImage } from './textures'
@@ -109,25 +109,25 @@ const LOGO_AT = 0.45
 const AO_INTENSITY = 3.5
 
 export type Quality = 'high' | 'medium' | 'low'
-type QualityLevel = { dpr: [number, number]; msaa: number; ao: 'low' | 'medium'; glass: boolean }
+type QualityLevel = { dpr: [number, number]; msaa: number; smaa: boolean; ao: 'low' | 'medium' }
 /**
- * Fasce di qualita': quanti pixel (dpr), quanto antialiasing (msaa), che occlusione, e se
- * la plastica del Game Boy lascia vedere l'elettronica (glass; senza, la scheda e' stampata
- * sotto il velo rosa).
+ * Fasce di qualita': quanti pixel (dpr), quanto antialiasing (msaa sulla scheda video, o
+ * smaa: FXAA a fine catena), che occlusione.
  * Da computer l'alta e' sovracampionata: il vetro del logo e i bordi del banco nitidi
  * anche sugli schermi normali. Ogni fascia ha la sua risoluzione fissa: cambiarla a ogni
  * inizio e fine di movimento riallocava i buffer, e ogni animazione partiva con uno scatto.
  */
 const QUALITY: Record<'desktop' | 'mobile', Record<Quality, QualityLevel>> = {
   desktop: {
-    high: { dpr: [1.5, 2], msaa: 4, ao: 'medium', glass: true },
-    medium: { dpr: [1, 1.25], msaa: 2, ao: 'low', glass: true },
-    low: { dpr: [1, 1], msaa: 0, ao: 'low', glass: false },
+    high: { dpr: [1.5, 2], msaa: 4, smaa: false, ao: 'medium' },
+    // l'antialiasing della scheda video costava 5 ms a fotogramma su una integrata: FXAA, a fine catena, quasi niente
+    medium: { dpr: [1, 1.25], msaa: 0, smaa: true, ao: 'low' },
+    low: { dpr: [1, 1], msaa: 0, smaa: false, ao: 'low' },
   },
   mobile: {
-    high: { dpr: [1, 1.5], msaa: 0, ao: 'low', glass: true },
-    medium: { dpr: [1, 1.5], msaa: 0, ao: 'low', glass: true },
-    low: { dpr: [1, 1], msaa: 0, ao: 'low', glass: false },
+    high: { dpr: [1, 1.5], msaa: 0, smaa: false, ao: 'low' },
+    medium: { dpr: [1, 1.5], msaa: 0, smaa: false, ao: 'low' },
+    low: { dpr: [1, 1], msaa: 0, smaa: false, ao: 'low' },
   },
 }
 const LOWER: Record<Quality, Quality> = { high: 'medium', medium: 'low', low: 'low' }
@@ -348,7 +348,6 @@ function Table(props: Props & { images: Images; level: QualityLevel }) {
         mobile={mobile}
         grab={grab}
         hovered={hConsole}
-        glass={props.level.glass}
         game={props.game}
         logo={props.images.logo}
         plasticRough={plasticRough}
@@ -588,6 +587,7 @@ function World(props: Props & { images: Images | null; level: QualityLevel; onSl
         <N8AO aoRadius={0.5} distanceFalloff={0.5} intensity={AO_INTENSITY} quality={level.ao} halfRes />
         <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
         <Vignette offset={0.25} darkness={0.55} />
+        {level.smaa ? <FXAA /> : <></>}
         {/* il fondale: la piscina rosata, dietro al tavolo e alle cose che ha sopra */}
         <WorldBackdrop mobile={mobile} />
       </EffectComposer>

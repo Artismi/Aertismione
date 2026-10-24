@@ -6,7 +6,7 @@
  */
 
 import * as THREE from 'three'
-import { rng, pcbPaint, insideChips } from './consolePaint'
+import { rng, pcbPaint } from './consolePaint'
 
 /** Seme fisso: il banco e la carta sono gli stessi a ogni visita */
 export { rng }
@@ -428,35 +428,16 @@ type PadPrints = { stick: string; cross: string; spray: string; bike: string; ba
  * La faccia della base della console, come la pulsantiera del Game Boy a tutto
  * schermo (GameBoyPad): il nome con ARTISMI, le scritte sotto i tre tasti, sotto
  * la levetta e la croce, A e B. La tela copre la base (PX pixel per unita',
- * centro della base = centro della tela, in alto la cerniera).
- * inside: sotto le scritte la scheda sfocata e il velo rosa, con la ricetta del
- * Game Boy a tutto schermo (.shell): la plastica sembra trasparente anche dove la
- * trasparenza vera costa troppo. Senza, solo le scritte su fondo trasparente.
+ * centro della base = centro della tela, in alto la cerniera). Fondo trasparente:
+ * sotto ci sono la plastica e la scheda.
  */
-export function faceTexture(title: string, pad: PadPrints, l: PadLayout, inside: boolean) {
+export function faceTexture(title: string, pad: PadPrints, l: PadLayout) {
   const PX = 1200
   const W = Math.round(l.w * PX), H = Math.round(l.d * PX)
   const [c, ctx] = canvas(W, H)
   const { mono, display } = fonts()
   const X = (x: number) => W / 2 + x * PX
   const Y = (z: number) => H / 2 + z * PX
-
-  if (inside) {
-    ctx.fillStyle = '#cf98ad'; ctx.fillRect(0, 0, W, H)
-    // la scheda coi chip, sfocata come la si vede attraverso la plastica (dove il browser sa sfocare)
-    const S = 1024
-    const [ic, ictx] = canvas(S, S)
-    insidePaint(ictx, S, mono)
-    ctx.filter = 'blur(3px)'
-    const k = Math.max(W, H) / S
-    ctx.drawImage(ic, (W - S * k) / 2, (H - S * k) / 2, S * k, S * k)
-    ctx.filter = 'none'
-    // il velo rosa della plastica, piu' carico verso chi guarda (un filo piu' leggero di quello
-    // del Game Boy a tutto schermo: sotto la lampada del banco il velo schiariva la scheda)
-    const v = ctx.createLinearGradient(0, 0, 0, H)
-    v.addColorStop(0, 'rgba(249,221,229,0.64)'); v.addColorStop(0.55, 'rgba(242,196,211,0.6)'); v.addColorStop(1, 'rgba(236,159,181,0.58)')
-    ctx.fillStyle = v; ctx.fillRect(0, 0, W, H)
-  }
 
   // la serigrafia del Game Boy 3D, incisa: un filo di luce sotto ogni scritta
   const ink = 'rgba(70,30,48,0.82)', soft = 'rgba(70,30,48,0.66)'
@@ -490,12 +471,6 @@ export function faceTexture(title: string, pad: PadPrints, l: PadLayout, inside:
     print(() => { ctx.font = `800 ${ab}px ${display}`; ctx.textAlign = 'center'; ctx.fillText(k, X(p.x), Y(p.z + l.abLabel)) }, ink)
   }
   return toTexture(c)
-}
-
-/** La scheda coi chip sotto la plastica (consolePaint): la stessa del Game Boy a tutto schermo */
-function insidePaint(ctx: CanvasRenderingContext2D, S: number, mono: string) {
-  pcbPaint(ctx, S, S, mono)
-  insideChips(ctx)
 }
 
 /**

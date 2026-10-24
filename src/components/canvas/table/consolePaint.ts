@@ -1,8 +1,7 @@
 /**
  * L'elettronica dentro la console di Porto Vecchio, disegnata su una tela: la
- * stessa per il Game Boy 3D sul banco (pcbTexture, e la faccia stampata della
- * base in textures.ts) e per quello a tutto schermo (GameBoy), che la mostra
- * sotto la plastica rosa trasparente.
+ * stessa per il Game Boy 3D sul banco (pcbTexture in textures.ts) e per quello
+ * a tutto schermo (GameBoy), che la mostra sotto la plastica rosa trasparente.
  * Niente Three qui: la pagina del gioco non lo scarica.
  */
 
@@ -45,8 +44,18 @@ export function pcbPaint(ctx: CanvasRenderingContext2D, W: number, H: number, mo
   ctx.fillText('C12  R4  U3', 420, 520)
 }
 
-/** I chip neri coi piedini sopra la scheda (disegnata per 1024×1024) */
-export function insideChips(ctx: CanvasRenderingContext2D) {
+/**
+ * Per il Game Boy a tutto schermo: la scheda con sopra i chip neri coi piedini
+ * (nel 3D sono pezzi a parte), sfocata come la si vede attraverso la plastica.
+ * Un'immagine sola, fatta una volta: l'URL (da liberare con
+ * URL.revokeObjectURL), o null se il browser non sa farla.
+ */
+export function plasticInside(mono: string): Promise<string | null> {
+  const S = 1024
+  const c = document.createElement('canvas'); c.width = S; c.height = S
+  const ctx = c.getContext('2d')
+  if (!ctx) return Promise.resolve(null)
+  pcbPaint(ctx, S, S, mono)
   const chip = (x: number, y: number, w: number, h: number) => {
     ctx.fillStyle = 'rgba(200,200,205,0.85)'
     for (let i = 8; i < w - 4; i += 12) { ctx.fillRect(x + i, y - 6, 5, 6); ctx.fillRect(x + i, y + h, 5, 6) }
@@ -57,21 +66,6 @@ export function insideChips(ctx: CanvasRenderingContext2D) {
     ctx.fillStyle = 'rgba(255,255,255,0.18)'; ctx.beginPath(); ctx.arc(x + 10, y + 10, 4, 0, Math.PI * 2); ctx.fill()
   }
   chip(560, 180, 170, 170); chip(160, 600, 110, 80); chip(700, 640, 90, 60); chip(250, 250, 120, 60)
-}
-
-/**
- * Per il Game Boy a tutto schermo: la scheda con sopra i chip neri coi piedini
- * (nel 3D con la plastica trasparente sono pezzi a parte), sfocata come la si
- * vede attraverso la plastica. Un'immagine sola, fatta una volta: l'URL (da
- * liberare con URL.revokeObjectURL), o null se il browser non sa farla.
- */
-export function plasticInside(mono: string): Promise<string | null> {
-  const S = 1024
-  const c = document.createElement('canvas'); c.width = S; c.height = S
-  const ctx = c.getContext('2d')
-  if (!ctx) return Promise.resolve(null)
-  pcbPaint(ctx, S, S, mono)
-  insideChips(ctx)
   // la plastica spessa sfoca un poco quello che c'e' sotto
   const out = document.createElement('canvas'); out.width = S; out.height = S
   const o = out.getContext('2d')
