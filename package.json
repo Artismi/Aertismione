@@ -27,12 +27,17 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@gltf-transform/core": "^4.5.1",
+    "@gltf-transform/extensions": "^4.5.1",
+    "@gltf-transform/functions": "^4.5.1",
     "@types/node": "^24.10.1",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "draco3d": "^1.5.9",
     "eslint": "^9.39.1",
     "eslint-config-next": "^15.2.3",
     "globals": "^15.15.0",
+    "meshoptimizer": "^0.22.0",
     "typescript": "~5.9.3"
   }
 }

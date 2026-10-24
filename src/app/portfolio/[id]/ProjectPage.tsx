@@ -7,6 +7,7 @@ import { useRef, useState, useEffect } from 'react'
 import { useStore } from '@/stores/useStore'
 import { PaperPlane, type PaperItem } from '@/components/ui/PaperPlane'
 import imageSizes from '@/config/imageSizes.json'
+import { Fascicolo } from './Fascicolo'
 import styles from './ProjectPage.module.css'
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
@@ -17,7 +18,7 @@ type Project = {
   category: string
   tagline: string
   /** Sezioni libere: ogni progetto racconta quello che ha da raccontare. */
-  sections?: { label: string; text: string }[]
+  sections?: { label: string; text?: string }[]
   /** Schema storico a quattro caselle, usato dai progetti che non hanno "sections". */
   context?: string
   problem?: string
@@ -248,7 +249,7 @@ function NarrativeGrid({
    * Contesto / Problema / Soluzione / Risultato.
    */
   const blocks = project.sections?.length
-    ? project.sections.map((s, i) => ({ key: `s${i}`, label: s.label, text: s.text }))
+    ? project.sections.map((s, i) => ({ key: `s${i}`, label: s.label, text: s.text ?? '' }))
     : ([
         { key: 'context',  label: NARRATIVE_LABELS.context,  text: project.context  },
         { key: 'problem',  label: NARRATIVE_LABELS.problem,  text: project.problem  },
@@ -571,7 +572,7 @@ function conGrassetto(testo: string) {
 
 /** Le sezioni del progetto, saltando le caselle vuote dello schema storico. */
 function blocksOf(project: Project): { label: string; text: string }[] {
-  if (project.sections?.length) return project.sections
+  if (project.sections?.length) return project.sections.map((s) => ({ label: s.label, text: s.text ?? '' }))
   return ([
     { label: NARRATIVE_LABELS.context,  text: project.context  },
     { label: NARRATIVE_LABELS.problem,  text: project.problem  },
@@ -873,6 +874,18 @@ function Lightbox({
   isIllustration: boolean
 }) {
   const idx = all.indexOf(src)
+
+  // tastiera: Esc chiude, le frecce sfogliano
+  useEffect(() => {
+    function tasto(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+      else if (e.key === 'ArrowLeft' && idx > 0) onNav(all[idx - 1])
+      else if (e.key === 'ArrowRight' && idx < all.length - 1) onNav(all[idx + 1])
+    }
+    window.addEventListener('keydown', tasto)
+    return () => window.removeEventListener('keydown', tasto)
+  }, [idx, all, onClose, onNav])
+
   return (
     <motion.div
       className={styles.lightbox}
@@ -972,6 +985,12 @@ export function ProjectPage({
   const isDark = layout === 'split_dark' || layout === 'dual'
   const num = String(index + 1).padStart(2, '0')
 
+  // Impaginazione "a fascicolo" (modello Bicicleria): i progetti convertiti.
+  const useFascicolo = [
+    'bicicleria', 'mulini', 'torino-invisibile', 'alice', 'ridi-piangi-balli',
+    'punk', 'ciclomeccanica', 'campus-boreale', 'ecosistema-boreale', 'sperimentazione',
+  ].includes(project.id)
+
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null)
   const [lightboxAll, setLightboxAll] = useState<string[]>([])
 
@@ -984,7 +1003,7 @@ export function ProjectPage({
     <div
       className={styles.root}
       data-layout={layout}
-      data-dark={isDark ? '' : undefined}
+      data-dark={isDark || useFascicolo ? '' : undefined}
       style={{ '--accent': project.accent } as React.CSSProperties}
     >
       {/* Scroll progress */}
@@ -1008,6 +1027,10 @@ export function ProjectPage({
         </span>
       </nav>
 
+      {useFascicolo ? (
+        <Fascicolo project={project} onLightbox={openLightbox} />
+      ) : (
+        <>
       {/* Hero */}
       <HeroBlock project={project} layout={layout} num={num} isIllustration={isIllustration} />
 
@@ -1061,6 +1084,8 @@ export function ProjectPage({
           {project.pdfs?.length ? <PdfBlock pdfs={project.pdfs} onLightbox={openLightbox} /> : null}
           {project.links?.length ? <LinksBlock links={project.links} /> : null}
         </section>
+      )}
+        </>
       )}
 
       {/* Footer navigation */}

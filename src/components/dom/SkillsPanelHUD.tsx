@@ -9,7 +9,7 @@ const CV_DATA = {
         location: 'Italia',
         birth: '10/12/2001',
         linkedin: 'www.linkedin.com/in/andrea-pizzoglio',
-        instagram: 'https://www.instagram.com/angea_pangea'
+        instagram: 'https://www.instagram.com/giovane_kudos'
     },
     experiences: [
         {

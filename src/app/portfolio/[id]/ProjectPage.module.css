@@ -19,6 +19,9 @@
   background-color: var(--bg);
   color: var(--ink);
   overflow-x: hidden;
+  /* clip taglia lo stesso senza fare del contenitore un'area di scorrimento:
+     così gli elementi «sticky» delle pagine progetto restano fermi davvero */
+  overflow-x: clip;
 }
 
 .root[data-dark] {

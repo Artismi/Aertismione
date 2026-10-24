@@ -35,6 +35,10 @@ function folderScale(w: number, h: number) {
 const FRICTION      = 0.972
 const MIN_SPEED     = 0.07
 const MAX_LAUNCH    = 38
+// Velocità, attrito e particelle sono tarati su 60 fotogrammi al secondo: ogni
+// fotogramma li scala per il tempo passato davvero, così il moto è lo stesso
+// su ogni schermo (60, 120, 144 Hz) e non rallenta quando un fotogramma tarda.
+const FRAME_60      = 1000 / 60
 // Il tabellone e' la tavola stesa sul fascicolo 3D aperto: misura fissa, con le
 // stesse proporzioni della tavola (BW : BD in Folder3D)
 const MAP_W         = 1200
@@ -558,6 +562,9 @@ export function PortfolioSection() {
 
   const isDraggingRef       = useRef(false)
   const dragPosRef          = useRef({ x: 0, y: 0 })
+  // Ultimo punto del mouse sullo schermo durante la presa: se la pagina scorre il
+  // tabellone si sposta sotto il mouse fermo, e la pallina va ricalcolata da qui.
+  const lastClientRef       = useRef<{ x: number; y: number } | null>(null)
   const dragOriginRef       = useRef({ x: 0, y: 0 })
   const collisionCooldownRef = useRef(0)
   // la bilia apre un lavoro solo se l'hai tirata tu: i rimbalzi da soli (all'apertura) no
@@ -604,8 +611,13 @@ export function PortfolioSection() {
     const canvas=canvasRef.current; if (!canvas) return
     const canvasLoop = canvas
     startTimeRef.current=performance.now()
+    let ultimo=performance.now()
 
     function loop(now: number) {
+      // tempo dall'ultimo fotogramma, in fotogrammi da 60 Hz; limitato, così
+      // dopo una pausa (scheda in background) la pallina non schizza via
+      const dt=Math.min((now-ultimo)/FRAME_60, 3)
+      ultimo=now
       const ctx=canvasLoop.getContext('2d')
       if (!ctx) { rafRef.current=requestAnimationFrame(loop); return }
       const {w,h}=sizeRef.current
@@ -620,7 +632,7 @@ export function PortfolioSection() {
 
       // La mappa si vede solo a fascicolo aperto: entra piano, esce svelta
       const visible = inViewRef.current && openRef.current
-      gridRevealRef.current+=((visible?1:0)-gridRevealRef.current)*(visible?0.1:0.2)
+      gridRevealRef.current+=((visible?1:0)-gridRevealRef.current)*(1-Math.pow(1-(visible?0.1:0.2),dt))
       if (visible && gridRevealRef.current > 0.99) gridRevealRef.current = 1
 
       // Sezione fuori schermo o fascicolo chiuso: si salta tutto il disegno.
@@ -642,7 +654,7 @@ export function PortfolioSection() {
         // l'arco del salto e' un'altezza vera: la bilia 3D si alza dal tabellone
         ball.x=js.fromX+(js.toX-js.fromX)*eased
         ball.y=js.fromY+(js.toY-js.fromY)*t
-        ball.rotation+=(Math.abs(js.toX-js.fromX)/js.duration)*0.06
+        ball.rotation+=(Math.abs(js.toX-js.fromX)/js.duration)*0.06*dt
         js.arcNorm=4*t*(1-t)
         if      (t<0.44)  { js.scaleX=0.81; js.scaleY=1.24 }
         else if (t<0.72)  { const p=(t-0.44)/0.28; js.scaleX=0.81+0.19*p; js.scaleY=1.24-0.24*p }
@@ -673,15 +685,20 @@ export function PortfolioSection() {
           }, 120)
         }
       } else if (!js && isDraggingRef.current) {
+        // scorrendo la pagina col mouse fermo il tabellone si sposta sotto il mouse:
+        // la pallina si ricalcola dall'ultimo punto del mouse, così resta sotto la mano
+        const lc = lastClientRef.current, bp = lc && tableRef.current?.toBoard(lc.x, lc.y)
+        if (bp) dragPosRef.current = desk ? { x: bp.u*MAP_W, y: bp.v*MAP_H } : { x: (1-bp.v)*MAP_H, y: bp.u*MAP_W }
         ball.x = dragPosRef.current.x
         ball.y = dragPosRef.current.y
         ball.vx = 0; ball.vy = 0
         trailRef.current = []
       } else if (!js && !isDraggingRef.current) {
-        ball.x+=ball.vx; ball.y+=ball.vy
-        ball.vx*=FRICTION; ball.vy*=FRICTION
+        ball.x+=ball.vx*dt; ball.y+=ball.vy*dt
+        const attrito=Math.pow(FRICTION,dt)
+        ball.vx*=attrito; ball.vy*=attrito
         const spd=Math.hypot(ball.vx,ball.vy)
-        ball.rotation+=spd*0.055
+        ball.rotation+=spd*0.055*dt
         if (spd<MIN_SPEED){ball.vx=0;ball.vy=0;shotRef.current=false}   // tiro finito
         const m=BALL_R+2
         if(ball.x<m){ball.x=m;ball.vx*=-0.72}
@@ -718,8 +735,8 @@ export function PortfolioSection() {
 
       const alive: Particle[]=[]
       for (const p of particlesRef.current) {
-        p.x+=p.vx; p.y+=p.vy; p.vy+=0.20; p.vx*=0.95; p.vy*=0.96
-        p.alpha-=0.033; p.r*=0.975; if(p.alpha>0) alive.push(p)
+        p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=0.20*dt; p.vx*=Math.pow(0.95,dt); p.vy*=Math.pow(0.96,dt)
+        p.alpha-=0.033*dt; p.r*=Math.pow(0.975,dt); if(p.alpha>0) alive.push(p)
       }
       particlesRef.current=alive
 
@@ -1090,13 +1107,18 @@ export function PortfolioSection() {
         isDraggingRef.current = true
         dragOriginRef.current = { x: ball.x, y: ball.y }
         dragPosRef.current = { x: p.lx, y: p.ly }
+        lastClientRef.current = { x: e.clientX, y: e.clientY }
         jumpRef.current = null
         body.style.cursor = 'grabbing'
       }
     }
     function move(e: PointerEvent) {
       const p = toMap(e); if (!p) return
-      if (isDraggingRef.current) { dragPosRef.current = { x: p.lx, y: p.ly }; return }
+      if (isDraggingRef.current) {
+        dragPosRef.current = { x: p.lx, y: p.ly }
+        lastClientRef.current = { x: e.clientX, y: e.clientY }
+        return
+      }
       hoveredRef.current = null
       if (!p.inside || !ours(e)) { body.style.cursor = ''; return }
       const {w,h} = sizeRef.current
@@ -1107,6 +1129,7 @@ export function PortfolioSection() {
       body.style.cursor = Math.hypot(p.lx-ball.x, p.ly-ball.y) < BALL_R+12 ? 'grab' : hoveredRef.current ? 'pointer' : 'crosshair'
     }
     function up(e: PointerEvent) {
+      lastClientRef.current = null
       if (isDraggingRef.current) { fireSlingshot(); body.style.cursor = 'grab'; pressed = false; return }
       if (!pressed) return
       pressed = false
@@ -1122,6 +1145,7 @@ export function PortfolioSection() {
       window.removeEventListener('pointermove', move)
       window.removeEventListener('pointerup', up)
       isDraggingRef.current = false
+      lastClientRef.current = null
       hoveredRef.current = null
       body.style.cursor = ''
       html.style.overflow = prev.overflow; html.style.touchAction = prev.touch

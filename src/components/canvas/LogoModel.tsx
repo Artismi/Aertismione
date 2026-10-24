@@ -1,5 +1,5 @@
 import { useGLTF, useEnvironment, useTexture, Center, Float } from '@react-three/drei'
-import { useFrame } from '@react-three/fiber'
+import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { useEffect, useMemo, useRef } from 'react'
 import { useStore } from '../../stores/useStore'
@@ -16,6 +16,45 @@ const occluderMat = new THREE.MeshBasicMaterial({
     colorWrite: false,
     side: THREE.FrontSide,
 })
+
+// Ponte per /ar (biglietto in realtà aumentata): quella pagina carica la home in un
+// iframe e, al tocco sull'ologramma, fa volare il suo logo esattamente sopra questo.
+// Le servono la posa della scena glTF rispetto alla camera e il campo visivo,
+// aggiornati a ogni fotogramma. Con `hold` la pagina AR nasconde questo logo
+// finché il suo non è arrivato in posizione, così non se ne vedono due.
+// Il logo della pagina AR si ricava da questo: scripts/build-logo-ar.mjs
+// Il mondo della home si ridisegna solo su richiesta: `loaded` si legge al momento e
+// cambiare `hold` chiede un fotogramma (onHold), se no il logo non sparirebbe né tornerebbe.
+const _logoInCamera = new THREE.Matrix4()
+type LogoBridge = {
+    cameraSpace: number[]; fov: number; aspect: number; visible: boolean; frame: number
+    readonly loaded: boolean
+    hold: boolean
+    onHold: (() => void) | null
+}
+function logoBridge(): LogoBridge {
+    const w = window as unknown as { __artismiLogo?: LogoBridge }
+    if (!w.__artismiLogo) {
+        let hold = false
+        const bridge = { cameraSpace: [], fov: 35, aspect: 1, visible: false, frame: 0, onHold: null } as unknown as LogoBridge
+        Object.defineProperties(bridge, {
+            loaded: { enumerable: true, get: () => useStore.getState().isLoaded },
+            hold: { enumerable: true, get: () => hold, set: (v: boolean) => { hold = v; bridge.onHold?.() } },
+        })
+        w.__artismiLogo = bridge
+    }
+    return w.__artismiLogo
+}
+function publishLogoPose(scene: THREE.Object3D, camera: THREE.Camera, visible: boolean) {
+    const bridge = logoBridge()
+    _logoInCamera.multiplyMatrices(camera.matrixWorldInverse, scene.matrixWorld)
+    _logoInCamera.toArray(bridge.cameraSpace)
+    const persp = camera as THREE.PerspectiveCamera
+    bridge.fov = persp.fov
+    bridge.aspect = persp.aspect
+    bridge.visible = visible
+    bridge.frame++
+}
 
 /**
  * inWorld: il logo e' un oggetto del mondo della home (Table3D), sospeso in aria
@@ -38,7 +77,15 @@ export function LogoModel({ inWorld = false, ...props }: any) {
     const groupRef = useRef<THREE.Group>(null)
     const timeRef = useRef(0)
     const edgeMatRef = useRef<THREE.ShaderMaterial | null>(null)
-
+    // 0 mentre il logo del biglietto AR vola qui sopra, 1 a riposo (vedi logoBridge)
+    const arHold = useMemo(() => ({ value: 1 }), [])
+    const invalidate = useThree((s) => s.invalidate)
+    useEffect(() => {
+        const bridge = logoBridge()
+        bridge.onHold = invalidate
+        invalidate()   // la prima posa, appena il logo c'e'
+        return () => { if (bridge.onHold === invalidate) bridge.onHold = null }
+    }, [invalidate])
 
     const glassMaterial = useMemo(() => {
         const mat = new THREE.MeshPhysicalMaterial({
@@ -189,9 +236,19 @@ export function LogoModel({ inWorld = false, ...props }: any) {
                 shader.uniforms.u_ripieno = { value: ripieno }
                 const im = ripieno.image as HTMLImageElement | undefined
                 shader.uniforms.u_ripAspect = { value: im ? im.height / im.width : 0.6 }
-                shader.fragmentShader = 'varying vec3 vObjPos;\nvarying vec2 vRip;\nuniform sampler2D u_ripieno;\nuniform float u_ripAspect;\n' + glassPars + shader.fragmentShader.replace(
+                shader.uniforms.u_arHold = arHold
+                // il vetro qui e' opaco (si fonde da se' con il fondo): per farlo sparire mentre
+                // arriva il logo del biglietto AR sfuma nel fondo che ha dietro, non piegato
+                const arFade = /* glsl */`
+                    if (u_arHold < 0.999) {
+                        vec2 suv = gl_FragCoord.xy / u_px;
+                        vec3 fondo = pvAcesInv(srgbToLinearBg(pvToSrgb(glassSeen(suv, haze(suv)))));
+                        gl_FragColor.rgb = mix(fondo, gl_FragColor.rgb, u_arHold);
+                    }
+                `
+                shader.fragmentShader = 'varying vec3 vObjPos;\nvarying vec2 vRip;\nuniform sampler2D u_ripieno;\nuniform float u_ripAspect;\nuniform float u_arHold;\n' + glassPars + shader.fragmentShader.replace(
                     '#include <dithering_fragment>',
-                    '#include <dithering_fragment>\n' + liquid + glassComposite,
+                    '#include <dithering_fragment>\n' + liquid + glassComposite + arFade,
                 )
             } else {
                 shader.fragmentShader = shader.fragmentShader.replace(
@@ -214,7 +271,7 @@ export function LogoModel({ inWorld = false, ...props }: any) {
         }
 
         return mat
-    }, [inWorld, ripieno])
+    }, [inWorld, ripieno, arHold])
 
     useEffect(() => {
         glassMaterial.envMap = studio
@@ -333,6 +390,13 @@ export function LogoModel({ inWorld = false, ...props }: any) {
             rotatingRef.current.rotation.y = Math.sin(timeRef.current) * (Math.PI / 18)
         }
 
+        // Durante il volo dalla pagina AR il logo resta nascosto, poi ricompare in dissolvenza.
+        // Finche' la dissolvenza non e' finita si chiede un altro fotogramma.
+        const holdTo = logoBridge().hold ? 0 : 1
+        arHold.value += (holdTo - arHold.value) * Math.min(1, delta * 8)
+        if (Math.abs(holdTo - arHold.value) > 0.002) invalidate()
+        else arHold.value = holdTo
+
         // dove sta il logo sullo schermo e quanto e' grande: la luce dall'alto e il
         // vapore del fondale (WorldBackdrop) gli si mettono intorno
         if (inWorld && groupRef.current) {
@@ -345,6 +409,10 @@ export function LogoModel({ inWorld = false, ...props }: any) {
             // l'ultimo numero e' la luce dall'alto e il vapore intorno al logo: spenti, come prima
             glassUniforms.u_logo.value.set((_c.x + 1) / 2, (_c.y + 1) / 2, LOGO_W * _s.x * perUnit, 0)
             logoSeen.scroll = window.scrollY
+            // nascosto del tutto finche' quello del biglietto non e' quasi arrivato
+            glassMaterial.visible = arHold.value > 0.01
+            // per la pagina AR il logo si vede se il suo centro e' nello schermo
+            publishLogoPose(scene, camera, Math.abs(_c.x) < 1 && Math.abs(_c.y) < 1 && _c.z < 1)
         }
 
         // Il logo resta staticamente ben inquadrato al centro dello schermo.
@@ -360,8 +428,10 @@ export function LogoModel({ inWorld = false, ...props }: any) {
         // Il logo svanisce gradualmente solo dopo aver iniziato a scorrere in alto,
         // così rimane ben visibile e inquadrato più a lungo senza essere schiacciato dal pannello.
         const scrollY = useStore.getState().scrollY
-        const glassFade = Math.max(0, Math.min(1, 1 - (scrollY - 150) / 600))
+        const scrollFade = Math.max(0, Math.min(1, 1 - (scrollY - 150) / 600))
+        const glassFade = scrollFade * arHold.value
         const edgeFade = glassFade
+        publishLogoPose(scene, camera, scrollFade > 0.5)
 
         glassMaterial.opacity = glassFade
         glassMaterial.emissiveIntensity = 0.32 * glassFade

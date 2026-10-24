@@ -129,7 +129,7 @@ const CONTENT = {
   contact: {
     heading: 'Raccontami il tuo progetto.',
     lead: 'Anche se non hai ancora le idee chiare — partiamo da lì.',
-    links: ['WhatsApp: +39 319 597 5752', 'apizzoglio@gmail.com', '@angea_pangea'],
+    links: ['WhatsApp: +39 319 597 5752', 'apizzoglio@gmail.com', '@giovane_kudos'],
   },
 };
 
