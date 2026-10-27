@@ -50,8 +50,9 @@ function compileSafe(gl: THREE.WebGLRenderer, scene: THREE.Object3D, camera: THR
         const program = (gl.properties.get(mat) as { currentProgram?: { isReady?: () => boolean } }).currentProgram
         if (!program?.isReady || program.isReady()) pending.delete(mat)
       }
-      // al massimo dieci secondi: poi si va avanti comunque
-      if (pending.size === 0 || performance.now() - started > 10000) done()
+      // al massimo trenta secondi, poi si va avanti comunque: sulle schede integrate i programmi
+      // sono tanti e lenti, e andando avanti prima si compilavano tutti insieme, a pagina ferma
+      if (pending.size === 0 || performance.now() - started > 30000) done()
       else window.setTimeout(check, 10)
     }
     window.setTimeout(check, 10)
@@ -109,10 +110,11 @@ const LOGO_AT = 0.45
 const AO_INTENSITY = 3.5
 
 export type Quality = 'high' | 'medium' | 'low'
-type QualityLevel = { dpr: [number, number]; msaa: number; smaa: boolean; ao: 'low' | 'medium' }
+type QualityLevel = { dpr: [number, number]; msaa: number; smaa: boolean; ao: 'low' | 'medium' | null }
 /**
  * Fasce di qualita': quanti pixel (dpr), quanto antialiasing (msaa sulla scheda video, o
- * smaa: FXAA a fine catena), che occlusione.
+ * smaa: FXAA a fine catena), che occlusione. L'occlusione (N8AO) solo nell'alta: sulle schede
+ * integrate i suoi programmi si compilavano in secondi, a pagina ferma, all'arrivo sul banco.
  * Da computer l'alta e' sovracampionata: il vetro del logo e i bordi del banco nitidi
  * anche sugli schermi normali. Ogni fascia ha la sua risoluzione fissa: cambiarla a ogni
  * inizio e fine di movimento riallocava i buffer, e ogni animazione partiva con uno scatto.
@@ -121,13 +123,13 @@ const QUALITY: Record<'desktop' | 'mobile', Record<Quality, QualityLevel>> = {
   desktop: {
     high: { dpr: [1.5, 2], msaa: 4, smaa: false, ao: 'medium' },
     // l'antialiasing della scheda video costava 5 ms a fotogramma su una integrata: FXAA, a fine catena, quasi niente
-    medium: { dpr: [1, 1.25], msaa: 0, smaa: true, ao: 'low' },
-    low: { dpr: [1, 1], msaa: 0, smaa: false, ao: 'low' },
+    medium: { dpr: [1, 1.25], msaa: 0, smaa: true, ao: null },
+    low: { dpr: [1, 1], msaa: 0, smaa: false, ao: null },
   },
   mobile: {
-    high: { dpr: [1, 1.5], msaa: 0, smaa: false, ao: 'low' },
-    medium: { dpr: [1, 1.5], msaa: 0, smaa: false, ao: 'low' },
-    low: { dpr: [1, 1], msaa: 0, smaa: false, ao: 'low' },
+    high: { dpr: [1, 1.5], msaa: 0, smaa: false, ao: null },
+    medium: { dpr: [1, 1.5], msaa: 0, smaa: false, ao: null },
+    low: { dpr: [1, 1], msaa: 0, smaa: false, ao: null },
   },
 }
 const LOWER: Record<Quality, Quality> = { high: 'medium', medium: 'low', low: 'low' }
@@ -370,10 +372,12 @@ function Table(props: Props & { images: Images; level: QualityLevel }) {
  * quando qualcosa sul banco si muove, non a ogni fotogramma. E se muovendosi
  * sul banco i fotogrammi restano lenti, la fascia di qualita' scende (onSlow).
  */
-function Budget({ stage, table, composer, onSlow }: {
+function Budget({ stage, table, composer, prepared, onSlow }: {
   stage: RefObject<HTMLDivElement | null>
   table: RefObject<THREE.Group | null>
   composer: RefObject<Composer | null>
+  /** il banco e' pronto (Warmup): prima non si disegna */
+  prepared: MutableRefObject<boolean>
   onSlow: () => void
 }) {
   const { gl, camera, invalidate } = useThree()
@@ -399,7 +403,9 @@ function Budget({ stage, table, composer, onSlow }: {
     const r = stage.current?.getBoundingClientRect()
     const onTable = !!r && r.bottom > -60 && r.top < vh + 60
     const g = table.current
-    if (g) g.visible = onTable
+    // finche' Warmup non ha finito il banco non si mostra: disegnato prima, compilava i suoi
+    // programmi al momento, e la pagina si fermava per secondi proprio all'arrivo
+    if (g) g.visible = onTable && prepared.current
     // ne' logo ne' banco sullo schermo: il composer non disegna niente. Qualcuno puo'
     // chiedere un fotogramma lo stesso (lo schermo del Game Boy che si accende, il
     // caricamento del gioco) e costa solo questo giro. L'ultima immagine e' gia' vuota
@@ -463,12 +469,15 @@ function Budget({ stage, table, composer, onSlow }: {
  * Il banco si prepara prima di entrare: i programmi della scheda video e le
  * immagini (legno, carta, metallo...) si caricano ora, a pezzi, mentre il banco
  * e' ancora fuori schermo. Altrimenti si preparavano tutti insieme nel primo
- * fotogramma in cui il banco compare, e lo scroll scattava proprio li'.
+ * fotogramma in cui il banco compare, e lo scroll scattava proprio li'. Finche' non
+ * ha finito (prepared) il banco non si disegna: chi ci arriva subito lo vede comparire
+ * un attimo dopo, invece di trovare la pagina ferma per secondi.
  */
-function Warmup({ table, ready, composer }: {
+function Warmup({ table, ready, composer, prepared }: {
   table: RefObject<THREE.Group | null>; ready: boolean; composer: RefObject<Composer | null>
+  prepared: MutableRefObject<boolean>
 }) {
-  const { gl, scene, camera } = useThree()
+  const { gl, scene, camera, invalidate } = useThree()
   const done = useRef(false)
   useEffect(() => {
     if (!ready || done.current) return
@@ -484,49 +493,79 @@ function Warmup({ table, ready, composer }: {
       if (!alive || !g) return
       if (g.children.length === 0) { if (++tries < 20) t = window.setTimeout(attempt, 500); return }
       done.current = true
-      const was = g.visible
-      g.visible = true
-      // si compila per dove il banco si disegna davvero: nel buffer del composer (lineare,
-      // senza correzione colore), non sullo schermo. Compilati per lo schermo i programmi
-      // erano altri, e quelli giusti si compilavano tutti insieme all'arrivo sul banco
-      const prev = gl.getRenderTarget()
-      gl.setRenderTarget(composer.current?.inputBuffer ?? null)
-      const job = compileSafe(gl, scene, camera)   // traversata subito, compilazione in parallelo
-      gl.setRenderTarget(prev)
-      g.visible = was
-      await job.catch(() => {})
-      const texs = new Set<THREE.Texture>()
-      g.traverse((o) => {
-        const m = (o as THREE.Mesh).material
-        for (const mat of Array.isArray(m) ? m : m ? [m] : []) {
-          for (const v of Object.values(mat)) if (v && (v as THREE.Texture).isTexture) texs.add(v as THREE.Texture)
+      // compila (in parallelo) e carica le immagini di quello che c'e' adesso sul banco
+      const prepare = async () => {
+        const was = g.visible
+        g.visible = true
+        // si compila per dove il banco si disegna davvero: nel buffer del composer (lineare,
+        // senza correzione colore), non sullo schermo. Compilati per lo schermo i programmi
+        // erano altri, e quelli giusti si compilavano tutti insieme all'arrivo sul banco
+        const prev = gl.getRenderTarget()
+        gl.setRenderTarget(composer.current?.inputBuffer ?? null)
+        const job = compileSafe(gl, scene, camera)   // traversata subito, compilazione in parallelo
+        gl.setRenderTarget(prev)
+        g.visible = was
+        await job.catch(() => {})
+        // anche i passaggi della post-produzione, in parallelo come il banco: compilati al primo
+        // fotogramma fermavano la pagina
+        const fx = new THREE.Scene()
+        const quad = new THREE.PlaneGeometry(2, 2)
+        for (const pass of composer.current?.passes ?? []) {
+          const m = (pass as unknown as { fullscreenMaterial?: THREE.Material }).fullscreenMaterial
+          if (m) fx.add(new THREE.Mesh(quad, m))
         }
-      })
-      // una immagine per volta, quando il browser e' libero
-      for (const tx of texs) {
-        if (!alive) return
-        await new Promise<void>((ok) => idle(ok))
-        gl.initTexture(tx)
+        if (fx.children.length) await compileSafe(gl, fx, camera).catch(() => {})
+        quad.dispose()
+        const texs = new Set<THREE.Texture>()
+        g.traverse((o) => {
+          const m = (o as THREE.Mesh).material
+          for (const mat of Array.isArray(m) ? m : m ? [m] : []) {
+            for (const v of Object.values(mat)) if (v && (v as THREE.Texture).isTexture && !sent.has(v)) texs.add(v as THREE.Texture)
+          }
+        })
+        // una immagine per volta, quando il browser e' libero
+        for (const tx of texs) {
+          if (!alive) return
+          await new Promise<void>((ok) => idle(ok))
+          gl.initTexture(tx)
+          sent.add(tx)
+        }
       }
-      // e un fotogramma intero col banco acceso, ancora fuori dall'inquadratura: l'occlusione
-      // (N8AO) e l'ombra del sole preparano i loro programmi la prima volta che lavorano,
-      // e sul banco quella prima volta faceva scattare l'arrivo
+      const sent = new Set<unknown>()
+      await prepare()
+      // e un fotogramma intero col banco acceso, ancora nascosto: l'occlusione (N8AO) e l'ombra
+      // del sole preparano i loro programmi la prima volta che lavorano, e quella prima volta
+      // ferma la pagina. Si aspetta che la pagina stia ferma un attimo (al massimo un secondo e mezzo)
       await new Promise<void>((ok) => idle(ok))
+      for (let y = window.scrollY, waited = 0; waited < 1500; waited += 100) {
+        await new Promise((ok) => window.setTimeout(ok, 100))
+        if (window.scrollY === y) break
+        y = window.scrollY
+      }
+      // i pezzi del banco montano uno alla volta (Suspense): chi e' arrivato mentre si
+      // preparava il resto si compila ora, in parallelo, e non dentro quel fotogramma
+      if (!alive) return
+      await prepare()
       const c = composer.current
       const tg = table.current
-      if (!alive || !c || !tg || tg.visible) return
-      const before = c.passes.map((p) => p.enabled)
-      tg.visible = true
-      c.passes.forEach((p) => { p.enabled = true })
-      gl.shadowMap.needsUpdate = true
-      c.render()
-      tg.visible = false
-      c.passes.forEach((p, i) => { p.enabled = before[i] })
-      gl.shadowMap.needsUpdate = true
+      if (!alive) return
+      if (c && tg && !tg.visible) {
+        const before = c.passes.map((p) => p.enabled)
+        tg.visible = true
+        c.passes.forEach((p) => { p.enabled = true })
+        gl.shadowMap.needsUpdate = true
+        c.render()
+        tg.visible = false
+        c.passes.forEach((p, i) => { p.enabled = before[i] })
+        gl.shadowMap.needsUpdate = true
+      }
+      // pronto: da qui il banco si disegna
+      prepared.current = true
+      invalidate()
     })
-    t = window.setTimeout(attempt, 800)
+    t = window.setTimeout(attempt, 100)
     return () => { alive = false; window.clearTimeout(t) }
-  }, [ready, gl, scene, camera, table, composer])
+  }, [ready, gl, scene, camera, table, composer, prepared, invalidate])
   return null
 }
 
@@ -536,6 +575,7 @@ function World(props: Props & { images: Images | null; level: QualityLevel; onSl
   const logo = useRef<THREE.Group>(null)
   const table = useRef<THREE.Group>(null)
   const composer = useRef<Composer>(null)
+  const prepared = useRef(false)
 
   return (
     <>
@@ -577,14 +617,14 @@ function World(props: Props & { images: Images | null; level: QualityLevel; onSl
       <group ref={table}>
         {props.images && <Suspense fallback={null}><Table {...props} images={props.images} /></Suspense>}
       </group>
-      <Budget stage={props.stage} table={table} composer={composer} onSlow={props.onSlow} />
-      <Warmup table={table} ready={!!props.images} composer={composer} />
+      <Budget stage={props.stage} table={table} composer={composer} prepared={prepared} onSlow={props.onSlow} />
+      <Warmup table={table} ready={!!props.images} composer={composer} prepared={prepared} />
 
       {/* come in un render: occlusione negli angoli e vignettatura. Niente grana qui:
           sgranava il logo (la grana del sito e' gia' sopra tutta la pagina) */}
       {/* niente messa a fuoco: costava piu' di tutto il resto e faceva scattare lo scroll */}
       <EffectComposer ref={composer} multisampling={level.msaa}>
-        <N8AO aoRadius={0.5} distanceFalloff={0.5} intensity={AO_INTENSITY} quality={level.ao} halfRes />
+        {level.ao ? <N8AO aoRadius={0.5} distanceFalloff={0.5} intensity={AO_INTENSITY} quality={level.ao} halfRes /> : <></>}
         <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
         <Vignette offset={0.25} darkness={0.55} />
         {level.smaa ? <FXAA /> : <></>}

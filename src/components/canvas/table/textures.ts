@@ -733,8 +733,9 @@ export function screenTexture(src: string, logo: HTMLImageElement | null, loadin
 export function loadImage(src: string) {
   return new Promise<HTMLImageElement | null>((resolve) => {
     const img = new Image()
-    img.onload = () => resolve(img)
-    img.onerror = () => resolve(null)
     img.src = src
+    // decodificata fuori dal filo principale, prima di servire: se no si decodifica al primo
+    // uso, di colpo, mentre la pagina scorre
+    img.decode().then(() => resolve(img), () => resolve(img.complete && img.naturalWidth ? img : null))
   })
 }
