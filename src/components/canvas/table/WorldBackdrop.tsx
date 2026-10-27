@@ -96,7 +96,7 @@ const common = causticsFragment
   // zone spente che la piscina ha di proposito. Servono al vetro del logo e alla luce
   // dietro: devono attraversare tutto il logo, non solo una parte. 0 = niente, 1 = filo pieno
   float lightWaves(vec2 uv) {
-    float t = u_time * 0.22;
+    float t = u_time * 0.44;   // lo stesso moto dell'acqua (CausticsPlane)
     vec2 q = uv * vec2(u_res.x / max(1.0, u_res.y), 1.0) * 14.0;
     vec2 flow = vec2(field(q * 0.18, t * 0.18), field(q * 0.18 + vec2(3.9, 2.2), t * 0.18)) * 1.4;
     float f = field(q + flow, t);

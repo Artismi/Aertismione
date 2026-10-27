@@ -51,7 +51,7 @@ export const causticsFragment = /* glsl */`
   }
 
   void main() {
-    float t  = u_time * 0.22;  // lento: i punti sella evolvono piano → legami duraturi
+    float t  = u_time * 0.44;  // i punti sella evolvono senza fretta → legami che durano
     vec2  uv = vUv;
     uv.x *= u_res.x / u_res.y;
     uv   *= 22.5;
