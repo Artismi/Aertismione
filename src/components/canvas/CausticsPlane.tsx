@@ -4,7 +4,7 @@ import * as THREE from 'three'
 import { useStore } from '../../stores/useStore'
 
 // ─── Vertex shader ────────────────────────────────────────────────────────────
-export const causticsVertexShader = /* glsl */`
+const vertexShader = /* glsl */`
   varying vec2 vUv;
   void main() {
     vUv = uv;
@@ -19,13 +19,17 @@ export const causticsVertexShader = /* glsl */`
 // si biforcano e si fondono nei punti sella — esattamente i filamenti
 // di luce sul fondo di una piscina.
 // Un solo campo → UN'unica famiglia di curve, senza caos da sovrapposizione.
-// Funzioni della piscina, condivise: CausticsPlane le usa per lo sfondo della
-// home, logoHologram per il vetro del logo in /ar.
-export const causticsChunk = /* glsl */`
+export const causticsFragment = /* glsl */`
+  uniform float u_time;
+  uniform float u_fade;
+  uniform float u_white; // 0 = rosa hero, 1 = bianco about
+  uniform vec2  u_res;
+  varying vec2  vUv;
+
   // Tre componenti in direzioni diverse → molti punti sella → rete ramificata.
   // La rete emerge dallo ZERO-CROSSING di (a+b+c): un'unica curva continua
   // che si biforca ai punti sella. Nessun abs(sin(f*k)) → niente spigoli.
-  float causticsField(vec2 p, float t) {
+  float field(vec2 p, float t) {
     // 3 onde a 120° con ampiezza uguale → isotropia perfetta.
     // Nessuna direzione privilegiata: la ragnatela si muove
     // uniformemente in tutte le direzioni.
@@ -46,9 +50,7 @@ export const causticsChunk = /* glsl */`
     return (a + b + c) / 3.0;
   }
 
-  // Il colore della piscina in un punto del piano (vUv 0..1). Usato anche dal
-  // vetro del logo in /ar, che la "registra" dentro di se'.
-  vec3 causticsColor(vec2 vUv, float u_time, vec2 u_res, float u_white) {
+  void main() {
     float t  = u_time * 0.22;  // lento: i punti sella evolvono piano → legami duraturi
     vec2  uv = vUv;
     uv.x *= u_res.x / u_res.y;
@@ -59,12 +61,12 @@ export const causticsChunk = /* glsl */`
     // che rappresenta la "corrente d'acqua" sottostante.
     // Entrambi i layer vengono deformati da questo stesso flusso:
     // si muovono casualmente MA in modo coerente — network interdipendente.
-    float flowX = causticsField(uv * 0.18 + vec2(0.0, 0.0), t * 0.18);
-    float flowY = causticsField(uv * 0.18 + vec2(3.9, 2.2), t * 0.18);
+    float flowX = field(uv * 0.18 + vec2(0.0, 0.0), t * 0.18);
+    float flowY = field(uv * 0.18 + vec2(3.9, 2.2), t * 0.18);
     vec2  flow  = vec2(flowX, flowY) * 1.4;
 
     // ── Unico campo: l'intera superficie d'acqua ─────────────────
-    float f = causticsField(uv + flow, t);
+    float f = field(uv + flow, t);
 
     // ── Modulazione neuronale: dove le linee si attivano/silenziamo ──
     // Due campi lenti e larghi (scala 0.20) definiscono zone di
@@ -73,12 +75,12 @@ export const causticsChunk = /* glsl */`
     // A e B usano offset spaziali diversi → rompono in zone indipendenti
     // ma la stessa lentezza li tiene coordinati nel tempo.
     // Scale più alte (0.32 / 0.22) → zone di attivazione più piccole → gap più frequenti
-    float modA = (causticsField(uv * 0.32 + vec2(0.0, 0.0), t * 0.10) * 0.5 + 0.5)
-               * (causticsField(uv * 0.22 + vec2(1.9, 2.6), t * 0.08) * 0.5 + 0.5);
+    float modA = (field(uv * 0.32 + vec2(0.0, 0.0), t * 0.10) * 0.5 + 0.5)
+               * (field(uv * 0.22 + vec2(1.9, 2.6), t * 0.08) * 0.5 + 0.5);
     float breakA = smoothstep(0.14, 0.48, modA);
 
-    float modB = (causticsField(uv * 0.32 + vec2(3.2, 1.5), t * 0.10) * 0.5 + 0.5)
-               * (causticsField(uv * 0.22 + vec2(0.4, 3.8), t * 0.08) * 0.5 + 0.5);
+    float modB = (field(uv * 0.32 + vec2(3.2, 1.5), t * 0.10) * 0.5 + 0.5)
+               * (field(uv * 0.22 + vec2(0.4, 3.8), t * 0.08) * 0.5 + 0.5);
     float breakB = smoothstep(0.14, 0.48, modB);
 
     // Layer A: livello f = 0 — filamenti principali
@@ -98,7 +100,7 @@ export const causticsChunk = /* glsl */`
 
     // ── Ombre — inverse di max(A,B), sfumate a bassa frequenza ───
     vec2  uvS  = uv * 0.14 + vec2(2.3, 1.1);
-    float sf   = causticsField(uvS, t * 0.50);
+    float sf   = field(uvS, t * 0.50);
     float both = max(causticA, causticB);
     float dark = (1.0 - both) * clamp(0.30 + 0.70 * sf, 0.0, 1.0) * 0.80;
 
@@ -132,21 +134,7 @@ export const causticsChunk = /* glsl */`
     col = mix(col, lineA, causticA * 0.70);
     col = mix(col, lineB, causticB * 0.50);
 
-    return col;
-  }
-`
-
-export const causticsFragmentShader = /* glsl */`
-  uniform float u_time;
-  uniform float u_fade;
-  uniform float u_white; // 0 = rosa hero, 1 = bianco about
-  uniform vec2  u_res;
-  varying vec2  vUv;
-
-  ${causticsChunk}
-
-  void main() {
-    gl_FragColor = vec4(causticsColor(vUv, u_time, u_res, u_white), u_fade);
+    gl_FragColor = vec4(col, u_fade);
   }
 `
 
@@ -207,8 +195,8 @@ export function CausticsPlane() {
       <planeGeometry args={[16, 10]} />
       <shaderMaterial
         ref={matRef}
-        vertexShader={causticsVertexShader}
-        fragmentShader={causticsFragmentShader}
+        vertexShader={vertexShader}
+        fragmentShader={causticsFragment}
         uniforms={uniforms}
         transparent
         depthWrite={false}

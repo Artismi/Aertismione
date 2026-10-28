@@ -66,8 +66,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
+  modal,
 }: {
   children: React.ReactNode
+  /** la pagina di un lavoro aperta sopra la home (app/@modal) */
+  modal: React.ReactNode
 }) {
   return (
     <html
@@ -83,15 +86,14 @@ export default function RootLayout({
             __html: "try{if(sessionStorage.getItem('artismi:intro-visto'))document.documentElement.dataset.introVisto='1'}catch(e){}",
           }}
         />
-        {/* Preload 3D model files — browser fetches them in parallel with JS bundle */}
+        {/* Il logo 3D parte insieme al codice: e' il solo modello della home */}
         <link rel="preload" href="/models/logo.glb" as="fetch" crossOrigin="anonymous" />
-        <link rel="preload" href="/models/avatar.glb" as="fetch" crossOrigin="anonymous" />
-        <link rel="preload" href="/models/Background_v2.glb" as="fetch" crossOrigin="anonymous" />
       </head>
       <body>
         <CustomCursor />
         <Ambience />
         {children}
+        {modal}
       </body>
     </html>
   )

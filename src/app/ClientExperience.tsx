@@ -1,52 +1,20 @@
 'use client'
 
 /**
- * ClientExperience — Il layer 3D completo con scroll-driven camera.
+ * ClientExperience — il ponte tra la pagina e il mondo 3D della home.
  *
- * Architettura:
- * - La scena 3D è FIXED, occupa tutto lo schermo (z-index: 0)
- * - L'utente scrolla la pagina normalmente (scroll nativo Next.js)
- * - La camera 3D segue il scroll virtuale:
- *     scrollY=0    → Logo in primo piano (position y=0)
- *     scrollY=1600 → Avatar+Pavimento (position y=-18)
- * - Le sezioni DOM (Servizi, Chi Sono) sono overlay position:fixed
- *   che appaiono tramite opacity quando la camera è nel range giusto.
+ * Il mondo (logo, banco, fascicolo, Game Boy) e' uno solo e sta in Table3D,
+ * dietro tutta la pagina. Qui restano solo:
+ * - ScrollSync: lo scroll e le posizioni delle sezioni nello store;
+ * - LoadingSync: l'avanzamento dei caricamenti 3D per il Preloader.
  *
- * Lo scroll nativo del browser è usato per determinare la posizione
- * nell'esperienza, con lerp fluido per la camera.
+ * Prima qui c'era una seconda scena 3D (il logo), disegnata di continuo sopra
+ * la prima: due mondi separati, e il doppio del lavoro per la scheda grafica.
  */
 
-import { Canvas } from '@react-three/fiber'
-import { Suspense, useEffect } from 'react'
-import { Html, useProgress, useGLTF } from '@react-three/drei'
-import { HeroStage } from '../components/canvas/HeroStage'
-import { useFrame, useThree } from '@react-three/fiber'
+import { useEffect } from 'react'
+import { useProgress } from '@react-three/drei'
 import { useStore } from '../stores/useStore'
-import type { AvatarTarget } from '../components/canvas/AvatarParticles'
-import { usePathname } from 'next/navigation'
-
-// ─── Preload all models immediately ───────────────────────────────────────────
-useGLTF.preload('/models/logo.glb')
-useGLTF.preload('/models/avatar.glb')
-useGLTF.preload('/models/Background_v2.glb')
-// ──────────────────────────────────────────────────────────────────────────────
-
-function Loader() {
-  const { progress } = useProgress()
-  return (
-    <Html center>
-      <div style={{
-        fontFamily: 'monospace',
-        fontSize: '0.7rem',
-        letterSpacing: '0.15em',
-        textTransform: 'uppercase',
-        color: '#888880',
-      }}>
-        {progress.toFixed(0)}%
-      </div>
-    </Html>
-  )
-}
 
 /**
  * ScrollSync — reads window.scrollY every frame and syncs it to the store.
@@ -79,7 +47,8 @@ function ScrollSync() {
       if (scrollRaf !== null) return
       scrollRaf = requestAnimationFrame(() => {
         scrollRaf = null
-        setScrollY(window.scrollY)
+        // sopra la home c'e' la pagina di un lavoro: il suo scroll non muove il mondo
+        if (!useStore.getState().away) setScrollY(window.scrollY)
       })
     }
 
@@ -120,130 +89,11 @@ function LoadingSync() {
 }
 
 
-/**
- * ResponsiveCamera — adjusts vertical FOV to maintain consistent visual proportions
- * across viewport aspect ratios (landscape desktop vs portrait mobile).
- *
- * Strategy: preserve the horizontal angular coverage of the desktop reference
- * (vFOV=35 at 16:9). On portrait screens the vFOV is increased so the scene
- * "zooms out" uniformly — the logo and background keep the same ratio with the
- * viewport frame regardless of device orientation.
- */
-function ResponsiveCamera() {
-  const { camera, size } = useThree()
-
-  useEffect(() => {
-    const aspect = size.width / size.height
-    const BASE_FOV = 35
-    const REF_ASPECT = 16 / 9
-
-    let fov: number
-    if (aspect >= REF_ASPECT) {
-      // Landscape / wide desktop: use the designed FOV unchanged
-      fov = BASE_FOV
-    } else {
-      // Portrait / narrow: maintain the same horizontal angular coverage
-      // as the desktop reference so proportions stay consistent.
-      const hFov = 2 * Math.atan(Math.tan((BASE_FOV * Math.PI / 180) / 2) * REF_ASPECT)
-      fov = Math.min(
-        2 * Math.atan(Math.tan(hFov / 2) / aspect) * (180 / Math.PI),
-        65 // cap to limit fisheye distortion on very narrow screens
-      )
-    }
-
-    ;(camera as any).fov = fov
-    ;(camera as any).updateProjectionMatrix()
-  }, [camera, size.width, size.height])
-
-  return null
-}
-
-/**
- * CameraRig — smooth lerp of the camera following scrollY.
- * scrollY 0 → camera at y=2 (looking at logo)
- * scrollY increases → camera descends
- * scrollY ~2000px → camera at y=-16 (avatar + floor level)
- */
-/**
- * Scroll → 3D camera mapping:
- *
- *  scrollY=0     → y= 2   (logo at eye level)
- *  scrollY=6000  → y=-33  (avatar+floor at eye level)
- *
- * 6000px total matches the DOM page height:
- *   Hero: 200vh, Visione: ~120vh, Servizi: ~130vh,
- *   Portfolio: 60vh, Chi Sono: 100vh → ~610vh total ≈ 5800-6200px
- */
-function CameraRig() {
-  // Lettura "transitoria": dentro useFrame il valore si legge al volo, senza
-  // iscriversi allo store. Iscriversi qui voleva dire ricostruire la scena 3D
-  // a ogni scatto di scroll.
-  const { camera } = useThree()
-
-  useFrame((_, delta) => {
-    const scrollY = useStore.getState().scrollY
-    // Il modello Avatar è stato rimosso, quindi non c'è più bisogno 
-    // di far scendere la camera a y=-36. Se la moviamo giù, la scena 3D
-    // ("lo sfondo procedurale") esce dal campo visivo e lo schermo diventa nero.
-    // Manteniamo la camera fissa (con un lievissimo parallax di profondità)
-    // per garantire che lo sfondo procedurale resti *sempre visibile* dietro tutto il sito.
-    
-    // Parallax sub-millimetrico per dare senso di connessione allo scroll
-    const targetY = scrollY * -0.0003
-    const targetZ = 6 + (scrollY * 0.0001)
-
-    const lerpFactor = Math.min(1, delta * 5)
-    camera.position.y += (targetY - camera.position.y) * lerpFactor
-    camera.position.z += (targetZ - camera.position.z) * lerpFactor
-    camera.position.x += (0 - camera.position.x) * lerpFactor
-    camera.rotation.x = 0
-    camera.rotation.y = 0
-    camera.rotation.z = 0
-  })
-
-  return null
-}
-
-function Scene({ isHome }: { isHome: boolean }) {
-  const noop = (_: AvatarTarget[]) => { }
-
+export default function ClientExperience() {
   return (
     <>
       <LoadingSync />
       <ScrollSync />
-      <ResponsiveCamera />
-      <CameraRig />
-      {/* Turn off heavy physics/updates when not home */}
-      {isHome && <HeroStage onTrackedPoints={noop} />}
     </>
-  )
-}
-
-export default function ClientExperience() {
-  const pathname = usePathname()
-  const isHome = pathname === '/'
-
-  return (
-    <div
-      aria-hidden="true"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 0,
-        pointerEvents: 'none',
-        display: isHome ? 'block' : 'none' // completely hide it from DOM flow
-      }}
-    >
-      <Canvas
-        camera={{ position: [0, 0, 6], fov: 35 }}
-        dpr={[1, 1.5]} /* Cap rendering quality to save GPU */
-        gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
-        frameloop={isHome ? 'always' : 'demand'}
-      >
-        <Suspense fallback={null}>
-          <Scene isHome={isHome} />
-        </Suspense>
-      </Canvas>
-    </div>
   )
 }

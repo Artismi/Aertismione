@@ -32,7 +32,12 @@ for d, _, files in os.walk(os.path.join(root, 'portfolio')):
             w, h = m
         elif est in ('jpg', 'jpeg', 'png', 'webp', 'gif'):
             try:
-                w, h = Image.open(p).size
+                img = Image.open(p)
+                w, h = img.size
+                # le foto col tag EXIF di rotazione (5-8) il browser le mostra
+                # girate di 90°: contano le misure come si vedono, non come sono salvate
+                if img.getexif().get(0x0112) in (5, 6, 7, 8):
+                    w, h = h, w
             except Exception:
                 continue
         else:

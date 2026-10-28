@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#f5c7d6">
+<title>Artismi · Ologramma</title>
+<meta name="description" content="Inquadra il biglietto Artismi e guarda il logo prendere vita in realtà aumentata.">
+<link rel="icon" href="/artismi-logo.png">
+<link rel="preload" href="/ar/assets/logo-ar.glb" as="fetch" crossorigin>
+<style>
+  :root {
+    --ink: #2b1622;
+    --pool: #f5c7d6;
+    --paper: #fff4f8;
+    --blush: #ff9cc8;
+    --muted: rgba(255, 244, 248, 0.72);
+    --glass: rgba(58, 28, 46, 0.58);
+    --line: rgba(255, 255, 255, 0.32);
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--pool); color: var(--paper); font-family: var(--sans); }
+  body { overscroll-behavior: none; touch-action: none; }
+
+  #bg, #stage, #preview { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
+  #bg canvas { display: block; }
+  #stage { display: none; }
+  body[data-state="loading"] #stage, body[data-state="scanning"] #stage, body[data-state="found"] #stage, body[data-state="flying"] #stage { display: block; }
+  #stage video { object-fit: cover; }
+  #preview { display: none; }
+  body[data-state="preview"] #preview, body[data-state="flying"] #preview { display: block; }
+
+  /* La home si carica qui sotto fin dall'inizio, invisibile; al tocco sale e diventa la pagina. */
+  #home { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; z-index: 0; opacity: 0; pointer-events: none; background: var(--pool); }
+  #home.active { z-index: 40; pointer-events: auto; }
+
+  .ui { position: fixed; inset: 0; z-index: 10; pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        padding: max(20px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom)); }
+  .ui > * { pointer-events: auto; }
+  .layer { display: none; }
+
+  .label { font: 500 11px/1 var(--mono); letter-spacing: 0.42em; text-transform: uppercase; color: var(--blush); }
+  .btn { appearance: none; border: 1px solid var(--line); background: var(--glass); color: var(--paper); font: 600 15px/1 var(--sans);
+         padding: 16px 22px; border-radius: 999px; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); cursor: pointer; text-decoration: none;
+         display: inline-flex; align-items: center; gap: 10px; }
+  .btn.primary { background: var(--paper); color: var(--ink); border: 0; box-shadow: 0 0 34px rgba(255, 156, 200, 0.55); }
+  .btn:active { transform: scale(0.97); }
+  .link { color: var(--muted); font-size: 14px; text-decoration: underline; text-underline-offset: 4px; background: none; border: 0; cursor: pointer; padding: 10px; }
+
+  /* Intro */
+  #intro { max-width: 380px; text-align: center; gap: 16px; flex-direction: column; align-items: center;
+           background: var(--glass); border: 1px solid var(--line); border-radius: 28px; padding: 30px 22px 18px;
+           backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); box-shadow: 0 20px 60px rgba(90, 30, 60, 0.25); }
+  body[data-state="intro"] #intro { display: flex; }
+  #intro h1 { font: 700 28px/1.15 var(--sans); margin: 4px 0 0; letter-spacing: -0.01em; }
+  #intro p { margin: 0; color: var(--muted); font-size: 16px; line-height: 1.5; }
+  .orb { width: 64px; height: 64px; border-radius: 50%; margin-bottom: 2px;
+         background: radial-gradient(circle at 38% 32%, #fff 0%, #f3eef2 30%, #b9aab4 70%, #8d7a87 100%);
+         box-shadow: 0 0 0 2px var(--blush), 0 0 30px rgba(255, 156, 200, 0.8); animation: beam 3s ease-in-out infinite; }
+  @keyframes beam { 50% { box-shadow: 0 0 0 2px var(--blush), 0 0 46px rgba(255, 156, 200, 1); } }
+
+  /* Caricamento */
+  #loading { flex-direction: column; align-items: center; gap: 16px; }
+  body[data-state="loading"] #loading { display: flex; }
+  #loading .label { color: var(--paper); text-shadow: 0 1px 12px rgba(90, 30, 60, 0.6); }
+  .spinner { width: 46px; height: 46px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--paper); animation: spin 0.9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Mirino di scansione */
+  #scan { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; pointer-events: none; }
+  body[data-state="scanning"] #scan { display: flex; }
+  .frame { width: min(64vw, 300px); aspect-ratio: 1; position: relative; animation: breathe 2.4s ease-in-out infinite; }
+  .frame i { position: absolute; width: 30px; height: 30px; border: 3px solid var(--paper); filter: drop-shadow(0 0 6px rgba(255,156,200,0.9)); }
+  .frame i:nth-child(1) { top: 0; left: 0; border-right: 0; border-bottom: 0; border-radius: 10px 0 0 0; }
+  .frame i:nth-child(2) { top: 0; right: 0; border-left: 0; border-bottom: 0; border-radius: 0 10px 0 0; }
+  .frame i:nth-child(3) { bottom: 0; left: 0; border-right: 0; border-top: 0; border-radius: 0 0 0 10px; }
+  .frame i:nth-child(4) { bottom: 0; right: 0; border-left: 0; border-top: 0; border-radius: 0 0 10px 0; }
+  .frame b { position: absolute; left: 8%; right: 8%; height: 2px; top: 10%; background: linear-gradient(90deg, transparent, var(--paper), transparent);
+             box-shadow: 0 0 12px var(--blush); animation: sweep 2.2s ease-in-out infinite; }
+  @keyframes breathe { 50% { transform: scale(1.03); } }
+  @keyframes sweep { 50% { top: 88%; } }
+
+  /* Suggerimenti e barra in basso */
+  .hint { position: absolute; left: 16px; right: 16px; text-align: center; display: none; }
+  .hint .pill { display: inline-block; background: var(--glass); border: 1px solid var(--line); border-radius: 14px; padding: 12px 16px;
+                backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); font-size: 15px; line-height: 1.4; max-width: 340px; }
+  .hint small { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
+  #hint-scan { top: max(28px, env(safe-area-inset-top)); }
+  #hint-tap { top: max(28px, env(safe-area-inset-top)); }
+  body[data-state="scanning"] #hint-scan, body[data-state="found"] #hint-tap { display: block; }
+  #hint-tap .pill { border-color: rgba(255, 156, 200, 0.6); animation: glow 1.8s ease-in-out infinite; }
+  @keyframes glow { 50% { box-shadow: 0 0 22px rgba(255, 156, 200, 0.5); } }
+
+  #bar { position: absolute; left: 0; right: 0; bottom: max(22px, env(safe-area-inset-bottom)); display: none; justify-content: center; }
+  body[data-state="scanning"] #bar, body[data-state="found"] #bar, body[data-state="preview"] #bar { display: flex; }
+
+  #hint-preview { top: max(28px, env(safe-area-inset-top)); }
+  body[data-state="preview"] #hint-preview { display: block; }
+  #hint-preview .link { padding: 6px 0 0; font-size: 13px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .frame, .frame b, .orb::after, #hint-tap .pill, .spinner { animation: none; }
+  }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "/ar/vendor/three/build/three.module.min.js",
+    "three/addons/": "/ar/vendor/three/examples/jsm/",
+    "mindar-image-three": "/ar/vendor/mind-ar/mindar-image-three.prod.js"
+  }
+}
+</script>
+</head>
+<body data-state="boot">
+  <div id="bg"></div>
+  <div id="stage"></div>
+  <div id="preview"></div>
+
+  <div class="ui">
+    <section id="intro" class="layer">
+      <div class="orb" aria-hidden="true"></div>
+      <span class="label">Artismi · Design Studio</span>
+      <h1>Il biglietto che si accende</h1>
+      <p>Consenti l'uso della fotocamera e inquadra il biglietto: il logo prende vita sopra la carta.</p>
+      <button id="start" class="btn primary" type="button">Attiva la fotocamera</button>
+      <a id="skip" class="link" href="/">Vai direttamente al sito</a>
+    </section>
+
+    <section id="loading" class="layer" aria-live="polite">
+      <div class="spinner" aria-hidden="true"></div>
+      <span class="label">Accendo il proiettore</span>
+    </section>
+
+    <div id="scan" aria-hidden="true">
+      <div class="frame"><i></i><i></i><i></i><i></i><b></b></div>
+    </div>
+
+    <div id="hint-scan" class="hint" aria-live="polite">
+      <span class="pill">Inquadra tutto il biglietto<small>Ben illuminato, a 25–30 cm dal telefono</small></span>
+    </div>
+    <div id="hint-tap" class="hint" aria-live="polite">
+      <span class="pill">Tocca l'ologramma per entrare nello studio</span>
+    </div>
+    <div id="hint-preview" class="hint">
+      <span class="pill"><span id="preview-msg">Apri questa pagina dal telefono e inquadra il biglietto.</span>
+        <small>Qui sotto un'anteprima: trascina per girarla, tocca l'ologramma per entrare.</small>
+        <button id="retry" class="link" type="button" hidden>Riprova con la fotocamera</button>
+      </span>
+    </div>
+
+    <div id="bar">
+      <a id="go" class="btn" href="/">artismidesignstudio.com <span aria-hidden="true">→</span></a>
+    </div>
+  </div>
+
+  <script type="module" src="/ar/app.js"></script>
+</body>
+</html>

@@ -7,6 +7,8 @@
 
 .root {
   position: relative;
+  /* arrivando dalla home la pagina entra sfumando, non compare di colpo */
+  animation: pageIn 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   --accent: #C4622D; /* overridden per-project from JS */
   --bg: #F2EAF0; /* carta rosata — emerge dal buio come da richiesta */
   --bg-alt: #EAE0E8;
@@ -17,6 +19,9 @@
   background-color: var(--bg);
   color: var(--ink);
   overflow-x: hidden;
+  /* clip taglia lo stesso senza fare del contenitore un'area di scorrimento:
+     così gli elementi «sticky» delle pagine progetto restano fermi davvero */
+  overflow-x: clip;
 }
 
 .root[data-dark] {
@@ -546,7 +551,7 @@
   width: 100%;
   border: none;
   background: none;
-  cursor: none;
+  cursor: var(--cursor-hover);
   padding: 0;
   position: relative;
 }
@@ -594,7 +599,7 @@
   height: 100%;
   border: none;
   background: none;
-  cursor: none;
+  cursor: var(--cursor-hover);
   padding: 0;
   position: relative;
 }
@@ -631,7 +636,7 @@
   height: 100%;
   border: none;
   background: none;
-  cursor: none;
+  cursor: var(--cursor-hover);
   padding: 0;
   position: relative;
 }
@@ -657,7 +662,7 @@
   height: 100%;
   border: none;
   background: none;
-  cursor: none;
+  cursor: var(--cursor-hover);
   padding: 0;
   position: relative;
 }
@@ -687,7 +692,7 @@
   aspect-ratio: 3 / 4;
   overflow: hidden;
   border: 2px solid color-mix(in srgb, var(--ink) 10%, transparent);
-  cursor: none;
+  cursor: var(--cursor-hover);
   border: none;
   background: none;
   padding: 0;
@@ -947,7 +952,7 @@
   border: none;
   color: #F2EDE4;
   font-size: 2rem;
-  cursor: none;
+  cursor: var(--cursor-hover);
   line-height: 1;
   opacity: 0.7;
   transition: opacity 0.2s;
@@ -966,7 +971,7 @@
   color: #F2EDE4;
   font-size: 1.2rem;
   padding: 12px 18px;
-  cursor: none;
+  cursor: var(--cursor-hover);
   transition: background 0.2s;
 }
 
@@ -1418,4 +1423,13 @@
 
 @media (prefers-reduced-motion: reduce) {
   .fregioTrack { animation: none; }
+}
+
+@keyframes pageIn {
+  /* solo l'opacita': uno spostamento muoverebbe anche la barra e le finestre fisse */
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .root { animation: none; }
 }

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useConfiguratorStore, CONFIG_SERVICES } from '@/stores/useConfiguratorStore'
 import styles from './ConfigStep3.module.css'
 import { motion } from 'framer-motion'
+import { CONTACT } from '@/config/content'
 
 export function Step3Summary() {
   const { selectedServices, getTotals, insegnaType, reset } = useConfiguratorStore()
@@ -11,6 +12,7 @@ export function Step3Summary() {
   
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDone, setIsDone] = useState(false)
+  const [failed, setFailed] = useState(false)
 
   const generateSummaryText = () => {
     let text = "RIEPILOGO PROGETTO ARTISMI\n\n"
@@ -32,24 +34,25 @@ export function Step3Summary() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsSubmitting(true)
+    setFailed(false)
 
     const formData = new FormData(e.currentTarget)
     formData.append('preventivo_riepilogo', generateSummaryText())
 
     try {
       // Usiamo l'endpoint Formspree dedicato
-      const response = await fetch('https://formspree.io/f/xvgzbgzl', {
+      const response = await fetch(`https://formspree.io/f/${CONTACT.formspreeId}`, {
         method: 'POST',
         body: formData,
         headers: { 'Accept': 'application/json' }
       })
 
-      if (response.ok) {
-        setIsDone(true)
-        reset() // Opzionale: puliamo lo store dopo l'invio
-      }
+      if (!response.ok) throw new Error(String(response.status))
+      // la conferma resta in vista; il configuratore si azzera solo quando si ricomincia
+      setIsDone(true)
     } catch (err) {
       console.error("Errore invio form", err)
+      setFailed(true)
     } finally {
       setIsSubmitting(false)
     }
@@ -59,11 +62,11 @@ export function Step3Summary() {
     return (
       <div className={styles.done}>
         <div className={styles.doneIcon}>✓</div>
-        <h3 className={styles.doneTitle}>Ricevuto. Ti scrivo entro 24 ore.</h3>
+        <h3 className={styles.doneTitle}>Ricevuto. Ti scrivo presto.</h3>
         <p className={styles.doneText}>
           Ho salvato la tua configurazione. La studierò e ti contatterò per parlarne insieme.
         </p>
-        <button className={styles.resetBtn} onClick={() => setIsDone(false)}>Inizia un nuovo progetto</button>
+        <button className={styles.resetBtn} onClick={() => { reset(); setIsDone(false) }}>Inizia un nuovo progetto</button>
       </div>
     )
   }
@@ -106,12 +109,18 @@ export function Step3Summary() {
         <form className={styles.form} onSubmit={handleSubmit}>
           <h4 className={styles.blockTitle}>Parliamone.</h4>
           <p className={styles.formIntro}>
-            Ti rispondo entro 24 ore. Capiamo se il progetto è fattibile e affiniamo la stima.
+            Capiamo insieme se il progetto è fattibile e affiniamo la stima.
           </p>
 
           <div className={styles.field}>
             <label htmlFor="name">Nome *</label>
             <input type="text" id="name" name="name" required placeholder="Come ti chiami?" />
+          </div>
+
+          {/* senza l'email non si puo' rispondere: Formspree la usa come indirizzo di risposta */}
+          <div className={styles.field}>
+            <label htmlFor="email">Email *</label>
+            <input type="email" id="email" name="email" required placeholder="Dove ti rispondo?" />
           </div>
 
           <div className={styles.field}>
@@ -139,6 +148,12 @@ export function Step3Summary() {
             {isSubmitting ? 'Invio in corso...' : 'Mandami il progetto →'}
           </button>
           
+          {failed && (
+            <p className={styles.error} role="alert">
+              Non è partito. Riprova, oppure scrivimi a apizzoglio@gmail.com.
+            </p>
+          )}
+
           <p className={styles.privacy}>
             Inviando questo form accetti che i tuoi dati vengano usati per risponderti.
           </p>

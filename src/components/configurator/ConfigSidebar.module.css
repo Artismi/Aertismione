@@ -130,3 +130,7 @@
     overflow-y: auto;
   }
 }
+
+/* il pannello e' chiaro: i testi senza colore proprio prendono l'inchiostro */
+.sidebar { color: #1A1A1A; }
+.emptyNote { color: rgba(26,26,26,0.6); }

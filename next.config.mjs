@@ -2,7 +2,7 @@
 const nextConfig = {
   // Allow Next.js Image component to serve images from Notion's S3 CDN
   images: {
-    qualities: [75, 85],
+    qualities: [75, 85, 90],
     remotePatterns: [
       {
         protocol: 'https',
@@ -17,6 +17,27 @@ const nextConfig = {
         hostname: 'images.unsplash.com',
       },
     ],
+  },
+  // Porto Vecchio vive sul suo sito, ma si gioca dall'indirizzo di questo:
+  // /gioco/* arriva da porto-vecchio.vercel.app/v7/*, e le due chiamate del
+  // gioco alla sua api vanno al suo sito. Da qui lo usano il telefono e la pagina
+  // /porto-vecchio (deve restare allineato a PROGETTI.game in content.ts).
+  // le illustrazioni erano una raccolta: ora ognuna e' un lavoro a se', sul banco
+  async redirects() {
+    return [
+      { source: '/portfolio/illustrazioni', destination: '/#portfolio', permanent: false },
+      // la lattina e lo skate di Punk Isn't Dead erano due lavori: ora una pagina sola
+      { source: '/portfolio/punk-lattina', destination: '/portfolio/punk', permanent: true },
+      { source: '/portfolio/punk-skate', destination: '/portfolio/punk', permanent: true },
+    ]
+  },
+  async rewrites() {
+    const GAME = 'https://porto-vecchio.vercel.app'
+    return [
+      { source: '/gioco/:path*', destination: `${GAME}/v7/:path*` },
+      { source: '/api/mente', destination: `${GAME}/api/mente` },
+      { source: '/api/status', destination: `${GAME}/api/status` },
+    ]
   },
   eslint: {
     ignoreDuringBuilds: true,
