@@ -128,14 +128,16 @@ export function MarblePage() {
       return { x: m.x, y: m.y + sy, r: R }
     }
 
-    /** la visuale segue il tiro: la pagina scorre per tenere la bilia nella fascia di
-     *  mezzo dello schermo. Si ferma appena si scorre a mano (rotella, dito, tasti) */
+    /** la visuale segue il tiro: la pagina scorre per tenere la bilia sullo schermo,
+     *  lontana dai bordi. Si ferma appena si scorre a mano (rotella, dito, tasti) */
     let userAt = 0
     function chase(dt: number) {
       if (!st.shot || st.drag || st.jump || marble.mode !== 'page') return
       if (performance.now() - userAt < 600) return
+      // solo quando sta per uscire: far scorrere la pagina a ogni fotogramma ridisegna
+      // tutto (anche il 3D del banco) e il rotolare scattava, mentre i salti erano fluidi
       const vh = window.innerHeight, y = st.y - sy
-      const want = y < vh * 0.35 ? y - vh * 0.35 : y > vh * 0.65 ? y - vh * 0.65 : 0
+      const want = y < vh * 0.2 ? y - vh * 0.2 : y > vh * 0.8 ? y - vh * 0.8 : 0
       if (Math.abs(want) < 0.5) return
       const max = document.documentElement.scrollHeight - vh
       const to = clamp(sy + want * Math.min(1, dt * 9), 0, max)

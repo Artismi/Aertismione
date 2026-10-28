@@ -144,6 +144,8 @@ export const PROGETTI = {
   folderLabel: 'Progetti',
   folderHint:  'Apri il fascicolo',
   folderClose: 'Chiudi il fascicolo',
+  // il titolo stampato in cima al tabellone, dentro il fascicolo aperto (come l'etichetta fuori)
+  boardTitle:  'Portfolio',
   game: {
     id:    'porto-vecchio',
     title: 'Porto Vecchio',
@@ -184,6 +186,7 @@ export const PORTFOLIO = {
       title:    'Bicicleria',
       category: 'Identità visiva completa',
       tagline:  'Identità visiva di una ciclofficina. Progetto continuativo dal 2025.',
+      short:    'Identità di una ciclofficina',   // sotto il titolo, sulla cartellina del tabellone
       // Tre capitoli in ordine di racconto: la colonna, i personaggi che ne
       // nascono, l'identità dove vengono usati. Ogni riga affianca i pezzi
       // alla stessa altezza; una «pila» impila immagini nella stessa colonna.
@@ -250,6 +253,7 @@ export const PORTFOLIO = {
       title:    'Mulini',
       category: 'Illustrazione / Tesi di laurea',
       tagline:  'Tesi di laurea in Design e Comunicazione, Politecnico di Torino, 2024.',
+      short:    'Tesi di laurea, Polito 2024',   // sotto il titolo, sulla cartellina del tabellone
       // Introduzione breve, poi subito la striscia, poi la presentazione e i link.
       intro: "Tesi sul ruolo dei mulini e delle macchine ad acqua nell'Ecomuseo Terra del Castelmagno, in Valle Grana. Erano **snodi di una rete di relazioni umane ed economiche** che teneva insieme comunità e territorio. Con chi abita la valle ho ricostruito quella rete e proposto **undici spazi interconnessi**, co-progettati con la comunità; il racconto è diventato una **striscia illustrata di sei metri**, installata in loco.",
       sections: [
@@ -315,6 +319,7 @@ export const PORTFOLIO = {
       title:    'Torino Invisibile',
       category: '3D / Realtà aumentata',
       tagline:  'Progetto PNRR, 2025 – 2026.',
+      short:    'Progetto PNRR, 2025–2026',   // sotto il titolo, sulla cartellina del tabellone
       intro:    "Le città invisibili di Italo Calvino diventano un'**opera transmediale in realtà aumentata**, diffusa nello spazio urbano: ogni città del libro è ancorata a un luogo reale di Torino — Olivia al Grattacielo San Paolo, Leonia in Piazza San Carlo, Ersilia alle Porte Palatine, Valdrada in Piazza Statuto, Zaira ai Murazzi — e prende forma sullo schermo di smartphone e visori mentre il testo di Calvino accompagna la visione.",
       sections: [
         {
@@ -366,6 +371,7 @@ export const PORTFOLIO = {
       title:    'Alice, un mondo di matti',
       category: 'Copertina / Illustrazione',
       tagline:  'Copertina per un singolo di Gcomemarco.',
+      short:    'Copertina per Gcomemarco',   // sotto il titolo, sulla cartellina del tabellone
       intro:    'Unire Torino, **Alice nel Paese delle Meraviglie** e il **Giardino delle delizie** di Bosch: ne è nata una città rossa dove palazzi torinesi, castelli e funghi giganti ospitano i personaggi del libro.',
       // qui le immagini sono tutto: sugli schermi grandi la pagina si allarga
       largo:    true,
@@ -403,6 +409,7 @@ export const PORTFOLIO = {
       title:    'Ridi, piangi, balli',
       category: 'Copertina / Illustrazione',
       tagline:  'Copertina per un singolo di Gcomemarco.',
+      short:    'Copertina per Gcomemarco',   // sotto il titolo, sulla cartellina del tabellone
       sections: [
         {
           label:       'La copertina',
@@ -445,6 +452,7 @@ export const PORTFOLIO = {
       title:     "Punk Isn't Dead",
       category:  'Illustrazione',
       tagline:   'Contest Bonobolabo × Birrificio Mad One, 2024.',
+      short:    'Contest Bonobolabo × Mad One',   // sotto il titolo, sulla cartellina del tabellone
       accent:    '#E2475E',   // sulla tavola scura il nero non si vedeva
       // qui le immagini sono tutto: sugli schermi grandi la pagina si allarga
       largo:     true,
@@ -471,6 +479,7 @@ export const PORTFOLIO = {
       title:    'Campionati di Ciclomeccanica',
       category: 'Locandina / Illustrazione',
       tagline:  'Locandina per il XVI Trofeo Sheldon Brown. Torino, 5 ottobre 2024.',
+      short:    'Trofeo Sheldon Brown, 2024',   // sotto il titolo, sulla cartellina del tabellone
       sections: [
         {
           label: 'La locandina',
@@ -506,6 +515,7 @@ export const PORTFOLIO = {
       title:     'Campus Boreale',
       category:  'Locandina / Illustrazione',
       tagline:   "Locandina per la prima apertura del Campus, l'aula studio di Borealis.",
+      short:    'Apertura del Campus Borealis',   // sotto il titolo, sulla cartellina del tabellone
       accent:    '#9DD4EE',
       sections: [
         {
@@ -536,6 +546,7 @@ export const PORTFOLIO = {
       category: 'Illustrazione',
       thumb:    '/portfolio/_thumbs/ecosistema-boreale.jpg',
       tagline:  'Illustrazione per la call di Borealis, 2025.',
+      short:    'Call di Borealis, 2025',   // sotto il titolo, sulla cartellina del tabellone
       intro:    "Per la call di Borealis rivolta a **imprese creative** e realtà a **impatto sociale** da ospitare negli spazi del centro. Un'isola dove piante, animali, strumenti musicali e da pittura convivono e mettono radici insieme.",
       // qui le immagini sono tutto: sugli schermi grandi la pagina si allarga
       largo:    true,
@@ -561,6 +572,7 @@ export const PORTFOLIO = {
       title:    'Stamperia',
       category: 'Ricerca personale',
       tagline:  'Ricerca personale, 2024 — in corso. Circa 80 fogli A3: spontaneità, ripetizione, stratificazione.',
+      short:    'Ricerca personale, in corso',   // sotto il titolo, sulla cartellina del tabellone
       intro:    "Alcuni estratti di un progetto esplorativo: monotipi, macchie, segni e texture su carta. La ricerca di significato nella **spontaneità, nella ripetizione e nella stratificazione**, con procedure approssimative e sbrigative, **senza pretendere il controllo** e contemplando **l'errore come parte integrante del processo**.",
       // Prima il materiale, i fogli; poi quello che ne nasce, i video fatti con i fogli.
       sections: [
