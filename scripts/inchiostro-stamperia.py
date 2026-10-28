@@ -1,29 +1,35 @@
 #!/usr/bin/env python3
 """L'inchiostro del biglietto, preso da un foglio vero di Stamperia.
 
-Dal foglio 13 (la fascia nera rullata in alto) si ritaglia una zona e si tengono solo le strisciate
-sottili lasciate dalle setole e i puntini: le grandi zone bianche si richiudono, cosi' il nero resta pieno
-ma attraversato da graffi veri. Esce ar-print/inchiostro-stamperia.png: nero con trasparenza.
+Dal foglio 13 si prende la fascia dove il rullo scarico ha lasciato le strisciate delle setole in modo
+uniforme. Si tengono solo i segni sottili (le grandi zone bianche si richiudono), si allunga la fascia in
+verticale, nel verso delle setole, e si fa netto il bordo: nero pieno e carta, niente grigi impastati
+ne' granelli isolati. Esce ar-print/inchiostro-stamperia.png: nero con trasparenza.
 
-    python3 scripts/inchiostro-stamperia.py [--foglio 13] [--x 976 --y 400 --w 1280 --h 768]
+    python3 scripts/inchiostro-stamperia.py [--foglio 13] [--x 200 --y 620] [--soglia .22]
+    (--soglia piu' bassa = piu' strisciate, meno nero)
 """
 import argparse
 import cv2, numpy as np
 
 ap = argparse.ArgumentParser()
 ap.add_argument('--foglio', default='13')
-ap.add_argument('--x', type=int, default=976); ap.add_argument('--y', type=int, default=400)
-ap.add_argument('--w', type=int, default=1280); ap.add_argument('--h', type=int, default=768)
-ap.add_argument('--apertura', type=int, default=11, help='le zone bianche piu\' larghe di cosi\' (px) si richiudono')
+ap.add_argument('--x', type=int, default=200); ap.add_argument('--y', type=int, default=620)
+ap.add_argument('--w', type=int, default=1280); ap.add_argument('--h', type=int, default=468)
+ap.add_argument('--soglia', type=float, default=.22)
+ap.add_argument('--apertura', type=int, default=11, help="le zone bianche piu' larghe di cosi' (px) si richiudono")
 A = ap.parse_args()
 
 im = cv2.imread(f'public/portfolio/sperimentazione/foglio-{A.foglio}.jpg')
 mx = im[A.y:A.y + A.h, A.x:A.x + A.w].max(axis=2).astype(np.float32)   # il massimo dei canali: i colori restano chiari, conta il nero
-nero = np.clip((185 - mx) / 130, 0, 1)
-bianco = 1 - nero
+bianco = 1 - np.clip((185 - mx) / 130, 0, 1)
 k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (A.apertura, A.apertura))
-sottile = np.clip(bianco - cv2.morphologyEx(bianco, cv2.MORPH_OPEN, k), 0, 1)
-alpha = 1 - np.clip((sottile - .12) / .6, 0, 1)
+segni = np.clip(bianco - cv2.morphologyEx(bianco, cv2.MORPH_OPEN, k), 0, 1)
+segni = cv2.resize(segni, (1280, 768), interpolation=cv2.INTER_CUBIC)     # le setole sono quasi verticali: si allungano e basta
+t = np.clip((cv2.GaussianBlur(segni, (0, 0), .7) - A.soglia) / .08, 0, 1)  # bordo netto, come una stampa
+n, lab, st, _ = cv2.connectedComponentsWithStats((t > .5).astype(np.uint8), 8)
+tieni = np.zeros(n, bool); tieni[1:] = st[1:, cv2.CC_STAT_AREA] >= 6       # via i granelli isolati
+alpha = 1 - t * tieni[lab]
 a = (alpha * 255).astype(np.uint8)
 cv2.imwrite('ar-print/inchiostro-stamperia.png', np.dstack([np.full_like(a, 26)] * 3 + [a]), [cv2.IMWRITE_PNG_COMPRESSION, 9])
 print('ar-print/inchiostro-stamperia.png', f'nero {alpha.mean():.0%}')

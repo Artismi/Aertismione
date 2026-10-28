@@ -114,7 +114,7 @@ def logo_stampato(d, pieno):
         segno = '<g mask="url(#forma)"><image href="inchiostro-stamperia.png" width="1000" height="603" preserveAspectRatio="none"/></g>'
     return f'<svg class="logo" viewBox="0 0 1000 603"><defs>{forma}</defs>{segno}</svg>'
 
-for PIENO, NOME in ((False, 'biglietto-fronte.html'), (True, 'biglietto-fronte-pieno.html')):
+for PIENO, NOME in ((True, 'biglietto-fronte.html'),):
   pagina(NOME, 'Biglietto Artismi · fronte', f'''
   .testa {{ position: absolute; left: 56px; right: 56px; top: 40px; display: flex; justify-content: space-between; }}
   .logo {{ position: absolute; left: 50px; top: 92px; width: 600px; }}
