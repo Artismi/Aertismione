@@ -172,4 +172,9 @@ pagina('biglietto-retro.html', 'Biglietto Artismi · retro', ROSA, PRUGNA, f'''
   <div class="rule" style="bottom:130px"></div>
   <div class="contatti"><p class="t">Inquadra il fronte:<br><em>il logo prende vita.</em></p>
     <ul class="p"><li>WhatsApp +39 393 195 9752</li><li>apizzoglio@gmail.com</li></ul></div>''')
+# il retro definitivo e' quello classico, piu' quieto (Fraunces e JetBrains Mono): le varianti di carattere
+# restano solo per confronto
+if A.tipo == 'misto':
+    classico = open(os.path.join(os.path.dirname(__file__), 'biglietto-retro.html'), encoding='utf-8').read()
+    open(os.path.join(A.out, 'biglietto-retro.html'), 'w', encoding='utf-8').write(classico.replace('{FONTI}', FONTI))
 print(A.out, A.tipo)
