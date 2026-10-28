@@ -6,6 +6,7 @@ import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { createHologram } from '/ar/hologram.js';
 import { makeCausticsBackdropQuad, mountCausticsBackground } from '/ar/caustics.js';
 import { preloadHome, flyToHome, fadeToHome } from '/ar/flight.js';
+import { createStabilizer } from '/ar/stabile.js';
 
 const LOGO_URL = '/ar/assets/logo-ar.glb';
 const TARGET_URL = '/ar/assets/target.mind'; // compilato dal fronte del biglietto
@@ -112,8 +113,11 @@ async function startAR() {
     holo.root.rotation.x = Math.PI / 2; // Y dell'ologramma = normale uscente dal biglietto
     holo.root.scale.setScalar((HOLO_SCALE * HOLO_UNIT_MM) / CARD_MM.w);
     const anchor = mindar.addAnchor(0);
-    anchor.group.add(holo.root);
-    if (location.hash === '#debug') window.__ar = { THREE, scene, camera, renderer, holo, anchor };
+    // l'ologramma non sta sull'ancora ma su un gruppo che la segue senza scatti (stabile.js)
+    const stable = createStabilizer(anchor.group);
+    scene.add(stable.group);
+    stable.group.add(holo.root);
+    if (location.hash === '#debug') window.__ar = { THREE, scene, camera, renderer, holo, anchor, stable };
     anchor.onTargetFound = () => { holo.show(); if (!leaving) setState('found'); };
     anchor.onTargetLost = () => { holo.hide(); if (!leaving) setState('scanning'); };
 
@@ -132,15 +136,16 @@ async function startAR() {
     stopIntroBackground();
     const clock = new THREE.Clock();
     renderer.setAnimationLoop(() => {
+      stable.update();
       holo.update(clock.getDelta(), camera);
-      if (anchor.visible) holo.renderLogo(renderer, camera, scene.environment);
+      if (stable.group.visible) holo.renderLogo(renderer, camera, scene.environment);
       renderer.render(scene, camera);
     });
 
     onTap(stage, (e) => {
-      if (anchor.visible && hitTest(e, renderer.domElement, camera, holo.hitTargets)) goHome({ fly: true });
+      if (stable.group.visible && hitTest(e, renderer.domElement, camera, holo.hitTargets)) goHome({ fly: true });
     });
-    $('go').onclick = (e) => { e.preventDefault(); goHome({ fly: anchor.visible }); };
+    $('go').onclick = (e) => { e.preventDefault(); goHome({ fly: stable.group.visible }); };
   } catch (err) {
     console.warn('AR non disponibile', err);
     try { mindar?.stop(); } catch { /* niente da fermare */ }
