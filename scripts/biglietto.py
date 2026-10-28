@@ -130,6 +130,19 @@ def pagina(nome, titolo, fondo, ink, stile, corpo):
 <div class="card">
 {corpo}
 </div>
+<script>
+// [lettering] le righe con data-fit si giustificano sulla larghezza dell'elemento indicato: i titoli in
+// Archivo cambiano corpo, le righe in mono cambiano spaziatura. Il blocco diventa una forma sola.
+document.fonts.ready.then(() => {{
+  const larg = el => {{ const r = document.createRange(); r.selectNodeContents(el); return r.getBoundingClientRect().width; }};
+  document.querySelectorAll('[data-fit]').forEach(el => {{
+    const W = larg(document.querySelector(el.dataset.fit)), cs = getComputedStyle(el);
+    if (el.dataset.modo === 'spazio') {{ const n = el.textContent.length; const ls = parseFloat(cs.letterSpacing) || 0; el.style.letterSpacing = (ls + (W - larg(el)) / Math.max(1, n - 1)) + 'px'; }}
+    else {{ let fs = parseFloat(cs.fontSize); for (let i = 0; i < 4; i++) {{ fs *= W / larg(el); el.style.fontSize = fs + 'px'; }} }}
+  }});
+  window.__fit = true;
+}});
+</script>
 </body>
 </html>
 '''
@@ -147,7 +160,7 @@ pagina('biglietto-fronte.html', 'Biglietto Artismi · fronte', NOTTE, ROSA, f'''
   .piede .p {{ margin-top: 12px; font-size: 15px; letter-spacing: .1em; }}
   .sigillo {{ position: absolute; right: 22px; bottom: 18px; width: 284px; height: 284px; }}
 ''', f'''  <svg class="logo" viewBox="0 0 1000 603"><path d="{d}"/></svg>
-  <div class="piede"><p class="t ti">Design Studio</p><p class="p">artismidesignstudio.com</p></div>
+  <div class="piede"><p class="t ti" id="firma">Design Studio</p><p class="p" data-fit="#firma" data-modo="spazio">artismidesignstudio.com</p></div>
   {sigillo(disco=True, bordo=NOTTE)}''')
 
 # ─── retro ──────────────────────────────────────────────────────────────────────────────────

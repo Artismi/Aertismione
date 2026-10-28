@@ -34,7 +34,21 @@ def scrivi(nome, fondo, ink, stile, corpo):
 </style></head>
 <body><div class="card">
 {corpo}
-</div></body></html>
+</div>
+<script>
+// [lettering] le righe con data-fit si giustificano sulla larghezza dell'elemento indicato: i titoli in
+// Archivo cambiano corpo, le righe in mono cambiano spaziatura. Il blocco diventa una forma sola.
+document.fonts.ready.then(() => {{
+  const larg = el => {{ const r = document.createRange(); r.selectNodeContents(el); return r.getBoundingClientRect().width; }};
+  document.querySelectorAll('[data-fit]').forEach(el => {{
+    const W = larg(document.querySelector(el.dataset.fit)), cs = getComputedStyle(el);
+    if (el.dataset.modo === 'spazio') {{ const n = el.textContent.length; const ls = parseFloat(cs.letterSpacing) || 0; el.style.letterSpacing = (ls + (W - larg(el)) / Math.max(1, n - 1)) + 'px'; }}
+    else {{ let fs = parseFloat(cs.fontSize); for (let i = 0; i < 4; i++) {{ fs *= W / larg(el); el.style.fontSize = fs + 'px'; }} }}
+  }});
+  window.__fit = true;
+}});
+</script>
+</body></html>
 '''
     open(os.path.join(out, 'biglietto-retro.html'), 'w', encoding='utf-8').write(html)
     # il render vuole anche un fronte: si copia quello vero
@@ -46,7 +60,7 @@ CONTATTI = '<p>WhatsApp +39 393 195 9752</p><p>apizzoglio@gmail.com</p>'
 # A · indice: i servizi come l'indice di una rivista, i numeri enormi in colonna
 scrivi('retro-indice', ROSA, PRUGNA, f'''
   .testa {{ position: absolute; left: 48px; top: 40px; right: 48px; display: flex; justify-content: space-between; }}
-  .claim {{ position: absolute; left: 48px; top: 92px; width: 330px; font-size: 54px; line-height: .95; }}
+  .claim {{ position: absolute; left: 48px; top: 80px; width: 330px; font-size: 54px; line-height: .95; }}
   .claim .c {{ text-transform: none; font-size: 1.22em; line-height: .7; }}
   .indice {{ position: absolute; left: 430px; right: 48px; top: 36px; list-style: none; }}
   .indice li {{ display: grid; grid-template-columns: 128px 1fr; align-items: end; height: 104px; border-bottom: 1px solid {PRUGNA}; }}
@@ -99,9 +113,9 @@ DETTAGLI = ['Dal logo ai muri del negozio', 'Disegni che la gente porta con sé'
 scrivi('retro-fusione', NOTTE, ROSA, f'''
   .det {{ position: absolute; left: -560px; top: -250px; width: 1700px; clip-path: inset(0 0 39.5% 79.5%); }}  /* la i col pallino, accanto a volto */
   .det path {{ fill: none; stroke: {ROSA}; stroke-width: 2.2; stroke-linejoin: round; }}
-  .prima {{ position: absolute; left: 50px; top: 108px; font-size: 34px; }}
-  .volto {{ position: absolute; left: 34px; top: 130px; font-size: 220px; line-height: .8; letter-spacing: -.03em; white-space: nowrap; }}
-  .dopo {{ position: absolute; left: 52px; top: 324px; font-size: 34px; }}
+  .claim {{ position: absolute; left: 48px; top: 80px; display: inline-flex; flex-direction: column; align-items: flex-start; }}
+  .claim .a {{ display: block; font-size: 40px; line-height: .82; white-space: nowrap; letter-spacing: 0; }}
+  .claim .volto {{ display: block; font-size: 224px; line-height: .74; letter-spacing: -.035em; white-space: nowrap; margin: 24px 0 10px -10px; }}  /* la l sale fino a sfiorare INSIEME, senza toccarla */
   .linea {{ position: absolute; left: 48px; right: 48px; height: 0; border-top: 1px solid {ROSA}; }}
   .indice {{ position: absolute; left: 48px; right: 48px; top: 408px; list-style: none; display: grid; grid-template-columns: 1fr 1.15fr 1.1fr 1.05fr 1fr; gap: 16px; }}
   .indice .a {{ display: block; font-size: 64px; line-height: .8; letter-spacing: -.02em; }}
@@ -111,9 +125,7 @@ scrivi('retro-fusione', NOTTE, ROSA, f'''
   .piede .c {{ font-size: 24px; }}
   .piede .m {{ display: flex; gap: 34px; }}
 ''', f'''  <svg class="det" viewBox="0 0 1000 603"><path d="{D}"/></svg>
-  <p class="prima a">Diamo un</p>
-  <p class="volto c">volto</p>
-  <p class="dopo a">alla tua attività.</p>
+  <h1 class="claim"><span class="a" data-fit="#volto">Diamo insieme un</span><span class="volto c" id="volto">volto</span><span class="a" data-fit="#volto">alla tua attività.</span></h1>
   <div class="linea" style="top:388px"></div>
   <ol class="indice">{"".join(f'<li><span class="a">{i+1:02d}</span><span class="c">{t}</span><span class="m">{x}</span></li>' for i, (t, x) in enumerate(zip(SERVIZI, DETTAGLI)))}</ol>
   <div class="linea" style="bottom:86px"></div>

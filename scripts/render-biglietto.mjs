@@ -10,6 +10,7 @@ const page = await browser.newPage({ viewport: { width: 1020, height: 660 }, dev
 for (const lato of ['fronte', 'retro']) {
   await page.goto('file://' + path.join(dir, `biglietto-${lato}.html`));
   await page.evaluate(() => document.fonts.ready);
+  await page.waitForFunction(() => !document.querySelector('[data-fit]') || window.__fit === true, null, { timeout: 5000 });
   await page.screenshot({ path: path.join(dir, `biglietto-${lato}.png`) });
   console.log(path.join(dir, `biglietto-${lato}.png`));
 }
