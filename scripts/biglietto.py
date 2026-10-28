@@ -6,7 +6,7 @@ frase che gli gira intorno. Retro rosa in prugna. I colori sono quelli della pag
 Scrive biglietto-fronte.html e biglietto-retro.html (1020 x 660 px = 85 x 55 mm). I testi riassumono
 src/config/content.ts (HERO, SERVICES, CONTACT): se cambiano li', aggiornali qui.
 
-    python3 scripts/biglietto.py [--tipo instrument|cormorant|archivo] [--out ar-print]
+    python3 scripts/biglietto.py [--tipo misto|instrument|cormorant|archivo] [--out ar-print]
     poi:  node scripts/render-biglietto.mjs [cartella]      (le immagini PNG)
 
 Il fronte e' anche il bersaglio AR: se cambia, vanno rifatti public/ar/assets/target.mind e card-front.png.
@@ -15,7 +15,7 @@ import argparse, math, os
 import segno
 
 ap = argparse.ArgumentParser()
-ap.add_argument('--tipo', default='instrument')
+ap.add_argument('--tipo', default='misto')
 ap.add_argument('--out', default=os.path.join(os.path.dirname(__file__), '..', 'ar-print'))
 A = ap.parse_args()
 os.makedirs(A.out, exist_ok=True)
@@ -47,8 +47,19 @@ TIPI = {
         facce=[face('Archivo', 'archivo-latin-wdth-normal.woff2', '100 900', extra='font-stretch: 62% 125%;')],
         t='font-family: "Archivo", sans-serif; font-weight: 800; font-stretch: 62%; text-transform: uppercase; letter-spacing: -.01em;', ti='',
         p='font-family: "Archivo", sans-serif; font-weight: 500; font-stretch: 100%;', claim=70, firma=56, servizi=22, anello=('Archivo', 600)),
+    # il meglio dei due: il grottesco stretto per le parole forti, il garamond corsivo per gli accenti e
+    # l'elenco, il mono per le note. Il contrasto fra i due pesi e' la voce del biglietto
+    'misto': dict(
+        facce=[face('Archivo', 'archivo-latin-wdth-normal.woff2', '100 900', extra='font-stretch: 62% 125%;'),
+               face('Cormorant Garamond', 'cormorant-garamond-latin-300-normal.woff2', '300'), face('Cormorant Garamond', 'cormorant-garamond-latin-300-italic.woff2', '300', 'italic'),
+               face('IBM Plex Mono', 'ibm-plex-mono-latin-400-normal.woff2')],
+        t='font-family: "Archivo", sans-serif; font-weight: 780; font-stretch: 62%; text-transform: uppercase; letter-spacing: -.005em;',
+        em='font-family: "Cormorant Garamond", serif; font-weight: 300; font-style: italic; text-transform: none; letter-spacing: 0; font-size: 1.16em; line-height: .8;',
+        ti='', serv='font-family: "Cormorant Garamond", serif; font-weight: 300; text-transform: none; letter-spacing: 0;',
+        p='font-family: "IBM Plex Mono", monospace; font-weight: 400;', claim=72, firma=58, servizi=26, anello=('IBM Plex Mono', 400)),
 }
 T = TIPI[A.tipo]
+T.setdefault('em', T['ti']); T.setdefault('serv', '')
 
 # ─── il QR: il sigillo tondo, il codice al centro e la frase che gli gira intorno ─────────────
 def sigillo(ink=PRUGNA, carta=ROSA, disco=False, bordo=None, frase='  Inquadra il biglietto · il logo prende vita · realtà aumentata  '):  # gli spazi ai capi: la bilia in alto sta nel respiro
@@ -107,7 +118,8 @@ def pagina(nome, titolo, fondo, ink, stile, corpo):
   html, body {{ width: 1020px; height: 660px; background: {fondo}; color: {ink}; overflow: hidden; }}
   .card {{ position: relative; width: 1020px; height: 660px; }}
   .t {{ {T['t']} line-height: .95; }}
-  .t em, .ti {{ {T['ti']} }}
+  .t em {{ {T['em']} }}
+  .ti {{ {T['ti']} }}
   .p {{ {T['p']} font-size: 14px; letter-spacing: .06em; }}
   .up {{ text-transform: uppercase; letter-spacing: .2em; font-size: 12px; }}
   .rule {{ position: absolute; left: 56px; right: 56px; height: 0; border-top: 1px solid {ink}; }}
@@ -148,7 +160,7 @@ pagina('biglietto-retro.html', 'Biglietto Artismi · retro', ROSA, PRUGNA, f'''
   .servizi li {{ display: flex; gap: 16px; align-items: baseline; padding: 8px 0 7px; border-top: 1px solid {PRUGNA}; }}
   .servizi li:last-child {{ border-bottom: 1px solid {PRUGNA}; }}
   .servizi b {{ font-size: 11px; letter-spacing: .12em; font-weight: 500; }}
-  .servizi span {{ font-size: {T['servizi']}px; line-height: 1; }}
+  .servizi span {{ {T['serv']} font-size: {T['servizi']}px; line-height: 1; }}
   .contatti {{ position: absolute; left: 56px; right: 56px; bottom: 40px; display: flex; justify-content: space-between; align-items: flex-end; }}
   .contatti .t {{ font-size: 30px; line-height: 1.05; }}
   .contatti ul {{ list-style: none; text-align: right; font-size: 15px; line-height: 1.7; }}
