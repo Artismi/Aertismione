@@ -57,10 +57,6 @@ def sigillo(frase='  Inquadra il biglietto · il logo prende vita · realtà aum
             f'<circle cx="{f(c0)}" cy="{f(c0)}" r="{f(R3)}" stroke-width="{f(HAIR)}"/>'
             f'<g stroke-width="{f(HAIR)}">{"".join(croci)}</g></g>{bilia}</svg>')
 
-# ─── la materia: inchiostro vero ─────────────────────────────────────────────────────────────
-# Niente grana generata: l'unica materia e' l'inchiostro di un foglio di Stamperia (foglio 13, la fascia
-# rullata in alto), da cui si tengono solo le strisciate sottili delle setole e i puntini. Si fa con
-# scripts/inchiostro-stamperia.py; la carta e' quella vera del biglietto stampato.
 MATERIA = ''
 
 # ─── la pagina comune ────────────────────────────────────────────────────────────────────────
@@ -102,20 +98,12 @@ def pagina(nome, titolo, stile, corpo):
 # ─── fronte ──────────────────────────────────────────────────────────────────────────────────
 forma = open(os.path.join(os.path.dirname(__file__), 'logo-forma.svg'), encoding='utf-8').read()
 d = forma.split(' d="', 1)[1].split('"', 1)[0]
-def logo_stampato(d, pieno):
-    # il logo stampato con l'inchiostro vero: la forma fa da stencil, l'inchiostro e' il foglio 13.
-    # pieno: la lettera tutta inchiostrata; altrimenti solo il contorno, spesso, con le stesse strisciate
-    if pieno:
-        forma = f'<clipPath id="forma"><path clip-rule="evenodd" d="{d}"/></clipPath>'
-        segno = '<g clip-path="url(#forma)"><image href="inchiostro-stamperia.png" width="1000" height="603" preserveAspectRatio="none"/></g>'
-    else:
-        forma = (f'<mask id="forma" maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="603">'
-                 f'<path d="{d}" fill="none" stroke="#fff" stroke-width="7" stroke-linejoin="round"/></mask>')
-        segno = '<g mask="url(#forma)"><image href="inchiostro-stamperia.png" width="1000" height="603" preserveAspectRatio="none"/></g>'
-    return f'<svg class="logo" viewBox="0 0 1000 603"><defs>{forma}</defs>{segno}</svg>'
+def logo_contorno(d):
+    # il logo a contorno, con il filo netto: nessuna texture
+    return (f'<svg class="logo" viewBox="0 0 1000 603"><path d="{d}" fill="none" stroke="{INK}" '
+            f'stroke-width="4.4" stroke-linejoin="round"/></svg>')
 
-for PIENO, NOME in ((True, 'biglietto-fronte.html'),):
-  pagina(NOME, 'Biglietto Artismi · fronte', f'''
+pagina('biglietto-fronte.html', 'Biglietto Artismi · fronte', f'''
   .testa {{ position: absolute; left: 56px; right: 56px; top: 40px; display: flex; justify-content: space-between; }}
   .logo {{ position: absolute; left: 50px; top: 92px; width: 600px; }}
   .piede {{ position: absolute; left: 56px; bottom: 44px; }}
@@ -124,7 +112,7 @@ for PIENO, NOME in ((True, 'biglietto-fronte.html'),):
   .sigillo {{ position: absolute; right: 34px; bottom: 30px; width: 330px; height: 330px; }}
 ''', f'''  <div class="testa mono"><span>Artismi</span><span>N° 01 — Biglietto</span></div>
   <div class="rule hair" style="top:66px"></div>
-  {logo_stampato(d, PIENO)}
+  {logo_contorno(d)}
   <div class="piede"><p class="serif">Design Studio</p><p class="mono">artismidesignstudio.com</p></div>
   {sigillo()}''')
 
