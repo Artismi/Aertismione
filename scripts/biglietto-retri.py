@@ -60,7 +60,7 @@ CONTATTI = '<p>WhatsApp +39 393 195 9752</p><p>apizzoglio@gmail.com</p>'
 # A · indice: i servizi come l'indice di una rivista, i numeri enormi in colonna
 scrivi('retro-indice', ROSA, PRUGNA, f'''
   .testa {{ position: absolute; left: 48px; top: 40px; right: 48px; display: flex; justify-content: space-between; }}
-  .claim {{ position: absolute; left: 48px; top: 80px; width: 330px; font-size: 54px; line-height: .95; }}
+  .claim {{ position: absolute; left: 48px; top: 50px; width: 330px; font-size: 54px; line-height: .95; }}
   .claim .c {{ text-transform: none; font-size: 1.22em; line-height: .7; }}
   .indice {{ position: absolute; left: 430px; right: 48px; top: 36px; list-style: none; }}
   .indice li {{ display: grid; grid-template-columns: 128px 1fr; align-items: end; height: 104px; border-bottom: 1px solid {PRUGNA}; }}
@@ -111,11 +111,11 @@ scrivi('retro-dettaglio', NOTTE, ROSA, f'''
 # una riga per servizio: a cosa serve (riassunto di SERVICES.promise in src/config/content.ts)
 DETTAGLI = ['Dal logo ai muri del negozio', 'Disegni che la gente porta con sé', 'Online come dal vivo', 'Con chi vivrà il progetto', 'I tuoi canali, con la tua voce']
 scrivi('retro-fusione', NOTTE, ROSA, f'''
-  .det {{ position: absolute; left: -560px; top: -250px; width: 1700px; clip-path: inset(0 0 39.5% 79.5%); }}  /* la i col pallino, accanto a volto */
+  .det {{ position: absolute; left: -868px; top: -282px; width: 2000px; clip-path: inset(0 0 46% 77.6%); }}  /* la i col pallino, accanto a volto */
   .det path {{ fill: none; stroke: {ROSA}; stroke-width: 2.2; stroke-linejoin: round; }}
-  .claim {{ position: absolute; left: 48px; top: 80px; display: inline-flex; flex-direction: column; align-items: flex-start; }}
+  .claim {{ position: absolute; left: 48px; top: 50px; display: inline-flex; flex-direction: column; align-items: flex-start; }}
   .claim .a {{ display: block; font-size: 40px; line-height: .82; white-space: nowrap; letter-spacing: 0; }}
-  .claim .volto {{ display: block; font-size: 224px; line-height: .74; letter-spacing: -.035em; white-space: nowrap; margin: 24px 0 10px -10px; }}  /* la l sale fino a sfiorare INSIEME, senza toccarla */
+  .claim .volto {{ display: block; font-size: 242px; line-height: .74; letter-spacing: -.035em; white-space: nowrap; margin: 22px 0 10px -10px; }}  /* la l sale fino a sfiorare INSIEME, senza toccarla */
   .linea {{ position: absolute; left: 48px; right: 48px; height: 0; border-top: 1px solid {ROSA}; }}
   .indice {{ position: absolute; left: 48px; right: 48px; top: 408px; list-style: none; display: grid; grid-template-columns: 1fr 1.15fr 1.1fr 1.05fr 1fr; gap: 16px; }}
   .indice .a {{ display: block; font-size: 64px; line-height: .8; letter-spacing: -.02em; }}
