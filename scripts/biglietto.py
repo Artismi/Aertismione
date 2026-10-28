@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Il biglietto Artismi, fronte e retro.
 
-Fronte notte con il logo a contorno al vivo in rosa; il QR e' una tessera rosa con la didascalia, come
-l'etichetta di un'opera. Retro rosa in prugna. I colori sono quelli della pagina AR.
+Fronte notte con il logo a contorno al vivo in rosa; il QR al centro di un sigillo tondo rosa, con la
+frase che gli gira intorno. Retro rosa in prugna. I colori sono quelli della pagina AR.
 Scrive biglietto-fronte.html e biglietto-retro.html (1020 x 660 px = 85 x 55 mm). I testi riassumono
 src/config/content.ts (HERO, SERVICES, CONTACT): se cambiano li', aggiornali qui.
 
@@ -11,7 +11,7 @@ src/config/content.ts (HERO, SERVICES, CONTACT): se cambiano li', aggiornali qui
 
 Il fronte e' anche il bersaglio AR: se cambia, vanno rifatti public/ar/assets/target.mind e card-front.png.
 """
-import argparse, os
+import argparse, math, os
 import segno
 
 ap = argparse.ArgumentParser()
@@ -23,6 +23,7 @@ FONTI = os.path.relpath(os.path.join(os.path.dirname(__file__), '..', 'ar-print'
 
 URL = 'HTTPS://WWW.ARTISMIDESIGNSTUDIO.COM/AR'
 NOTTE = '#14121C'; ROSA = '#F5C7D6'; PRUGNA = '#2B1622'
+f = lambda v: f'{v:.3f}'.rstrip('0').rstrip('.')
 
 # ─── i caratteri: un titolo (.t) e un testo piccolo (.p) ──────────────────────────────────────
 def face(fam, file, w='400', st='normal', extra=''):
@@ -34,32 +35,61 @@ TIPI = {
         facce=[face('Instrument Serif', 'instrument-serif-latin-400-normal.woff2'), face('Instrument Serif', 'instrument-serif-latin-400-italic.woff2', st='italic'),
                face('Instrument Sans', 'instrument-sans-latin-400-normal.woff2'), face('Instrument Sans', 'instrument-sans-latin-500-normal.woff2', '500')],
         t='font-family: "Instrument Serif", serif; font-weight: 400;', ti='font-style: italic;',
-        p='font-family: "Instrument Sans", sans-serif; font-weight: 500;', claim=78, firma=64, servizi=24),
+        p='font-family: "Instrument Sans", sans-serif; font-weight: 500;', claim=78, firma=64, servizi=24, anello=('Instrument Sans', 500)),
     # garamond da libro, corsivo leggero; mono da dattiloscritto per le note
     'cormorant': dict(
         facce=[face('Cormorant Garamond', 'cormorant-garamond-latin-300-normal.woff2', '300'), face('Cormorant Garamond', 'cormorant-garamond-latin-300-italic.woff2', '300', 'italic'),
                face('Cormorant Garamond', 'cormorant-garamond-latin-500-normal.woff2', '500'), face('IBM Plex Mono', 'ibm-plex-mono-latin-400-normal.woff2')],
         t='font-family: "Cormorant Garamond", serif; font-weight: 300;', ti='font-style: italic;',
-        p='font-family: "IBM Plex Mono", monospace; font-weight: 400;', claim=80, firma=66, servizi=26),
+        p='font-family: "IBM Plex Mono", monospace; font-weight: 400;', claim=80, firma=66, servizi=26, anello=('IBM Plex Mono', 400)),
     # grottesco stretto e pesante, da manifesto: tutto maiuscolo e serrato
     'archivo': dict(
         facce=[face('Archivo', 'archivo-latin-wdth-normal.woff2', '100 900', extra='font-stretch: 62% 125%;')],
         t='font-family: "Archivo", sans-serif; font-weight: 800; font-stretch: 62%; text-transform: uppercase; letter-spacing: -.01em;', ti='',
-        p='font-family: "Archivo", sans-serif; font-weight: 500; font-stretch: 100%;', claim=70, firma=56, servizi=22),
+        p='font-family: "Archivo", sans-serif; font-weight: 500; font-stretch: 100%;', claim=70, firma=56, servizi=22, anello=('Archivo', 600)),
 }
 T = TIPI[A.tipo]
 
-# ─── il QR: una tessera rosa, il codice netto e la didascalia sotto ─────────────────────────
-def tessera():
+# ─── il QR: il sigillo tondo, il codice al centro e la frase che gli gira intorno ─────────────
+def sigillo(ink=PRUGNA, carta=ROSA, disco=False, bordo=None, frase='  Inquadra il biglietto · il logo prende vita · realtà aumentata  '):  # gli spazi ai capi: la bilia in alto sta nel respiro
     qr = segno.make(URL, error='q', micro=False, boost_error=False)
-    M = qr.matrix; N = len(M); Q = 2                       # margine di due moduli: il minimo che si legge bene
+    M = [[bool(v) for v in r] for r in qr.matrix]; N = len(M); c0 = N / 2
     occhio = lambda r, c: any(fr <= r < fr + 7 and fc <= c < fc + 7 for fr, fc in ((0, 0), (0, N - 7), (N - 7, 0)))
-    s = [f'<rect x="{c+.04}" y="{r+.04}" width=".92" height=".92"/>' for r in range(N) for c in range(N) if M[r][c] and not occhio(r, c)]
+    R1 = math.hypot(c0, c0) + 1.3          # il codice e il suo margine stanno dentro il primo anello
+    FS = 2.9                                # corpo della frase, in moduli
+    RT = R1 + 1.25 + FS * .36               # linea di base della frase
+    R2 = R1 + 2.5 + FS                      # anello esterno
+    R3 = R2 + 1.6                           # filo piu' esterno, con le crocette di registro
+    HAIR = .2; FILO = .42
+    s = []
+    for r in range(N):
+        for c in range(N):
+            if M[r][c] and not occhio(r, c): s.append(f'<rect x="{f(c+.07)}" y="{f(r+.07)}" width=".86" height=".86" rx=".22"/>')
     for fr, fc in ((0, 0), (0, N - 7), (N - 7, 0)):
-        s.append(f'<rect x="{fc+.5}" y="{fr+.5}" width="6" height="6" fill="none" stroke="{PRUGNA}" stroke-width="1"/>')
-        s.append(f'<rect x="{fc+2}" y="{fr+2}" width="3" height="3"/>')
-    return (f'<svg class="qr" viewBox="{-Q} {-Q} {N+2*Q} {N+2*Q}" role="img" aria-label="QR: {URL.lower()}">'
-            f'<g fill="{PRUGNA}">{"".join(s)}</g></svg>')
+        s.append(f'<rect x="{fc+.5}" y="{fr+.5}" width="6" height="6" rx="1.5" fill="none" stroke="{ink}" stroke-width="1"/>')
+        s.append(f'<rect x="{fc+2}" y="{fr+2}" width="3" height="3" rx=".8"/>')
+    giro = 2 * math.pi * RT
+    # la frase parte in alto e gira in senso orario; textLength la stende esatta sul cerchio
+    testo = (f'<path id="giro" fill="none" d="M{f(c0)} {f(c0-RT)} A{f(RT)} {f(RT)} 0 1 1 {f(c0-.001)} {f(c0-RT)}"/>'
+             f'<text font-family="{T["anello"][0]}" font-weight="{T["anello"][1]}" font-size="{f(FS)}" letter-spacing="0" fill="{ink}">'
+             f'<textPath href="#giro" textLength="{f(giro)}" lengthAdjust="spacing" xml:space="preserve">{frase.upper()}</textPath></text>')
+    croci = []
+    for a in (0, 90, 180, 270):                 # crocette di registro sul filo esterno, come in tipografia
+        ar = math.radians(a)
+        x, y = c0 + R3 * math.cos(ar), c0 + R3 * math.sin(ar)
+        dx, dy = math.cos(ar), math.sin(ar)
+        croci.append(f'<line x1="{f(x-dx*1.2)}" y1="{f(y-dy*1.2)}" x2="{f(x+dx*1.2)}" y2="{f(y+dy*1.2)}"/>')
+    bilia = f'<circle cx="{f(c0)}" cy="{f(c0-R2)}" r="1" fill="{carta}" stroke="{ink}" stroke-width="{f(FILO)}"/>'
+    ext = R3 + 2.6
+    return (f'<svg class="sigillo" xmlns="http://www.w3.org/2000/svg" viewBox="{f(c0-ext)} {f(c0-ext)} {f(2*ext)} {f(2*ext)}" role="img" aria-label="QR: {URL.lower()}">'
+            + (f'<circle cx="{f(c0)}" cy="{f(c0)}" r="{f(R3+1.4)}" fill="{carta}"' + (f' stroke="{bordo}" stroke-width="1.6"' if bordo else '') + '/>' if disco else '') +
+            f'<g fill="{ink}">{"".join(s)}</g>{testo}'
+            f'<g fill="none" stroke="{ink}" stroke-linecap="round">'
+            f'<circle cx="{f(c0)}" cy="{f(c0)}" r="{f(R1)}" stroke-width="{f(FILO)}"/>'
+            f'<circle cx="{f(c0)}" cy="{f(c0)}" r="{f(R2)}" stroke-width="{f(FILO)}"/>'
+            f'<circle cx="{f(c0)}" cy="{f(c0)}" r="{f(R3)}" stroke-width="{f(HAIR)}"/>'
+            f'<g stroke-width="{f(HAIR)}">{"".join(croci)}</g></g>{bilia}</svg>')
+
 
 # ─── la pagina ──────────────────────────────────────────────────────────────────────────────
 def pagina(nome, titolo, fondo, ink, stile, corpo):
@@ -103,15 +133,10 @@ pagina('biglietto-fronte.html', 'Biglietto Artismi · fronte', NOTTE, ROSA, f'''
   .piede {{ position: absolute; left: 0; bottom: 0; padding: 22px 30px 34px 48px; background: {NOTTE}; }}
   .piede .t {{ font-size: {T['firma']}px; }}
   .piede .p {{ margin-top: 12px; font-size: 15px; letter-spacing: .1em; }}
-  .tessera {{ position: absolute; right: 40px; bottom: 34px; width: 214px; background: {ROSA}; color: {PRUGNA}; padding: 12px 12px 14px;
-             box-shadow: 0 0 0 5px {NOTTE}; }}
-  .tessera .qr {{ display: block; width: 190px; height: 190px; }}
-  .tessera .nota {{ margin-top: 8px; padding-top: 8px; border-top: 1px solid {PRUGNA}; }}
-  .tessera .t {{ font-size: 21px; line-height: 1.05; }}
+  .sigillo {{ position: absolute; right: 22px; bottom: 18px; width: 284px; height: 284px; }}
 ''', f'''  <svg class="logo" viewBox="0 0 1000 603"><path d="{d}"/></svg>
   <div class="piede"><p class="t ti">Design Studio</p><p class="p">artismidesignstudio.com</p></div>
-  <div class="tessera">{tessera()}
-    <div class="nota"><p class="t">Inquadra il fronte:<br><em>il logo prende vita.</em></p></div></div>''')
+  {sigillo(disco=True, bordo=NOTTE)}''')
 
 # ─── retro ──────────────────────────────────────────────────────────────────────────────────
 SERVIZI = ['Identità completa', 'Illustrazioni, stampe e gadget', 'Web, app e realtà aumentata', 'Progettazione partecipata', 'Gestione social']
