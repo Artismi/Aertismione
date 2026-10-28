@@ -17,6 +17,7 @@ import { marble } from '@/components/canvas/table/marble'
 import { MARBLE_PX } from '@/components/ui/MarblePage'
 import { gameLoad } from '@/components/canvas/table/gameLoad'
 import { GameBoy, gameWarmable, type Rect } from '@/components/ui/GameBoy'
+import { useStore } from '@/stores/useStore'
 
 // Il tavolo in 3D si carica solo nel browser, a parte dal resto della pagina
 const Table3D = dynamic(() => import('@/components/canvas/table/Table3D'), { ssr: false })
@@ -893,7 +894,8 @@ export function PortfolioSection() {
   /**
    * Si apre un lavoro dal fascicolo: la pagina se lo ricorda. Tornando indietro
    * (o con «torna al portfolio») si ritorna al banco, con il fascicolo chiuso e
-   * pronto da riaprire: non si riapre da solo.
+   * pronto da riaprire: non si riapre da solo. Questo serve quando la home si
+   * ricarica da capo; quando resta montata sotto il lavoro, vedi `away` qui sotto.
    */
   function goProject(id: string) {
     try { sessionStorage.setItem(FOLDER_KEY, '1') } catch { /* niente memoria: pazienza */ }
@@ -911,6 +913,22 @@ export function PortfolioSection() {
     const t2 = window.setTimeout(center, 260)
     return () => { window.clearTimeout(t1); window.clearTimeout(t2) }
   }, [])
+
+  // Aperto un lavoro la home resta montata sotto (HomeShell): il fascicolo restava aperto
+  // e al ritorno andava richiuso ogni volta. Mentre la home e' nascosta si chiude di colpo,
+  // senza animazione: tornando il banco e' com'era, fascicolo chiuso e pronto da riaprire
+  const away = useStore((s) => s.away)
+  useEffect(() => {
+    if (!away) {
+      try { sessionStorage.removeItem(FOLDER_KEY) } catch { /* ignora */ }
+      return
+    }
+    timersRef.current.forEach(clearTimeout)
+    timersRef.current = []
+    const ball = ballRef.current; ball.vx = 0; ball.vy = 0; jumpRef.current = null
+    hoveredRef.current = null
+    setPhase('closed')
+  }, [away])
 
   function openFolder() {
     if (phase === 'list') { setPhase('closed'); return }
