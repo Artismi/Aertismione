@@ -18,8 +18,6 @@
   .rule { position: absolute; left: 56px; right: 56px; height: 0; border-top: 1.5px solid #1A1A1A; }
   .hair { border-top-width: .75px; }
   .serif { font-family: "Fraunces", Georgia, serif; font-variation-settings: "SOFT" 50, "WONK" 1; }
-  .ink { filter: url(#inchiostro); }
-  .carta { position: absolute; inset: 0; width: 1020px; height: 660px; pointer-events: none; mix-blend-mode: multiply; z-index: 5; }
 
   .testa { position: absolute; left: 56px; right: 56px; top: 40px; display: flex; justify-content: space-between; }
   .claim { position: absolute; left: 56px; top: 96px; font-size: 62px; line-height: 1.02; font-weight: 360; letter-spacing: -.02em; }
@@ -38,43 +36,14 @@
 </head>
 <body>
 <div class="card">
-<svg width="0" height="0" style="position:absolute">
-  <filter id="inchiostro" x="-4%" y="-20%" width="108%" height="140%">
-    <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="4" result="onda"/>
-    <feDisplacementMap in="SourceGraphic" in2="onda" scale="1.2" xChannelSelector="R" yChannelSelector="G" result="mosso"/>
-    <feTurbulence type="fractalNoise" baseFrequency="1.15" numOctaves="2" seed="9" result="grana"/>
-    <feColorMatrix in="grana" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  10 0 0 0 -6.6" result="buchi"/>
-    <feComposite in="mosso" in2="buchi" operator="out"/>
-  </filter>
-  <!-- leggero: per il testo piccolo e i fili del sigillo (non deve spezzarli ne' mangiare accenti e punti) -->
-  <filter id="inchiostro-fine" x="-4%" y="-20%" width="108%" height="140%">
-    <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="7" result="onda"/>
-    <feDisplacementMap in="SourceGraphic" in2="onda" scale=".5" xChannelSelector="R" yChannelSelector="G" result="mosso"/>
-    <feTurbulence type="fractalNoise" baseFrequency="1.6" numOctaves="1" seed="12" result="grana"/>
-    <feColorMatrix in="grana" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  10 0 0 0 -7.4" result="buchi"/>
-    <feComposite in="mosso" in2="buchi" operator="out"/>
-  </filter>
-</svg>
-<svg class="carta" viewBox="0 0 1020 660" preserveAspectRatio="none" aria-hidden="true">
-  <filter id="granacarta" x="0" y="0" width="100%" height="100%">
-    <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" seed="2"/>
-    <feColorMatrix type="matrix" values="0 0 0 0 0.1  0 0 0 0 0.09  0 0 0 0 0.08  -1.1 0 0 0 0.75"/>
-  </filter>
-  <filter id="macchie" x="0" y="0" width="100%" height="100%">
-    <feTurbulence type="fractalNoise" baseFrequency="0.006" numOctaves="3" seed="6"/>
-    <feColorMatrix type="matrix" values="0 0 0 0 0.35  0 0 0 0 0.3  0 0 0 0 0.24  0 0 0 -.9 .55"/>
-  </filter>
-  <rect width="1020" height="660" filter="url(#macchie)" opacity=".16"/>
-  <rect width="1020" height="660" filter="url(#granacarta)" opacity=".22"/>
-  <g fill="none" stroke="#6b5f52"><path d="M457.618 374.232 Q418.372 386.257 378.687 393.388" stroke-width="0.392" opacity="0.096"/><path d="M652.871 546.803 Q671.722 564.707 713.495 565.271" stroke-width="0.647" opacity="0.054"/><path d="M1040.413 673.921 Q1008.108 703.595 994.983 760.429" stroke-width="0.564" opacity="0.055"/><path d="M169.229 139.038 Q207.9 152.449 249.9 146.685" stroke-width="0.56" opacity="0.108"/><path d="M509.75 450.213 Q527.734 494.119 517.849 510.267" stroke-width="0.72" opacity="0.114"/><path d="M306.805 129.953 Q325.867 142.033 330.016 159.691" stroke-width="0.723" opacity="0.085"/><path d="M1013.847 587.009 Q1051.869 586.214 1066.915 587.1" stroke-width="0.79" opacity="0.086"/><path d="M40.342 425.797 Q5.881 440.236 -5.46 464.05" stroke-width="0.782" opacity="0.118"/><path d="M89.791 142.327 Q115.488 139.012 124.551 153.748" stroke-width="0.58" opacity="0.09"/><path d="M169.753 501.602 Q205.213 519.541 262.148 541.919" stroke-width="0.406" opacity="0.074"/><path d="M1028.022 554.525 Q1056.671 603.555 1101.52 658.507" stroke-width="0.727" opacity="0.108"/><path d="M70.366 692.083 Q100.894 705.428 116.152 728.352" stroke-width="0.448" opacity="0.057"/><path d="M59.129 391.224 Q90.266 423.15 128.587 457.697" stroke-width="0.78" opacity="0.094"/><path d="M592.028 601.229 Q623.174 622.883 631.449 626.74" stroke-width="0.425" opacity="0.067"/><path d="M773.367 655.9 Q838.901 697.746 883.033 733.795" stroke-width="0.511" opacity="0.059"/><path d="M2.566 672.384 Q35.129 718.048 81.3 745.583" stroke-width="0.598" opacity="0.076"/><path d="M152.977 493.061 Q181.56 508.838 206.819 504.879" stroke-width="0.607" opacity="0.075"/><path d="M969.096 110.944 Q997.341 100.188 1028.627 114.047" stroke-width="0.388" opacity="0.083"/><path d="M589.386 57.368 Q629.7 119.855 643.106 173.554" stroke-width="0.646" opacity="0.103"/><path d="M114.382 -14.04 Q184.968 2.573 244.3 -6.729" stroke-width="0.311" opacity="0.107"/><path d="M490.459 500.569 Q516.259 560.803 565.843 618.456" stroke-width="0.669" opacity="0.131"/><path d="M770.797 480.731 Q714.623 525.422 666.747 559.744" stroke-width="0.75" opacity="0.128"/><path d="M418.868 544.994 Q380.075 561.039 334.285 583.674" stroke-width="0.591" opacity="0.105"/><path d="M48.222 433.159 Q-8.763 431.365 -78.527 435.819" stroke-width="0.668" opacity="0.102"/><path d="M444.575 580.394 Q485.733 597.868 553.223 609.67" stroke-width="0.54" opacity="0.071"/><path d="M728.168 327.965 Q698.23 375.707 681.966 450.816" stroke-width="0.451" opacity="0.111"/><path d="M182.832 85.509 Q132.14 111.451 84.7 115.455" stroke-width="0.463" opacity="0.11"/><path d="M178.356 278.863 Q135.477 312.998 71.303 353.606" stroke-width="0.592" opacity="0.078"/><path d="M109.794 327.386 Q61.931 370.192 2.24 387.798" stroke-width="0.438" opacity="0.065"/><path d="M455.714 163.62 Q488.779 186.979 514.803 210.68" stroke-width="0.458" opacity="0.126"/><path d="M1040.24 294.833 Q1066.953 285.884 1072.787 302.612" stroke-width="0.654" opacity="0.101"/><path d="M299.933 545.72 Q321.102 533.761 344.799 548.417" stroke-width="0.715" opacity="0.071"/><path d="M114.962 -5.262 Q102.985 35.422 83.73 67.424" stroke-width="0.704" opacity="0.136"/><path d="M712.942 107.513 Q701.18 131.486 716.816 157.017" stroke-width="0.657" opacity="0.066"/><path d="M259.59 215.847 Q237.453 258.528 208.906 286.862" stroke-width="0.497" opacity="0.121"/><path d="M956.861 24.535 Q892.99 34.736 849.844 47.539" stroke-width="0.613" opacity="0.132"/><path d="M374.483 380.922 Q332.277 401.677 265.193 424.463" stroke-width="0.626" opacity="0.068"/><path d="M754.129 565.576 Q722.659 625.944 707.244 663.913" stroke-width="0.79" opacity="0.138"/><path d="M550.652 545.182 Q595.401 595.907 620.226 655.115" stroke-width="0.341" opacity="0.09"/><path d="M565.332 528.493 Q574.641 532.836 566.638 561.592" stroke-width="0.7" opacity="0.066"/><path d="M328.505 543.05 Q349.923 559.212 370.416 562.853" stroke-width="0.72" opacity="0.112"/><path d="M1000.322 324.51 Q973.042 328.395 961.362 330.787" stroke-width="0.445" opacity="0.116"/><path d="M662.758 346.859 Q617.104 365.139 581.994 390.07" stroke-width="0.723" opacity="0.131"/><path d="M189.064 589.571 Q147.49 585.537 101.829 598.248" stroke-width="0.568" opacity="0.095"/><path d="M625.751 -19.461 Q579.786 -6.868 539.389 -11.134" stroke-width="0.581" opacity="0.094"/><path d="M720.085 8.766 Q728.297 58.101 710.923 83.723" stroke-width="0.435" opacity="0.093"/></g>
-</svg>
+
   <div class="testa mono"><span>Artismi — Design Studio</span><span>N° 01 — Retro</span></div>
   <div class="rule hair" style="top:66px"></div>
-  <h1 class="claim serif ink">Diamo un <em>volto</em><br>alla tua attività.</h1>
+  <h1 class="claim serif">Diamo un <em>volto</em><br>alla tua attività.</h1>
   <p class="line">Identità visive, illustrazione e murales per negozi, associazioni e piccole imprese.</p>
-  <ol class="servizi"><li><b>01</b><span class="serif ink">Identità completa</span></li><li><b>02</b><span class="serif ink">Illustrazioni, stampe e gadget</span></li><li><b>03</b><span class="serif ink">Web, app e realtà aumentata</span></li><li><b>04</b><span class="serif ink">Progettazione partecipata</span></li><li><b>05</b><span class="serif ink">Gestione social</span></li></ol>
+  <ol class="servizi"><li><b>01</b><span class="serif">Identità completa</span></li><li><b>02</b><span class="serif">Illustrazioni, stampe e gadget</span></li><li><b>03</b><span class="serif">Web, app e realtà aumentata</span></li><li><b>04</b><span class="serif">Progettazione partecipata</span></li><li><b>05</b><span class="serif">Gestione social</span></li></ol>
   <div class="rule" style="bottom:126px"></div>
-  <div class="contatti"><p class="serif ink">Inquadra il fronte:<br>il logo prende vita.</p>
+  <div class="contatti"><p class="serif">Inquadra il fronte:<br>il logo prende vita.</p>
     <ul><li>WhatsApp +39 393 195 9752</li><li>apizzoglio@gmail.com</li><li>@giovane_kudos</li></ul></div>
 </div>
 </body>

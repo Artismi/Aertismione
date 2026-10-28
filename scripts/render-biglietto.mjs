@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 const dir = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'ar-print');
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1020, height: 660 }, deviceScaleFactor: 2 });
-for (const lato of ['fronte', 'retro']) {
+for (const lato of ['fronte', 'fronte-pieno', 'retro']) {
   await page.goto('file://' + path.join(dir, `biglietto-${lato}.html`));
   await page.evaluate(() => document.fonts.ready);
   await page.screenshot({ path: path.join(dir, `biglietto-${lato}.png`) });
