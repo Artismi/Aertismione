@@ -138,8 +138,8 @@ from svgpathtools import parse_path
 _P = parse_path(D); _sp = _P.continuous_subpaths()
 FIG = _sp[0].cropped(0.75455, 0.9236).d()           # dalla punta in alto (842, 88) giu' fino a (764, 515) sulla gamba della m
 TESTA = _sp[6].d()                                  # il pallino
-SC = 1.9                                            # la punta in alto esce di sopra, la gamba della m esce di sotto
-FTX, FTY = 1000 - 910.3 * SC, 570 - 421.7 * SC      # braccio a 1000 px, punta della gamba a 570 px
+SC = 2.35                                           # la punta in alto esce di sopra, la gamba della m esce di sotto
+FTX, FTY = 965 - 910.3 * SC, 545 - 421.7 * SC       # braccio a 965 px, punta della gamba a 545 px: la figura verso il centro
 TOP, H = 34, 412
 scrivi('retro-bc', NOTTE, ROSA, f'''
   .det {{ position: absolute; left: 0; top: 0; width: 1020px; height: 660px; overflow: hidden; }}
@@ -148,14 +148,13 @@ scrivi('retro-bc', NOTTE, ROSA, f'''
   .claim {{ position: absolute; left: 48px; top: {TOP}px; height: {H}px; display: inline-flex; flex-direction: column; justify-content: space-between; align-items: flex-start; }}
   .claim .a {{ display: block; font-size: 48px; line-height: .74; white-space: nowrap; letter-spacing: 0; }}
   .claim .volto {{ display: block; font-size: 290px; line-height: .74; letter-spacing: -.035em; white-space: nowrap; margin-left: -12px; }}
-  .servizi {{ position: absolute; left: 50px; bottom: 40px; list-style: none; }}
-  .servizi li {{ line-height: 1.75; }}
+  .servizi {{ position: absolute; left: 50px; bottom: 78px; list-style: none; font-size: 13px; letter-spacing: .03em; }}
+  .servizi li {{ line-height: 1.65; }}
   .servizi b {{ font-weight: 400; margin-right: 12px; }}
   .servizi i {{ font-style: normal; opacity: .62; }}
-  .contatti {{ position: absolute; left: 526px; bottom: {660 - TOP - H}px; text-align: left; }}  /* tra il claim e la figura, sulla linea di ALLA TUA ATTIVITA */
-  .contatti .c {{ font-size: 26px; line-height: 1.05; margin-bottom: 14px; }}
+  .contatti {{ position: absolute; left: 50px; bottom: 36px; display: flex; gap: 34px; }}  /* una riga sola, sotto i servizi */
 ''', f'''  <svg class="det" viewBox="0 0 1020 660"><g transform="translate({FTX:.2f} {FTY:.2f}) scale({SC:.4f})"><path d="{FIG}"/><path d="{TESTA}"/></g></svg>
   <h1 class="claim"><span class="a" data-fit="#volto">Diamo insieme un</span><span class="volto c" id="volto">volto</span><span class="a" data-fit="#volto">alla tua attività.</span></h1>
   <ol class="servizi m">{"".join(f'<li><b>{i+1:02d}</b>{t} <i>— {x.lower()}</i></li>' for i, (t, x) in enumerate(zip(SERVIZI, DETTAGLI)))}</ol>
-  <div class="contatti"><p class="c">Inquadra il fronte:<br>il logo prende vita.</p><div class="m"><p>WhatsApp +39 393 195 9752</p><p>apizzoglio@gmail.com</p></div></div>''')
+  <div class="contatti m"><p>WhatsApp +39 393 195 9752</p><p>apizzoglio@gmail.com</p></div>''')
 print('scritte le proposte del retro')
