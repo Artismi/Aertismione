@@ -138,23 +138,26 @@ from svgpathtools import parse_path
 _P = parse_path(D); _sp = _P.continuous_subpaths()
 FIG = _sp[0].cropped(0.75455, 0.9236).d()           # dalla punta in alto (842, 88) giu' fino a (764, 515) sulla gamba della m
 TESTA = _sp[6].d()                                  # il pallino
-SC = 2.35                                           # la punta in alto esce di sopra, la gamba della m esce di sotto
-FTX, FTY = 965 - 910.3 * SC, 545 - 421.7 * SC       # braccio a 965 px, punta della gamba a 545 px: la figura verso il centro
-TOP, H = 34, 412
+SC = 1.55                                           # la punta in alto esce di sopra; la gamba della m finisce sul filetto
+FTX, FTY = 905 - 910.3 * SC, 362 - 421.7 * SC       # braccio a 905 px, punta della gamba a 362 px, sopra il filetto
+TOP, H = 34, 330                 # il claim, sopra il filetto dei servizi
+RIGA = 388                       # il filetto: sotto ci sono i servizi, la figura ci finisce sopra
 scrivi('retro-bc', NOTTE, ROSA, f'''
-  .det {{ position: absolute; left: 0; top: 0; width: 1020px; height: 660px; overflow: hidden; }}
+  .det {{ position: absolute; left: 0; top: 0; width: 1020px; height: {RIGA}px; overflow: hidden; }}  /* la figura finisce sul filetto */
   .det path {{ fill: none; stroke: {ROSA}; stroke-width: {2.2 / SC:.3f}; stroke-linejoin: round; stroke-linecap: round; }}
-  /* il blocco del claim e' alto quanto la figura: la prima riga parte dalla punta della i, l'ultima finisce sulla punta della gamba */
   .claim {{ position: absolute; left: 48px; top: {TOP}px; height: {H}px; display: inline-flex; flex-direction: column; justify-content: space-between; align-items: flex-start; }}
-  .claim .a {{ display: block; font-size: 48px; line-height: .74; white-space: nowrap; letter-spacing: 0; }}
-  .claim .volto {{ display: block; font-size: 290px; line-height: .74; letter-spacing: -.035em; white-space: nowrap; margin-left: -12px; }}
-  .servizi {{ position: absolute; left: 50px; bottom: 78px; list-style: none; font-size: 13px; letter-spacing: .03em; }}
-  .servizi li {{ line-height: 1.65; }}
-  .servizi b {{ font-weight: 400; margin-right: 12px; }}
-  .servizi i {{ font-style: normal; opacity: .62; }}
-  .contatti {{ position: absolute; left: 50px; bottom: 36px; display: flex; gap: 34px; }}  /* una riga sola, sotto i servizi */
-''', f'''  <svg class="det" viewBox="0 0 1020 660"><g transform="translate({FTX:.2f} {FTY:.2f}) scale({SC:.4f})"><path d="{FIG}"/><path d="{TESTA}"/></g></svg>
+  .claim .a {{ display: block; font-size: 44px; line-height: .74; white-space: nowrap; letter-spacing: 0; }}
+  .claim .volto {{ display: block; font-size: 236px; line-height: .74; letter-spacing: -.035em; white-space: nowrap; margin-left: -10px; }}
+  .linea {{ position: absolute; left: 48px; right: 48px; height: 0; border-top: 1px solid {ROSA}; }}
+  .indice {{ position: absolute; left: 48px; right: 48px; top: {RIGA + 20}px; list-style: none; display: grid; grid-template-columns: 1fr 1.15fr 1.1fr 1.05fr 1fr; gap: 16px; }}
+  .indice .a {{ display: block; font-size: 64px; line-height: .8; letter-spacing: -.02em; }}
+  .indice .c {{ display: block; margin-top: 12px; font-size: 21px; line-height: 1.05; text-wrap: balance; }}
+  .indice .m {{ display: block; margin-top: 9px; font-size: 11px; line-height: 1.45; letter-spacing: .03em; opacity: .78; text-wrap: balance; }}
+  .piede {{ position: absolute; left: 48px; right: 48px; bottom: 36px; display: flex; justify-content: space-between; }}
+''', f'''  <svg class="det" viewBox="0 0 1020 {RIGA}"><g transform="translate({FTX:.2f} {FTY:.2f}) scale({SC:.4f})"><path d="{FIG}"/><path d="{TESTA}"/></g></svg>
   <h1 class="claim"><span class="a" data-fit="#volto">Diamo insieme un</span><span class="volto c" id="volto">volto</span><span class="a" data-fit="#volto">alla tua attività.</span></h1>
-  <ol class="servizi m">{"".join(f'<li><b>{i+1:02d}</b>{t} <i>— {x.lower()}</i></li>' for i, (t, x) in enumerate(zip(SERVIZI, DETTAGLI)))}</ol>
-  <div class="contatti m"><p>WhatsApp +39 393 195 9752</p><p>apizzoglio@gmail.com</p></div>''')
+  <div class="linea" style="top:{RIGA}px"></div>
+  <ol class="indice">{"".join(f'<li><span class="a">{i+1:02d}</span><span class="c">{t}</span><span class="m">{x}</span></li>' for i, (t, x) in enumerate(zip(SERVIZI, DETTAGLI)))}</ol>
+  <div class="linea" style="bottom:86px"></div>
+  <div class="piede m"><p>WhatsApp +39 393 195 9752</p><p>artismidesignstudio.com</p><p>apizzoglio@gmail.com</p></div>''')
 print('scritte le proposte del retro')
