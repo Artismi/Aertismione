@@ -131,12 +131,12 @@ scrivi('retro-fusione', NOTTE, ROSA, f'''
   <div class="linea" style="bottom:86px"></div>
   <div class="piede"><p class="c">Inquadra il fronte: il logo prende vita.</p><div class="m"><p>WhatsApp +39 393 195 9752</p><p>apizzoglio@gmail.com</p></div></div>''')
 # B + C · il nero e la figura della C, volto enorme della B; servizi in mono col loro dettaglio
-# la figura della i, aperta: del contorno del logo si tiene un solo lato per ciascuna punta (il lato destro della
-# punta in alto e quello destro della gamba), piu' il pallino. Ingrandita, le due punte escono dal biglietto e
-# restano due linee che spariscono fuori, una in alto e una in basso.
+# la figura della i, aperta con due tagli: uno sulla gamba di sopra (la punta in alto) e uno sulla gamba di sotto.
+# Del contorno del logo si tiene tutta la i con le sue due punte; ciascun lato esterno prosegue finche' va dritto
+# e si taglia dove comincerebbe a curvare verso il centro (verso la m). Ingrandita, le punte escono dal biglietto.
 from svgpathtools import parse_path
 _P = parse_path(D); _sp = _P.continuous_subpaths()
-FIG = _sp[0].cropped(0.75455, 0.8511).d()          # dalla punta della i (842, 88) alla punta della gamba (879, 422)
+FIG = _sp[0].cropped(0.7185, 0.8711).d()            # taglio sopra (745, 241) ... taglio sotto (845, 328)
 TESTA = _sp[6].d()                                  # il pallino
 SC = 720 / (421.7 - 88.4)                           # punta in alto a -30 px, punta in basso a 690 px: fuori di 30 px
 FTX, FTY = 978 - 908.5 * SC, -30 - 88.4 * SC        # la punta del braccio resta dentro, a 978 px
@@ -152,7 +152,7 @@ scrivi('retro-bc', NOTTE, ROSA, f'''
   .servizi li {{ line-height: 1.75; }}
   .servizi b {{ font-weight: 400; margin-right: 12px; }}
   .servizi i {{ font-style: normal; opacity: .62; }}
-  .contatti {{ position: absolute; right: 148px; bottom: 40px; text-align: right; }}  /* a sinistra della gamba */
+  .contatti {{ position: absolute; left: 560px; bottom: {660 - TOP - H}px; text-align: left; }}  /* tra il claim e la figura, sulla linea di ALLA TUA ATTIVITA */
   .contatti .c {{ font-size: 26px; line-height: 1.05; margin-bottom: 14px; }}
 ''', f'''  <svg class="det" viewBox="0 0 1020 660"><g transform="translate({FTX:.2f} {FTY:.2f}) scale({SC:.4f})"><path d="{FIG}"/><path d="{TESTA}"/></g></svg>
   <h1 class="claim"><span class="a" data-fit="#volto">Diamo insieme un</span><span class="volto c" id="volto">volto</span><span class="a" data-fit="#volto">alla tua attività.</span></h1>
