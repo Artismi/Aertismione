@@ -7,8 +7,9 @@
  * in alto la tesa del Game Boy, con la lucina, il nome e due tasti di gomma
  * (schermo intero, esci). Niente barra del sito: si e' dentro la console.
  *
- * Caricamento: da computer il gioco parte gia' in sottofondo, poco dopo
- * l'apertura della home, nascosto fuori schermo. Viene dal suo sito
+ * Caricamento: da computer il gioco parte gia' in sottofondo, quando il banco e'
+ * vicino e la pagina e' ferma, nascosto fuori schermo. Mentre la pagina scorre gli
+ * si dice di aspettare ('attendi'): il caricamento non fa scattare lo scroll. Viene dal suo sito
  * (PROGETTI.game.url): un'origine diversa, quindi il browser lo fa girare in un
  * processo suo e la pagina resta fluida; fuori schermo il browser non lo
  * disegna, quindi non costa niente. Prendendo in mano il Game Boy e' gia' al
@@ -85,6 +86,28 @@ export function GameBoy({ from, onClose, page = false, warm = false }: {
     window.addEventListener('message', onMsg)
     return () => window.removeEventListener('message', onMsg)
   }, [])
+
+  // nascosto, mentre si carica in anticipo: finche' la pagina scorre gli si dice di aspettare,
+  // cosi' i suoi passi pesanti (modelli, preparazione della scena) non rubano fotogrammi allo scroll
+  useEffect(() => {
+    if (open) return
+    const origin = warm ? new URL(game.url).origin : window.location.origin
+    let lastSent = 0
+    const busy = () => {
+      const now = performance.now()
+      if (now - lastSent < 150) return
+      lastSent = now
+      frameRef.current?.contentWindow?.postMessage({ pvc: 'attendi', ms: 700 }, origin)
+    }
+    window.addEventListener('scroll', busy, { passive: true })
+    window.addEventListener('wheel', busy, { passive: true })
+    window.addEventListener('touchmove', busy, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', busy)
+      window.removeEventListener('wheel', busy)
+      window.removeEventListener('touchmove', busy)
+    }
+  }, [open, warm, game.url])
 
   // un gioco che non parla: basta la pagina caricata. E se il messaggio non arriva, dopo un po' si mostra.
   // Il menu si disegna solo quando si vede (fuori schermo il browser non disegna): l'attesa conta da li'

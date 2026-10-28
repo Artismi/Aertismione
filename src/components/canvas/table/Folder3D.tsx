@@ -296,10 +296,12 @@ export function Folder3D({ phase, mobile, hovered, thumbs, count, label, logo, p
               <planeGeometry args={[1.86, 0.93]} />
               <meshStandardMaterial map={tex.label} transparent roughness={0.62} />
             </mesh>
-            {/* bollino azzurro sull'angolo, e nastro di carta sull'altro */}
+            {/* bollino azzurro sull'angolo, e nastro di carta sull'altro. Gli angoli vuoti del
+                quadrato si scartano (alphaTest): se no coprivano l'etichetta sotto e si vedeva
+                un riquadro del cartone attorno al bollino */}
             <mesh position={[0.86, top + 0.0012, -0.3]} rotation={[-Math.PI / 2, 0, -0.3]} receiveShadow>
               <planeGeometry args={[0.42, 0.42]} />
-              <meshStandardMaterial map={tex.dot} transparent roughness={0.55} />
+              <meshStandardMaterial map={tex.dot} transparent alphaTest={0.5} roughness={0.55} />
             </mesh>
             <mesh position={[-0.76, top + 0.0012, -0.3]} rotation={[-Math.PI / 2, 0, 0.62]} receiveShadow>
               <planeGeometry args={[0.44, 0.13]} />

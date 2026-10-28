@@ -75,6 +75,8 @@ const SLIDE_MS = 650
 const COVER_MS = 800
 const FADE_MS  = 280
 const OPEN_MS  = 1150 // coperchio alzato e schermo acceso
+/** quanto deve restare ferma la pagina prima che il gioco cominci a caricarsi in sottofondo */
+const CALM_MS  = 900
 
 interface Particle { x: number; y: number; vx: number; vy: number; r: number; alpha: number; color: string }
 
@@ -962,21 +964,43 @@ export function PortfolioSection() {
     // aperto il sito: sono ~20 MB e un secondo mondo 3D da preparare, che nei primi
     // secondi rubavano processore, memoria e banda alla home, anche a chi il Game Boy
     // non lo prende mai. Arrivati al banco ha gia' cominciato, e lo schermo della
-    // console mostra a che punto e'
+    // console mostra a che punto e'. Parte a pagina ferma da un attimo: il primo passo
+    // (scaricare e leggere il gioco) non cade nel mezzo di uno scroll; poi, se si scorre,
+    // il gioco aspetta (GameBoy, 'attendi')
     const section = sectionRef.current
     if (!section) return
-    let t = 0
-    const io = new IntersectionObserver(([e]) => {
-      if (!e.isIntersecting) return
-      io.disconnect()
-      const go = () => setGameOn(true)
+    let t = 0, near = false, started = false
+    const go = () => {
+      if (started) return
+      started = true
+      off()
+      setGameOn(true)
+    }
+    const calm = () => {
+      window.clearTimeout(t)
+      if (!near || started) return
       t = window.setTimeout(() => {
         if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(go, { timeout: 1500 })
         else go()
-      }, 300)
+      }, CALM_MS)
+    }
+    const io = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return
+      io.disconnect()
+      near = true
+      calm()
     }, { rootMargin: '100% 0px' })
+    const off = () => {
+      io.disconnect()
+      window.removeEventListener('scroll', calm)
+      window.removeEventListener('wheel', calm)
+      window.removeEventListener('touchmove', calm)
+    }
+    window.addEventListener('scroll', calm, { passive: true })
+    window.addEventListener('wheel', calm, { passive: true })
+    window.addEventListener('touchmove', calm, { passive: true })
     io.observe(section)
-    return () => { io.disconnect(); window.clearTimeout(t) }
+    return () => { off(); window.clearTimeout(t) }
   }, [])
   useGamePreload(!warm, sectionRef)
 

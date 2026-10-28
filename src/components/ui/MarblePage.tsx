@@ -90,9 +90,15 @@ export function MarblePage() {
 
     /** il piano: da dove comincia il testo sotto il logo fino in fondo alla pagina */
     const plane = { top: 0, bottom: 0, left: 0, right: 0 }
-    function measure() {
-      const vh = window.innerHeight
+    /** il piano si rimisura ogni mezzo secondo (e quando cambia la finestra), non a ogni
+     *  fotogramma: leggere le misure della pagina mentre scorre obbliga il browser a
+     *  rifare l'impaginazione, e lo scroll scattava */
+    let measuredAt = -Infinity
+    function measure(now: number) {
       sy = window.scrollY
+      if (now - measuredAt < 500) return
+      measuredAt = now
+      const vh = window.innerHeight
       const vis = document.getElementById('visione')?.getBoundingClientRect()
       plane.top = (vis ? vis.top + sy + vh * 0.3 : vh * 0.8) + R
       plane.bottom = document.documentElement.scrollHeight - R - 4
@@ -349,7 +355,7 @@ export function MarblePage() {
       // il tempo vero, a passi piccoli: anche con un fotogramma lungo la bilia va giusta
       const raw = Math.min((now - last) / 1000, 0.1)
       last = now
-      measure()
+      measure(now)
       // quanto corre la pagina (px al secondo, verso il basso positivo): e' la spinta dei bordi
       if (raw > 0) scrollV = scrollV * 0.5 + ((sy - prevSy) / raw) * 0.5
       prevSy = sy
@@ -437,6 +443,8 @@ export function MarblePage() {
       if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(e.key)) byHand()
     }
 
+    const remeasure = () => { measuredAt = -Infinity }
+    window.addEventListener('resize', remeasure)
     window.addEventListener('pointerdown', onDown)
     window.addEventListener('pointermove', onMove, { passive: true })
     window.addEventListener('pointerup', onUp, { passive: true })
@@ -446,6 +454,7 @@ export function MarblePage() {
     raf = requestAnimationFrame(tick)
     return () => {
       cancelAnimationFrame(raf)
+      window.removeEventListener('resize', remeasure)
       window.removeEventListener('wheel', byHand)
       window.removeEventListener('touchmove', byHand)
       window.removeEventListener('keydown', byKey)
