@@ -135,7 +135,7 @@ pagina('biglietto-retro.html', 'Biglietto Artismi · retro', f'''
   .contatti {{ position: absolute; left: 56px; right: 56px; bottom: 40px; display: flex; justify-content: space-between; align-items: flex-end; }}
   .contatti .serif {{ font-size: 24px; font-style: italic; font-weight: 380; }}
   .contatti ul {{ list-style: none; text-align: right; font-size: 14px; line-height: 1.7; letter-spacing: .04em; }}
-''', f'''  <div class="testa mono"><span>Artismi — Design Studio</span><span>N° 01 — Retro</span></div>
+''', f'''  <div class="testa mono"><span>Artismi — Design Studio</span></div>
   <div class="rule hair" style="top:66px"></div>
   <h1 class="claim serif">Diamo un <em>volto</em><br>alla tua attività.</h1>
   <p class="line">Identità visive, illustrazione e murales per negozi, associazioni e piccole imprese.</p>
