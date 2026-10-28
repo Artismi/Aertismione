@@ -132,11 +132,11 @@ scrivi('retro-fusione', NOTTE, ROSA, f'''
   <div class="piede"><p class="c">Inquadra il fronte: il logo prende vita.</p><div class="m"><p>WhatsApp +39 393 195 9752</p><p>apizzoglio@gmail.com</p></div></div>''')
 # B + C · il nero e la figura della C, volto enorme della B; servizi in mono col loro dettaglio
 # il ritaglio della figura nel disegno del logo (scripts/logo-forma.svg, 1000 x 603): dalla punta della i (847, 88)
-# e giu' lungo la gamba della m fino alla sua punta (758, 532)
-VX, VY, VW, VH = 744, 82, 173, 456
+# alla punta della sua gamba (882, 420); la gamba della m resta fuori
+VX, VY, VW, VH = 787, 82, 130, 344
 VB = f'{VX} {VY} {VW} {VH}'
 TOP, H = 34, 412                 # la figura, e il claim accanto, dall'alto fino sopra i servizi
-FW = round(H * VW / VH); FX = 660
+FW = round(H * VW / VH); FX = 690
 scrivi('retro-bc', NOTTE, ROSA, f'''
   /* la figura intera, dalla punta della i in alto fino alla punta della gamba: un ritaglio del logo (viewBox) */
   .det {{ position: absolute; left: {FX}px; top: {TOP}px; width: {FW}px; height: {H}px; }}
