@@ -2,11 +2,11 @@
 """Il biglietto Artismi, fronte e retro.
 
 Fronte notte con il logo a contorno al vivo in rosa; il QR al centro di un sigillo tondo rosa, con la
-frase che gli gira intorno. Retro rosa in prugna. I colori sono quelli della pagina AR.
+frase che gli gira intorno. Retro notte: volto con la i del logo e l'indice dei servizi. I colori sono quelli della pagina AR.
 Scrive biglietto-fronte.html e biglietto-retro.html (1020 x 660 px = 85 x 55 mm). I testi riassumono
 src/config/content.ts (HERO, SERVICES, CONTACT): se cambiano li', aggiornali qui.
 
-    python3 scripts/biglietto.py [--tipo misto|instrument|cormorant|archivo] [--out ar-print]
+    python3 scripts/biglietto-retri.py && python3 scripts/biglietto.py [--tipo misto|instrument|cormorant|archivo] [--out ar-print]
     poi:  node scripts/render-biglietto.mjs [cartella]      (le immagini PNG)
 
 Il fronte e' anche il bersaglio AR: se cambia, vanno rifatti public/ar/assets/target.mind e card-front.png.
@@ -172,9 +172,10 @@ pagina('biglietto-retro.html', 'Biglietto Artismi · retro', ROSA, PRUGNA, f'''
   <div class="rule" style="bottom:130px"></div>
   <div class="contatti"><p class="t">Inquadra il fronte:<br><em>il logo prende vita.</em></p>
     <ul class="p"><li>WhatsApp +39 393 195 9752</li><li>apizzoglio@gmail.com</li></ul></div>''')
-# il retro definitivo e' quello classico, piu' quieto (Fraunces e JetBrains Mono): le varianti di carattere
-# restano solo per confronto
+# il retro definitivo e' la fusione di scripts/biglietto-retri.py (notte, volto con la i della figura, indice):
+# si lancia prima quello, poi questo lo copia accanto al fronte
 if A.tipo == 'misto':
-    classico = open(os.path.join(os.path.dirname(__file__), 'biglietto-retro.html'), encoding='utf-8').read()
-    open(os.path.join(A.out, 'biglietto-retro.html'), 'w', encoding='utf-8').write(classico.replace('{FONTI}', FONTI))
+    fus = os.path.join(os.path.dirname(__file__), '..', 'ar-print', 'varianti', 'retro-fusione', 'biglietto-retro.html')
+    r = open(fus, encoding='utf-8').read().replace('url("../../fonts/', f'url("{FONTI}/')
+    open(os.path.join(A.out, 'biglietto-retro.html'), 'w', encoding='utf-8').write(r)
 print(A.out, A.tipo)

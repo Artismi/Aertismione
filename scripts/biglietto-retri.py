@@ -94,13 +94,11 @@ scrivi('retro-dettaglio', NOTTE, ROSA, f'''
   <ol class="servizi c">{"".join(f'<li><b>{i+1:02d}</b>{t}</li>' for i, t in enumerate(SERVIZI))}</ol>
   <div class="contatti"><p class="c">Inquadra il fronte: il logo prende vita.</p><div class="m">{CONTATTI}</div></div>''')
 # FUSIONE · il nero del dettaglio, "volto" enorme, l'indice coi numeri grandi: tre fasce, una cosa per fascia
-import re
-# il sigillo e' lo stesso del fronte: lo si prende gia' disegnato da biglietto-fronte.html
-SIGILLO = re.search(r'<svg class="sigillo".*?</svg>', open(os.path.join(QUI, '..', 'ar-print', 'biglietto-fronte.html'), encoding='utf-8').read(), re.S).group(0)
 # una riga per servizio: a cosa serve (riassunto di SERVICES.promise in src/config/content.ts)
 DETTAGLI = ['Dal logo ai muri del negozio', 'Disegni che la gente porta con sé', 'Online come dal vivo', 'Con chi vivrà il progetto', 'I tuoi canali, con la tua voce']
 scrivi('retro-fusione', NOTTE, ROSA, f'''
-  .sigillo {{ position: absolute; right: 30px; top: 22px; width: 300px; height: 300px; }}
+  .det {{ position: absolute; left: -560px; top: -250px; width: 1700px; clip-path: inset(0 0 39.5% 79.5%); }}  /* la i col pallino, accanto a volto */
+  .det path {{ fill: none; stroke: {ROSA}; stroke-width: 2.2; stroke-linejoin: round; }}
   .prima {{ position: absolute; left: 50px; top: 108px; font-size: 34px; }}
   .volto {{ position: absolute; left: 34px; top: 130px; font-size: 220px; line-height: .8; letter-spacing: -.03em; white-space: nowrap; }}
   .dopo {{ position: absolute; left: 52px; top: 324px; font-size: 34px; }}
@@ -112,7 +110,7 @@ scrivi('retro-fusione', NOTTE, ROSA, f'''
   .piede {{ position: absolute; left: 48px; right: 48px; bottom: 38px; display: flex; justify-content: space-between; align-items: baseline; }}
   .piede .c {{ font-size: 24px; }}
   .piede .m {{ display: flex; gap: 34px; }}
-''', f'''  {SIGILLO}
+''', f'''  <svg class="det" viewBox="0 0 1000 603"><path d="{D}"/></svg>
   <p class="prima a">Diamo un</p>
   <p class="volto c">volto</p>
   <p class="dopo a">alla tua attività.</p>
