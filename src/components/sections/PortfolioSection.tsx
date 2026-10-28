@@ -33,8 +33,8 @@ const FOLDER_KEY    = 'artismi:fascicolo-aperto'   // il fascicolo era aperto qu
  * grandi, perche' il titolo resti leggibile (prima arrivava a 4-5 px sullo schermo)
  */
 const CARD = {
-  desk: { w: 250, h: 180, title: 20, cat: 12, cta: 12 },
-  tall: { w: 214, h: 236, title: 25, cat: 15, cta: 15 },
+  desk: { w: 250, h: 180, title: 20, cat: 12, sub: 13 },
+  tall: { w: 214, h: 236, title: 25, cat: 15, sub: 16 },
 }
 const cardOf = (w: number, h: number) => (w > h ? CARD.desk : CARD.tall)
 /** il punto (x, y) del tabellone cade sulla cartellina p (con un margine) */
@@ -59,7 +59,7 @@ const FRAME_60      = 1000 / 60
 const MAP_W         = 1200
 const MAP_H         = 775
 // da telefono, in verticale: il centro della prima riga di cartelline e il passo fra le righe
-const TALL_TOP      = 208
+const TALL_TOP      = 195
 const TALL_STEP     = 282
 // pixel del canvas per unita' del tabellone. La texture si ricarica solo quando la
 // mappa cambia (la pallina e' la bilia 3D, non si disegna qui); a 1,5 la scheda
@@ -110,7 +110,6 @@ const ZONE_JITTER = PROJECTS.map((p) => {
 /** Le anteprime che spuntano dal fascicolo chiuso */
 // Da telefono il tabellone e' in verticale (il fascicolo aperto si guarda girato
 // di 90°): le stesse cartelline, con le coordinate scambiate
-// (in cima resta una fascia per il titolo del tabellone: le righe si stringono sotto)
 const PROJECTS_TALL: Project[] = PROJECTS.map((p) => ({
   ...p, mapX: p.mapY, mapY: (TALL_TOP + (p.mapX - 0.12) / 0.25 * TALL_STEP) / MAP_W,
 }))
@@ -178,17 +177,11 @@ function drawMapDecorations(ctx: CanvasRenderingContext2D, w: number, h: number,
   ctx.font = 'bold 7px "JetBrains Mono",monospace'
   ctx.fillStyle = 'rgba(242,237,228,0.60)'; ctx.textAlign = 'center'
   ctx.fillText('N', cx, cy-r-5)
-  // il titolo del tabellone: cosa si sta guardando e cosa si puo' fare
+  // il titolo del tabellone, come l'etichetta sulla copertina
   ctx.textAlign = 'left'
   ctx.fillStyle = '#FFFFFF'
-  ctx.font = `700 ${touch ? 30 : 26}px ${GROTESK()}`
-  const head = `I LAVORI · ${PROJECTS.length}`
-  ctx.fillText(head, 22, touch ? 40 : 38)
-  const headW = ctx.measureText(head).width
-  ctx.font = `600 ${touch ? 15 : 13}px ${MONO()}`
-  ctx.fillStyle = 'rgba(242,237,228,0.72)'
-  if (touch) ctx.fillText('TOCCA UNA CARTELLINA PER APRIRE IL LAVORO', 22, 64)
-  else ctx.fillText('— CLICCA UNA CARTELLINA PER APRIRE IL LAVORO', 22 + headW + 16, 36)
+  ctx.font = `700 ${touch ? 34 : 24}px ${GROTESK()}`
+  ctx.fillText(PROGETTI.boardTitle.toUpperCase(), 22, touch ? 46 : 33)
   // il gioco della bilia, in piccolo in fondo: e' un di piu'
   ctx.font = `600 ${touch ? 12 : 11}px ${MONO()}`
   ctx.fillStyle = 'rgba(242,237,228,0.42)'; ctx.textAlign = 'right'
@@ -280,12 +273,12 @@ function wrapAll(ctx: CanvasRenderingContext2D, text: string, maxW: number): str
 }
 
 
-function drawFolder(ctx: CanvasRenderingContext2D, p: Project, w: number, h: number, isHovered: boolean, touch: boolean) {
+function drawFolder(ctx: CanvasRenderingContext2D, p: Project, w: number, h: number, isHovered: boolean) {
   const cx = p.mapX*w, cy = p.mapY*h
   const [cr,cg,cb] = hexToRgb(p.accent)
   const seed = p.id.split('').reduce((a,c)=>a+c.charCodeAt(0),0)
   const tilt = ((seed*73)%100-50)/100*0.06
-  // colore del lavoro scuro: la scritta sulla linguetta chiara, e «apri» in una tinta schiarita
+  // colore del lavoro scuro: la scritta sulla linguetta chiara, e il bordo acceso in una tinta schiarita
   const dark = (cr*0.299 + cg*0.587 + cb*0.114) < 110
   const soft = dark ? `rgb(${Math.round(cr+(255-cr)*0.55)},${Math.round(cg+(255-cg)*0.55)},${Math.round(cb+(255-cb)*0.55)})` : p.accent
   // Cartelline grandi e scritte grandi: si capisce subito che sono i lavori e che si aprono
@@ -346,7 +339,8 @@ function drawFolder(ctx: CanvasRenderingContext2D, p: Project, w: number, h: num
   }
   lines = lines.slice(0, 2)
   const lineH = titleSize*1.08
-  const textH = lines.length*lineH + C.cta + 22
+  const short = (p as { short?: string }).short ?? ''
+  const textH = lines.length*lineH + (short ? C.sub*1.5 : 0) + 18
   const px = bx+pad, py = by+pad, pw = fw-pad*2, ph = Math.max(40, fh-pad*2-textH)
   const thumb = getThumb((p as { thumb?: string }).thumb)
   if (thumb) {
@@ -379,56 +373,72 @@ function drawFolder(ctx: CanvasRenderingContext2D, p: Project, w: number, h: num
   ctx.font=`700 ${titleSize}px ${GROTESK()}`
   let ty = py + ph + 8 + titleSize*0.9
   for (const l of lines) { ctx.fillText(l, bx+pad+6, ty); ty += lineH }
-
-  // «Apri →»: e' un lavoro, si apre
-  ctx.font=`700 ${C.cta}px ${MONO()}`
-  ctx.fillStyle = isHovered ? '#FFFFFF' : soft
-  ctx.fillText(touch ? 'TOCCA PER APRIRE →' : 'APRI IL LAVORO →', bx+pad+6, by+fh-10)
+  // il sottotitolo breve: che cosa e' (content.ts, short); se non ci sta si stringe
+  if (short) {
+    const maxW = fw-pad*2-12
+    let sub = C.sub
+    ctx.font=`500 ${sub}px ${GROTESK()}`
+    while (sub > C.sub*0.8 && ctx.measureText(short).width > maxW) { sub -= 0.5; ctx.font=`500 ${sub}px ${GROTESK()}` }
+    let txt = short
+    while (txt.length > 1 && ctx.measureText(txt).width > maxW) txt = txt.slice(0, -2) + '…'
+    ctx.fillStyle = 'rgba(242,237,228,0.72)'
+    ctx.fillText(txt, bx+pad+6, ty - lineH + titleSize*0.35 + C.sub*1.25)
+  }
 
   ctx.restore()
 }
 
 
+/**
+ * La scia: tre aloni (viola, rosa, nucleo chiaro) disegnati una volta sola su un
+ * canvas piccolo e poi stampati, scalati e sfumati, lungo la scia. Prima ogni
+ * fotogramma creava due sfumature radiali per ogni punto (56 a fotogramma): mentre
+ * la bilia rotolava il tabellone si ridisegnava a scatti, i salti (senza scia) no
+ */
+let trailSprite: HTMLCanvasElement | null = null
+function getTrailSprite() {
+  if (trailSprite) return trailSprite
+  const S = 64, c = document.createElement('canvas')
+  c.width = c.height = S
+  const g = c.getContext('2d')!
+  const r = S / 2
+  const bloom = g.createRadialGradient(r, r, 0, r, r, r)
+  bloom.addColorStop(0,    'rgba(140,55,210,0.52)')
+  bloom.addColorStop(0.55, 'rgba(90,25,160,0.28)')
+  bloom.addColorStop(1,    'rgba(60,10,120,0)')
+  g.fillStyle = bloom; g.fillRect(0, 0, S, S)
+  const mid = g.createRadialGradient(r, r, 0, r, r, r * 0.52)
+  mid.addColorStop(0,   'rgba(240,75,195,0.65)')
+  mid.addColorStop(0.6, 'rgba(180,40,155,0.30)')
+  mid.addColorStop(1,   'rgba(140,20,120,0)')
+  g.fillStyle = mid; g.fillRect(0, 0, S, S)
+  return (trailSprite = c)
+}
+
 function drawTrail(ctx: CanvasRenderingContext2D, trail: Array<{x:number;y:number;speed:number}>) {
   if (trail.length === 0) return
-  const prev = ctx.globalCompositeOperation
+  const prevOp = ctx.globalCompositeOperation, prevA = ctx.globalAlpha
   // Screen = additivo su sfondo scuro → fuoco vero, non overlay opaco
   ctx.globalCompositeOperation = 'screen'
-
+  const sprite = getTrailSprite()
   for (let i = 0; i < trail.length; i++) {
     const t = i / trail.length          // 0 = coda lontana, 1 = vicino alla pallina
     const spd = Math.min(trail[i].speed, MAX_LAUNCH) / MAX_LAUNCH
     if (spd < 0.06) continue
     const { x, y } = trail[i]
-
-    // Bloom viola — strato esterno
     const bloomR = Math.max(3, BALL_R * (0.22 + t * 1.05))
-    const bloom = ctx.createRadialGradient(x, y, 0, x, y, bloomR)
-    bloom.addColorStop(0,   `rgba(140,55,210,${(t * 0.52 * spd).toFixed(3)})`)
-    bloom.addColorStop(0.55,`rgba(90,25,160,${(t * 0.28 * spd).toFixed(3)})`)
-    bloom.addColorStop(1,   'rgba(60,10,120,0)')
-    ctx.beginPath(); ctx.arc(x, y, bloomR, 0, Math.PI*2)
-    ctx.fillStyle = bloom; ctx.fill()
-
-    // Mid pink
-    const midR = bloomR * 0.52
-    const mid = ctx.createRadialGradient(x, y, 0, x, y, midR)
-    mid.addColorStop(0,   `rgba(240,75,195,${(t * 0.65 * spd).toFixed(3)})`)
-    mid.addColorStop(0.6, `rgba(180,40,155,${(t * 0.30 * spd).toFixed(3)})`)
-    mid.addColorStop(1,   'rgba(140,20,120,0)')
-    ctx.beginPath(); ctx.arc(x, y, midR, 0, Math.PI*2)
-    ctx.fillStyle = mid; ctx.fill()
-
+    ctx.globalAlpha = Math.min(1, t * spd)
+    ctx.drawImage(sprite, x - bloomR, y - bloomR, bloomR * 2, bloomR * 2)
     // Core bianco-caldo — solo ultimo 38% della scia
     if (t > 0.62) {
       const ct = (t - 0.62) / 0.38
-      const cR = midR * 0.38
-      ctx.beginPath(); ctx.arc(x, y, cR, 0, Math.PI*2)
+      ctx.globalAlpha = 1
+      ctx.beginPath(); ctx.arc(x, y, bloomR * 0.2, 0, Math.PI*2)
       ctx.fillStyle = `rgba(255,215,255,${(ct * 0.88 * spd).toFixed(3)})`; ctx.fill()
     }
   }
-
-  ctx.globalCompositeOperation = prev
+  ctx.globalAlpha = prevA
+  ctx.globalCompositeOperation = prevOp
 }
 
 function drawSlingshot(
@@ -789,10 +799,12 @@ export function PortfolioSection() {
         drawnHoverRef.current = hoveredRef.current
         drawnFlatRef.current = flat
         // la fodera scura del fascicolo: il tabellone e' stampato li' sopra
-        ctx.fillStyle='#1E1B24'; ctx.fillRect(0,0,w,h)
-        drawBackground(ctx,w,h,reveal)
+        // lo sfondo a puntini (1300 cerchi) cambia solo mentre il tabellone compare: a
+        // tabellone aperto sta nello strato fisso, non si ridisegna a ogni fotogramma
+        const full = reveal >= 1
+        if (!full) { ctx.fillStyle='#1E1B24'; ctx.fillRect(0,0,w,h); drawBackground(ctx,w,h,reveal) }
         const L = layerRef.current
-        const key = `${desk}|${w}|${h}|${hoveredRef.current}|${thumbsVersion}|${canvasLoop.width}x${canvasLoop.height}`
+        const key = `${desk}|${w}|${h}|${hoveredRef.current}|${thumbsVersion}|${canvasLoop.width}x${canvasLoop.height}|${full}`
         if (!L.c) L.c = document.createElement('canvas')
         if (L.key !== key) {
           L.key = key
@@ -800,9 +812,10 @@ export function PortfolioSection() {
           const lc = L.c.getContext('2d')
           if (lc) {
             lc.setTransform(ctx.getTransform())
+            if (full) { lc.fillStyle='#1E1B24'; lc.fillRect(0,0,w,h); drawBackground(lc,w,h,1) }
             for (let i=0;i<PROJ.length;i++) drawZone(lc,PROJ[i],ZONE_JITTER[i],w,h)
             drawPaths(lc,PROJ,w,h)
-            for (const p of PROJ) drawFolder(lc,p,w,h,hoveredRef.current===p.id,!desk)
+            for (const p of PROJ) drawFolder(lc,p,w,h,hoveredRef.current===p.id)
           }
         }
         ctx.save(); ctx.setTransform(1,0,0,1,0,0); ctx.drawImage(L.c,0,0); ctx.restore()
@@ -915,9 +928,9 @@ export function PortfolioSection() {
 
   /**
    * Si apre un lavoro dal fascicolo: la pagina se lo ricorda. Tornando indietro
-   * (o con «torna al portfolio») si ritorna al banco, con il fascicolo chiuso e
-   * pronto da riaprire: non si riapre da solo. Questo serve quando la home si
-   * ricarica da capo; quando resta montata sotto il lavoro, vedi `away` qui sotto.
+   * (o con «torna al portfolio») si ritorna al tabellone, fascicolo aperto. Questo
+   * serve quando la home si ricarica da capo; quando resta montata sotto il lavoro
+   * il fascicolo e' rimasto aperto da se', vedi `away` qui sotto.
    */
   function goProject(id: string) {
     try { sessionStorage.setItem(FOLDER_KEY, '1') } catch { /* niente memoria: pazienza */ }
@@ -928,28 +941,23 @@ export function PortfolioSection() {
     let back = false
     try { back = sessionStorage.getItem(FOLDER_KEY) === '1'; sessionStorage.removeItem(FOLDER_KEY) } catch { /* ignora */ }
     if (!back) return
-    // di nuovo al banco, il fascicolo chiuso e pronto
+    // di nuovo al banco, e il fascicolo si riapre sul tabellone: si sceglie un altro lavoro
     const center = () => wrapperRef.current?.scrollIntoView({ block: 'center', behavior: 'instant' })
     center()
     const t1 = window.setTimeout(center, 120)
     const t2 = window.setTimeout(center, 260)
-    return () => { window.clearTimeout(t1); window.clearTimeout(t2) }
+    const t3 = window.setTimeout(openFolder, 420)
+    return () => { window.clearTimeout(t1); window.clearTimeout(t2); window.clearTimeout(t3) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Aperto un lavoro la home resta montata sotto (HomeShell): il fascicolo restava aperto
-  // e al ritorno andava richiuso ogni volta. Mentre la home e' nascosta si chiude di colpo,
-  // senza animazione: tornando il banco e' com'era, fascicolo chiuso e pronto da riaprire
+  // Aperto un lavoro la home resta montata sotto (HomeShell), fascicolo aperto compreso:
+  // uscendo dal lavoro si torna al tabellone, pronti a sceglierne un altro, senza
+  // doverlo riaprire. Mentre la home e' nascosta il fascicolo non ascolta niente
+  // (vedi sotto: lo scroll del lavoro non lo chiude, da telefono la pagina non si blocca)
   const away = useStore((s) => s.away)
   useEffect(() => {
-    if (!away) {
-      try { sessionStorage.removeItem(FOLDER_KEY) } catch { /* ignora */ }
-      return
-    }
-    timersRef.current.forEach(clearTimeout)
-    timersRef.current = []
-    const ball = ballRef.current; ball.vx = 0; ball.vy = 0; jumpRef.current = null
-    hoveredRef.current = null
-    setPhase('closed')
+    if (!away) { try { sessionStorage.removeItem(FOLDER_KEY) } catch { /* ignora */ } }
   }, [away])
 
   function openFolder() {
@@ -974,16 +982,16 @@ export function PortfolioSection() {
   // a fascicolo aperto la tavola sta ferma sulla pagina: se si scorre (su o giu') il
   // fascicolo si chiude e la bilia ne esce, poi scende con la pagina
   useEffect(() => {
-    if (phase !== 'open') return
+    if (phase !== 'open' || away) return
     const y0 = window.scrollY
     const onScroll = () => { if (Math.abs(window.scrollY - y0) > 30) closeFolder() }
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase])
+  }, [phase, away])
 
   useEffect(() => {
-    if (phase !== 'open') return
+    if (phase !== 'open' || away) return
     function onKey(e: KeyboardEvent) { if (e.key === 'Escape') closeFolder() }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -1138,7 +1146,9 @@ export function PortfolioSection() {
   /* ── Mouse e dita sul tabellone: dallo schermo al fascicolo 3D ── */
 
   useEffect(() => {
-    if (phase !== 'open') return
+    // con un lavoro aperto sopra la home il tabellone non prende ne' mouse ne' dita, e da
+    // telefono la pagina non si blocca: prima il lavoro non si poteva scorrere
+    if (phase !== 'open' || away) return
     const body = document.body
 
     // da telefono il tabellone e' girato: vedi la rotazione nel loop
@@ -1214,7 +1224,8 @@ export function PortfolioSection() {
       body.style.cursor = ''
       html.style.overflow = prev.overflow; html.style.touchAction = prev.touch
     }
-  }, [phase])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, away])
 
   return (
     <div ref={sectionRef} className={styles.section}>
