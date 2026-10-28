@@ -142,5 +142,5 @@ pagina('biglietto-retro.html', 'Biglietto Artismi · retro', f'''
   <ol class="servizi">{"".join(f'<li><b>{i+1:02d}</b><span class="serif">{t}</span></li>' for i, t in enumerate(SERVIZI))}</ol>
   <div class="rule" style="bottom:126px"></div>
   <div class="contatti"><p class="serif">Inquadra il fronte:<br>il logo prende vita.</p>
-    <ul><li>WhatsApp +39 393 195 9752</li><li>apizzoglio@gmail.com</li><li>@giovane_kudos</li></ul></div>''', fondo=ROSA, ink=PRUGNA)
+    <ul><li>WhatsApp +39 393 195 9752</li><li>apizzoglio@gmail.com</li></ul></div>''', fondo=ROSA, ink=PRUGNA)
 print('scritti biglietto-fronte.html e biglietto-retro.html')
