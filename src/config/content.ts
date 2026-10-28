@@ -319,7 +319,7 @@ export const PORTFOLIO = {
       title:    'Torino Invisibile',
       category: '3D / Realtà aumentata',
       tagline:  'Progetto PNRR, 2025 – 2026.',
-      short:    'Progetto PNRR, 2025–2026',   // sotto il titolo, sulla cartellina del tabellone
+      short:    'Kaninchen-Haus, 2025–2026',   // sotto il titolo, sulla cartellina del tabellone
       intro:    "Le città invisibili di Italo Calvino diventano un'**opera transmediale in realtà aumentata**, diffusa nello spazio urbano: ogni città del libro è ancorata a un luogo reale di Torino — Olivia al Grattacielo San Paolo, Leonia in Piazza San Carlo, Ersilia alle Porte Palatine, Valdrada in Piazza Statuto, Zaira ai Murazzi — e prende forma sullo schermo di smartphone e visori mentre il testo di Calvino accompagna la visione.",
       sections: [
         {
