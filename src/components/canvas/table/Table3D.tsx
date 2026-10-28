@@ -103,7 +103,7 @@ const V = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z)
 
 /** dove sta il logo nella prima schermata, in frazione dell'altezza dello schermo */
 const LOGO_AT = 0.45
-/** in movimento il 3D si disegna con questa frazione dei pixel (al minimo uno per pixel dello schermo) */
+/** nelle aperture il 3D si disegna con questa frazione dei pixel (al minimo uno per pixel dello schermo) */
 const MOVING_DPR = 0.6
 /** quanto deve restare tutto fermo prima di tornare alla risoluzione piena (ms) */
 const STILL_MS = 220
@@ -402,11 +402,14 @@ function Budget({ stage, table, composer }: {
     if (moving) ao.current = 0
     else if (ao.current < 1) { ao.current = Math.min(1, ao.current + dt / 0.35); invalidate() }
 
-    // Risoluzione: mentre la camera o le cose si muovono si disegna con meno pixel
-    // (sugli schermi retina e' il costo piu' grosso, e in movimento non si vede);
-    // ferma da un attimo, si torna alla risoluzione piena, nitida
+    // Risoluzione: mentre il fascicolo o il Game Boy si aprono e si chiudono si disegna
+    // con meno pixel (sugli schermi retina e' il costo piu' grosso, e in movimento non si
+    // vede); fermi da un attimo, si torna alla risoluzione piena, nitida. Lo scroll no:
+    // cambiare risoluzione rifa' tutti i buffer (composer, occlusione, plastica del Game
+    // Boy) e costava uno scatto quando il banco cominciava a scorrere e quando si fermava
     const now = performance.now()
-    if (moving) { still.current = now; stillFrames.current = 0 } else stillFrames.current++
+    const opening = marble.phase !== 'closed' || marble.grab
+    if (moving && opening) { still.current = now; stillFrames.current = 0 } else stillFrames.current++
     const settled = now - still.current >= STILL_MS && stillFrames.current >= STILL_FRAMES
     const want = settled ? fullDpr : Math.max(1, fullDpr * MOVING_DPR)
     if (Math.abs(gl.getPixelRatio() - want) > 0.01) {
@@ -414,7 +417,7 @@ function Budget({ stage, table, composer }: {
       gl.setSize(size.width, size.height, false)
       composer.current?.setSize(size.width, size.height)
     }
-    if (!moving && want !== fullDpr) invalidate()   // si torna nitidi anche se nulla chiede un fotogramma
+    if (want !== fullDpr) invalidate()   // si torna nitidi anche se nulla chiede un fotogramma
     composer.current?.passes.forEach((pass) => {
       // N8AOPostPass: solo sul banco. Sul vetro del logo l'occlusione, a meta' risoluzione, lo sgranava
       if ('configuration' in pass) {
