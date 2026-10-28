@@ -1,648 +1,414 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-10.08 -10.08 49.161 49.161">
-<title>Artismi AR — HTTPS://WWW.ARTISMIDESIGNSTUDIO.COM/AR — QR circolare, 29x29 moduli, correzione Q</title>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-12.476 -12.476 53.952 53.952">
+<title>Artismi AR — HTTPS://WWW.ARTISMIDESIGNSTUDIO.COM/AR — QR nel cerchio di evocazione, 29x29 moduli, correzione Q</title>
 <g fill="#1A1A1A">
-<circle cx="9.5" cy="-7.5" r="0.17"/>
-<circle cx="11.5" cy="-7.5" r="0.182"/>
-<circle cx="14.5" cy="-7.5" r="0.188"/>
-<circle cx="15.5" cy="-7.5" r="0.188"/>
-<circle cx="17.5" cy="-7.5" r="0.182"/>
-<circle cx="18.5" cy="-7.5" r="0.177"/>
-<circle cx="6.5" cy="-6.5" r="0.173"/>
-<circle cx="8.5" cy="-6.5" r="0.194"/>
-<circle cx="10.5" cy="-6.5" r="0.209"/>
-<circle cx="16.5" cy="-6.5" r="0.218"/>
-<circle cx="19.5" cy="-6.5" r="0.202"/>
-<circle cx="20.5" cy="-6.5" r="0.194"/>
-<circle cx="22.5" cy="-6.5" r="0.173"/>
-<circle cx="8.5" cy="-5.5" r="0.225"/>
-<circle cx="10.5" cy="-5.5" r="0.241"/>
-<circle cx="13.5" cy="-5.5" r="0.253"/>
-<circle cx="14.5" cy="-5.5" r="0.254"/>
-<circle cx="15.5" cy="-5.5" r="0.253"/>
-<circle cx="17.5" cy="-5.5" r="0.246"/>
-<circle cx="19.5" cy="-5.5" r="0.234"/>
-<circle cx="21.5" cy="-5.5" r="0.215"/>
-<circle cx="22.5" cy="-5.5" r="0.203"/>
-<circle cx="8.5" cy="-4.5" r="0.256"/>
-<circle cx="14.5" cy="-4.5" r="0.286"/>
-<circle cx="17.5" cy="-4.5" r="0.278"/>
-<circle cx="18.5" cy="-4.5" r="0.273"/>
-<circle cx="21.5" cy="-4.5" r="0.245"/>
-<circle cx="23.5" cy="-4.5" r="0.22"/>
-<circle cx="24.5" cy="-4.5" r="0.206"/>
-<circle cx="25.5" cy="-4.5" r="0.19"/>
-<circle cx="2.5" cy="-3.5" r="0.2"/>
-<circle cx="4.5" cy="-3.5" r="0.234"/>
-<circle cx="6.5" cy="-3.5" r="0.263"/>
-<circle cx="11.5" cy="-3.5" r="0.311"/>
-<circle cx="12.5" cy="-3.5" r="0.315"/>
-<circle cx="14.5" cy="-3.5" r="0.319"/>
-<circle cx="15.5" cy="-3.5" r="0.318"/>
-<circle cx="16.5" cy="-3.5" r="0.315"/>
-<circle cx="18.5" cy="-3.5" r="0.304"/>
-<circle cx="19.5" cy="-3.5" r="0.296"/>
-<circle cx="21.5" cy="-3.5" r="0.276"/>
-<circle cx="24.5" cy="-3.5" r="0.234"/>
-<circle cx="25.5" cy="-3.5" r="0.218"/>
-<circle cx="5.5" cy="-2.5" r="0.278"/>
-<circle cx="7.5" cy="-2.5" r="0.306"/>
-<circle cx="8.5" cy="-2.5" r="0.318"/>
-<circle cx="12.5" cy="-2.5" r="0.347"/>
-<circle cx="13.5" cy="-2.5" r="0.35"/>
-<circle cx="15.5" cy="-2.5" r="0.35"/>
-<circle cx="18.5" cy="-2.5" r="0.336"/>
-<circle cx="20.5" cy="-2.5" r="0.318"/>
-<circle cx="22.5" cy="-2.5" r="0.293"/>
-<circle cx="25.5" cy="-2.5" r="0.245"/>
-<circle cx="26.5" cy="-2.5" r="0.227"/>
-<circle cx="-1.5" cy="-1.5" r="0.168"/>
-<circle cx="-0.5" cy="-1.5" r="0.191"/>
-<circle cx="1.5" cy="-1.5" r="0.234"/>
-<circle cx="2.5" cy="-1.5" r="0.254"/>
-<circle cx="3.5" cy="-1.5" r="0.273"/>
-<circle cx="4.5" cy="-1.5" r="0.29"/>
-<circle cx="6.5" cy="-1.5" r="0.322"/>
-<circle cx="7.5" cy="-1.5" r="0.336"/>
-<circle cx="9.5" cy="-1.5" r="0.359"/>
-<circle cx="12.5" cy="-1.5" r="0.38"/>
-<circle cx="13.5" cy="-1.5" r="0.383"/>
-<circle cx="15.5" cy="-1.5" r="0.383"/>
-<circle cx="16.5" cy="-1.5" r="0.38"/>
-<circle cx="17.5" cy="-1.5" r="0.375"/>
-<circle cx="19.5" cy="-1.5" r="0.359"/>
-<circle cx="20.5" cy="-1.5" r="0.348"/>
-<circle cx="21.5" cy="-1.5" r="0.336"/>
-<circle cx="23.5" cy="-1.5" r="0.307"/>
-<circle cx="25.5" cy="-1.5" r="0.273"/>
-<circle cx="26.5" cy="-1.5" r="0.254"/>
-<circle cx="29.5" cy="-1.5" r="0.191"/>
-<circle cx="30.5" cy="-1.5" r="0.168"/>
-<circle cx="-1.5" cy="-0.5" r="0.191"/>
-<circle cx="-2.5" cy="0.5" r="0.188"/>
-<circle cx="10.5" cy="0.5" r="0.4"/>
-<circle cx="11.5" cy="0.5" r="0.4"/>
-<circle cx="13.5" cy="0.5" r="0.4"/>
-<circle cx="18.5" cy="0.5" r="0.4"/>
-<circle cx="31.5" cy="0.5" r="0.188"/>
-<circle cx="-3.5" cy="1.5" r="0.182"/>
-<circle cx="8.5" cy="1.5" r="0.4"/>
-<circle cx="9.5" cy="1.5" r="0.4"/>
-<circle cx="11.5" cy="1.5" r="0.4"/>
-<circle cx="12.5" cy="1.5" r="0.4"/>
-<circle cx="13.5" cy="1.5" r="0.4"/>
-<circle cx="15.5" cy="1.5" r="0.4"/>
-<circle cx="17.5" cy="1.5" r="0.4"/>
-<circle cx="18.5" cy="1.5" r="0.4"/>
-<circle cx="20.5" cy="1.5" r="0.4"/>
-<circle cx="31.5" cy="1.5" r="0.208"/>
-<circle cx="32.5" cy="1.5" r="0.182"/>
-<circle cx="-4.5" cy="2.5" r="0.173"/>
-<circle cx="-2.5" cy="2.5" r="0.227"/>
-<circle cx="-1.5" cy="2.5" r="0.254"/>
-<circle cx="8.5" cy="2.5" r="0.4"/>
-<circle cx="10.5" cy="2.5" r="0.4"/>
-<circle cx="12.5" cy="2.5" r="0.4"/>
-<circle cx="13.5" cy="2.5" r="0.4"/>
-<circle cx="16.5" cy="2.5" r="0.4"/>
-<circle cx="17.5" cy="2.5" r="0.4"/>
-<circle cx="18.5" cy="2.5" r="0.4"/>
-<circle cx="19.5" cy="2.5" r="0.4"/>
-<circle cx="30.5" cy="2.5" r="0.254"/>
-<circle cx="31.5" cy="2.5" r="0.227"/>
-<circle cx="32.5" cy="2.5" r="0.2"/>
-<circle cx="-4.5" cy="3.5" r="0.19"/>
-<circle cx="-3.5" cy="3.5" r="0.218"/>
-<circle cx="11.5" cy="3.5" r="0.4"/>
-<circle cx="12.5" cy="3.5" r="0.4"/>
-<circle cx="20.5" cy="3.5" r="0.4"/>
-<circle cx="31.5" cy="3.5" r="0.245"/>
-<circle cx="-5.5" cy="4.5" r="0.177"/>
-<circle cx="9.5" cy="4.5" r="0.4"/>
-<circle cx="14.5" cy="4.5" r="0.4"/>
-<circle cx="18.5" cy="4.5" r="0.4"/>
-<circle cx="20.5" cy="4.5" r="0.4"/>
-<circle cx="30.5" cy="4.5" r="0.29"/>
-<circle cx="31.5" cy="4.5" r="0.263"/>
-<circle cx="32.5" cy="4.5" r="0.234"/>
-<circle cx="33.5" cy="4.5" r="0.206"/>
-<circle cx="-5.5" cy="5.5" r="0.191"/>
-<circle cx="-3.5" cy="5.5" r="0.249"/>
-<circle cx="9.5" cy="5.5" r="0.4"/>
-<circle cx="10.5" cy="5.5" r="0.4"/>
-<circle cx="12.5" cy="5.5" r="0.4"/>
-<circle cx="17.5" cy="5.5" r="0.4"/>
-<circle cx="18.5" cy="5.5" r="0.4"/>
-<circle cx="34.5" cy="5.5" r="0.191"/>
-<circle cx="-5.5" cy="6.5" r="0.203"/>
-<circle cx="-4.5" cy="6.5" r="0.234"/>
-<circle cx="-1.5" cy="6.5" r="0.322"/>
-<circle cx="8.5" cy="6.5" r="0.4"/>
-<circle cx="10.5" cy="6.5" r="0.4"/>
-<circle cx="12.5" cy="6.5" r="0.4"/>
-<circle cx="14.5" cy="6.5" r="0.4"/>
-<circle cx="16.5" cy="6.5" r="0.4"/>
-<circle cx="18.5" cy="6.5" r="0.4"/>
-<circle cx="20.5" cy="6.5" r="0.4"/>
-<circle cx="32.5" cy="6.5" r="0.263"/>
-<circle cx="33.5" cy="6.5" r="0.234"/>
-<circle cx="35.5" cy="6.5" r="0.173"/>
-<circle cx="-5.5" cy="7.5" r="0.215"/>
-<circle cx="-4.5" cy="7.5" r="0.245"/>
-<circle cx="-1.5" cy="7.5" r="0.336"/>
-<circle cx="9.5" cy="7.5" r="0.4"/>
-<circle cx="12.5" cy="7.5" r="0.4"/>
-<circle cx="15.5" cy="7.5" r="0.4"/>
-<circle cx="19.5" cy="7.5" r="0.4"/>
-<circle cx="34.5" cy="7.5" r="0.215"/>
-<circle cx="-5.5" cy="8.5" r="0.225"/>
-<circle cx="-4.5" cy="8.5" r="0.256"/>
-<circle cx="-3.5" cy="8.5" r="0.287"/>
-<circle cx="-1.5" cy="8.5" r="0.348"/>
-<circle cx="1.5" cy="8.5" r="0.4"/>
-<circle cx="2.5" cy="8.5" r="0.4"/>
-<circle cx="3.5" cy="8.5" r="0.4"/>
-<circle cx="5.5" cy="8.5" r="0.4"/>
-<circle cx="6.5" cy="8.5" r="0.4"/>
-<circle cx="9.5" cy="8.5" r="0.4"/>
-<circle cx="10.5" cy="8.5" r="0.4"/>
-<circle cx="14.5" cy="8.5" r="0.4"/>
-<circle cx="15.5" cy="8.5" r="0.4"/>
-<circle cx="16.5" cy="8.5" r="0.4"/>
-<circle cx="18.5" cy="8.5" r="0.4"/>
-<circle cx="19.5" cy="8.5" r="0.4"/>
-<circle cx="26.5" cy="8.5" r="0.4"/>
-<circle cx="27.5" cy="8.5" r="0.4"/>
-<circle cx="30.5" cy="8.5" r="0.348"/>
-<circle cx="32.5" cy="8.5" r="0.287"/>
-<circle cx="33.5" cy="8.5" r="0.256"/>
-<circle cx="34.5" cy="8.5" r="0.225"/>
-<circle cx="35.5" cy="8.5" r="0.194"/>
-<circle cx="-7.5" cy="9.5" r="0.17"/>
-<circle cx="-4.5" cy="9.5" r="0.265"/>
-<circle cx="-2.5" cy="9.5" r="0.328"/>
-<circle cx="-1.5" cy="9.5" r="0.359"/>
-<circle cx="2.5" cy="9.5" r="0.4"/>
-<circle cx="11.5" cy="9.5" r="0.4"/>
-<circle cx="12.5" cy="9.5" r="0.4"/>
-<circle cx="13.5" cy="9.5" r="0.4"/>
-<circle cx="14.5" cy="9.5" r="0.4"/>
-<circle cx="15.5" cy="9.5" r="0.4"/>
-<circle cx="18.5" cy="9.5" r="0.4"/>
-<circle cx="20.5" cy="9.5" r="0.4"/>
-<circle cx="21.5" cy="9.5" r="0.4"/>
-<circle cx="22.5" cy="9.5" r="0.4"/>
-<circle cx="24.5" cy="9.5" r="0.4"/>
-<circle cx="25.5" cy="9.5" r="0.4"/>
-<circle cx="27.5" cy="9.5" r="0.4"/>
-<circle cx="28.5" cy="9.5" r="0.4"/>
-<circle cx="30.5" cy="9.5" r="0.359"/>
-<circle cx="33.5" cy="9.5" r="0.265"/>
-<circle cx="34.5" cy="9.5" r="0.234"/>
-<circle cx="35.5" cy="9.5" r="0.202"/>
-<circle cx="36.5" cy="9.5" r="0.17"/>
-<circle cx="-5.5" cy="10.5" r="0.241"/>
-<circle cx="-4.5" cy="10.5" r="0.273"/>
-<circle cx="-3.5" cy="10.5" r="0.304"/>
-<circle cx="-2.5" cy="10.5" r="0.336"/>
-<circle cx="0.5" cy="10.5" r="0.4"/>
-<circle cx="2.5" cy="10.5" r="0.4"/>
-<circle cx="3.5" cy="10.5" r="0.4"/>
-<circle cx="5.5" cy="10.5" r="0.4"/>
-<circle cx="6.5" cy="10.5" r="0.4"/>
-<circle cx="8.5" cy="10.5" r="0.4"/>
-<circle cx="13.5" cy="10.5" r="0.4"/>
-<circle cx="14.5" cy="10.5" r="0.4"/>
-<circle cx="17.5" cy="10.5" r="0.4"/>
-<circle cx="21.5" cy="10.5" r="0.4"/>
-<circle cx="25.5" cy="10.5" r="0.4"/>
-<circle cx="28.5" cy="10.5" r="0.4"/>
-<circle cx="31.5" cy="10.5" r="0.336"/>
-<circle cx="34.5" cy="10.5" r="0.241"/>
-<circle cx="35.5" cy="10.5" r="0.209"/>
-<circle cx="36.5" cy="10.5" r="0.177"/>
-<circle cx="-6.5" cy="11.5" r="0.214"/>
-<circle cx="-4.5" cy="11.5" r="0.278"/>
-<circle cx="-3.5" cy="11.5" r="0.311"/>
-<circle cx="2.5" cy="11.5" r="0.4"/>
-<circle cx="4.5" cy="11.5" r="0.4"/>
-<circle cx="5.5" cy="11.5" r="0.4"/>
-<circle cx="8.5" cy="11.5" r="0.4"/>
-<circle cx="9.5" cy="11.5" r="0.4"/>
-<circle cx="13.5" cy="11.5" r="0.4"/>
-<circle cx="16.5" cy="11.5" r="0.4"/>
-<circle cx="20.5" cy="11.5" r="0.4"/>
-<circle cx="21.5" cy="11.5" r="0.4"/>
-<circle cx="22.5" cy="11.5" r="0.4"/>
-<circle cx="25.5" cy="11.5" r="0.4"/>
-<circle cx="26.5" cy="11.5" r="0.4"/>
-<circle cx="27.5" cy="11.5" r="0.4"/>
-<circle cx="28.5" cy="11.5" r="0.4"/>
-<circle cx="30.5" cy="11.5" r="0.375"/>
-<circle cx="31.5" cy="11.5" r="0.343"/>
-<circle cx="32.5" cy="11.5" r="0.311"/>
-<circle cx="35.5" cy="11.5" r="0.214"/>
-<circle cx="-6.5" cy="12.5" r="0.218"/>
-<circle cx="-5.5" cy="12.5" r="0.25"/>
-<circle cx="-4.5" cy="12.5" r="0.283"/>
-<circle cx="0.5" cy="12.5" r="0.4"/>
-<circle cx="3.5" cy="12.5" r="0.4"/>
-<circle cx="4.5" cy="12.5" r="0.4"/>
-<circle cx="6.5" cy="12.5" r="0.4"/>
-<circle cx="7.5" cy="12.5" r="0.4"/>
-<circle cx="10.5" cy="12.5" r="0.4"/>
-<circle cx="11.5" cy="12.5" r="0.4"/>
-<circle cx="12.5" cy="12.5" r="0.4"/>
-<circle cx="14.5" cy="12.5" r="0.4"/>
-<circle cx="15.5" cy="12.5" r="0.4"/>
-<circle cx="16.5" cy="12.5" r="0.4"/>
-<circle cx="17.5" cy="12.5" r="0.4"/>
-<circle cx="18.5" cy="12.5" r="0.4"/>
-<circle cx="20.5" cy="12.5" r="0.4"/>
-<circle cx="22.5" cy="12.5" r="0.4"/>
-<circle cx="23.5" cy="12.5" r="0.4"/>
-<circle cx="24.5" cy="12.5" r="0.4"/>
-<circle cx="26.5" cy="12.5" r="0.4"/>
-<circle cx="27.5" cy="12.5" r="0.4"/>
-<circle cx="34.5" cy="12.5" r="0.25"/>
-<circle cx="36.5" cy="12.5" r="0.186"/>
-<circle cx="-7.5" cy="13.5" r="0.188"/>
-<circle cx="-5.5" cy="13.5" r="0.253"/>
-<circle cx="-4.5" cy="13.5" r="0.285"/>
-<circle cx="-3.5" cy="13.5" r="0.318"/>
-<circle cx="-1.5" cy="13.5" r="0.383"/>
-<circle cx="2.5" cy="13.5" r="0.4"/>
-<circle cx="4.5" cy="13.5" r="0.4"/>
-<circle cx="8.5" cy="13.5" r="0.4"/>
-<circle cx="10.5" cy="13.5" r="0.4"/>
-<circle cx="13.5" cy="13.5" r="0.4"/>
-<circle cx="14.5" cy="13.5" r="0.4"/>
-<circle cx="15.5" cy="13.5" r="0.4"/>
-<circle cx="17.5" cy="13.5" r="0.4"/>
-<circle cx="19.5" cy="13.5" r="0.4"/>
-<circle cx="24.5" cy="13.5" r="0.4"/>
-<circle cx="28.5" cy="13.5" r="0.4"/>
-<circle cx="30.5" cy="13.5" r="0.383"/>
-<circle cx="32.5" cy="13.5" r="0.318"/>
-<circle cx="-5.5" cy="14.5" r="0.254"/>
-<circle cx="-1.5" cy="14.5" r="0.384"/>
-<circle cx="1.5" cy="14.5" r="0.4"/>
-<circle cx="2.5" cy="14.5" r="0.4"/>
-<circle cx="3.5" cy="14.5" r="0.4"/>
-<circle cx="6.5" cy="14.5" r="0.4"/>
-<circle cx="10.5" cy="14.5" r="0.4"/>
-<circle cx="11.5" cy="14.5" r="0.4"/>
-<circle cx="12.5" cy="14.5" r="0.4"/>
-<circle cx="14.5" cy="14.5" r="0.4"/>
-<circle cx="15.5" cy="14.5" r="0.4"/>
-<circle cx="16.5" cy="14.5" r="0.4"/>
-<circle cx="19.5" cy="14.5" r="0.4"/>
-<circle cx="20.5" cy="14.5" r="0.4"/>
-<circle cx="22.5" cy="14.5" r="0.4"/>
-<circle cx="23.5" cy="14.5" r="0.4"/>
-<circle cx="25.5" cy="14.5" r="0.4"/>
-<circle cx="26.5" cy="14.5" r="0.4"/>
-<circle cx="28.5" cy="14.5" r="0.4"/>
-<circle cx="32.5" cy="14.5" r="0.319"/>
-<circle cx="33.5" cy="14.5" r="0.286"/>
-<circle cx="36.5" cy="14.5" r="0.188"/>
-<circle cx="-7.5" cy="15.5" r="0.188"/>
-<circle cx="-6.5" cy="15.5" r="0.22"/>
-<circle cx="-3.5" cy="15.5" r="0.318"/>
-<circle cx="-2.5" cy="15.5" r="0.35"/>
-<circle cx="-1.5" cy="15.5" r="0.383"/>
-<circle cx="0.5" cy="15.5" r="0.4"/>
-<circle cx="4.5" cy="15.5" r="0.4"/>
-<circle cx="14.5" cy="15.5" r="0.4"/>
-<circle cx="15.5" cy="15.5" r="0.4"/>
-<circle cx="19.5" cy="15.5" r="0.4"/>
-<circle cx="20.5" cy="15.5" r="0.4"/>
-<circle cx="22.5" cy="15.5" r="0.4"/>
-<circle cx="23.5" cy="15.5" r="0.4"/>
-<circle cx="25.5" cy="15.5" r="0.4"/>
-<circle cx="27.5" cy="15.5" r="0.4"/>
-<circle cx="30.5" cy="15.5" r="0.383"/>
-<circle cx="31.5" cy="15.5" r="0.35"/>
-<circle cx="32.5" cy="15.5" r="0.318"/>
-<circle cx="35.5" cy="15.5" r="0.22"/>
-<circle cx="-7.5" cy="16.5" r="0.186"/>
-<circle cx="-2.5" cy="16.5" r="0.347"/>
-<circle cx="3.5" cy="16.5" r="0.4"/>
-<circle cx="6.5" cy="16.5" r="0.4"/>
-<circle cx="9.5" cy="16.5" r="0.4"/>
-<circle cx="10.5" cy="16.5" r="0.4"/>
-<circle cx="11.5" cy="16.5" r="0.4"/>
-<circle cx="12.5" cy="16.5" r="0.4"/>
-<circle cx="13.5" cy="16.5" r="0.4"/>
-<circle cx="17.5" cy="16.5" r="0.4"/>
-<circle cx="21.5" cy="16.5" r="0.4"/>
-<circle cx="24.5" cy="16.5" r="0.4"/>
-<circle cx="27.5" cy="16.5" r="0.4"/>
-<circle cx="31.5" cy="16.5" r="0.347"/>
-<circle cx="32.5" cy="16.5" r="0.315"/>
-<circle cx="36.5" cy="16.5" r="0.186"/>
-<circle cx="-6.5" cy="17.5" r="0.214"/>
-<circle cx="-5.5" cy="17.5" r="0.246"/>
-<circle cx="-4.5" cy="17.5" r="0.278"/>
-<circle cx="-2.5" cy="17.5" r="0.343"/>
-<circle cx="-1.5" cy="17.5" r="0.375"/>
-<circle cx="1.5" cy="17.5" r="0.4"/>
-<circle cx="2.5" cy="17.5" r="0.4"/>
-<circle cx="4.5" cy="17.5" r="0.4"/>
-<circle cx="8.5" cy="17.5" r="0.4"/>
-<circle cx="10.5" cy="17.5" r="0.4"/>
-<circle cx="13.5" cy="17.5" r="0.4"/>
-<circle cx="18.5" cy="17.5" r="0.4"/>
-<circle cx="20.5" cy="17.5" r="0.4"/>
-<circle cx="22.5" cy="17.5" r="0.4"/>
-<circle cx="27.5" cy="17.5" r="0.4"/>
-<circle cx="32.5" cy="17.5" r="0.311"/>
-<circle cx="34.5" cy="17.5" r="0.246"/>
-<circle cx="-7.5" cy="18.5" r="0.177"/>
-<circle cx="-6.5" cy="18.5" r="0.209"/>
-<circle cx="-5.5" cy="18.5" r="0.241"/>
-<circle cx="-4.5" cy="18.5" r="0.273"/>
-<circle cx="-3.5" cy="18.5" r="0.304"/>
-<circle cx="-2.5" cy="18.5" r="0.336"/>
-<circle cx="-1.5" cy="18.5" r="0.368"/>
-<circle cx="0.5" cy="18.5" r="0.4"/>
-<circle cx="2.5" cy="18.5" r="0.4"/>
-<circle cx="5.5" cy="18.5" r="0.4"/>
-<circle cx="6.5" cy="18.5" r="0.4"/>
-<circle cx="8.5" cy="18.5" r="0.4"/>
-<circle cx="11.5" cy="18.5" r="0.4"/>
-<circle cx="14.5" cy="18.5" r="0.4"/>
-<circle cx="17.5" cy="18.5" r="0.4"/>
-<circle cx="21.5" cy="18.5" r="0.4"/>
-<circle cx="26.5" cy="18.5" r="0.4"/>
-<circle cx="27.5" cy="18.5" r="0.4"/>
-<circle cx="30.5" cy="18.5" r="0.368"/>
-<circle cx="32.5" cy="18.5" r="0.304"/>
-<circle cx="34.5" cy="18.5" r="0.241"/>
-<circle cx="36.5" cy="18.5" r="0.177"/>
-<circle cx="-4.5" cy="19.5" r="0.265"/>
-<circle cx="-1.5" cy="19.5" r="0.359"/>
-<circle cx="2.5" cy="19.5" r="0.4"/>
-<circle cx="3.5" cy="19.5" r="0.4"/>
-<circle cx="4.5" cy="19.5" r="0.4"/>
-<circle cx="7.5" cy="19.5" r="0.4"/>
-<circle cx="8.5" cy="19.5" r="0.4"/>
-<circle cx="10.5" cy="19.5" r="0.4"/>
-<circle cx="11.5" cy="19.5" r="0.4"/>
-<circle cx="13.5" cy="19.5" r="0.4"/>
-<circle cx="14.5" cy="19.5" r="0.4"/>
-<circle cx="15.5" cy="19.5" r="0.4"/>
-<circle cx="16.5" cy="19.5" r="0.4"/>
-<circle cx="17.5" cy="19.5" r="0.4"/>
-<circle cx="19.5" cy="19.5" r="0.4"/>
-<circle cx="20.5" cy="19.5" r="0.4"/>
-<circle cx="24.5" cy="19.5" r="0.4"/>
-<circle cx="25.5" cy="19.5" r="0.4"/>
-<circle cx="27.5" cy="19.5" r="0.4"/>
-<circle cx="28.5" cy="19.5" r="0.4"/>
-<circle cx="32.5" cy="19.5" r="0.296"/>
-<circle cx="33.5" cy="19.5" r="0.265"/>
-<circle cx="34.5" cy="19.5" r="0.234"/>
-<circle cx="-4.5" cy="20.5" r="0.256"/>
-<circle cx="-3.5" cy="20.5" r="0.287"/>
-<circle cx="-2.5" cy="20.5" r="0.318"/>
-<circle cx="-1.5" cy="20.5" r="0.348"/>
-<circle cx="1.5" cy="20.5" r="0.4"/>
-<circle cx="6.5" cy="20.5" r="0.4"/>
-<circle cx="7.5" cy="20.5" r="0.4"/>
-<circle cx="8.5" cy="20.5" r="0.4"/>
-<circle cx="9.5" cy="20.5" r="0.4"/>
-<circle cx="10.5" cy="20.5" r="0.4"/>
-<circle cx="11.5" cy="20.5" r="0.4"/>
-<circle cx="13.5" cy="20.5" r="0.4"/>
-<circle cx="14.5" cy="20.5" r="0.4"/>
-<circle cx="15.5" cy="20.5" r="0.4"/>
-<circle cx="17.5" cy="20.5" r="0.4"/>
-<circle cx="18.5" cy="20.5" r="0.4"/>
-<circle cx="19.5" cy="20.5" r="0.4"/>
-<circle cx="20.5" cy="20.5" r="0.4"/>
-<circle cx="21.5" cy="20.5" r="0.4"/>
-<circle cx="22.5" cy="20.5" r="0.4"/>
-<circle cx="23.5" cy="20.5" r="0.4"/>
-<circle cx="24.5" cy="20.5" r="0.4"/>
-<circle cx="25.5" cy="20.5" r="0.4"/>
-<circle cx="26.5" cy="20.5" r="0.4"/>
-<circle cx="28.5" cy="20.5" r="0.4"/>
-<circle cx="33.5" cy="20.5" r="0.256"/>
-<circle cx="35.5" cy="20.5" r="0.194"/>
-<circle cx="-6.5" cy="21.5" r="0.184"/>
-<circle cx="-4.5" cy="21.5" r="0.245"/>
-<circle cx="-3.5" cy="21.5" r="0.276"/>
-<circle cx="-1.5" cy="21.5" r="0.336"/>
-<circle cx="8.5" cy="21.5" r="0.4"/>
-<circle cx="12.5" cy="21.5" r="0.4"/>
-<circle cx="13.5" cy="21.5" r="0.4"/>
-<circle cx="15.5" cy="21.5" r="0.4"/>
-<circle cx="17.5" cy="21.5" r="0.4"/>
-<circle cx="18.5" cy="21.5" r="0.4"/>
-<circle cx="20.5" cy="21.5" r="0.4"/>
-<circle cx="24.5" cy="21.5" r="0.4"/>
-<circle cx="25.5" cy="21.5" r="0.4"/>
-<circle cx="30.5" cy="21.5" r="0.336"/>
-<circle cx="33.5" cy="21.5" r="0.245"/>
-<circle cx="34.5" cy="21.5" r="0.215"/>
-<circle cx="35.5" cy="21.5" r="0.184"/>
-<circle cx="-6.5" cy="22.5" r="0.173"/>
-<circle cx="-5.5" cy="22.5" r="0.203"/>
-<circle cx="-2.5" cy="22.5" r="0.293"/>
-<circle cx="10.5" cy="22.5" r="0.4"/>
-<circle cx="12.5" cy="22.5" r="0.4"/>
-<circle cx="13.5" cy="22.5" r="0.4"/>
-<circle cx="14.5" cy="22.5" r="0.4"/>
-<circle cx="15.5" cy="22.5" r="0.4"/>
-<circle cx="18.5" cy="22.5" r="0.4"/>
-<circle cx="20.5" cy="22.5" r="0.4"/>
-<circle cx="22.5" cy="22.5" r="0.4"/>
-<circle cx="24.5" cy="22.5" r="0.4"/>
-<circle cx="25.5" cy="22.5" r="0.4"/>
-<circle cx="26.5" cy="22.5" r="0.4"/>
-<circle cx="27.5" cy="22.5" r="0.4"/>
-<circle cx="28.5" cy="22.5" r="0.4"/>
-<circle cx="30.5" cy="22.5" r="0.322"/>
-<circle cx="31.5" cy="22.5" r="0.293"/>
-<circle cx="33.5" cy="22.5" r="0.234"/>
-<circle cx="-5.5" cy="23.5" r="0.191"/>
-<circle cx="-3.5" cy="23.5" r="0.249"/>
-<circle cx="8.5" cy="23.5" r="0.4"/>
-<circle cx="9.5" cy="23.5" r="0.4"/>
-<circle cx="10.5" cy="23.5" r="0.4"/>
-<circle cx="11.5" cy="23.5" r="0.4"/>
-<circle cx="13.5" cy="23.5" r="0.4"/>
-<circle cx="17.5" cy="23.5" r="0.4"/>
-<circle cx="20.5" cy="23.5" r="0.4"/>
-<circle cx="24.5" cy="23.5" r="0.4"/>
-<circle cx="27.5" cy="23.5" r="0.4"/>
-<circle cx="28.5" cy="23.5" r="0.4"/>
-<circle cx="30.5" cy="23.5" r="0.307"/>
-<circle cx="34.5" cy="23.5" r="0.191"/>
-<circle cx="-1.5" cy="24.5" r="0.29"/>
-<circle cx="9.5" cy="24.5" r="0.4"/>
-<circle cx="13.5" cy="24.5" r="0.4"/>
-<circle cx="14.5" cy="24.5" r="0.4"/>
-<circle cx="15.5" cy="24.5" r="0.4"/>
-<circle cx="16.5" cy="24.5" r="0.4"/>
-<circle cx="20.5" cy="24.5" r="0.4"/>
-<circle cx="21.5" cy="24.5" r="0.4"/>
-<circle cx="22.5" cy="24.5" r="0.4"/>
-<circle cx="23.5" cy="24.5" r="0.4"/>
-<circle cx="24.5" cy="24.5" r="0.4"/>
-<circle cx="27.5" cy="24.5" r="0.4"/>
-<circle cx="28.5" cy="24.5" r="0.4"/>
-<circle cx="30.5" cy="24.5" r="0.29"/>
-<circle cx="31.5" cy="24.5" r="0.263"/>
-<circle cx="-4.5" cy="25.5" r="0.19"/>
-<circle cx="-1.5" cy="25.5" r="0.273"/>
-<circle cx="8.5" cy="25.5" r="0.4"/>
-<circle cx="9.5" cy="25.5" r="0.4"/>
-<circle cx="11.5" cy="25.5" r="0.4"/>
-<circle cx="12.5" cy="25.5" r="0.4"/>
-<circle cx="14.5" cy="25.5" r="0.4"/>
-<circle cx="19.5" cy="25.5" r="0.4"/>
-<circle cx="20.5" cy="25.5" r="0.4"/>
-<circle cx="22.5" cy="25.5" r="0.4"/>
-<circle cx="24.5" cy="25.5" r="0.4"/>
-<circle cx="27.5" cy="25.5" r="0.4"/>
-<circle cx="32.5" cy="25.5" r="0.218"/>
-<circle cx="-4.5" cy="26.5" r="0.173"/>
-<circle cx="-3.5" cy="26.5" r="0.2"/>
-<circle cx="8.5" cy="26.5" r="0.4"/>
-<circle cx="10.5" cy="26.5" r="0.4"/>
-<circle cx="12.5" cy="26.5" r="0.4"/>
-<circle cx="13.5" cy="26.5" r="0.4"/>
-<circle cx="17.5" cy="26.5" r="0.4"/>
-<circle cx="18.5" cy="26.5" r="0.4"/>
-<circle cx="19.5" cy="26.5" r="0.4"/>
-<circle cx="20.5" cy="26.5" r="0.4"/>
-<circle cx="21.5" cy="26.5" r="0.4"/>
-<circle cx="28.5" cy="26.5" r="0.4"/>
-<circle cx="32.5" cy="26.5" r="0.2"/>
-<circle cx="33.5" cy="26.5" r="0.173"/>
-<circle cx="-3.5" cy="27.5" r="0.182"/>
-<circle cx="-2.5" cy="27.5" r="0.208"/>
-<circle cx="8.5" cy="27.5" r="0.4"/>
-<circle cx="10.5" cy="27.5" r="0.4"/>
-<circle cx="11.5" cy="27.5" r="0.4"/>
-<circle cx="13.5" cy="27.5" r="0.4"/>
-<circle cx="14.5" cy="27.5" r="0.4"/>
-<circle cx="15.5" cy="27.5" r="0.4"/>
-<circle cx="17.5" cy="27.5" r="0.4"/>
-<circle cx="18.5" cy="27.5" r="0.4"/>
-<circle cx="19.5" cy="27.5" r="0.4"/>
-<circle cx="21.5" cy="27.5" r="0.4"/>
-<circle cx="22.5" cy="27.5" r="0.4"/>
-<circle cx="25.5" cy="27.5" r="0.4"/>
-<circle cx="27.5" cy="27.5" r="0.4"/>
-<circle cx="28.5" cy="27.5" r="0.4"/>
-<circle cx="-2.5" cy="28.5" r="0.188"/>
-<circle cx="-1.5" cy="28.5" r="0.213"/>
-<circle cx="12.5" cy="28.5" r="0.4"/>
-<circle cx="13.5" cy="28.5" r="0.4"/>
-<circle cx="20.5" cy="28.5" r="0.4"/>
-<circle cx="30.5" cy="28.5" r="0.213"/>
-<circle cx="-1.5" cy="29.5" r="0.191"/>
-<circle cx="-1.5" cy="30.5" r="0.168"/>
-<circle cx="0.5" cy="30.5" r="0.213"/>
-<circle cx="1.5" cy="30.5" r="0.234"/>
-<circle cx="2.5" cy="30.5" r="0.254"/>
-<circle cx="5.5" cy="30.5" r="0.307"/>
-<circle cx="7.5" cy="30.5" r="0.336"/>
-<circle cx="8.5" cy="30.5" r="0.348"/>
-<circle cx="9.5" cy="30.5" r="0.359"/>
-<circle cx="10.5" cy="30.5" r="0.368"/>
-<circle cx="13.5" cy="30.5" r="0.383"/>
-<circle cx="14.5" cy="30.5" r="0.384"/>
-<circle cx="15.5" cy="30.5" r="0.383"/>
-<circle cx="20.5" cy="30.5" r="0.348"/>
-<circle cx="21.5" cy="30.5" r="0.336"/>
-<circle cx="22.5" cy="30.5" r="0.322"/>
-<circle cx="25.5" cy="30.5" r="0.273"/>
-<circle cx="26.5" cy="30.5" r="0.254"/>
-<circle cx="28.5" cy="30.5" r="0.213"/>
-<circle cx="1.5" cy="31.5" r="0.208"/>
-<circle cx="7.5" cy="31.5" r="0.306"/>
-<circle cx="9.5" cy="31.5" r="0.328"/>
-<circle cx="12.5" cy="31.5" r="0.347"/>
-<circle cx="15.5" cy="31.5" r="0.35"/>
-<circle cx="17.5" cy="31.5" r="0.343"/>
-<circle cx="18.5" cy="31.5" r="0.336"/>
-<circle cx="20.5" cy="31.5" r="0.318"/>
-<circle cx="23.5" cy="31.5" r="0.278"/>
-<circle cx="27.5" cy="31.5" r="0.208"/>
-<circle cx="2.5" cy="32.5" r="0.2"/>
-<circle cx="3.5" cy="32.5" r="0.218"/>
-<circle cx="4.5" cy="32.5" r="0.234"/>
-<circle cx="5.5" cy="32.5" r="0.249"/>
-<circle cx="8.5" cy="32.5" r="0.287"/>
-<circle cx="11.5" cy="32.5" r="0.311"/>
-<circle cx="17.5" cy="32.5" r="0.311"/>
-<circle cx="21.5" cy="32.5" r="0.276"/>
-<circle cx="23.5" cy="32.5" r="0.249"/>
-<circle cx="24.5" cy="32.5" r="0.234"/>
-<circle cx="25.5" cy="32.5" r="0.218"/>
-<circle cx="26.5" cy="32.5" r="0.2"/>
-<circle cx="27.5" cy="32.5" r="0.182"/>
-<circle cx="2.5" cy="33.5" r="0.173"/>
-<circle cx="3.5" cy="33.5" r="0.19"/>
-<circle cx="6.5" cy="33.5" r="0.234"/>
-<circle cx="8.5" cy="33.5" r="0.256"/>
-<circle cx="9.5" cy="33.5" r="0.265"/>
-<circle cx="11.5" cy="33.5" r="0.278"/>
-<circle cx="12.5" cy="33.5" r="0.283"/>
-<circle cx="15.5" cy="33.5" r="0.285"/>
-<circle cx="16.5" cy="33.5" r="0.283"/>
-<circle cx="19.5" cy="33.5" r="0.265"/>
-<circle cx="20.5" cy="33.5" r="0.256"/>
-<circle cx="21.5" cy="33.5" r="0.245"/>
-<circle cx="23.5" cy="33.5" r="0.22"/>
-<circle cx="24.5" cy="33.5" r="0.206"/>
-<circle cx="25.5" cy="33.5" r="0.19"/>
-<circle cx="26.5" cy="33.5" r="0.173"/>
-<circle cx="4.5" cy="34.5" r="0.177"/>
-<circle cx="5.5" cy="34.5" r="0.191"/>
-<circle cx="6.5" cy="34.5" r="0.203"/>
-<circle cx="7.5" cy="34.5" r="0.215"/>
-<circle cx="8.5" cy="34.5" r="0.225"/>
-<circle cx="9.5" cy="34.5" r="0.234"/>
-<circle cx="10.5" cy="34.5" r="0.241"/>
-<circle cx="11.5" cy="34.5" r="0.246"/>
-<circle cx="12.5" cy="34.5" r="0.25"/>
-<circle cx="13.5" cy="34.5" r="0.253"/>
-<circle cx="14.5" cy="34.5" r="0.254"/>
-<circle cx="16.5" cy="34.5" r="0.25"/>
-<circle cx="17.5" cy="34.5" r="0.246"/>
-<circle cx="18.5" cy="34.5" r="0.241"/>
-<circle cx="19.5" cy="34.5" r="0.234"/>
-<circle cx="21.5" cy="34.5" r="0.215"/>
-<circle cx="22.5" cy="34.5" r="0.203"/>
-<circle cx="23.5" cy="34.5" r="0.191"/>
-<circle cx="24.5" cy="34.5" r="0.177"/>
-<circle cx="7.5" cy="35.5" r="0.184"/>
-<circle cx="8.5" cy="35.5" r="0.194"/>
-<circle cx="9.5" cy="35.5" r="0.202"/>
-<circle cx="11.5" cy="35.5" r="0.214"/>
-<circle cx="13.5" cy="35.5" r="0.22"/>
-<circle cx="15.5" cy="35.5" r="0.22"/>
-<circle cx="16.5" cy="35.5" r="0.218"/>
-<circle cx="17.5" cy="35.5" r="0.214"/>
-<circle cx="20.5" cy="35.5" r="0.194"/>
-<circle cx="21.5" cy="35.5" r="0.184"/>
-<circle cx="11.5" cy="36.5" r="0.182"/>
-<circle cx="12.5" cy="36.5" r="0.186"/>
-<circle cx="13.5" cy="36.5" r="0.188"/>
-<circle cx="14.5" cy="36.5" r="0.188"/>
-<circle cx="15.5" cy="36.5" r="0.188"/>
-<circle cx="16.5" cy="36.5" r="0.186"/>
-<circle cx="19.5" cy="36.5" r="0.17"/>
-<circle cx="3.5" cy="3.5" r="3" fill="none" stroke="#1A1A1A" stroke-width="1"/>
-<circle cx="3.5" cy="3.5" r="1.5"/>
-<circle cx="25.5" cy="3.5" r="3" fill="none" stroke="#1A1A1A" stroke-width="1"/>
-<circle cx="25.5" cy="3.5" r="1.5"/>
-<circle cx="3.5" cy="25.5" r="3" fill="none" stroke="#1A1A1A" stroke-width="1"/>
-<circle cx="3.5" cy="25.5" r="1.5"/>
+<rect x="10.06" y="0.06" width=".88" height=".88" rx=".24"/>
+<rect x="11.06" y="0.06" width=".88" height=".88" rx=".24"/>
+<rect x="13.06" y="0.06" width=".88" height=".88" rx=".24"/>
+<rect x="18.06" y="0.06" width=".88" height=".88" rx=".24"/>
+<rect x="8.06" y="1.06" width=".88" height=".88" rx=".24"/>
+<rect x="9.06" y="1.06" width=".88" height=".88" rx=".24"/>
+<rect x="11.06" y="1.06" width=".88" height=".88" rx=".24"/>
+<rect x="12.06" y="1.06" width=".88" height=".88" rx=".24"/>
+<rect x="13.06" y="1.06" width=".88" height=".88" rx=".24"/>
+<rect x="15.06" y="1.06" width=".88" height=".88" rx=".24"/>
+<rect x="17.06" y="1.06" width=".88" height=".88" rx=".24"/>
+<rect x="18.06" y="1.06" width=".88" height=".88" rx=".24"/>
+<rect x="20.06" y="1.06" width=".88" height=".88" rx=".24"/>
+<rect x="8.06" y="2.06" width=".88" height=".88" rx=".24"/>
+<rect x="10.06" y="2.06" width=".88" height=".88" rx=".24"/>
+<rect x="12.06" y="2.06" width=".88" height=".88" rx=".24"/>
+<rect x="13.06" y="2.06" width=".88" height=".88" rx=".24"/>
+<rect x="16.06" y="2.06" width=".88" height=".88" rx=".24"/>
+<rect x="17.06" y="2.06" width=".88" height=".88" rx=".24"/>
+<rect x="18.06" y="2.06" width=".88" height=".88" rx=".24"/>
+<rect x="19.06" y="2.06" width=".88" height=".88" rx=".24"/>
+<rect x="11.06" y="3.06" width=".88" height=".88" rx=".24"/>
+<rect x="12.06" y="3.06" width=".88" height=".88" rx=".24"/>
+<rect x="20.06" y="3.06" width=".88" height=".88" rx=".24"/>
+<rect x="9.06" y="4.06" width=".88" height=".88" rx=".24"/>
+<rect x="14.06" y="4.06" width=".88" height=".88" rx=".24"/>
+<rect x="18.06" y="4.06" width=".88" height=".88" rx=".24"/>
+<rect x="20.06" y="4.06" width=".88" height=".88" rx=".24"/>
+<rect x="9.06" y="5.06" width=".88" height=".88" rx=".24"/>
+<rect x="10.06" y="5.06" width=".88" height=".88" rx=".24"/>
+<rect x="12.06" y="5.06" width=".88" height=".88" rx=".24"/>
+<rect x="17.06" y="5.06" width=".88" height=".88" rx=".24"/>
+<rect x="18.06" y="5.06" width=".88" height=".88" rx=".24"/>
+<rect x="8.06" y="6.06" width=".88" height=".88" rx=".24"/>
+<rect x="10.06" y="6.06" width=".88" height=".88" rx=".24"/>
+<rect x="12.06" y="6.06" width=".88" height=".88" rx=".24"/>
+<rect x="14.06" y="6.06" width=".88" height=".88" rx=".24"/>
+<rect x="16.06" y="6.06" width=".88" height=".88" rx=".24"/>
+<rect x="18.06" y="6.06" width=".88" height=".88" rx=".24"/>
+<rect x="20.06" y="6.06" width=".88" height=".88" rx=".24"/>
+<rect x="9.06" y="7.06" width=".88" height=".88" rx=".24"/>
+<rect x="12.06" y="7.06" width=".88" height=".88" rx=".24"/>
+<rect x="15.06" y="7.06" width=".88" height=".88" rx=".24"/>
+<rect x="19.06" y="7.06" width=".88" height=".88" rx=".24"/>
+<rect x="1.06" y="8.06" width=".88" height=".88" rx=".24"/>
+<rect x="2.06" y="8.06" width=".88" height=".88" rx=".24"/>
+<rect x="3.06" y="8.06" width=".88" height=".88" rx=".24"/>
+<rect x="5.06" y="8.06" width=".88" height=".88" rx=".24"/>
+<rect x="6.06" y="8.06" width=".88" height=".88" rx=".24"/>
+<rect x="9.06" y="8.06" width=".88" height=".88" rx=".24"/>
+<rect x="10.06" y="8.06" width=".88" height=".88" rx=".24"/>
+<rect x="14.06" y="8.06" width=".88" height=".88" rx=".24"/>
+<rect x="15.06" y="8.06" width=".88" height=".88" rx=".24"/>
+<rect x="16.06" y="8.06" width=".88" height=".88" rx=".24"/>
+<rect x="18.06" y="8.06" width=".88" height=".88" rx=".24"/>
+<rect x="19.06" y="8.06" width=".88" height=".88" rx=".24"/>
+<rect x="26.06" y="8.06" width=".88" height=".88" rx=".24"/>
+<rect x="27.06" y="8.06" width=".88" height=".88" rx=".24"/>
+<rect x="2.06" y="9.06" width=".88" height=".88" rx=".24"/>
+<rect x="11.06" y="9.06" width=".88" height=".88" rx=".24"/>
+<rect x="12.06" y="9.06" width=".88" height=".88" rx=".24"/>
+<rect x="13.06" y="9.06" width=".88" height=".88" rx=".24"/>
+<rect x="14.06" y="9.06" width=".88" height=".88" rx=".24"/>
+<rect x="15.06" y="9.06" width=".88" height=".88" rx=".24"/>
+<rect x="18.06" y="9.06" width=".88" height=".88" rx=".24"/>
+<rect x="20.06" y="9.06" width=".88" height=".88" rx=".24"/>
+<rect x="21.06" y="9.06" width=".88" height=".88" rx=".24"/>
+<rect x="22.06" y="9.06" width=".88" height=".88" rx=".24"/>
+<rect x="24.06" y="9.06" width=".88" height=".88" rx=".24"/>
+<rect x="25.06" y="9.06" width=".88" height=".88" rx=".24"/>
+<rect x="27.06" y="9.06" width=".88" height=".88" rx=".24"/>
+<rect x="28.06" y="9.06" width=".88" height=".88" rx=".24"/>
+<rect x="0.06" y="10.06" width=".88" height=".88" rx=".24"/>
+<rect x="2.06" y="10.06" width=".88" height=".88" rx=".24"/>
+<rect x="3.06" y="10.06" width=".88" height=".88" rx=".24"/>
+<rect x="5.06" y="10.06" width=".88" height=".88" rx=".24"/>
+<rect x="6.06" y="10.06" width=".88" height=".88" rx=".24"/>
+<rect x="8.06" y="10.06" width=".88" height=".88" rx=".24"/>
+<rect x="13.06" y="10.06" width=".88" height=".88" rx=".24"/>
+<rect x="14.06" y="10.06" width=".88" height=".88" rx=".24"/>
+<rect x="17.06" y="10.06" width=".88" height=".88" rx=".24"/>
+<rect x="21.06" y="10.06" width=".88" height=".88" rx=".24"/>
+<rect x="25.06" y="10.06" width=".88" height=".88" rx=".24"/>
+<rect x="28.06" y="10.06" width=".88" height=".88" rx=".24"/>
+<rect x="2.06" y="11.06" width=".88" height=".88" rx=".24"/>
+<rect x="4.06" y="11.06" width=".88" height=".88" rx=".24"/>
+<rect x="5.06" y="11.06" width=".88" height=".88" rx=".24"/>
+<rect x="8.06" y="11.06" width=".88" height=".88" rx=".24"/>
+<rect x="9.06" y="11.06" width=".88" height=".88" rx=".24"/>
+<rect x="13.06" y="11.06" width=".88" height=".88" rx=".24"/>
+<rect x="16.06" y="11.06" width=".88" height=".88" rx=".24"/>
+<rect x="20.06" y="11.06" width=".88" height=".88" rx=".24"/>
+<rect x="21.06" y="11.06" width=".88" height=".88" rx=".24"/>
+<rect x="22.06" y="11.06" width=".88" height=".88" rx=".24"/>
+<rect x="25.06" y="11.06" width=".88" height=".88" rx=".24"/>
+<rect x="26.06" y="11.06" width=".88" height=".88" rx=".24"/>
+<rect x="27.06" y="11.06" width=".88" height=".88" rx=".24"/>
+<rect x="28.06" y="11.06" width=".88" height=".88" rx=".24"/>
+<rect x="0.06" y="12.06" width=".88" height=".88" rx=".24"/>
+<rect x="3.06" y="12.06" width=".88" height=".88" rx=".24"/>
+<rect x="4.06" y="12.06" width=".88" height=".88" rx=".24"/>
+<rect x="6.06" y="12.06" width=".88" height=".88" rx=".24"/>
+<rect x="7.06" y="12.06" width=".88" height=".88" rx=".24"/>
+<rect x="10.06" y="12.06" width=".88" height=".88" rx=".24"/>
+<rect x="11.06" y="12.06" width=".88" height=".88" rx=".24"/>
+<rect x="12.06" y="12.06" width=".88" height=".88" rx=".24"/>
+<rect x="14.06" y="12.06" width=".88" height=".88" rx=".24"/>
+<rect x="15.06" y="12.06" width=".88" height=".88" rx=".24"/>
+<rect x="16.06" y="12.06" width=".88" height=".88" rx=".24"/>
+<rect x="17.06" y="12.06" width=".88" height=".88" rx=".24"/>
+<rect x="18.06" y="12.06" width=".88" height=".88" rx=".24"/>
+<rect x="20.06" y="12.06" width=".88" height=".88" rx=".24"/>
+<rect x="22.06" y="12.06" width=".88" height=".88" rx=".24"/>
+<rect x="23.06" y="12.06" width=".88" height=".88" rx=".24"/>
+<rect x="24.06" y="12.06" width=".88" height=".88" rx=".24"/>
+<rect x="26.06" y="12.06" width=".88" height=".88" rx=".24"/>
+<rect x="27.06" y="12.06" width=".88" height=".88" rx=".24"/>
+<rect x="2.06" y="13.06" width=".88" height=".88" rx=".24"/>
+<rect x="4.06" y="13.06" width=".88" height=".88" rx=".24"/>
+<rect x="8.06" y="13.06" width=".88" height=".88" rx=".24"/>
+<rect x="10.06" y="13.06" width=".88" height=".88" rx=".24"/>
+<rect x="13.06" y="13.06" width=".88" height=".88" rx=".24"/>
+<rect x="14.06" y="13.06" width=".88" height=".88" rx=".24"/>
+<rect x="15.06" y="13.06" width=".88" height=".88" rx=".24"/>
+<rect x="17.06" y="13.06" width=".88" height=".88" rx=".24"/>
+<rect x="19.06" y="13.06" width=".88" height=".88" rx=".24"/>
+<rect x="24.06" y="13.06" width=".88" height=".88" rx=".24"/>
+<rect x="28.06" y="13.06" width=".88" height=".88" rx=".24"/>
+<rect x="1.06" y="14.06" width=".88" height=".88" rx=".24"/>
+<rect x="2.06" y="14.06" width=".88" height=".88" rx=".24"/>
+<rect x="3.06" y="14.06" width=".88" height=".88" rx=".24"/>
+<rect x="6.06" y="14.06" width=".88" height=".88" rx=".24"/>
+<rect x="10.06" y="14.06" width=".88" height=".88" rx=".24"/>
+<rect x="11.06" y="14.06" width=".88" height=".88" rx=".24"/>
+<rect x="12.06" y="14.06" width=".88" height=".88" rx=".24"/>
+<rect x="14.06" y="14.06" width=".88" height=".88" rx=".24"/>
+<rect x="15.06" y="14.06" width=".88" height=".88" rx=".24"/>
+<rect x="16.06" y="14.06" width=".88" height=".88" rx=".24"/>
+<rect x="19.06" y="14.06" width=".88" height=".88" rx=".24"/>
+<rect x="20.06" y="14.06" width=".88" height=".88" rx=".24"/>
+<rect x="22.06" y="14.06" width=".88" height=".88" rx=".24"/>
+<rect x="23.06" y="14.06" width=".88" height=".88" rx=".24"/>
+<rect x="25.06" y="14.06" width=".88" height=".88" rx=".24"/>
+<rect x="26.06" y="14.06" width=".88" height=".88" rx=".24"/>
+<rect x="28.06" y="14.06" width=".88" height=".88" rx=".24"/>
+<rect x="0.06" y="15.06" width=".88" height=".88" rx=".24"/>
+<rect x="4.06" y="15.06" width=".88" height=".88" rx=".24"/>
+<rect x="14.06" y="15.06" width=".88" height=".88" rx=".24"/>
+<rect x="15.06" y="15.06" width=".88" height=".88" rx=".24"/>
+<rect x="19.06" y="15.06" width=".88" height=".88" rx=".24"/>
+<rect x="20.06" y="15.06" width=".88" height=".88" rx=".24"/>
+<rect x="22.06" y="15.06" width=".88" height=".88" rx=".24"/>
+<rect x="23.06" y="15.06" width=".88" height=".88" rx=".24"/>
+<rect x="25.06" y="15.06" width=".88" height=".88" rx=".24"/>
+<rect x="27.06" y="15.06" width=".88" height=".88" rx=".24"/>
+<rect x="3.06" y="16.06" width=".88" height=".88" rx=".24"/>
+<rect x="6.06" y="16.06" width=".88" height=".88" rx=".24"/>
+<rect x="9.06" y="16.06" width=".88" height=".88" rx=".24"/>
+<rect x="10.06" y="16.06" width=".88" height=".88" rx=".24"/>
+<rect x="11.06" y="16.06" width=".88" height=".88" rx=".24"/>
+<rect x="12.06" y="16.06" width=".88" height=".88" rx=".24"/>
+<rect x="13.06" y="16.06" width=".88" height=".88" rx=".24"/>
+<rect x="17.06" y="16.06" width=".88" height=".88" rx=".24"/>
+<rect x="21.06" y="16.06" width=".88" height=".88" rx=".24"/>
+<rect x="24.06" y="16.06" width=".88" height=".88" rx=".24"/>
+<rect x="27.06" y="16.06" width=".88" height=".88" rx=".24"/>
+<rect x="1.06" y="17.06" width=".88" height=".88" rx=".24"/>
+<rect x="2.06" y="17.06" width=".88" height=".88" rx=".24"/>
+<rect x="4.06" y="17.06" width=".88" height=".88" rx=".24"/>
+<rect x="8.06" y="17.06" width=".88" height=".88" rx=".24"/>
+<rect x="10.06" y="17.06" width=".88" height=".88" rx=".24"/>
+<rect x="13.06" y="17.06" width=".88" height=".88" rx=".24"/>
+<rect x="18.06" y="17.06" width=".88" height=".88" rx=".24"/>
+<rect x="20.06" y="17.06" width=".88" height=".88" rx=".24"/>
+<rect x="22.06" y="17.06" width=".88" height=".88" rx=".24"/>
+<rect x="27.06" y="17.06" width=".88" height=".88" rx=".24"/>
+<rect x="0.06" y="18.06" width=".88" height=".88" rx=".24"/>
+<rect x="2.06" y="18.06" width=".88" height=".88" rx=".24"/>
+<rect x="5.06" y="18.06" width=".88" height=".88" rx=".24"/>
+<rect x="6.06" y="18.06" width=".88" height=".88" rx=".24"/>
+<rect x="8.06" y="18.06" width=".88" height=".88" rx=".24"/>
+<rect x="11.06" y="18.06" width=".88" height=".88" rx=".24"/>
+<rect x="14.06" y="18.06" width=".88" height=".88" rx=".24"/>
+<rect x="17.06" y="18.06" width=".88" height=".88" rx=".24"/>
+<rect x="21.06" y="18.06" width=".88" height=".88" rx=".24"/>
+<rect x="26.06" y="18.06" width=".88" height=".88" rx=".24"/>
+<rect x="27.06" y="18.06" width=".88" height=".88" rx=".24"/>
+<rect x="2.06" y="19.06" width=".88" height=".88" rx=".24"/>
+<rect x="3.06" y="19.06" width=".88" height=".88" rx=".24"/>
+<rect x="4.06" y="19.06" width=".88" height=".88" rx=".24"/>
+<rect x="7.06" y="19.06" width=".88" height=".88" rx=".24"/>
+<rect x="8.06" y="19.06" width=".88" height=".88" rx=".24"/>
+<rect x="10.06" y="19.06" width=".88" height=".88" rx=".24"/>
+<rect x="11.06" y="19.06" width=".88" height=".88" rx=".24"/>
+<rect x="13.06" y="19.06" width=".88" height=".88" rx=".24"/>
+<rect x="14.06" y="19.06" width=".88" height=".88" rx=".24"/>
+<rect x="15.06" y="19.06" width=".88" height=".88" rx=".24"/>
+<rect x="16.06" y="19.06" width=".88" height=".88" rx=".24"/>
+<rect x="17.06" y="19.06" width=".88" height=".88" rx=".24"/>
+<rect x="19.06" y="19.06" width=".88" height=".88" rx=".24"/>
+<rect x="20.06" y="19.06" width=".88" height=".88" rx=".24"/>
+<rect x="24.06" y="19.06" width=".88" height=".88" rx=".24"/>
+<rect x="25.06" y="19.06" width=".88" height=".88" rx=".24"/>
+<rect x="27.06" y="19.06" width=".88" height=".88" rx=".24"/>
+<rect x="28.06" y="19.06" width=".88" height=".88" rx=".24"/>
+<rect x="1.06" y="20.06" width=".88" height=".88" rx=".24"/>
+<rect x="6.06" y="20.06" width=".88" height=".88" rx=".24"/>
+<rect x="7.06" y="20.06" width=".88" height=".88" rx=".24"/>
+<rect x="8.06" y="20.06" width=".88" height=".88" rx=".24"/>
+<rect x="9.06" y="20.06" width=".88" height=".88" rx=".24"/>
+<rect x="10.06" y="20.06" width=".88" height=".88" rx=".24"/>
+<rect x="11.06" y="20.06" width=".88" height=".88" rx=".24"/>
+<rect x="13.06" y="20.06" width=".88" height=".88" rx=".24"/>
+<rect x="14.06" y="20.06" width=".88" height=".88" rx=".24"/>
+<rect x="15.06" y="20.06" width=".88" height=".88" rx=".24"/>
+<rect x="17.06" y="20.06" width=".88" height=".88" rx=".24"/>
+<rect x="18.06" y="20.06" width=".88" height=".88" rx=".24"/>
+<rect x="19.06" y="20.06" width=".88" height=".88" rx=".24"/>
+<rect x="20.06" y="20.06" width=".88" height=".88" rx=".24"/>
+<rect x="21.06" y="20.06" width=".88" height=".88" rx=".24"/>
+<rect x="22.06" y="20.06" width=".88" height=".88" rx=".24"/>
+<rect x="23.06" y="20.06" width=".88" height=".88" rx=".24"/>
+<rect x="24.06" y="20.06" width=".88" height=".88" rx=".24"/>
+<rect x="25.06" y="20.06" width=".88" height=".88" rx=".24"/>
+<rect x="26.06" y="20.06" width=".88" height=".88" rx=".24"/>
+<rect x="28.06" y="20.06" width=".88" height=".88" rx=".24"/>
+<rect x="8.06" y="21.06" width=".88" height=".88" rx=".24"/>
+<rect x="12.06" y="21.06" width=".88" height=".88" rx=".24"/>
+<rect x="13.06" y="21.06" width=".88" height=".88" rx=".24"/>
+<rect x="15.06" y="21.06" width=".88" height=".88" rx=".24"/>
+<rect x="17.06" y="21.06" width=".88" height=".88" rx=".24"/>
+<rect x="18.06" y="21.06" width=".88" height=".88" rx=".24"/>
+<rect x="20.06" y="21.06" width=".88" height=".88" rx=".24"/>
+<rect x="24.06" y="21.06" width=".88" height=".88" rx=".24"/>
+<rect x="25.06" y="21.06" width=".88" height=".88" rx=".24"/>
+<rect x="10.06" y="22.06" width=".88" height=".88" rx=".24"/>
+<rect x="12.06" y="22.06" width=".88" height=".88" rx=".24"/>
+<rect x="13.06" y="22.06" width=".88" height=".88" rx=".24"/>
+<rect x="14.06" y="22.06" width=".88" height=".88" rx=".24"/>
+<rect x="15.06" y="22.06" width=".88" height=".88" rx=".24"/>
+<rect x="18.06" y="22.06" width=".88" height=".88" rx=".24"/>
+<rect x="20.06" y="22.06" width=".88" height=".88" rx=".24"/>
+<rect x="22.06" y="22.06" width=".88" height=".88" rx=".24"/>
+<rect x="24.06" y="22.06" width=".88" height=".88" rx=".24"/>
+<rect x="25.06" y="22.06" width=".88" height=".88" rx=".24"/>
+<rect x="26.06" y="22.06" width=".88" height=".88" rx=".24"/>
+<rect x="27.06" y="22.06" width=".88" height=".88" rx=".24"/>
+<rect x="28.06" y="22.06" width=".88" height=".88" rx=".24"/>
+<rect x="8.06" y="23.06" width=".88" height=".88" rx=".24"/>
+<rect x="9.06" y="23.06" width=".88" height=".88" rx=".24"/>
+<rect x="10.06" y="23.06" width=".88" height=".88" rx=".24"/>
+<rect x="11.06" y="23.06" width=".88" height=".88" rx=".24"/>
+<rect x="13.06" y="23.06" width=".88" height=".88" rx=".24"/>
+<rect x="17.06" y="23.06" width=".88" height=".88" rx=".24"/>
+<rect x="20.06" y="23.06" width=".88" height=".88" rx=".24"/>
+<rect x="24.06" y="23.06" width=".88" height=".88" rx=".24"/>
+<rect x="27.06" y="23.06" width=".88" height=".88" rx=".24"/>
+<rect x="28.06" y="23.06" width=".88" height=".88" rx=".24"/>
+<rect x="9.06" y="24.06" width=".88" height=".88" rx=".24"/>
+<rect x="13.06" y="24.06" width=".88" height=".88" rx=".24"/>
+<rect x="14.06" y="24.06" width=".88" height=".88" rx=".24"/>
+<rect x="15.06" y="24.06" width=".88" height=".88" rx=".24"/>
+<rect x="16.06" y="24.06" width=".88" height=".88" rx=".24"/>
+<rect x="20.06" y="24.06" width=".88" height=".88" rx=".24"/>
+<rect x="21.06" y="24.06" width=".88" height=".88" rx=".24"/>
+<rect x="22.06" y="24.06" width=".88" height=".88" rx=".24"/>
+<rect x="23.06" y="24.06" width=".88" height=".88" rx=".24"/>
+<rect x="24.06" y="24.06" width=".88" height=".88" rx=".24"/>
+<rect x="27.06" y="24.06" width=".88" height=".88" rx=".24"/>
+<rect x="28.06" y="24.06" width=".88" height=".88" rx=".24"/>
+<rect x="8.06" y="25.06" width=".88" height=".88" rx=".24"/>
+<rect x="9.06" y="25.06" width=".88" height=".88" rx=".24"/>
+<rect x="11.06" y="25.06" width=".88" height=".88" rx=".24"/>
+<rect x="12.06" y="25.06" width=".88" height=".88" rx=".24"/>
+<rect x="14.06" y="25.06" width=".88" height=".88" rx=".24"/>
+<rect x="19.06" y="25.06" width=".88" height=".88" rx=".24"/>
+<rect x="20.06" y="25.06" width=".88" height=".88" rx=".24"/>
+<rect x="22.06" y="25.06" width=".88" height=".88" rx=".24"/>
+<rect x="24.06" y="25.06" width=".88" height=".88" rx=".24"/>
+<rect x="27.06" y="25.06" width=".88" height=".88" rx=".24"/>
+<rect x="8.06" y="26.06" width=".88" height=".88" rx=".24"/>
+<rect x="10.06" y="26.06" width=".88" height=".88" rx=".24"/>
+<rect x="12.06" y="26.06" width=".88" height=".88" rx=".24"/>
+<rect x="13.06" y="26.06" width=".88" height=".88" rx=".24"/>
+<rect x="17.06" y="26.06" width=".88" height=".88" rx=".24"/>
+<rect x="18.06" y="26.06" width=".88" height=".88" rx=".24"/>
+<rect x="19.06" y="26.06" width=".88" height=".88" rx=".24"/>
+<rect x="20.06" y="26.06" width=".88" height=".88" rx=".24"/>
+<rect x="21.06" y="26.06" width=".88" height=".88" rx=".24"/>
+<rect x="28.06" y="26.06" width=".88" height=".88" rx=".24"/>
+<rect x="8.06" y="27.06" width=".88" height=".88" rx=".24"/>
+<rect x="10.06" y="27.06" width=".88" height=".88" rx=".24"/>
+<rect x="11.06" y="27.06" width=".88" height=".88" rx=".24"/>
+<rect x="13.06" y="27.06" width=".88" height=".88" rx=".24"/>
+<rect x="14.06" y="27.06" width=".88" height=".88" rx=".24"/>
+<rect x="15.06" y="27.06" width=".88" height=".88" rx=".24"/>
+<rect x="17.06" y="27.06" width=".88" height=".88" rx=".24"/>
+<rect x="18.06" y="27.06" width=".88" height=".88" rx=".24"/>
+<rect x="19.06" y="27.06" width=".88" height=".88" rx=".24"/>
+<rect x="21.06" y="27.06" width=".88" height=".88" rx=".24"/>
+<rect x="22.06" y="27.06" width=".88" height=".88" rx=".24"/>
+<rect x="25.06" y="27.06" width=".88" height=".88" rx=".24"/>
+<rect x="27.06" y="27.06" width=".88" height=".88" rx=".24"/>
+<rect x="28.06" y="27.06" width=".88" height=".88" rx=".24"/>
+<rect x="12.06" y="28.06" width=".88" height=".88" rx=".24"/>
+<rect x="13.06" y="28.06" width=".88" height=".88" rx=".24"/>
+<rect x="20.06" y="28.06" width=".88" height=".88" rx=".24"/>
+<rect x="0.5" y="0.5" width="6" height="6" rx="1.6" fill="none" stroke="#1A1A1A" stroke-width="1"/>
+<rect x="2" y="2" width="3" height="3" rx=".9"/>
+<rect x="22.5" y="0.5" width="6" height="6" rx="1.6" fill="none" stroke="#1A1A1A" stroke-width="1"/>
+<rect x="24" y="2" width="3" height="3" rx=".9"/>
+<rect x="0.5" y="22.5" width="6" height="6" rx="1.6" fill="none" stroke="#1A1A1A" stroke-width="1"/>
+<rect x="2" y="24" width="3" height="3" rx=".9"/>
 </g>
-<circle cx="14.5" cy="14.5" r="23.92" fill="none" stroke="#1A1A1A" stroke-width="0.32"/>
+<g fill="none" stroke="#1A1A1A" stroke-width="0.42" stroke-linecap="round">
+<circle cx="14.5" cy="14.5" r="21.906"/>
+<line x1="-8.306" y1="14.5" x2="-10.006" y2="14.5"/>
+<line x1="-8.257" y1="13.008" x2="-9.056" y2="12.956"/>
+<line x1="-8.111" y1="11.523" x2="-8.904" y2="11.419"/>
+<line x1="-7.868" y1="10.051" x2="-8.653" y2="9.895"/>
+<line x1="-7.529" y1="8.597" x2="-8.302" y2="8.39"/>
+<line x1="-7.096" y1="7.169" x2="-7.853" y2="6.912"/>
+<line x1="-6.57" y1="5.772" x2="-7.309" y2="5.466"/>
+<line x1="-5.954" y1="4.413" x2="-6.672" y2="4.059"/>
+<line x1="-5.251" y1="3.097" x2="-6.723" y2="2.247"/>
+<line x1="-4.463" y1="1.83" x2="-5.128" y2="1.385"/>
+<line x1="-3.593" y1="0.617" x2="-4.228" y2="0.13"/>
+<line x1="0.617" y1="-3.593" x2="0.13" y2="-4.228"/>
+<line x1="1.83" y1="-4.463" x2="1.385" y2="-5.128"/>
+<line x1="3.097" y1="-5.251" x2="2.247" y2="-6.723"/>
+<line x1="4.413" y1="-5.954" x2="4.059" y2="-6.672"/>
+<line x1="5.772" y1="-6.57" x2="5.466" y2="-7.309"/>
+<line x1="7.169" y1="-7.096" x2="6.912" y2="-7.853"/>
+<line x1="8.597" y1="-7.529" x2="8.39" y2="-8.302"/>
+<line x1="10.051" y1="-7.868" x2="9.895" y2="-8.653"/>
+<line x1="11.523" y1="-8.111" x2="11.419" y2="-8.904"/>
+<line x1="13.008" y1="-8.257" x2="12.956" y2="-9.056"/>
+<line x1="14.5" y1="-8.306" x2="14.5" y2="-10.006"/>
+<line x1="15.992" y1="-8.257" x2="16.044" y2="-9.056"/>
+<line x1="17.477" y1="-8.111" x2="17.581" y2="-8.904"/>
+<line x1="18.949" y1="-7.868" x2="19.105" y2="-8.653"/>
+<line x1="20.403" y1="-7.529" x2="20.61" y2="-8.302"/>
+<line x1="21.831" y1="-7.096" x2="22.088" y2="-7.853"/>
+<line x1="23.228" y1="-6.57" x2="23.534" y2="-7.309"/>
+<line x1="24.587" y1="-5.954" x2="24.941" y2="-6.672"/>
+<line x1="25.903" y1="-5.251" x2="26.753" y2="-6.723"/>
+<line x1="27.17" y1="-4.463" x2="27.615" y2="-5.128"/>
+<line x1="28.383" y1="-3.593" x2="28.87" y2="-4.228"/>
+<line x1="32.593" y1="0.617" x2="33.228" y2="0.13"/>
+<line x1="33.463" y1="1.83" x2="34.128" y2="1.385"/>
+<line x1="34.251" y1="3.097" x2="35.723" y2="2.247"/>
+<line x1="34.954" y1="4.413" x2="35.672" y2="4.059"/>
+<line x1="35.57" y1="5.772" x2="36.309" y2="5.466"/>
+<line x1="36.096" y1="7.169" x2="36.853" y2="6.912"/>
+<line x1="36.529" y1="8.597" x2="37.302" y2="8.39"/>
+<line x1="36.868" y1="10.051" x2="37.653" y2="9.895"/>
+<line x1="37.111" y1="11.523" x2="37.904" y2="11.419"/>
+<line x1="37.257" y1="13.008" x2="38.056" y2="12.956"/>
+<line x1="37.306" y1="14.5" x2="39.006" y2="14.5"/>
+<line x1="37.257" y1="15.992" x2="38.056" y2="16.044"/>
+<line x1="37.111" y1="17.477" x2="37.904" y2="17.581"/>
+<line x1="36.868" y1="18.949" x2="37.653" y2="19.105"/>
+<line x1="36.529" y1="20.403" x2="37.302" y2="20.61"/>
+<line x1="36.096" y1="21.831" x2="36.853" y2="22.088"/>
+<line x1="35.57" y1="23.228" x2="36.309" y2="23.534"/>
+<line x1="34.954" y1="24.587" x2="35.672" y2="24.941"/>
+<line x1="34.251" y1="25.903" x2="35.723" y2="26.753"/>
+<line x1="33.463" y1="27.17" x2="34.128" y2="27.615"/>
+<line x1="32.593" y1="28.383" x2="33.228" y2="28.87"/>
+<line x1="31.647" y1="29.537" x2="32.248" y2="30.065"/>
+<line x1="30.626" y1="30.626" x2="31.192" y2="31.192"/>
+<line x1="29.537" y1="31.647" x2="30.065" y2="32.248"/>
+<line x1="28.383" y1="32.593" x2="28.87" y2="33.228"/>
+<line x1="27.17" y1="33.463" x2="27.615" y2="34.128"/>
+<line x1="25.903" y1="34.251" x2="26.753" y2="35.723"/>
+<line x1="24.587" y1="34.954" x2="24.941" y2="35.672"/>
+<line x1="23.228" y1="35.57" x2="23.534" y2="36.309"/>
+<line x1="21.831" y1="36.096" x2="22.088" y2="36.853"/>
+<line x1="20.403" y1="36.529" x2="20.61" y2="37.302"/>
+<line x1="18.949" y1="36.868" x2="19.105" y2="37.653"/>
+<line x1="17.477" y1="37.111" x2="17.581" y2="37.904"/>
+<line x1="15.992" y1="37.257" x2="16.044" y2="38.056"/>
+<line x1="14.5" y1="37.306" x2="14.5" y2="39.006"/>
+<line x1="13.008" y1="37.257" x2="12.956" y2="38.056"/>
+<line x1="11.523" y1="37.111" x2="11.419" y2="37.904"/>
+<line x1="10.051" y1="36.868" x2="9.895" y2="37.653"/>
+<line x1="8.597" y1="36.529" x2="8.39" y2="37.302"/>
+<line x1="7.169" y1="36.096" x2="6.912" y2="36.853"/>
+<line x1="5.772" y1="35.57" x2="5.466" y2="36.309"/>
+<line x1="4.413" y1="34.954" x2="4.059" y2="35.672"/>
+<line x1="3.097" y1="34.251" x2="2.247" y2="35.723"/>
+<line x1="1.83" y1="33.463" x2="1.385" y2="34.128"/>
+<line x1="0.617" y1="32.593" x2="0.13" y2="33.228"/>
+<line x1="-3.593" y1="28.383" x2="-4.228" y2="28.87"/>
+<line x1="-4.463" y1="27.17" x2="-5.128" y2="27.615"/>
+<line x1="-5.251" y1="25.903" x2="-6.723" y2="26.753"/>
+<line x1="-5.954" y1="24.587" x2="-6.672" y2="24.941"/>
+<line x1="-6.57" y1="23.228" x2="-7.309" y2="23.534"/>
+<line x1="-7.096" y1="21.831" x2="-7.853" y2="22.088"/>
+<line x1="-7.529" y1="20.403" x2="-8.302" y2="20.61"/>
+<line x1="-7.868" y1="18.949" x2="-8.653" y2="19.105"/>
+<line x1="-8.111" y1="17.477" x2="-8.904" y2="17.581"/>
+<line x1="-8.257" y1="15.992" x2="-9.056" y2="16.044"/>
+<path d="M-2.222 -4.627 A25.406 25.406 0 0 1 31.222 -4.627"/>
+<path d="M33.627 -2.222 A25.406 25.406 0 0 1 -2.222 33.627"/>
+<path d="M-4.627 31.222 A25.406 25.406 0 0 1 -4.627 -2.222"/>
+<circle cx="-3.465" cy="-3.465" r="1.15"/>
+<circle cx="32.465" cy="-3.465" r="1.15"/>
+<circle cx="-3.465" cy="32.465" r="1.15"/>
+</g>
 </svg>
