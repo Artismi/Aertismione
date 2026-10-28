@@ -94,25 +94,30 @@ scrivi('retro-dettaglio', NOTTE, ROSA, f'''
   <ol class="servizi c">{"".join(f'<li><b>{i+1:02d}</b>{t}</li>' for i, t in enumerate(SERVIZI))}</ol>
   <div class="contatti"><p class="c">Inquadra il fronte: il logo prende vita.</p><div class="m">{CONTATTI}</div></div>''')
 # FUSIONE · il nero del dettaglio, "volto" enorme, l'indice coi numeri grandi: tre fasce, una cosa per fascia
+import re
+# il sigillo e' lo stesso del fronte: lo si prende gia' disegnato da biglietto-fronte.html
+SIGILLO = re.search(r'<svg class="sigillo".*?</svg>', open(os.path.join(QUI, '..', 'ar-print', 'biglietto-fronte.html'), encoding='utf-8').read(), re.S).group(0)
+# una riga per servizio: a cosa serve (riassunto di SERVICES.promise in src/config/content.ts)
+DETTAGLI = ['Dal logo ai muri del negozio', 'Disegni che la gente porta con sé', 'Online come dal vivo', 'Con chi vivrà il progetto', 'I tuoi canali, con la tua voce']
 scrivi('retro-fusione', NOTTE, ROSA, f'''
-  .det {{ position: absolute; left: -560px; top: -250px; width: 1700px; clip-path: inset(0 0 44% 79.5%); }}
-  .det path {{ fill: none; stroke: {ROSA}; stroke-width: 2.2; stroke-linejoin: round; }}
-  .prima {{ position: absolute; left: 50px; top: 44px; font-size: 34px; }}
-  .volto {{ position: absolute; left: 30px; top: 40px; font-size: 300px; line-height: .8; letter-spacing: -.03em; white-space: nowrap; }}
-  .dopo {{ position: absolute; left: 520px; top: 238px; font-size: 34px; }}
+  .sigillo {{ position: absolute; right: 30px; top: 22px; width: 300px; height: 300px; }}
+  .prima {{ position: absolute; left: 50px; top: 52px; font-size: 34px; }}
+  .volto {{ position: absolute; left: 34px; top: 74px; font-size: 220px; line-height: .8; letter-spacing: -.03em; white-space: nowrap; }}
+  .dopo {{ position: absolute; left: 52px; top: 268px; font-size: 34px; }}
   .linea {{ position: absolute; left: 48px; right: 48px; height: 0; border-top: 1px solid {ROSA}; }}
-  .indice {{ position: absolute; left: 48px; right: 48px; top: 368px; list-style: none; display: grid; grid-template-columns: 1fr 1.15fr 1.1fr 1.05fr 1fr; gap: 16px; }}
-  .indice .a {{ display: block; font-size: 78px; line-height: .8; letter-spacing: -.02em; }}
-  .indice .c {{ display: block; margin-top: 12px; font-size: 22px; line-height: 1.05; text-wrap: balance; }}
+  .indice {{ position: absolute; left: 48px; right: 48px; top: 352px; list-style: none; display: grid; grid-template-columns: 1fr 1.15fr 1.1fr 1.05fr 1fr; gap: 16px; }}
+  .indice .a {{ display: block; font-size: 64px; line-height: .8; letter-spacing: -.02em; }}
+  .indice .c {{ display: block; margin-top: 12px; font-size: 21px; line-height: 1.05; text-wrap: balance; }}
+  .indice .m {{ display: block; margin-top: 9px; font-size: 11px; line-height: 1.45; letter-spacing: .03em; opacity: .78; text-wrap: balance; }}
   .piede {{ position: absolute; left: 48px; right: 48px; bottom: 38px; display: flex; justify-content: space-between; align-items: baseline; }}
   .piede .c {{ font-size: 24px; }}
   .piede .m {{ display: flex; gap: 34px; }}
-''', f'''  <svg class="det" viewBox="0 0 1000 603"><path d="{D}"/></svg>
+''', f'''  {SIGILLO}
   <p class="prima a">Diamo un</p>
   <p class="volto c">volto</p>
   <p class="dopo a">alla tua attività.</p>
-  <div class="linea" style="top:342px"></div>
-  <ol class="indice">{"".join(f'<li><span class="a">{i+1:02d}</span><span class="c">{t}</span></li>' for i, t in enumerate(SERVIZI))}</ol>
+  <div class="linea" style="top:332px"></div>
+  <ol class="indice">{"".join(f'<li><span class="a">{i+1:02d}</span><span class="c">{t}</span><span class="m">{x}</span></li>' for i, (t, x) in enumerate(zip(SERVIZI, DETTAGLI)))}</ol>
   <div class="linea" style="bottom:86px"></div>
   <div class="piede"><p class="c">Inquadra il fronte: il logo prende vita.</p><div class="m"><p>WhatsApp +39 393 195 9752</p><p>apizzoglio@gmail.com</p></div></div>''')
 print('scritte le proposte del retro')
