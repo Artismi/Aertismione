@@ -101,11 +101,11 @@ SIGILLO = re.search(r'<svg class="sigillo".*?</svg>', open(os.path.join(QUI, '..
 DETTAGLI = ['Dal logo ai muri del negozio', 'Disegni che la gente porta con sé', 'Online come dal vivo', 'Con chi vivrà il progetto', 'I tuoi canali, con la tua voce']
 scrivi('retro-fusione', NOTTE, ROSA, f'''
   .sigillo {{ position: absolute; right: 30px; top: 22px; width: 300px; height: 300px; }}
-  .prima {{ position: absolute; left: 50px; top: 52px; font-size: 34px; }}
-  .volto {{ position: absolute; left: 34px; top: 74px; font-size: 220px; line-height: .8; letter-spacing: -.03em; white-space: nowrap; }}
-  .dopo {{ position: absolute; left: 52px; top: 268px; font-size: 34px; }}
+  .prima {{ position: absolute; left: 50px; top: 108px; font-size: 34px; }}
+  .volto {{ position: absolute; left: 34px; top: 130px; font-size: 220px; line-height: .8; letter-spacing: -.03em; white-space: nowrap; }}
+  .dopo {{ position: absolute; left: 52px; top: 324px; font-size: 34px; }}
   .linea {{ position: absolute; left: 48px; right: 48px; height: 0; border-top: 1px solid {ROSA}; }}
-  .indice {{ position: absolute; left: 48px; right: 48px; top: 352px; list-style: none; display: grid; grid-template-columns: 1fr 1.15fr 1.1fr 1.05fr 1fr; gap: 16px; }}
+  .indice {{ position: absolute; left: 48px; right: 48px; top: 408px; list-style: none; display: grid; grid-template-columns: 1fr 1.15fr 1.1fr 1.05fr 1fr; gap: 16px; }}
   .indice .a {{ display: block; font-size: 64px; line-height: .8; letter-spacing: -.02em; }}
   .indice .c {{ display: block; margin-top: 12px; font-size: 21px; line-height: 1.05; text-wrap: balance; }}
   .indice .m {{ display: block; margin-top: 9px; font-size: 11px; line-height: 1.45; letter-spacing: .03em; opacity: .78; text-wrap: balance; }}
@@ -116,7 +116,7 @@ scrivi('retro-fusione', NOTTE, ROSA, f'''
   <p class="prima a">Diamo un</p>
   <p class="volto c">volto</p>
   <p class="dopo a">alla tua attività.</p>
-  <div class="linea" style="top:332px"></div>
+  <div class="linea" style="top:388px"></div>
   <ol class="indice">{"".join(f'<li><span class="a">{i+1:02d}</span><span class="c">{t}</span><span class="m">{x}</span></li>' for i, (t, x) in enumerate(zip(SERVIZI, DETTAGLI)))}</ol>
   <div class="linea" style="bottom:86px"></div>
   <div class="piede"><p class="c">Inquadra il fronte: il logo prende vita.</p><div class="m"><p>WhatsApp +39 393 195 9752</p><p>apizzoglio@gmail.com</p></div></div>''')
