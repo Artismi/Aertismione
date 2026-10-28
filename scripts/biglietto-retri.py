@@ -131,16 +131,19 @@ scrivi('retro-fusione', NOTTE, ROSA, f'''
   <div class="linea" style="bottom:86px"></div>
   <div class="piede"><p class="c">Inquadra il fronte: il logo prende vita.</p><div class="m"><p>WhatsApp +39 393 195 9752</p><p>apizzoglio@gmail.com</p></div></div>''')
 # B + C · il nero e la figura della C, volto enorme della B; servizi in mono col loro dettaglio
-# il ritaglio della figura nel disegno del logo (scripts/logo-forma.svg, 1000 x 603): dalla punta della i (847, 88)
-# alla punta della sua gamba (882, 420); la gamba della m resta fuori
-VX, VY, VW, VH = 787, 82, 130, 344
-VB = f'{VX} {VY} {VW} {VH}'
-TOP, H = 34, 412                 # la figura, e il claim accanto, dall'alto fino sopra i servizi
-FW = round(H * VW / VH); FX = 690
+# la figura della i, aperta: del contorno del logo si tiene un solo lato per ciascuna punta (il lato destro della
+# punta in alto e quello destro della gamba), piu' il pallino. Ingrandita, le due punte escono dal biglietto e
+# restano due linee che spariscono fuori, una in alto e una in basso.
+from svgpathtools import parse_path
+_P = parse_path(D); _sp = _P.continuous_subpaths()
+FIG = _sp[0].cropped(0.75455, 0.8511).d()          # dalla punta della i (842, 88) alla punta della gamba (879, 422)
+TESTA = _sp[6].d()                                  # il pallino
+SC = 720 / (421.7 - 88.4)                           # punta in alto a -30 px, punta in basso a 690 px: fuori di 30 px
+FTX, FTY = 978 - 908.5 * SC, -30 - 88.4 * SC        # la punta del braccio resta dentro, a 978 px
+TOP, H = 34, 412
 scrivi('retro-bc', NOTTE, ROSA, f'''
-  /* la figura intera, dalla punta della i in alto fino alla punta della gamba: un ritaglio del logo (viewBox) */
-  .det {{ position: absolute; left: {FX}px; top: {TOP}px; width: {FW}px; height: {H}px; }}
-  .det path {{ fill: none; stroke: {ROSA}; stroke-width: 2; stroke-linejoin: round; }}
+  .det {{ position: absolute; left: 0; top: 0; width: 1020px; height: 660px; overflow: hidden; }}
+  .det path {{ fill: none; stroke: {ROSA}; stroke-width: {2.2 / SC:.3f}; stroke-linejoin: round; stroke-linecap: round; }}
   /* il blocco del claim e' alto quanto la figura: la prima riga parte dalla punta della i, l'ultima finisce sulla punta della gamba */
   .claim {{ position: absolute; left: 48px; top: {TOP}px; height: {H}px; display: inline-flex; flex-direction: column; justify-content: space-between; align-items: flex-start; }}
   .claim .a {{ display: block; font-size: 48px; line-height: .74; white-space: nowrap; letter-spacing: 0; }}
@@ -149,9 +152,9 @@ scrivi('retro-bc', NOTTE, ROSA, f'''
   .servizi li {{ line-height: 1.75; }}
   .servizi b {{ font-weight: 400; margin-right: 12px; }}
   .servizi i {{ font-style: normal; opacity: .62; }}
-  .contatti {{ position: absolute; right: 48px; bottom: 40px; text-align: right; }}
+  .contatti {{ position: absolute; right: 148px; bottom: 40px; text-align: right; }}  /* a sinistra della gamba */
   .contatti .c {{ font-size: 26px; line-height: 1.05; margin-bottom: 14px; }}
-''', f'''  <svg class="det" viewBox="{VB}" preserveAspectRatio="xMidYMid meet"><path d="{D}"/></svg>
+''', f'''  <svg class="det" viewBox="0 0 1020 660"><g transform="translate({FTX:.2f} {FTY:.2f}) scale({SC:.4f})"><path d="{FIG}"/><path d="{TESTA}"/></g></svg>
   <h1 class="claim"><span class="a" data-fit="#volto">Diamo insieme un</span><span class="volto c" id="volto">volto</span><span class="a" data-fit="#volto">alla tua attività.</span></h1>
   <ol class="servizi m">{"".join(f'<li><b>{i+1:02d}</b>{t} <i>— {x.lower()}</i></li>' for i, (t, x) in enumerate(zip(SERVIZI, DETTAGLI)))}</ol>
   <div class="contatti"><p class="c">Inquadra il fronte:<br>il logo prende vita.</p><div class="m"><p>WhatsApp +39 393 195 9752</p><p>apizzoglio@gmail.com</p></div></div>''')
