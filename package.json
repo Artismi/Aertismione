@@ -3,7 +3,9 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
+    "predev": "node scripts/sync-ar-shared.mjs",
     "dev": "next dev",
+    "prebuild": "node scripts/sync-ar-shared.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
