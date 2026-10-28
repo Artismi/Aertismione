@@ -110,6 +110,9 @@ const STILL_MS = 220
 const STILL_FRAMES = 6
 /** quanto scurisce l'occlusione negli angoli del banco (N8AO) */
 const AO_INTENSITY = 3.5
+/** l'occlusione torna solo dopo che tutto e' fermo da tanto (ms), e sfuma in tanto (s) */
+const AO_WAIT_MS = 350
+const AO_FADE_S = 0.6
 
 /**
  * La camera guarda il banco sempre dalla stessa angolazione e scorre con la
@@ -124,28 +127,19 @@ function Rig({ phase, mobile, stage, look, logo }: {
   logo: RefObject<THREE.Group | null>
 }) {
   const { camera, size, invalidate } = useThree()
-  const mouse = useRef(new THREE.Vector2())
   const v = useRef({
     pos: new THREE.Vector3(), lk: new THREE.Vector3(), up: new THREE.Vector3(), fwd: new THREE.Vector3(),
     right: new THREE.Vector3(), m: new THREE.Matrix4(), camUp: new THREE.Vector3(0, 1, 0),
   })
   useEffect(() => { invalidate() }, [phase, mobile, size, invalidate])
-  // lo scroll muove il mondo, il mouse lo sposta appena: si ridisegna solo allora,
-  // e solo se il logo o il banco sono sullo schermo (altrove si vede solo l'acqua).
-  // Per il mouse basta mezzo fotogramma ogni due: lo spostamento e' di pochi millimetri
+  // lo scroll muove il mondo: si ridisegna solo allora, e solo se il logo o il banco
+  // sono sullo schermo (altrove si vede solo l'acqua). Il mouse non sposta piu' la
+  // camera: ogni suo movimento ridisegnava il mondo e spegneva l'occlusione, e
+  // puntatore, bilia e visuale si tiravano a vicenda
   useEffect(() => {
-    let lastMove = 0
     const on = () => { if (worldNear(stage.current)) invalidate() }
-    const move = (e: PointerEvent) => {
-      mouse.current.set(e.clientX / window.innerWidth * 2 - 1, e.clientY / window.innerHeight * 2 - 1)
-      const now = performance.now()
-      if (worldHold.on || now - lastMove < 33 || !worldNear(stage.current)) return
-      lastMove = now
-      invalidate()
-    }
     window.addEventListener('scroll', on, { passive: true })
-    window.addEventListener('pointermove', move, { passive: true })
-    return () => { window.removeEventListener('scroll', on); window.removeEventListener('pointermove', move) }
+    return () => window.removeEventListener('scroll', on)
   }, [invalidate, stage])
 
   useFrame((_, dt) => {
@@ -200,16 +194,20 @@ function Rig({ phase, mobile, stage, look, logo }: {
       // «alto» e la sua «destra», senza girarla. Riquadro sotto il centro = banco sotto.
       const dy = ((r.top + r.height / 2) - vh / 2) / vh * viewH
       const dx = ((r.left + r.width / 2) - vw / 2) / vw * viewH * aspect
-      // il mouse sposta di pochissimo, solo per dare profondita'
-      const sx = -dx + mouse.current.x * 0.08, sy = dy - mouse.current.y * 0.05
-      t.pos.addScaledVector(t.right, sx).addScaledVector(t.up, sy)
-      t.lk.addScaledVector(t.right, sx).addScaledVector(t.up, sy)
+      t.pos.addScaledVector(t.right, -dx).addScaledVector(t.up, dy)
+      t.lk.addScaledVector(t.right, -dx).addScaledVector(t.up, dy)
     }
 
     let moving = false
-    // seguendo lo scroll si va quasi alla lettera (lo scroll e' gia' morbido); le aperture sono smorzate
+    // seguendo lo scroll il mondo sta incollato alla pagina, alla lettera: lo scroll e'
+    // gia' morbido (Lenis), un secondo smorzamento faceva nuotare il banco dietro la
+    // pagina e lo faceva muovere ancora dopo lo stop. Le aperture sono smorzate; finita
+    // un'apertura la camera ci arriva smorzata e poi si aggancia
     const k = top || phase === 'returning' ? 5 : 16
-    for (const ax of ['x', 'y', 'z'] as const) {
+    const glue = !top && phase !== 'returning'
+      && cam.position.distanceTo(t.pos) < 0.05 && look.current.distanceTo(t.lk) < 0.05
+    if (glue) { cam.position.copy(t.pos); look.current.copy(t.lk) }
+    else for (const ax of ['x', 'y', 'z'] as const) {
       cam.position[ax] = damp(cam.position[ax], t.pos[ax], k, dt)
       look.current[ax] = damp(look.current[ax], t.lk[ax], k, dt)
       // si ridisegna finche' arrivano sia la camera sia il punto guardato
@@ -357,6 +355,8 @@ function Budget({ stage, table, composer }: {
   const cam = useRef(0)
   /** quanta occlusione: 0 mentre qualcosa si muove, poi torna piano a 1 */
   const ao = useRef(1)
+  /** l'ultimo momento in cui qualcosa si muoveva (ms) */
+  const aoStill = useRef(0)
   /** da quando e' tutto fermo (ms) e da quanti fotogrammi: oltre STILL_MS e STILL_FRAMES
    *  si torna alla risoluzione piena */
   const still = useRef(0)
@@ -392,15 +392,21 @@ function Budget({ stage, table, composer }: {
     }
     const p = camera.position, q = camera.quaternion
     const c = p.x * 1.31 + p.y * 1.73 + p.z * 2.11 + q.x * 3.7 + q.y * 5.3 + q.z * 7.1 + q.w * 1.9
-    // (lo spostamento di pochi millimetri del mouse non conta: e' sotto 0,03)
-    const moving = Math.abs(c - cam.current) > 0.03 || Math.abs(k - sig.current) > 1e-3
+    // ogni spostamento conta, anche piccolo: la coda dello scroll e' fatta di passi minimi
+    const moving = Math.abs(c - cam.current) > 1e-4 || Math.abs(k - sig.current) > 1e-3
     cam.current = c
 
     // L'occlusione (N8AO) e' l'effetto che costa di piu': mentre la camera o le cose si
-    // muovono (le aperture del fascicolo e del Game Boy, lo scroll) si ferma, e a
-    // movimento finito torna sfumando in un terzo di secondo, senza scatti
-    if (moving) ao.current = 0
-    else if (ao.current < 1) { ao.current = Math.min(1, ao.current + dt / 0.35); invalidate() }
+    // muovono (le aperture del fascicolo e del Game Boy, lo scroll) si ferma, e torna
+    // sfumando solo quando tutto e' fermo da un po'. Prima tornava al primo fotogramma
+    // fermo: nella coda dello scroll morbido (movimenti piccolissimi) si riaccendeva e
+    // rispegneva di continuo, e lo stop scattava
+    const t = performance.now()
+    if (moving) { ao.current = 0; aoStill.current = t }
+    else if (ao.current < 1) {
+      if (t - aoStill.current > AO_WAIT_MS) ao.current = Math.min(1, ao.current + dt / AO_FADE_S)
+      invalidate()
+    }
 
     // Risoluzione: mentre il fascicolo o il Game Boy si aprono e si chiudono si disegna
     // con meno pixel (sugli schermi retina e' il costo piu' grosso, e in movimento non si

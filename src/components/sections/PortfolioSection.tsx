@@ -27,7 +27,21 @@ const Table3D = dynamic(() => import('@/components/canvas/table/Table3D'), { ssr
 // la bilia 3D sul tabellone (Marble3D: 0,125 × 0,6 unita', il tabellone e' largo 4,46 su 1200)
 const BALL_R        = 20
 const FOLDER_KEY    = 'artismi:fascicolo-aperto'   // il fascicolo era aperto quando si e' andati a un lavoro
-const FOLDER_HIT_R  = 74   // raggio collisione/hover cartellina (a misura piena)
+/**
+ * La cartellina sul tabellone, in unita' del tabellone (1200 × 775). Da telefono il
+ * tabellone si vede a meno di meta': le cartelline sono piu' alte e le scritte piu'
+ * grandi, perche' il titolo resti leggibile (prima arrivava a 4-5 px sullo schermo)
+ */
+const CARD = {
+  desk: { w: 250, h: 180, title: 20, cat: 12, cta: 12 },
+  tall: { w: 214, h: 236, title: 25, cat: 15, cta: 15 },
+}
+const cardOf = (w: number, h: number) => (w > h ? CARD.desk : CARD.tall)
+/** il punto (x, y) del tabellone cade sulla cartellina p (con un margine) */
+function onCard(x: number, y: number, p: Project, w: number, h: number, pad = 0) {
+  const c = cardOf(w, h), s = folderScale(w, h)
+  return Math.abs(x - p.mapX * w) < c.w * s / 2 + pad && Math.abs(y - p.mapY * h) < c.h * s / 2 + pad
+}
 
 /** Con tanti lavori le cartelline si stringono: misura in base allo spazio tra una e l'altra */
 function folderScale(w: number, h: number) {
@@ -44,6 +58,9 @@ const FRAME_60      = 1000 / 60
 // stesse proporzioni della tavola (BW : BD in Folder3D)
 const MAP_W         = 1200
 const MAP_H         = 775
+// da telefono, in verticale: il centro della prima riga di cartelline e il passo fra le righe
+const TALL_TOP      = 208
+const TALL_STEP     = 282
 // pixel del canvas per unita' del tabellone. La texture si ricarica solo quando la
 // mappa cambia (la pallina e' la bilia 3D, non si disegna qui); a 1,5 la scheda
 // video emulata del test si spegneva: meglio non rischiare sui telefoni deboli
@@ -93,7 +110,10 @@ const ZONE_JITTER = PROJECTS.map((p) => {
 /** Le anteprime che spuntano dal fascicolo chiuso */
 // Da telefono il tabellone e' in verticale (il fascicolo aperto si guarda girato
 // di 90°): le stesse cartelline, con le coordinate scambiate
-const PROJECTS_TALL: Project[] = PROJECTS.map((p) => ({ ...p, mapX: p.mapY, mapY: p.mapX }))
+// (in cima resta una fascia per il titolo del tabellone: le righe si stringono sotto)
+const PROJECTS_TALL: Project[] = PROJECTS.map((p) => ({
+  ...p, mapX: p.mapY, mapY: (TALL_TOP + (p.mapX - 0.12) / 0.25 * TALL_STEP) / MAP_W,
+}))
 
 const THUMBS = PROJECTS
   .map((p) => (p as { thumb?: string }).thumb)
@@ -107,6 +127,16 @@ const PATH_PAIRS: [number, number][] = [
 ]
 
 /* â”€â”€â”€ Utility â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+
+/** I font del sito hanno nomi generati da next/font: per il canvas li si legge dalle variabili CSS */
+const fontCache: Record<string, string> = {}
+function siteFont(v: string, fallback: string) {
+  if (fontCache[v]) return fontCache[v]
+  const f = typeof window === 'undefined' ? '' : getComputedStyle(document.body).getPropertyValue(v).trim()
+  return f ? (fontCache[v] = f) : fallback
+}
+const GROTESK = () => siteFont('--font-serif-var', 'sans-serif')
+const MONO = () => siteFont('--font-mono-var', 'monospace')
 
 function hexToRgb(hex: string): [number, number, number] {
   const h = hex.replace('#', '')
@@ -148,15 +178,23 @@ function drawMapDecorations(ctx: CanvasRenderingContext2D, w: number, h: number,
   ctx.font = 'bold 7px "JetBrains Mono",monospace'
   ctx.fillStyle = 'rgba(242,237,228,0.60)'; ctx.textAlign = 'center'
   ctx.fillText('N', cx, cy-r-5)
-  ctx.font = '600 7.5px "JetBrains Mono",monospace'
-  ctx.fillStyle = 'rgba(242,237,228,0.25)'; ctx.textAlign = 'left'
-  ctx.fillText('ARTISMI STUDIO', 14, h-12)
-  // le istruzioni sono stampate sul tabellone, come su un gioco da tavolo
-  ctx.font = '600 11px "JetBrains Mono",monospace'
-  ctx.fillStyle = 'rgba(242,237,228,0.5)'; ctx.textAlign = 'right'
+  // il titolo del tabellone: cosa si sta guardando e cosa si puo' fare
+  ctx.textAlign = 'left'
+  ctx.fillStyle = '#FFFFFF'
+  ctx.font = `700 ${touch ? 30 : 26}px ${GROTESK()}`
+  const head = `I LAVORI · ${PROJECTS.length}`
+  ctx.fillText(head, 22, touch ? 40 : 38)
+  const headW = ctx.measureText(head).width
+  ctx.font = `600 ${touch ? 15 : 13}px ${MONO()}`
+  ctx.fillStyle = 'rgba(242,237,228,0.72)'
+  if (touch) ctx.fillText('TOCCA UNA CARTELLINA PER APRIRE IL LAVORO', 22, 64)
+  else ctx.fillText('— CLICCA UNA CARTELLINA PER APRIRE IL LAVORO', 22 + headW + 16, 36)
+  // il gioco della bilia, in piccolo in fondo: e' un di piu'
+  ctx.font = `600 ${touch ? 12 : 11}px ${MONO()}`
+  ctx.fillStyle = 'rgba(242,237,228,0.42)'; ctx.textAlign = 'right'
   ctx.fillText(touch
-    ? 'TOCCA PER SALTARE — TRASCINA LA PALLINA PER SPARARLA'
-    : 'CLICCA PER SALTARE — TRASCINA LA PALLINA PER SPARARLA COME UNA BILIA', w-18, h-14)
+    ? 'TRASCINA LA BILIA PER LANCIARLA'
+    : 'CLICCA PER SALTARE — TRASCINA LA BILIA PER LANCIARLA', w-18, h-12)
 }
 
 function drawZone(ctx: CanvasRenderingContext2D, p: Project, jitter: number[], w: number, h: number) {
@@ -227,36 +265,33 @@ function roundRectPath(ctx: CanvasRenderingContext2D, x: number, y: number, w: n
   ctx.closePath()
 }
 
-/** Manda a capo il titolo su massimo 2 righe, troncando con "…" se non ci sta. */
-function wrapTitle(ctx: CanvasRenderingContext2D, text: string, maxW: number): string[] {
-  if (ctx.measureText(text).width <= maxW) return [text]
-  const words = text.split(' ')
+/** Manda a capo il titolo parola per parola, tutte le righe che servono */
+function wrapAll(ctx: CanvasRenderingContext2D, text: string, maxW: number): string[] {
   const lines: string[] = []
   let cur = ''
-  for (const word of words) {
+  for (const word of text.split(' ')) {
     const next = cur ? `${cur} ${word}` : word
-    if (ctx.measureText(next).width <= maxW) { cur = next; continue }
-    if (cur) lines.push(cur)
+    if (!cur || ctx.measureText(next).width <= maxW) { cur = next; continue }
+    lines.push(cur)
     cur = word
-    if (lines.length === 2) break
   }
-  if (cur && lines.length < 2) lines.push(cur)
-  if (lines.length === 2 && ctx.measureText(lines[1]).width > maxW) {
-    let t = lines[1]
-    while (t.length > 1 && ctx.measureText(`${t}…`).width > maxW) t = t.slice(0, -1)
-    lines[1] = `${t}…`
-  }
-  return lines.slice(0, 2)
+  if (cur) lines.push(cur)
+  return lines
 }
 
-function drawFolder(ctx: CanvasRenderingContext2D, p: Project, w: number, h: number, isHovered: boolean) {
+
+function drawFolder(ctx: CanvasRenderingContext2D, p: Project, w: number, h: number, isHovered: boolean, touch: boolean) {
   const cx = p.mapX*w, cy = p.mapY*h
   const [cr,cg,cb] = hexToRgb(p.accent)
   const seed = p.id.split('').reduce((a,c)=>a+c.charCodeAt(0),0)
-  const tilt = ((seed*73)%100-50)/100*0.10
-  // Cartelline piu' grandi: si vede l'anteprima e invogliano ad aprirle
-  const fw=154, fh=118, br=5
-  const lift = isHovered ? -10 : 0
+  const tilt = ((seed*73)%100-50)/100*0.06
+  // colore del lavoro scuro: la scritta sulla linguetta chiara, e «apri» in una tinta schiarita
+  const dark = (cr*0.299 + cg*0.587 + cb*0.114) < 110
+  const soft = dark ? `rgb(${Math.round(cr+(255-cr)*0.55)},${Math.round(cg+(255-cg)*0.55)},${Math.round(cb+(255-cb)*0.55)})` : p.accent
+  // Cartelline grandi e scritte grandi: si capisce subito che sono i lavori e che si aprono
+  const C = cardOf(w, h)
+  const fw=C.w, fh=C.h, br=6
+  const lift = isHovered ? -8 : 0
   const bx=-fw/2, by=-fh/2
 
   ctx.save()
@@ -264,38 +299,25 @@ function drawFolder(ctx: CanvasRenderingContext2D, p: Project, w: number, h: num
   ctx.rotate(tilt)
   const fs = folderScale(w, h); ctx.scale(fs, fs)
 
-  // Alone attorno alla cartellina: fermo (la mappa si ridisegna solo quando cambia
-  // qualcosa), si accende sotto il puntatore
-  const pulse = 0.5
-  ctx.beginPath()
-  ctx.arc(0, 0, 88 + (isHovered ? 0 : pulse*9), 0, Math.PI*2)
-  ctx.strokeStyle = `rgba(${cr},${cg},${cb},${isHovered ? 0.45 : (0.06+pulse*0.08).toFixed(3)})`
-  ctx.lineWidth = isHovered ? 2.2 : 1.2; ctx.stroke()
-
-  // Linguetta con la categoria
+  // Linguetta con la categoria, in alto a sinistra
   // shadowBlur in canvas 2D e' costoso: lo accendiamo solo sulla cartellina
   // sotto il puntatore, le altre tengono un'ombra netta che non costa nulla.
   ctx.shadowColor = `rgba(0,0,0,${isHovered?0.60:0.32})`
   ctx.shadowBlur = isHovered ? 26 : 0
   ctx.shadowOffsetX = 2; ctx.shadowOffsetY = isHovered ? 12 : 5
-  // La linguetta si adatta alla lunghezza della categoria (prima il testo usciva fuori)
   const catLabel = p.category.toUpperCase()
-  ctx.font='bold 6.5px "JetBrains Mono",monospace'
-  const tabW = Math.min(fw-10, Math.max(40, ctx.measureText(catLabel).width + 18))
+  ctx.font=`700 ${C.cat}px ${MONO()}`
+  const tabH = C.cat + 9
+  const tabW = Math.min(fw-10, Math.max(60, ctx.measureText(catLabel).width + 22))
   ctx.beginPath()
-  ctx.moveTo(bx,          by)
-  ctx.lineTo(bx+tabW,     by)
-  ctx.lineTo(bx+tabW-7,   by-15)
-  ctx.lineTo(bx+5,        by-15)
+  ctx.moveTo(bx,          by+2)
+  ctx.lineTo(bx+tabW,     by+2)
+  ctx.lineTo(bx+tabW-8,   by-tabH)
+  ctx.lineTo(bx+5,        by-tabH)
   ctx.closePath()
   ctx.fillStyle = p.accent; ctx.fill()
-  ctx.shadowBlur=0; ctx.shadowOffsetX=0; ctx.shadowOffsetY=0
 
-  ctx.textAlign='left'
-  ctx.fillStyle='rgba(255,255,255,0.92)'
-  ctx.fillText(catLabel, bx+8, by-5)
-
-  // Corpo cartella — grafite scuro neutro (non piu' viola)
+  // Corpo cartella — grafite scuro neutro
   ctx.shadowColor=`rgba(0,0,0,${isHovered?0.50:0.26})`
   ctx.shadowBlur=isHovered?20:0; ctx.shadowOffsetY=isHovered?9:4
   roundRectPath(ctx, bx, by, fw, fh, br)
@@ -305,62 +327,63 @@ function drawFolder(ctx: CanvasRenderingContext2D, p: Project, w: number, h: num
   ctx.fillStyle=bodyGrad; ctx.fill()
   ctx.shadowBlur=0; ctx.shadowOffsetX=0; ctx.shadowOffsetY=0
 
-  // Anteprima del progetto dentro la cartellina
-  const pad = 4, stripH = 24
-  const px = bx+pad, py = by+pad, pw = fw-pad*2, ph = fh-pad*2-stripH
+  ctx.textAlign='left'
+  ctx.fillStyle=dark ? 'rgba(255,255,255,0.95)' : 'rgba(20,16,24,0.92)'
+  ctx.font=`700 ${C.cat}px ${MONO()}`
+  let cat = catLabel
+  while (cat.length > 1 && ctx.measureText(cat).width > tabW - 20) cat = cat.slice(0, -1)
+  ctx.fillText(cat === catLabel ? cat : `${cat}…`, bx+10, by-tabH*0.28)
+
+  // Anteprima del progetto in alto, il titolo sotto, su fondo scuro: si legge sempre.
+  // Il titolo sta intero: se in due righe non ci sta, si stringe un poco
+  const pad = 5
+  let titleSize = C.title, lines: string[] = []
+  for (const k of [1, 0.88, 0.78, 0.7]) {
+    titleSize = Math.round(C.title*k)
+    ctx.font=`700 ${titleSize}px ${GROTESK()}`
+    lines = wrapAll(ctx, p.title.toUpperCase(), fw-pad*2-12)
+    if (lines.length <= 2 && lines.every((l) => ctx.measureText(l).width <= fw-pad*2-12)) break
+  }
+  lines = lines.slice(0, 2)
+  const lineH = titleSize*1.08
+  const textH = lines.length*lineH + C.cta + 22
+  const px = bx+pad, py = by+pad, pw = fw-pad*2, ph = Math.max(40, fh-pad*2-textH)
   const thumb = getThumb((p as { thumb?: string }).thumb)
   if (thumb) {
     ctx.save()
-    roundRectPath(ctx, px, py, pw, ph, 2)
+    roundRectPath(ctx, px, py, pw, ph, 3)
     ctx.clip()
     const ar = thumb.naturalWidth/thumb.naturalHeight, tr = pw/ph
     let sw: number, sh: number, sx: number, sy: number
     if (ar > tr) { sh = thumb.naturalHeight; sw = sh*tr; sx = (thumb.naturalWidth-sw)/2; sy = 0 }
     else         { sw = thumb.naturalWidth;  sh = sw/tr; sx = 0; sy = (thumb.naturalHeight-sh)/2 }
     ctx.drawImage(thumb, sx, sy, sw, sh, px, py, pw, ph)
-    // Velo scuro a riposo, foto piena al passaggio del mouse
-    ctx.fillStyle = isHovered ? 'rgba(10,8,14,0.05)' : 'rgba(10,8,14,0.24)'
+    // Velo leggero a riposo, foto piena al passaggio del mouse
+    ctx.fillStyle = isHovered ? 'rgba(10,8,14,0)' : 'rgba(10,8,14,0.12)'
     ctx.fillRect(px, py, pw, ph)
     ctx.restore()
   } else {
-    // Nessuna anteprima disponibile: righe finte come prima
-    ctx.strokeStyle='rgba(242,237,228,0.10)'; ctx.lineWidth=1
-    for (let i=0;i<4;i++) {
-      ctx.beginPath(); ctx.moveTo(px+7, py+13+i*12); ctx.lineTo(px+pw-16, py+13+i*12); ctx.stroke()
-    }
+    ctx.fillStyle = `rgba(${cr},${cg},${cb},0.25)`
+    roundRectPath(ctx, px, py, pw, ph, 3); ctx.fill()
   }
 
   // Bordo (glow sull'hover)
   if (isHovered) { ctx.shadowColor=`rgba(${cr},${cg},${cb},0.60)`; ctx.shadowBlur=16 }
   roundRectPath(ctx, bx, by, fw, fh, br)
-  ctx.strokeStyle=isHovered ? p.accent : 'rgba(242,237,228,0.55)'
-  ctx.lineWidth=isHovered?2.2:1.3; ctx.stroke()
+  ctx.strokeStyle=isHovered ? soft : 'rgba(242,237,228,0.55)'
+  ctx.lineWidth=isHovered?3:1.6; ctx.stroke()
   ctx.shadowBlur=0
 
-  // Dog-ear
-  const dex=fw/2, dey=fh/2, ds=12
-  ctx.beginPath()
-  ctx.moveTo(dex-ds, dey); ctx.lineTo(dex, dey-ds); ctx.lineTo(dex, dey)
-  ctx.closePath()
-  ctx.fillStyle=`rgba(${cr},${cg},${cb},0.55)`; ctx.fill()
-
-  // Titolo nella fascia bassa, mandato a capo se serve (niente piu' testo che esce)
-  ctx.textAlign='left'
+  // Titolo, grande, sotto l'anteprima
   ctx.fillStyle='#FFFFFF'
-  ctx.font='600 10.5px "Space Grotesk", sans-serif'
-  const lines = wrapTitle(ctx, p.title.toUpperCase(), fw-26)
-  if (lines.length === 1) {
-    ctx.fillText(lines[0], bx+8, by+fh-8)
-  } else {
-    ctx.font='600 9px "Space Grotesk", sans-serif'
-    const l2 = wrapTitle(ctx, p.title.toUpperCase(), fw-26)
-    ctx.fillText(l2[0], bx+8, by+fh-13)
-    if (l2[1]) ctx.fillText(l2[1], bx+8, by+fh-4)
-  }
+  ctx.font=`700 ${titleSize}px ${GROTESK()}`
+  let ty = py + ph + 8 + titleSize*0.9
+  for (const l of lines) { ctx.fillText(l, bx+pad+6, ty); ty += lineH }
 
-  // Pallino accent
-  ctx.beginPath(); ctx.arc(bx+fw-10, by+fh-11, 3.2, 0, Math.PI*2)
-  ctx.fillStyle=p.accent; ctx.fill()
+  // «Apri →»: e' un lavoro, si apre
+  ctx.font=`700 ${C.cta}px ${MONO()}`
+  ctx.fillStyle = isHovered ? '#FFFFFF' : soft
+  ctx.fillText(touch ? 'TOCCA PER APRIRE →' : 'APRI IL LAVORO →', bx+pad+6, by+fh-10)
 
   ctx.restore()
 }
@@ -715,8 +738,7 @@ export function PortfolioSection() {
 
         if (now - collisionCooldownRef.current > 900) {
           for (const p of PROJ) {
-            const d=Math.hypot(ball.x-p.mapX*w, ball.y-p.mapY*h)
-            if (d < FOLDER_HIT_R*folderScale(w,h)) {
+            if (onCard(ball.x, ball.y, p, w, h, BALL_R*0.5)) {
               collisionCooldownRef.current=now
               const ang=Math.atan2(ball.y-p.mapY*h, ball.x-p.mapX*w)
               ball.vx=Math.cos(ang)*6; ball.vy=Math.sin(ang)*6
@@ -780,7 +802,7 @@ export function PortfolioSection() {
             lc.setTransform(ctx.getTransform())
             for (let i=0;i<PROJ.length;i++) drawZone(lc,PROJ[i],ZONE_JITTER[i],w,h)
             drawPaths(lc,PROJ,w,h)
-            for (const p of PROJ) drawFolder(lc,p,w,h,hoveredRef.current===p.id)
+            for (const p of PROJ) drawFolder(lc,p,w,h,hoveredRef.current===p.id,!desk)
           }
         }
         ctx.save(); ctx.setTransform(1,0,0,1,0,0); ctx.drawImage(L.c,0,0); ctx.restore()
@@ -1081,7 +1103,7 @@ export function PortfolioSection() {
     let clicked: Project|null=null, minD=Infinity
     for (const p of projRef.current) {
       const d=Math.hypot(lx-p.mapX*w, ly-p.mapY*h)
-      if (d<FOLDER_HIT_R*folderScale(w,h)&&d<minD) {minD=d;clicked=p}
+      if (onCard(lx,ly,p,w,h,8)&&d<minD) {minD=d;clicked=p}
     }
     const tx=clicked?clicked.mapX*w:lx, ty=clicked?clicked.mapY*h:ly
     const dist=Math.hypot(tx-ball.x, ty-ball.y)
@@ -1165,7 +1187,7 @@ export function PortfolioSection() {
       if (!p.inside || !ours(e)) { body.style.cursor = ''; return }
       const {w,h} = sizeRef.current
       for (const pr of projRef.current) {
-        if (Math.hypot(p.lx-pr.mapX*w, p.ly-pr.mapY*h) < FOLDER_HIT_R*folderScale(w,h)) { hoveredRef.current = pr.id; break }
+        if (onCard(p.lx, p.ly, pr, w, h)) { hoveredRef.current = pr.id; break }
       }
       const ball = ballRef.current
       body.style.cursor = Math.hypot(p.lx-ball.x, p.ly-ball.y) < BALL_R+12 ? 'grab' : hoveredRef.current ? 'pointer' : 'crosshair'

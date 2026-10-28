@@ -437,8 +437,9 @@ export function MarblePage() {
       }, 0)
     }
 
-    // si scorre a mano: la visuale smette di seguire la bilia
-    const byHand = () => { userAt = performance.now() }
+    // si scorre a mano: la visuale smette di seguire la bilia, per tutto il tiro (prima
+    // dopo poco la riprendeva e tirava la pagina contro chi scorreva)
+    const byHand = () => { userAt = performance.now(); st.shot = false }
     const byKey = (e: KeyboardEvent) => {
       if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(e.key)) byHand()
     }
