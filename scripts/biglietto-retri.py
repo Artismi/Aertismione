@@ -130,4 +130,23 @@ scrivi('retro-fusione', NOTTE, ROSA, f'''
   <ol class="indice">{"".join(f'<li><span class="a">{i+1:02d}</span><span class="c">{t}</span><span class="m">{x}</span></li>' for i, (t, x) in enumerate(zip(SERVIZI, DETTAGLI)))}</ol>
   <div class="linea" style="bottom:86px"></div>
   <div class="piede"><p class="c">Inquadra il fronte: il logo prende vita.</p><div class="m"><p>WhatsApp +39 393 195 9752</p><p>apizzoglio@gmail.com</p></div></div>''')
+# B + C · il nero e la figura della C, volto enorme della B; servizi in mono col loro dettaglio
+scrivi('retro-bc', NOTTE, ROSA, f'''
+  .det {{ position: absolute; left: -386px; top: -232px; width: 1500px; clip-path: inset(0 0 41% 77.8%); }}  /* la i col pallino, in alto a destra */
+  .det path {{ fill: none; stroke: {ROSA}; stroke-width: 2; stroke-linejoin: round; }}
+  .prima {{ position: absolute; left: 50px; top: 44px; font-size: 34px; }}
+  .volto {{ position: absolute; left: -26px; top: 62px; font-size: 400px; line-height: .8; letter-spacing: -.035em; white-space: nowrap; }}
+  .dopo {{ position: absolute; right: 48px; top: 322px; font-size: 40px; text-align: right; }}
+  .servizi {{ position: absolute; left: 50px; bottom: 40px; list-style: none; }}
+  .servizi li {{ line-height: 1.75; }}
+  .servizi b {{ font-weight: 400; margin-right: 12px; }}
+  .servizi i {{ font-style: normal; opacity: .62; }}
+  .contatti {{ position: absolute; right: 48px; bottom: 40px; text-align: right; }}
+  .contatti .c {{ font-size: 26px; line-height: 1.05; margin-bottom: 14px; }}
+''', f'''  <svg class="det" viewBox="0 0 1000 603"><path d="{D}"/></svg>
+  <p class="prima a">Diamo insieme un</p>
+  <p class="volto c">volto</p>
+  <p class="dopo a">alla tua<br>attività.</p>
+  <ol class="servizi m">{"".join(f'<li><b>{i+1:02d}</b>{t} <i>— {x.lower()}</i></li>' for i, (t, x) in enumerate(zip(SERVIZI, DETTAGLI)))}</ol>
+  <div class="contatti"><p class="c">Inquadra il fronte:<br>il logo prende vita.</p><div class="m"><p>WhatsApp +39 393 195 9752</p><p>apizzoglio@gmail.com</p></div></div>''')
 print('scritte le proposte del retro')

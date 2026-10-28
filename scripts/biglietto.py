@@ -185,10 +185,10 @@ pagina('biglietto-retro.html', 'Biglietto Artismi · retro', ROSA, PRUGNA, f'''
   <div class="rule" style="bottom:130px"></div>
   <div class="contatti"><p class="t">Inquadra il fronte:<br><em>il logo prende vita.</em></p>
     <ul class="p"><li>WhatsApp +39 393 195 9752</li><li>apizzoglio@gmail.com</li></ul></div>''')
-# il retro definitivo e' la fusione di scripts/biglietto-retri.py (notte, volto con la i della figura, indice):
+# il retro definitivo e' retro-bc di scripts/biglietto-retri.py (notte, la i della figura, volto enorme):
 # si lancia prima quello, poi questo lo copia accanto al fronte
 if A.tipo == 'misto':
-    fus = os.path.join(os.path.dirname(__file__), '..', 'ar-print', 'varianti', 'retro-fusione', 'biglietto-retro.html')
+    fus = os.path.join(os.path.dirname(__file__), '..', 'ar-print', 'varianti', 'retro-bc', 'biglietto-retro.html')
     r = open(fus, encoding='utf-8').read().replace('url("../../fonts/', f'url("{FONTI}/')
     open(os.path.join(A.out, 'biglietto-retro.html'), 'w', encoding='utf-8').write(r)
 print(A.out, A.tipo)
