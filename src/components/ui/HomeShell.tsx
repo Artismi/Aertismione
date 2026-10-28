@@ -33,14 +33,15 @@ export function HomeShell({ children }: { children: React.ReactNode }) {
   useLayoutEffect(() => {
     useStore.getState().setAway(away)
     if (away) {
-      lenisOf()?.stop()
-      // la pagina del lavoro comincia dall'alto
+      // la pagina del lavoro comincia dall'alto. Lo scroll morbido resta acceso: fermo,
+      // Lenis blocca lo scroll di tutta la pagina (overflow: clip sull'html) e del
+      // lavoro si vedeva solo la prima schermata
       window.scrollTo(0, 0)
+      lenisOf()?.scrollTo(0, { immediate: true, force: true })
     } else if (wasAway.current) {
       // di nuovo a casa: dove si era lasciata
       const y = kept.current
       window.scrollTo(0, y)
-      lenisOf()?.start()
       lenisOf()?.scrollTo(y, { immediate: true, force: true })
       useStore.getState().setScrollY(y)
     }
