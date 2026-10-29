@@ -6,6 +6,7 @@ import * as THREE from 'three';
 
 const HOME_URL = '/';
 const DURATION = 2.4; // il movimento di camera, dal biglietto alla home
+const SYNC = 0.6;     // poi i due loghi, sovrapposti, si muovono insieme mentre il nostro sfuma
 
 let frame = null;
 
@@ -44,6 +45,13 @@ function holdHomeLogo(hold) {
 const clamp01 = (v) => Math.min(1, Math.max(0, v));
 const phase = (t, a, b) => clamp01((t - a) / (b - a));
 const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+
+// Dove si vede il punto p (NDC, -1..1) da una camera in pos con orientamento quat.
+function ndcOf(p, pos, quat, fovDeg, aspect) {
+  const v = p.clone().sub(pos).applyQuaternion(quat.clone().invert());
+  const t = Math.tan(THREE.MathUtils.degToRad(fovDeg) / 2);
+  return { x: v.x / (-v.z * t * aspect), y: v.y / (-v.z * t) };
+}
 
 function decompose(m) {
   const pos = new THREE.Vector3();
@@ -128,6 +136,10 @@ export function flyToHome({ renderer, camera, scene, holo, fadeSource, stopSourc
 
   const pos = new THREE.Vector3();
   const q = new THREE.Quaternion();
+  const center = new THREE.Vector3(), offA = new THREE.Vector3(), offB = new THREE.Vector3();
+  const turn = new THREE.Quaternion(), dirQ = new THREE.Quaternion();
+  const vDes = new THREE.Vector3(), vCur = new THREE.Vector3(), qInv = new THREE.Quaternion(), fix = new THREE.Quaternion();
+  let screenA = null;
   frame.classList.add('arriving');
   document.body.dataset.state = 'flying';
   holdHomeLogo(true);
@@ -140,29 +152,61 @@ export function flyToHome({ renderer, camera, scene, holo, fadeSource, stopSourc
       t += dt;
       const u = clamp01(t / DURATION);
       const e = easeInOut(u);
+      // dopo l'arrivo: i due loghi si muovono insieme, poi il nostro sfuma nell'altro
+      const w = clamp01((t - DURATION) / SYNC);
       holo.update(dt);
       const { fov, end } = readTarget();
 
-      pos.lerpVectors(start.pos, end.pos, e);
+      // la camera va dove il logo si vede come in home; arrivata, ci resta (e ne segue il dondolio)
+      // Intorno al logo, non in linea retta: la direzione da cui lo si guarda ruota piano.
+      // La distanza viene dalla grandezza: il logo passa con continuita' dalla grandezza che ha sul
+      // biglietto a quella della home (in scala logaritmica), tenendo conto dell'angolo di campo
+      // che intanto cambia. E la camera si orienta perche' il logo scorra dritto dal punto dello
+      // schermo dov'era a quello della home. Senza, a meta' volo lo si vedeva enorme e di lato.
+      const fovE = THREE.MathUtils.lerp(fov0, fov, e);
+      center.setFromMatrixPosition(pivot.matrixWorld);
+      offA.subVectors(start.pos, center); offB.subVectors(end.pos, center);
+      const dA0 = offA.length();
+      const tA = Math.tan(THREE.MathUtils.degToRad(fov0) / 2), tB = Math.tan(THREE.MathUtils.degToRad(fov) / 2);
+      const sizeA = 1 / (offA.length() * tA), sizeB = 1 / (offB.length() * tB);
+      const size = Math.exp(THREE.MathUtils.lerp(Math.log(sizeA), Math.log(sizeB), e));
+      const dist = 1 / (size * Math.tan(THREE.MathUtils.degToRad(fovE) / 2));
+      turn.setFromUnitVectors(offA.normalize(), offB.normalize());
+      dirQ.identity().slerp(turn, e);
+      pos.copy(offA).applyQuaternion(dirQ).multiplyScalar(dist).add(center);
       q.copy(start.quat).slerp(end.quat, e);
+      // dove sta il logo sullo schermo (NDC) alla partenza e all'arrivo, e dove deve stare ora
+      if (!screenA) screenA = ndcOf(center, start.pos, start.quat, fov0, camera.aspect);
+      const screenB = ndcOf(center, end.pos, end.quat, fov, innerWidth / innerHeight);
+      const sx = THREE.MathUtils.lerp(screenA.x, screenB.x, e), sy = THREE.MathUtils.lerp(screenA.y, screenB.y, e);
+      const aspectE = THREE.MathUtils.lerp(camera.aspect, innerWidth / innerHeight, e);
+      const tE = Math.tan(THREE.MathUtils.degToRad(fovE) / 2);
+      vDes.set(sx * tE * aspectE, sy * tE, -1).normalize();
+      vCur.subVectors(center, pos).applyQuaternion(qInv.copy(q).invert()).normalize();
+      q.multiply(fix.setFromUnitVectors(vDes, vCur));
       flyCam.position.copy(pos);
       flyCam.quaternion.copy(q);
-      flyCam.fov = THREE.MathUtils.lerp(fov0, fov, e);
+      if (location.hash === '#debug') {
+        const sc = ndcOf(center, pos, q, fovE, aspectE);
+        (window.__flight ??= []).push({ e: +e.toFixed(3), dist: +dist.toFixed(1), dA: +dA0.toFixed(1), dB: +offB.length().toFixed(1), size: +(1 / (center.distanceTo(pos) * tE)).toFixed(4), sizeA: +sizeA.toFixed(4), sizeB: +sizeB.toFixed(4), ndc: [+sc.x.toFixed(2), +sc.y.toFixed(2)], A: [+screenA.x.toFixed(2), +screenA.y.toFixed(2)], B: [+screenB.x.toFixed(2), +screenB.y.toFixed(2)], fov0, fov });
+      }
+      flyCam.fov = fovE;
       flyCam.aspect = innerWidth / innerHeight;
       flyCam.updateProjectionMatrix();
       flyCam.updateMatrixWorld(true);
 
       if (!room) fadeSource(1 - phase(u, 0.08, 0.6));
-      else room.material.opacity = 1 - phase(u, 0.3, 0.8);
-      frame.style.opacity = String(phase(u, 0.25, 0.8));
-      // Arrivato in posizione, il nostro logo si dissolve in quello della home.
-      if (u > 0.8) holdHomeLogo(false);
-      holo.setLogoFade(1 - phase(u, 0.84, 1));
+      else room.material.opacity = 1 - phase(u, 0.3, 0.85);
+      frame.style.opacity = String(phase(u, 0.25, 0.9));
+      // Arrivati, il logo della home ricompare sotto il nostro e il nostro si dissolve:
+      // sono gia' sovrapposti, alla stessa scala, nello stesso punto, con lo stesso dondolio.
+      if (u >= 1) holdHomeLogo(false);
+      holo.setLogoFade(1 - easeInOut(w));
 
       holo.renderLogo(renderer, flyCam, scene.environment);
       renderer.render(scene, flyCam);
 
-      if (u >= 1) {
+      if (w >= 1) {
         renderer.setAnimationLoop(null);
         if (room) { room.removeFromParent(); room.material.map.dispose(); room.material.dispose(); room.geometry.dispose(); }
         takeOver(stopSource);

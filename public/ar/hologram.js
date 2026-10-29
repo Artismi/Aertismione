@@ -16,11 +16,13 @@ const CONE_H = 2.1;
 const CONE_R0 = 0.1;
 const CONE_R1 = 1.25;
 const LOGO_W = 1.5;
-const LOGO_DEPTH = 0.45;
+// Spessore pieno, come il logo della home: e' lo stesso oggetto, e nel volo verso la home la camera
+// si calcola dalla trasformazione fra i due, che deve essere rigida (con uno spessore schiacciato
+// non lo era, e la camera ne usciva storta). Prima era 0.45: col vetro vecchio le pareti interne
+// delle lettere confondevano il disegno.
+const LOGO_DEPTH = 1;
 const LOGO_Y = 1.25;
-const LOGO_LEAN = THREE.MathUtils.degToRad(-20); // inclinato all'indietro, verso chi legge il biglietto
 
-const X_AXIS = new THREE.Vector3(1, 0, 0);
 const Y_AXIS = new THREE.Vector3(0, 1, 0);
 const clamp01 = (v) => Math.min(1, Math.max(0, v));
 const phase = (t, a, b) => clamp01((t - a) / (b - a));
@@ -313,7 +315,7 @@ async function loadLogoGeometry(url) {
   const s = LOGO_W / size.x;
   geo.scale(s, s, s);
   geo.rotateY(Math.PI); // come sul sito: il fronte guarda la camera
-  // Spessore dimezzato: con l'estrusione piena le pareti interne delle lettere confondevano il tag.
+  // spessore: LOGO_DEPTH (pieno, come in home)
   geo.scale(1, 1, LOGO_DEPTH);
   geo.computeBoundingBox();
   // Inversa delle trasformazioni appena applicate: porta la nostra geometria nello spazio
@@ -360,12 +362,11 @@ function addLogoLights(root) {
 }
 
 
-// Rotazione del logo attorno al suo asse, rispetto alla direzione del telefono: il dondolio
-// della home (LogoModel nel mondo: ±10°, lento). Il giro completo di prima, ogni 9 secondi,
-// a meta' mostrava il logo di taglio e di schiena: in prospettiva sembrava ribaltarsi.
-function logoTurn(time) {
-  return Math.sin(time * 0.3) * (Math.PI / 18);
-}
+// Sul biglietto il logo ruota piano su se stesso, intorno al suo asse verticale: un giro ogni
+// ~10 secondi, come un ologramma su un piatto. Nel volo verso la home si rigira verso il fronte
+// per la via piu' breve; il dondolio della home lo da' poi la camera (flight.js).
+const SPIN_RATE = 0.6;        // rad/s
+const SPIN_HOME_RATE = 3.2;   // quanto in fretta, nel volo, torna di fronte
 
 // ─── Assemblaggio ──────────────────────────────────────────────────────
 export async function createHologram({ logoUrl }) {
@@ -393,10 +394,10 @@ export async function createHologram({ logoUrl }) {
   let introStart = 0;
   let lostAt = -Infinity;
   let departing = false;
-  // Il logo sta fermo sul biglietto, come un oggetto vero: rivolto verso il lato da cui si legge
-  // il biglietto, inclinato all'indietro di LOGO_LEAN (col telefono sopra il tavolo si legge di
-  // fronte). Girandoci intorno lo si vede di lato e di dietro. Gli resta solo il dondolio.
-  const qLean = new THREE.Quaternion().setFromAxisAngle(X_AXIS, LOGO_LEAN), qSpin = new THREE.Quaternion();
+  // Il logo sta sul biglietto come un oggetto vero, dritto (perpendicolare alla carta), e ruota
+  // su se stesso: girandoci intorno lo si vede di lato e di dietro, non insegue il telefono.
+  let spin = 0;
+  const setLogoPose = () => logo.pivot.quaternion.setFromAxisAngle(Y_AXIS, spin);
 
   return {
     root,
@@ -411,7 +412,7 @@ export async function createHologram({ logoUrl }) {
     },
 
     // Come si sta girando il logo (per #debug).
-    pose: () => ({ lean: LOGO_LEAN, turn: logoTurn(time) }),
+    pose: () => ({ spin }),
 
     // Moneta, cono e particelle si spengono; il logo resta e continua a girare.
     depart() {
@@ -446,6 +447,10 @@ export async function createHologram({ logoUrl }) {
         shared.uFade.value = Math.max(0, shared.uFade.value - dt / 0.45);
         // la moneta e' metallo pieno, non sfuma: si ritira insieme alla luce
         coin.scale.setScalar(Math.max(0.001, easeOut(shared.uFade.value)));
+        // il logo si rigira verso il fronte, per la via piu' breve
+        const front = Math.round(spin / (Math.PI * 2)) * Math.PI * 2;
+        spin += (front - spin) * (1 - Math.exp(-dt * SPIN_HOME_RATE));
+        setLogoPose();
         return;
       }
       shared.uFade.value = phase(t, 0, 0.35);
@@ -458,9 +463,8 @@ export async function createHologram({ logoUrl }) {
 
       logo.reveal.value = easeInOut(phase(t, 0.9, 2.1));
 
-      // il dondolio intorno all'asse del logo inclinato (come un piatto), non intorno al biglietto
-      qSpin.setFromAxisAngle(Y_AXIS, logoTurn(time));
-      logo.pivot.quaternion.copy(qLean).multiply(qSpin);
+      spin += dt * SPIN_RATE;
+      setLogoPose();
       logo.pivot.position.y = LOGO_Y + Math.sin(time * 1.4) * 0.02;
     },
   };
