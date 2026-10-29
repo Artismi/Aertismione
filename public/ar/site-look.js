@@ -4,7 +4,9 @@
 // sagoma del logo e lo si posa nella scena: dentro le lettere il vetro della home con il rosa
 // che traspare, fuori la stanza vista dalla fotocamera.
 import * as THREE from 'three';
+import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { CAUSTICS_GLSL } from '/ar/caustics.js';
+import { createWaterUniforms, waterScale, applyWorldGlass, worldGlassParams, worldGlassAlpha } from '/ar/shared/logoGlass.js';
 
 const RT_SCALE = 0.75; // risoluzione del passaggio fuori schermo rispetto allo schermo
 
@@ -77,37 +79,48 @@ export function createSiteLook({ geo, reveal, minY, maxY, logoFade, time }) {
     polygonOffsetUnits: 2,
   }));
 
-  // Il vetro di LogoModel.tsx, con gli stessi parametri.
+  // Il vetro del logo nel mondo della home (LogoModel.tsx, inWorld), dal modulo condiviso
+  // con la home (public/ar/shared/logoGlass.js, copia di src/shaders/logoGlass.js).
+  // Il vetro calcola da sé il fondo che ha dietro, come in cima alla home (la parete dello
+  // studio con la luce corallo, l'acqua che si muove): esce opaco, già fuso.
+  const glassU = { ...createWaterUniforms(), u_time: time, u_px: new THREE.Uniform(new THREE.Vector2(1, 1)) };
+  glassU.u_neutral.value = 1; // in cima alla home: la parete neutra dello studio
+  const ripieno = new THREE.TextureLoader().load('/models/logo-ripieno.png');
+  ripieno.flipY = false;
+  ripieno.colorSpace = THREE.NoColorSpace;
+  ripieno.wrapS = ripieno.wrapT = THREE.ClampToEdgeWrapping;
   const glass = new THREE.MeshPhysicalMaterial({
-    color: new THREE.Color('#eef5ff'),
-    emissive: new THREE.Color('#c8e8ff'),
-    emissiveIntensity: 0.32,
-    roughness: 0.0,
-    metalness: 0.0,
-    clearcoat: 1.0,
-    clearcoatRoughness: 0.0,
-    envMapIntensity: 5.5,
+    ...worldGlassParams,
     transparent: true,
     depthWrite: false,
     depthFunc: THREE.LessEqualDepth,
     side: THREE.FrontSide,
   });
+  // La luce di studio del logo della home (LogoModel: useEnvironment studio_logo.hdr).
+  new RGBELoader().loadAsync('/models/studio_logo.hdr').then((tex) => {
+    tex.mapping = THREE.EquirectangularReflectionMapping;
+    glass.envMap = tex;
+    glass.needsUpdate = true;
+  }).catch((err) => console.warn('luce di studio del logo non caricata', err));
   glass.onBeforeCompile = (shader) => {
+    applyWorldGlass(shader, { uniforms: glassU, ripieno, arHold: { value: 1 } });
     Object.assign(shader.uniforms, common);
     shader.vertexShader = 'varying float vObjY;\n' + shader.vertexShader.replace(
       '#include <begin_vertex>', '#include <begin_vertex>\n  vObjY = position.y;');
-    shader.fragmentShader = 'uniform float uReveal, uMinY, uMaxY;\nvarying float vObjY;\n' + ACES_GLSL + shader.fragmentShader
+    shader.fragmentShader = ('uniform float uReveal, uMinY, uMaxY;\nvarying float vObjY;\n' + shader.fragmentShader
       .replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>' + revealChunk())
       .replace('#include <alphamap_fragment>', `#include <alphamap_fragment>
         float NdotV = abs(dot(normalize(vNormal), normalize(vViewPosition)));
-        diffuseColor.a *= 0.18 + NdotV * NdotV * NdotV * 0.74;`)
-      // Fuori schermo three.js non applica tone mapping né conversione sRGB: li si fa qui,
-      // come R3F sullo schermo della home (ACES + sRGB), così i colori combaciano.
-      .replace('#include <dithering_fragment>', `#include <dithering_fragment>
-        gl_FragColor.rgb = sRGBTransferOETF(vec4(arACESFilmic(gl_FragColor.rgb), 1.0)).rgb;
+        float fresnel = 1.0 - NdotV;
+        ${worldGlassAlpha}`))
+      // In fondo, dopo la fusione col fondo: nella home il composer porta il vetro a schermo
+      // (ACES, sRGB); fuori schermo lo si fa qui. Poi la riga luminosa dello "stampaggio".
+      .replace(/}\s*$/, `
+        gl_FragColor.rgb = pvToSrgb(pvAces(gl_FragColor.rgb));
         float band = smoothstep(0.06, 0.0, abs(yN - uReveal)) * step(uReveal, 0.999);
         gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1.0, 0.93, 0.96), band);
-        gl_FragColor.a = max(gl_FragColor.a, band);`);
+        gl_FragColor.a = 1.0;
+      }`);
   };
   const body = new THREE.Mesh(geo, glass);
   body.renderOrder = 2;
@@ -159,6 +172,8 @@ export function createSiteLook({ geo, reveal, minY, maxY, logoFade, time }) {
     { dir: [0, 0, 4], i: 0.75, c: '#e8f4ff' },
     { dir: [3, 1, -2], i: 0.58, c: '#fce4f0' },
     { dir: [-3, -2, -1], i: 0.37, c: '#f0e8ff' },
+    // nel mondo: la luce dall'alto del fascio (pointLight 14 a 1,8 di distanza)
+    { dir: [0, 1.7, 0.6], i: 4.3, c: '#fff0e0' },
   ]) {
     const l = new THREE.DirectionalLight(s.c, s.i);
     l.position.set(...s.dir);
@@ -206,6 +221,9 @@ export function createSiteLook({ geo, reveal, minY, maxY, logoFade, time }) {
 
   const size = new THREE.Vector2();
   const clear = new THREE.Color();
+  const logoC = new THREE.Vector3(), logoS = new THREE.Vector3(), logoU = new THREE.Vector3(), logoQ = new THREE.Quaternion();
+  if (!geo.boundingBox) geo.computeBoundingBox();
+  const logoW = geo.boundingBox.max.x - geo.boundingBox.min.x;
   // La scena della home si disegna in coordinate camera, con una camera che guarda lungo -Z
   // come quella del sito: luce d'ambiente e luci arrivano sul vetro dalle stesse direzioni
   // della home qualunque sia l'orientamento del telefono.
@@ -221,6 +239,9 @@ export function createSiteLook({ geo, reveal, minY, maxY, logoFade, time }) {
       if (rtColor.width !== w || rtColor.height !== h) { rtColor.setSize(w, h); rtMask.setSize(w, h); }
       backdrop.material.uniforms.uRes.value.set(w, h);
       composite.material.uniforms.uRes.value.copy(size);
+      glassU.u_res.value.set(w, h);
+      glassU.u_px.value.set(w, h);
+      waterScale(w, h, glassU.u_scale.value);
 
       pivot.updateWorldMatrix(true, false);
       camera.updateMatrixWorld();
@@ -228,6 +249,13 @@ export function createSiteLook({ geo, reveal, minY, maxY, logoFade, time }) {
       logo.matrix.copy(logoMatrix);
       maskLogo.matrix.copy(logoMatrix);
       logo.matrixWorldNeedsUpdate = maskLogo.matrixWorldNeedsUpdate = true;
+      // dove sta il logo sullo schermo e quanto è largo (in altezze di schermo), come lo
+      // calcola LogoModel: la luce corallo della parete gli si mette dietro
+      pivot.getWorldPosition(logoC);
+      pivot.getWorldScale(logoS);
+      logoU.set(0, 1, 0).applyQuaternion(camera.getWorldQuaternion(logoQ)).add(logoC).project(camera);
+      logoC.project(camera);
+      glassU.u_logo.value.set((logoC.x + 1) / 2, (logoC.y + 1) / 2, logoW * logoS.x * Math.abs(logoU.y - logoC.y) / 2, 0);
       viewCam.projectionMatrix.copy(camera.projectionMatrix);
       viewCam.projectionMatrixInverse.copy(camera.projectionMatrixInverse);
       siteScene.environment = environment;

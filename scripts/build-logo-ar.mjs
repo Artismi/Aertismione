@@ -8,12 +8,14 @@
  * AR si posa esattamente su quello della home e ci si dissolve sopra, quindi
  * devono essere lo stesso disegno, nella stessa posizione.
  *
- * La pagina AR legge una mesh sola, con posizioni e normali:
+ * La pagina AR legge una mesh sola, con posizioni, normali e uv:
  *  - la mesh delle lettere resta nel suo nodo, con la sua trasformazione (è da lì
  *    che la pagina AR calcola il passaggio alla scena della home);
  *  - i pallini delle i (nodi "pallino" e "pallino-i") diventano sfere di vetro,
  *    come le fa la home (LogoModel.tsx), unite alla mesh delle lettere;
- *  - senza uv, semplificata e compressa: sul telefono arriva in un attimo.
+ *  - con il primo uv della home (la mappa del ripieno del vetro, logo-ripieno.png;
+ *    le sfere hanno uv -1, fuori dalla mappa, come in LogoModel.tsx), semplificata
+ *    e compressa: sul telefono arriva in un attimo.
  */
 import { NodeIO, Logger } from '@gltf-transform/core'
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions'
@@ -130,7 +132,7 @@ async function main() {
   const lettere = byName('aRTISMI 3D')
   const prim = lettere.getMesh().listPrimitives()[0]
   const vPrima = vertici(prim)
-  for (const sem of prim.listSemantics()) if (sem !== 'POSITION' && sem !== 'NORMAL') prim.setAttribute(sem, null)
+  for (const sem of prim.listSemantics()) if (!['POSITION', 'NORMAL', 'TEXCOORD_0'].includes(sem)) prim.setAttribute(sem, null)
 
   // le sfere si misurano prima di togliere i pallini
   const sfere = ['pallino', 'pallino-i'].map((name) => {
@@ -149,18 +151,22 @@ async function main() {
   const P = Array.from(prim.getAttribute('POSITION').getArray())
   const N = Array.from(prim.getAttribute('NORMAL').getArray())
   const I = Array.from(prim.getIndices().getArray())
+  const UV = Array.from(prim.getAttribute('TEXCOORD_0').getArray())
   for (const s of sfere) {
     const g = sfera(s), base = P.length / 3
     g.pos.forEach((p) => P.push(...fromScene(lettere, p)))
     g.nrm.forEach((n) => N.push(...normalFromScene(lettere, n)))
+    g.pos.forEach(() => UV.push(-1, -1))
     g.idx.forEach((i) => I.push(base + i))
   }
   const buffer = root.listBuffers()[0]
   prim.setAttribute('POSITION', doc.createAccessor().setType('VEC3').setArray(new Float32Array(P)).setBuffer(buffer))
   prim.setAttribute('NORMAL', doc.createAccessor().setType('VEC3').setArray(new Float32Array(N)).setBuffer(buffer))
+  prim.setAttribute('TEXCOORD_0', doc.createAccessor().setType('VEC2').setArray(new Float32Array(UV)).setBuffer(buffer))
   prim.setIndices(doc.createAccessor().setType('SCALAR').setArray(new Uint32Array(I)).setBuffer(buffer))
 
-  await doc.transform(prune(), meshopt({ encoder: MeshoptEncoder, level: 'medium' }))
+  // keepAttributes: il materiale non ha texture, e senza questo prune toglierebbe gli uv
+  await doc.transform(prune({ keepAttributes: true }), meshopt({ encoder: MeshoptEncoder, level: 'medium' }))
   await io.write(OUT, doc)
 
   console.log(

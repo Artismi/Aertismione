@@ -278,15 +278,15 @@ function makeParticles(count = 160) {
   return pts;
 }
 
-// ─── Logo di vetro (stesso materiale di LogoModel.tsx) ─────────────────
-function toFloat(attr) {
-  const arr = new Float32Array(attr.count * 3);
+// ─── Logo di vetro (lo stesso vetro di LogoModel.tsx nel mondo della home) ───
+function toFloat(attr, size = 3) {
+  const arr = new Float32Array(attr.count * size);
   for (let i = 0; i < attr.count; i++) {
-    arr[i * 3] = attr.getX(i);
-    arr[i * 3 + 1] = attr.getY(i);
-    arr[i * 3 + 2] = attr.getZ(i);
+    arr[i * size] = attr.getX(i);
+    arr[i * size + 1] = attr.getY(i);
+    if (size > 2) arr[i * size + 2] = attr.getZ(i);
   }
-  return new THREE.BufferAttribute(arr, 3);
+  return new THREE.BufferAttribute(arr, size);
 }
 
 async function loadLogoGeometry(url) {
@@ -299,6 +299,8 @@ async function loadLogoGeometry(url) {
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', toFloat(src.geometry.attributes.position));
   geo.setAttribute('normal', toFloat(src.geometry.attributes.normal));
+  // il punto nell'ingombro del logo, per la mappa del ripieno del vetro (bilie: -1)
+  geo.setAttribute('uv', toFloat(src.geometry.attributes.uv, 2));
   geo.setIndex(src.geometry.index);
   geo.applyMatrix4(src.matrixWorld);
   geo.computeBoundingBox();
