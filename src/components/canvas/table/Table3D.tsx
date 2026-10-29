@@ -103,8 +103,9 @@ const V = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z)
 /** da telefono la camera guarda il banco da qui: alta e un po' davanti */
 const MOBILE_DIR = V(0, 7.6, 4.25).normalize()
 
-/** dove sta il logo nella prima schermata, in frazione dell'altezza dello schermo */
-const LOGO_AT = 0.45
+/** dove sta il logo nella prima schermata, in frazione dell'altezza dello schermo.
+ *  Da telefono piu' in alto: sotto c'e' il titolo, e al 45% restava un gran vuoto sopra */
+const LOGO_AT = 0.45, LOGO_AT_MOBILE = 0.34
 /** nelle aperture il 3D si disegna con questa frazione dei pixel (al minimo uno per pixel dello schermo) */
 const MOVING_DPR = 0.6
 /** quanto deve restare tutto fermo prima di tornare alla risoluzione piena (ms) */
@@ -178,7 +179,7 @@ function Rig({ phase, mobile, stage, look, logo }: {
       // il logo: in cima alla pagina, nello stesso spazio del banco, girato verso la camera
       const g = logo.current
       if (g) {
-        const fromStage = ((r.top + r.height / 2) - (vh * LOGO_AT - window.scrollY)) / vh * viewH
+        const fromStage = ((r.top + r.height / 2) - (vh * (mobile ? LOGO_AT_MOBILE : LOGO_AT) - window.scrollY)) / vh * viewH
         g.position.copy(t.lk).addScaledVector(t.up, fromStage).addScaledVector(t.right, -((r.left + r.width / 2) - vw / 2) / vh * viewH)
         g.quaternion.setFromRotationMatrix(t.m.lookAt(t.pos, t.lk, t.up))
       }
@@ -557,7 +558,7 @@ function World(props: Props & { images: Images | null }) {
           si carica subito, e' la prima cosa che si vede */}
       <group ref={logo}>
         <Suspense fallback={null}>
-          <LogoModel inWorld scale={mobile ? 0.82 : 1} />
+          <LogoModel inWorld scale={mobile ? 0.9 : 1} />
         </Suspense>
         <GlassSync />
       </group>
