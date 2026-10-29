@@ -138,23 +138,26 @@ from svgpathtools import parse_path
 _P = parse_path(D); _sp = _P.continuous_subpaths()
 FIG = _sp[0].cropped(0.75455, 0.9236).d()           # dalla punta in alto (842, 88) giu' fino a (764, 515) sulla gamba della m
 TESTA = _sp[6].d()                                  # il pallino
-SC = 1.55                                           # la punta in alto esce di sopra; la gamba della m finisce sul filetto
-FTX, FTY = 905 - 910.3 * SC, 362 - 421.7 * SC       # braccio a 905 px, punta della gamba a 362 px, sopra il filetto
+SC = 2.0                                            # la punta in alto esce di sopra
+FTX, FTY = 772 - 879 * SC, 545 - 421.7 * SC         # la punta della i scende fra 04 e 05 (772 px), la gamba della m fra 03 e 04
+FONDO = 660 - 86                                    # la figura si ferma sul filetto di sotto
 TOP, H = 34, 330                 # il claim, sopra il filetto dei servizi
 RIGA = 388                       # il filetto: sotto ci sono i servizi, la figura ci finisce sopra
 scrivi('retro-bc', NOTTE, ROSA, f'''
-  .det {{ position: absolute; left: 0; top: 0; width: 1020px; height: {RIGA}px; overflow: hidden; }}  /* la figura finisce sul filetto */
+  .det {{ position: absolute; left: 0; top: 0; width: 1020px; height: {FONDO}px; overflow: hidden; }}  /* la figura scende fra i servizi */
   .det path {{ fill: none; stroke: {ROSA}; stroke-width: {2.2 / SC:.3f}; stroke-linejoin: round; stroke-linecap: round; }}
   .claim {{ position: absolute; left: 48px; top: {TOP}px; height: {H}px; display: inline-flex; flex-direction: column; justify-content: space-between; align-items: flex-start; }}
   .claim .a {{ display: block; font-size: 44px; line-height: .74; white-space: nowrap; letter-spacing: 0; }}
   .claim .volto {{ display: block; font-size: 236px; line-height: .74; letter-spacing: -.035em; white-space: nowrap; margin-left: -10px; }}
   .linea {{ position: absolute; left: 48px; right: 48px; height: 0; border-top: 1px solid {ROSA}; }}
-  .indice {{ position: absolute; left: 48px; right: 48px; top: {RIGA + 20}px; list-style: none; display: grid; grid-template-columns: 1fr 1.15fr 1.1fr 1.05fr 1fr; gap: 16px; }}
+  .indice {{ position: absolute; left: 48px; right: 48px; top: {RIGA + 20}px; list-style: none; display: grid; grid-template-columns: 162px 175px 162px 190px 1fr; gap: 16px; }}
+  .indice li:nth-child(3) > .m {{ max-width: 110px; }}
+  .indice li:nth-child(4) > span {{ max-width: 128px; }}  /* lo 04 sta fra la gamba della m e la gamba della i */
   .indice .a {{ display: block; font-size: 64px; line-height: .8; letter-spacing: -.02em; }}
   .indice .c {{ display: block; margin-top: 12px; font-size: 21px; line-height: 1.05; text-wrap: balance; }}
   .indice .m {{ display: block; margin-top: 9px; font-size: 11px; line-height: 1.45; letter-spacing: .03em; opacity: .78; text-wrap: balance; }}
   .piede {{ position: absolute; left: 48px; right: 48px; bottom: 36px; display: flex; justify-content: space-between; }}
-''', f'''  <svg class="det" viewBox="0 0 1020 {RIGA}"><g transform="translate({FTX:.2f} {FTY:.2f}) scale({SC:.4f})"><path d="{FIG}"/><path d="{TESTA}"/></g></svg>
+''', f'''  <svg class="det" viewBox="0 0 1020 {FONDO}"><g transform="translate({FTX:.2f} {FTY:.2f}) scale({SC:.4f})"><path d="{FIG}"/><path d="{TESTA}"/></g></svg>
   <h1 class="claim"><span class="a" data-fit="#volto">Diamo insieme un</span><span class="volto c" id="volto">volto</span><span class="a" data-fit="#volto">alla tua attività.</span></h1>
   <div class="linea" style="top:{RIGA}px"></div>
   <ol class="indice">{"".join(f'<li><span class="a">{i+1:02d}</span><span class="c">{t}</span><span class="m">{x}</span></li>' for i, (t, x) in enumerate(zip(SERVIZI, DETTAGLI)))}</ol>
