@@ -141,8 +141,19 @@ TESTA = _sp[6].d()                                  # il pallino
 SC = 2.0                                            # la punta in alto esce di sopra
 FTX, FTY = 772 - 879 * SC, 545 - 421.7 * SC         # la punta della i scende fra 04 e 05 (772 px), la gamba della m fra 03 e 04
 FONDO = 660 - 86                                    # la figura si ferma sul filetto di sotto
+import numpy as _np
+def _incroci(y_px):
+    yl = (y_px - FTY) / SC; fig = parse_path(FIG); xs = []
+    T = _np.linspace(0, 1, 20001); Z = _np.array([fig.point(t) for t in T]); dy = Z.imag - yl
+    for i in _np.nonzero(_np.sign(dy[:-1]) != _np.sign(dy[1:]))[0]:
+        xs.append(FTX + SC * (Z[i].real + (Z[i+1].real - Z[i].real) * (-dy[i]) / (dy[i+1] - dy[i])))
+    return sorted(xs)
 TOP, H = 34, 330                 # il claim, sopra il filetto dei servizi
 RIGA = 388                       # il filetto: sotto ci sono i servizi, la figura ci finisce sopra
+# il filetto di sopra: dentro la i (fra i due lati della sua gamba) non c'e'
+_x = _incroci(RIGA)                                 # da sinistra: gamba della m, lato sinistro e lato destro della gamba della i
+FILETTO = (f'<div class="linea" style="top:{RIGA}px; right: auto; width: {_x[1] - 48:.1f}px"></div>'
+           f'<div class="linea" style="top:{RIGA}px; left: {_x[2]:.1f}px"></div>')
 scrivi('retro-bc', NOTTE, ROSA, f'''
   .det {{ position: absolute; left: 0; top: 0; width: 1020px; height: {FONDO}px; overflow: hidden; }}  /* la figura scende fra i servizi */
   .det path {{ fill: none; stroke: {ROSA}; stroke-width: {2.2 / SC:.3f}; stroke-linejoin: round; stroke-linecap: round; }}
@@ -158,7 +169,7 @@ scrivi('retro-bc', NOTTE, ROSA, f'''
   .indice .c {{ display: block; margin-top: 12px; font-size: 21px; line-height: 1.05; text-wrap: balance; }}
   .indice .m {{ display: block; margin-top: 9px; font-size: 11px; line-height: 1.45; letter-spacing: .03em; opacity: .78; text-wrap: balance; }}
   .piede {{ position: absolute; left: 48px; right: 48px; bottom: 36px; display: flex; justify-content: space-between; }}
-''', f'''  <div class="linea" style="top:{RIGA}px"></div>
+''', f'''  {FILETTO}
   <svg class="det" viewBox="0 0 1020 {FONDO}"><defs><clipPath id="riga"><rect x="0" y="{RIGA - 10}" width="1020" height="20"/></clipPath></defs>
     <g clip-path="url(#riga)"><g transform="translate({FTX:.2f} {FTY:.2f}) scale({SC:.4f})"><path class="alone" d="{FIG}"/></g></g>
     <g transform="translate({FTX:.2f} {FTY:.2f}) scale({SC:.4f})"><path d="{FIG}"/><path d="{TESTA}"/></g></svg>
