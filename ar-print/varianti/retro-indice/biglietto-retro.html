@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><title>Biglietto Artismi · retro</title>
+<!-- generato da scripts/biglietto-retri.py -->
+<style>
+  @font-face { font-family: "Archivo"; src: url("../../fonts/archivo-latin-wdth-normal.woff2") format("woff2"); font-weight: 100 900; font-stretch: 62% 125%; }
+  @font-face { font-family: "Cormorant Garamond"; src: url("../../fonts/cormorant-garamond-latin-300-normal.woff2") format("woff2"); font-weight: 300; }
+  @font-face { font-family: "Cormorant Garamond"; src: url("../../fonts/cormorant-garamond-latin-300-italic.woff2") format("woff2"); font-weight: 300; font-style: italic; }
+  @font-face { font-family: "IBM Plex Mono"; src: url("../../fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2"); font-weight: 400; }
+  @page { size: 85mm 55mm; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1020px; height: 660px; background: #F5C7D6; color: #2B1622; overflow: hidden; }
+  .card { position: relative; width: 1020px; height: 660px; }
+  .a { font-family: "Archivo", sans-serif; font-weight: 780; font-stretch: 62%; text-transform: uppercase; line-height: .86; }
+  .c { font-family: "Cormorant Garamond", serif; font-weight: 300; font-style: italic; }
+  .m { font-family: "IBM Plex Mono", monospace; font-size: 14px; letter-spacing: .05em; line-height: 1.6; }
+  .u { text-transform: uppercase; letter-spacing: .2em; font-size: 12px; }
+
+  .testa { position: absolute; left: 48px; top: 40px; right: 48px; display: flex; justify-content: space-between; }
+  .claim { position: absolute; left: 48px; top: 50px; width: 330px; font-size: 54px; line-height: .95; }
+  .claim .c { text-transform: none; font-size: 1.22em; line-height: .7; }
+  .indice { position: absolute; left: 430px; right: 48px; top: 36px; list-style: none; }
+  .indice li { display: grid; grid-template-columns: 128px 1fr; align-items: end; height: 104px; border-bottom: 1px solid #2B1622; }
+  .indice li:first-child { border-top: 0; }
+  .indice .a { font-size: 112px; line-height: .8; letter-spacing: -.02em; }
+  .indice .c { font-size: 33px; line-height: 1; padding-bottom: 12px; }
+  .piede { position: absolute; left: 48px; bottom: 40px; width: 350px; }
+  .piede .c { font-size: 26px; line-height: 1.05; margin-bottom: 16px; }
+
+</style></head>
+<body><div class="card">
+  <p class="testa m u"><span>Artismi — Design Studio</span></p>
+  <h1 class="claim a">Diamo un <span class="c">volto</span> alla tua attività.</h1>
+  <ol class="indice"><li><span class="a">01</span><span class="c">Identità completa</span></li><li><span class="a">02</span><span class="c">Illustrazioni, stampe e gadget</span></li><li><span class="a">03</span><span class="c">Web, app e realtà aumentata</span></li><li><span class="a">04</span><span class="c">Progettazione partecipata</span></li><li><span class="a">05</span><span class="c">Gestione social</span></li></ol>
+  <div class="piede"><p class="c">Inquadra il fronte:<br>il logo prende vita.</p><div class="m"><p>WhatsApp +39 393 195 9752</p><p>apizzoglio@gmail.com</p></div></div>
+</div>
+<script>
+// [lettering] le righe con data-fit si giustificano sulla larghezza dell'elemento indicato: i titoli in
+// Archivo cambiano corpo, le righe in mono cambiano spaziatura. Il blocco diventa una forma sola.
+document.fonts.ready.then(() => {
+  const larg = el => { const r = document.createRange(); r.selectNodeContents(el); return r.getBoundingClientRect().width; };
+  document.querySelectorAll('[data-fit]').forEach(el => {
+    const W = larg(document.querySelector(el.dataset.fit)), cs = getComputedStyle(el);
+    if (el.dataset.modo === 'spazio') { const n = el.textContent.length; const ls = parseFloat(cs.letterSpacing) || 0; el.style.letterSpacing = (ls + (W - larg(el)) / Math.max(1, n - 1)) + 'px'; }
+    else { let fs = parseFloat(cs.fontSize); for (let i = 0; i < 4; i++) { fs *= W / larg(el); el.style.fontSize = fs + 'px'; } }
+  });
+  window.__fit = true;
+});
+</script>
+</body></html>
