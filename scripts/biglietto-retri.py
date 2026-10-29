@@ -146,6 +146,7 @@ RIGA = 388                       # il filetto: sotto ci sono i servizi, la figur
 scrivi('retro-bc', NOTTE, ROSA, f'''
   .det {{ position: absolute; left: 0; top: 0; width: 1020px; height: {FONDO}px; overflow: hidden; }}  /* la figura scende fra i servizi */
   .det path {{ fill: none; stroke: {ROSA}; stroke-width: {2.2 / SC:.3f}; stroke-linejoin: round; stroke-linecap: round; }}
+  .det path.alone {{ stroke: {NOTTE}; stroke-width: {16 / SC:.3f}; }}  /* dove la figura attraversa il filetto di sopra, il filetto si interrompe */
   .claim {{ position: absolute; left: 48px; top: {TOP}px; height: {H}px; display: inline-flex; flex-direction: column; justify-content: space-between; align-items: flex-start; }}
   .claim .a {{ display: block; font-size: 44px; line-height: .74; white-space: nowrap; letter-spacing: 0; }}
   .claim .volto {{ display: block; font-size: 236px; line-height: .74; letter-spacing: -.035em; white-space: nowrap; margin-left: -10px; }}
@@ -157,9 +158,11 @@ scrivi('retro-bc', NOTTE, ROSA, f'''
   .indice .c {{ display: block; margin-top: 12px; font-size: 21px; line-height: 1.05; text-wrap: balance; }}
   .indice .m {{ display: block; margin-top: 9px; font-size: 11px; line-height: 1.45; letter-spacing: .03em; opacity: .78; text-wrap: balance; }}
   .piede {{ position: absolute; left: 48px; right: 48px; bottom: 36px; display: flex; justify-content: space-between; }}
-''', f'''  <svg class="det" viewBox="0 0 1020 {FONDO}"><g transform="translate({FTX:.2f} {FTY:.2f}) scale({SC:.4f})"><path d="{FIG}"/><path d="{TESTA}"/></g></svg>
+''', f'''  <div class="linea" style="top:{RIGA}px"></div>
+  <svg class="det" viewBox="0 0 1020 {FONDO}"><defs><clipPath id="riga"><rect x="0" y="{RIGA - 10}" width="1020" height="20"/></clipPath></defs>
+    <g clip-path="url(#riga)"><g transform="translate({FTX:.2f} {FTY:.2f}) scale({SC:.4f})"><path class="alone" d="{FIG}"/></g></g>
+    <g transform="translate({FTX:.2f} {FTY:.2f}) scale({SC:.4f})"><path d="{FIG}"/><path d="{TESTA}"/></g></svg>
   <h1 class="claim"><span class="a" data-fit="#volto">Diamo insieme un</span><span class="volto c" id="volto">volto</span><span class="a" data-fit="#volto">alla tua attività.</span></h1>
-  <div class="linea" style="top:{RIGA}px"></div>
   <ol class="indice">{"".join(f'<li><span class="a">{i+1:02d}</span><span class="c">{t}</span><span class="m">{x}</span></li>' for i, (t, x) in enumerate(zip(SERVIZI, DETTAGLI)))}</ol>
   <div class="linea" style="bottom:86px"></div>
   <div class="piede m"><p>WhatsApp +39 393 195 9752</p><p>artismidesignstudio.com</p><p>apizzoglio@gmail.com</p></div>''')
