@@ -19,6 +19,8 @@ const LOGO_W = 1.5;
 const LOGO_DEPTH = 0.45;
 const LOGO_Y = 1.25;
 
+const X_AXIS = new THREE.Vector3(1, 0, 0);
+const Y_AXIS = new THREE.Vector3(0, 1, 0);
 const clamp01 = (v) => Math.min(1, Math.max(0, v));
 const phase = (t, a, b) => clamp01((t - a) / (b - a));
 const easeOut = (t) => 1 - Math.pow(1 - t, 3);
@@ -358,15 +360,11 @@ function addLogoLights(root) {
 
 const wrapAngle = (a) => Math.atan2(Math.sin(a), Math.cos(a));
 
-// Rotazione del logo attorno al suo asse, rispetto alla direzione del telefono:
-// l'oscillazione lenta della home (±30°) e, ogni TURN_EVERY secondi, un giro completo.
-const TURN_EVERY = 9;
-const TURN_TIME = 2.4;
+// Rotazione del logo attorno al suo asse, rispetto alla direzione del telefono: il dondolio
+// della home (LogoModel nel mondo: ±10°, lento). Il giro completo di prima, ogni 9 secondi,
+// a meta' mostrava il logo di taglio e di schiena: in prospettiva sembrava ribaltarsi.
 function logoTurn(time) {
-  const sway = Math.sin(time * 0.4) * (Math.PI / 6);
-  const c = time % TURN_EVERY;
-  const turn = c > TURN_EVERY - TURN_TIME ? easeInOut((c - (TURN_EVERY - TURN_TIME)) / TURN_TIME) * Math.PI * 2 : 0;
-  return sway + turn;
+  return Math.sin(time * 0.3) * (Math.PI / 18);
 }
 
 // ─── Assemblaggio ──────────────────────────────────────────────────────
@@ -401,6 +399,7 @@ export async function createHologram({ logoUrl }) {
   let faceYaw = 0;
   let facePitch = 0;
   const camLocal = new THREE.Vector3();
+  const qYaw = new THREE.Quaternion(), qPitch = new THREE.Quaternion(), qSpin = new THREE.Quaternion();
 
   return {
     root,
@@ -413,6 +412,9 @@ export async function createHologram({ logoUrl }) {
     renderLogo(renderer, camera, environment) {
       logo.look.render(renderer, camera, logo.pivot, environment);
     },
+
+    // Come si sta girando il logo (per #debug).
+    pose: () => ({ faceYaw, facePitch, turn: logoTurn(time) }),
 
     // Moneta, cono e particelle si spengono; il logo resta e continua a girare.
     depart() {
@@ -463,10 +465,21 @@ export async function createHologram({ logoUrl }) {
         root.worldToLocal(camLocal);
         const ground = Math.hypot(camLocal.x, camLocal.z);
         const k = 1 - Math.exp(-dt * 4);
-        faceYaw += wrapAngle(Math.atan2(camLocal.x, camLocal.z) - faceYaw) * k;
+        // Girarsi verso il telefono solo se il telefono sta davvero di lato. Visto da sopra (o
+        // di fronte, il biglietto su uno schermo) la sua posizione di lato e' quasi zero e
+        // l'angolo, con il minimo tremolio della stima, saltava di decine di gradi: il logo
+        // ruotava a caso. Li' resta rivolto verso il lato da cui si legge il biglietto.
+        const side = THREE.MathUtils.smoothstep(ground / Math.max(1e-6, camLocal.length()), 0.25, 0.6);
+        faceYaw += wrapAngle(Math.atan2(camLocal.x, camLocal.z) * side - faceYaw) * k * (0.25 + 0.75 * side);
         facePitch += (-Math.atan2(camLocal.y - LOGO_Y, ground) * 0.75 - facePitch) * k;
       }
-      logo.pivot.rotation.set(facePitch, faceYaw + logoTurn(time), 0);
+      // Prima si gira verso il telefono (intorno alla normale del biglietto), poi si inclina verso
+      // di lui, e il dondolio e il giro su se stesso vanno intorno all'asse del logo: inclinato,
+      // il logo gira come su un piatto, non nel piano dello schermo.
+      qYaw.setFromAxisAngle(Y_AXIS, faceYaw);
+      qPitch.setFromAxisAngle(X_AXIS, facePitch);
+      qSpin.setFromAxisAngle(Y_AXIS, logoTurn(time));
+      logo.pivot.quaternion.copy(qYaw).multiply(qPitch).multiply(qSpin);
       logo.pivot.position.y = LOGO_Y + Math.sin(time * 1.4) * 0.02;
     },
   };

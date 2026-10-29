@@ -6,7 +6,7 @@ import * as THREE from 'three';
 
 const HOME_URL = '/';
 const DURATION = 1.8;
-const SPIN = 0.6; // rad/s, la stessa rotazione che il logo aveva sul biglietto
+const SPIN = 0; // rad/s: sul biglietto il logo non gira piu' su se stesso (dondola come in home), e nel volo nemmeno
 
 let frame = null;
 
