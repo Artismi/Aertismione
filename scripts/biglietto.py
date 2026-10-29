@@ -184,7 +184,7 @@ pagina('biglietto-retro.html', 'Biglietto Artismi · retro', ROSA, PRUGNA, f'''
   <ol class="servizi">{"".join(f'<li><b class="p">{i+1:02d}</b><span class="t">{t}</span></li>' for i, t in enumerate(SERVIZI))}</ol>
   <div class="rule" style="bottom:130px"></div>
   <div class="contatti"><p class="t">Inquadra il fronte:<br><em>il logo prende vita.</em></p>
-    <ul class="p"><li>WhatsApp +39 393 195 9752</li><li>apizzoglio@gmail.com</li></ul></div>''')
+    <ul class="p"><li>WhatsApp +39 393 195 9752</li><li>andrea@artismidesignstudio.com</li></ul></div>''')
 # il retro definitivo e' retro-bc di scripts/biglietto-retri.py (notte, la i della figura, volto enorme):
 # si lancia prima quello, poi questo lo copia accanto al fronte
 if A.tipo == 'misto':

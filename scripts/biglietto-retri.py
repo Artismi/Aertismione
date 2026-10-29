@@ -84,7 +84,7 @@ document.fonts.ready.then(() => {{
     fr = open(os.path.join(QUI, '..', 'ar-print', 'biglietto-fronte.html'), encoding='utf-8').read().replace('url("fonts/', f'url("{F}/')
     open(os.path.join(out, 'biglietto-fronte.html'), 'w', encoding='utf-8').write(fr)
 
-CONTATTI = '<p>WhatsApp +39 393 195 9752</p><p>apizzoglio@gmail.com</p>'
+CONTATTI = '<p>WhatsApp +39 393 195 9752</p><p>andrea@artismidesignstudio.com</p>'
 
 # A · indice: i servizi come l'indice di una rivista, i numeri enormi in colonna
 scrivi('retro-indice', ROSA, PRUGNA, f'''
@@ -158,7 +158,7 @@ scrivi('retro-fusione', NOTTE, ROSA, f'''
   <div class="linea" style="top:388px"></div>
   <ol class="indice">{"".join(f'<li><span class="a">{i+1:02d}</span><span class="c">{t}</span><span class="m">{x}</span></li>' for i, (t, x) in enumerate(zip(SERVIZI, DETTAGLI)))}</ol>
   <div class="linea" style="bottom:86px"></div>
-  <div class="piede"><p class="c">Inquadra il fronte: il logo prende vita.</p><div class="m"><p>WhatsApp +39 393 195 9752</p><p>apizzoglio@gmail.com</p></div></div>''')
+  <div class="piede"><p class="c">Inquadra il fronte: il logo prende vita.</p><div class="m"><p>WhatsApp +39 393 195 9752</p><p>andrea@artismidesignstudio.com</p></div></div>''')
 # B + C · il nero e la figura della C, volto enorme della B; servizi in mono col loro dettaglio
 # la figura della i come nello schizzo: dall'alto scende un lato solo della punta (il destro), gira sotto il
 # pallino e sul braccio, la gamba resta chiusa con la sua punta, e dall'altro lato della gamba la linea risale,
@@ -193,9 +193,9 @@ scrivi('retro-bc', NOTTE, ROSA, f'''
   .claim {{ position: absolute; left: 0; top: 0; width: 600px; height: {RIGA}px; }}
   .claim span {{ position: absolute; white-space: nowrap; }}
   .claim .prima {{ left: 50px; top: 46px; font-size: 40px; line-height: .74; }}
-  .claim .v {{ left: 40px; top: 104px; font-size: 232px; line-height: 1; letter-spacing: -.03em;
+  .claim .v {{ left: 129px; top: 14px; font-size: 232px; line-height: 1; letter-spacing: -.03em;
                font-family: "Fraunces", serif; font-style: italic; font-weight: 300; font-variation-settings: "SOFT" 100, "WONK" 1, "opsz" 144; }}
-  .claim .dopo {{ right: 44px; bottom: 50px; font-size: 40px; line-height: .86; text-align: right; }}
+  .claim .dopo {{ right: 83px; bottom: 86px; font-size: 40px; line-height: .86; text-align: right; }}
   .linea {{ position: absolute; left: 48px; right: 48px; height: 0; border-top: 1px solid {ROSA}; }}
   .indice {{ position: absolute; left: 48px; right: 48px; top: {RIGA + 20}px; list-style: none; display: grid; grid-template-columns: 162px 175px 162px 190px 1fr; gap: 16px; }}
   .indice li:nth-child(3) > .m {{ max-width: 110px; }}
@@ -211,5 +211,5 @@ scrivi('retro-bc', NOTTE, ROSA, f'''
   <h1 class="claim"><span class="a prima">Diamo insieme un</span><span class="v">volto</span><span class="a dopo">alla tua<br>attività.</span></h1>
   <ol class="indice">{"".join(f'<li><span class="a">{i+1:02d}</span><span class="c">{t}</span><span class="m">{x}</span></li>' for i, (t, x) in enumerate(zip(SERVIZI, DETTAGLI)))}</ol>
   <div class="linea" style="bottom:86px"></div>
-  <div class="piede m"><p>WhatsApp +39 393 195 9752</p><p>artismidesignstudio.com</p><p>apizzoglio@gmail.com</p></div>''')
+  <div class="piede m"><p>WhatsApp +39 393 195 9752</p><p>artismidesignstudio.com</p><p>andrea@artismidesignstudio.com</p></div>''')
 print('scritte le proposte del retro')
