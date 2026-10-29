@@ -13,10 +13,14 @@ const TARGET_URL = '/ar/assets/target.mind'; // compilato dal fronte del bigliet
 const CARD_URL = '/ar/assets/card-front.png';
 
 // Biglietto 85×55 mm. L'ologramma è disegnato in unità da 25 mm e nasce dal centro
-// del biglietto, ingrandito 4 volte.
+// del biglietto, ingrandito 4 volte nell'anteprima e 2,5 sul biglietto vero.
 const CARD_MM = { w: 85, h: 55 };
 const HOLO_UNIT_MM = 25;
 const HOLO_SCALE = 4;
+// Sul biglietto vero l'ologramma e' piu' piccolo: il logo largo poco piu' del biglietto (94 mm),
+// la cima a 8 cm dalla carta. Ingrandito 4 volte (15 cm) a 25-30 cm dal telefono usciva
+// dall'inquadratura, e ogni grado di errore nell'inclinazione spostava la cima di piu'.
+const AR_HOLO_SCALE = 2.5;
 
 const $ = (id) => document.getElementById(id);
 const setState = (s) => { document.body.dataset.state = s; };
@@ -121,7 +125,7 @@ async function startAR() {
     const holo = await createHologram({ logoUrl: LOGO_URL });
     // L'ancora è il fronte del biglietto: origine al centro, 1 = larghezza del biglietto.
     holo.root.rotation.x = Math.PI / 2; // Y dell'ologramma = normale uscente dal biglietto
-    holo.root.scale.setScalar((HOLO_SCALE * HOLO_UNIT_MM) / CARD_MM.w);
+    holo.root.scale.setScalar((AR_HOLO_SCALE * HOLO_UNIT_MM) / CARD_MM.w);
     const anchor = mindar.addAnchor(0);
     // l'ologramma non sta sull'ancora ma su un gruppo che la segue senza scatti (stabile.js)
     const stable = createStabilizer(anchor.group);
