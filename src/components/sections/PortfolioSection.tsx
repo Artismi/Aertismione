@@ -627,10 +627,11 @@ export function PortfolioSection() {
         ballRef.current.x=sizeRef.current.w/2; ballRef.current.y=sizeRef.current.h/2
       }
       setDesktop(desk)
-      // il riquadro del tavolo; da telefono e' in verticale: fascicolo sopra, console sotto
+      // il riquadro del tavolo; da telefono e' una colonna alta quasi uno schermo:
+      // fascicolo sopra, Game Boy sotto, e la camera la fa riempire (Table3D)
       wrapperEl.style.height = desktopRef.current
         ? `${Math.min(620, Math.max(380, Math.round(w * 0.54)))}px`
-        : `${Math.round(Math.min(720, Math.max(520, w * 1.45)))}px`
+        : `${Math.round(Math.min(window.innerHeight * 0.9, Math.max(560, w * 2.1)))}px`
     }
     resize()
     const ro=new ResizeObserver(resize); ro.observe(wrapper)

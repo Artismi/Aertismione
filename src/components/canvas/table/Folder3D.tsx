@@ -40,6 +40,15 @@ const BOARD_T = 0.008
 export const BOARD_Y = 0.074
 /** da telefono il fascicolo sta piu' in fondo (sopra la console): da aperto e' centrato in z = MOBILE_Z */
 export const MOBILE_Z = -1.05
+/**
+ * Da telefono il banco e' una colonna: il fascicolo sopra, il Game Boy sotto, centrato e
+ * quasi dritto, grande quanto basta per giocarci con il pollice. Lo leggono Console3D
+ * (dove sta), Marble3D (dove la bilia ci sbatte) e Table3D (quanto inquadrare).
+ */
+export const MOBILE_CONSOLE = { x: 0, z: 2.7, ry: -0.1, s: 1.4 }
+/** quanto mondo deve stare nel riquadro da telefono: largo il fascicolo con un filo di
+ *  margine, alto dalla cima del fascicolo alla base del Game Boy; z = il centro guardato */
+export const MOBILE_COLUMN = { w: 2.7, h: 6.35, z: 0.45 }
 
 function folderShape(withTab: boolean) {
   const w = FW / 2, d = FD / 2, r = 0.05, rr = 0.09

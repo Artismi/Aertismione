@@ -17,7 +17,7 @@ import { useEffect, useMemo, type RefObject } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { marble, type Spot, type Quad } from './marble'
-import { FW, FD, BW, BD, BOARD_Y, MOBILE_Z } from './Folder3D'
+import { FW, FD, BW, BD, BOARD_Y, MOBILE_Z, MOBILE_CONSOLE as MC } from './Folder3D'
 import type { TablePhase } from './Table3D'
 
 /** raggio della bilia nel mondo, per l'altezza a cui si misurano gli ostacoli */
@@ -29,7 +29,7 @@ type Box = { x: number; z: number; hx: number; hz: number; ry: number }
 function obstacles(mobile: boolean): { folder: Box; console: Box } {
   return mobile
     ? { folder: { x: 0, z: MOBILE_Z, hx: FW / 2, hz: FD / 2, ry: 0 },
-        console: { x: 0.3, z: 1.75, hx: 0.5 * 1.1, hz: 0.49 * 1.1, ry: -0.3 } }
+        console: { x: MC.x, z: MC.z, hx: 0.5 * MC.s, hz: 0.49 * MC.s, ry: MC.ry } }
     : { folder: { x: -1.55, z: 0.05, hx: FW / 2, hz: FD / 2, ry: 0.07 },
         console: { x: 2.15, z: 0.4, hx: 0.5 * 1.25, hz: 0.49 * 1.25, ry: -0.4 } }
 }

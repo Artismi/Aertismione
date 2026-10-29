@@ -19,7 +19,7 @@ import * as THREE from 'three'
 import { pcbTexture, faceTexture, bezelTexture, screenTexture, BOOT_SECONDS } from './textures'
 import { gameLoad } from './gameLoad'
 import type { TablePhase } from './Table3D'
-import { HIT_MAT } from './Folder3D'
+import { HIT_MAT, MOBILE_CONSOLE } from './Folder3D'
 import styles from './Table3D.module.css'
 import { consoleScreen } from './shared'
 
@@ -195,8 +195,9 @@ export function Console3D({ phase, mobile, grab, hovered, game, logo, plasticRou
 
   useEffect(() => { invalidate() }, [phase, hovered, grab, mobile, invalidate])
 
-  const home = mobile ? [0.3, 0, 1.75] : [2.15, 0, 0.4]
-  const homeRy = mobile ? -0.3 : -0.4
+  const home = mobile ? [MOBILE_CONSOLE.x, 0, MOBILE_CONSOLE.z] : [2.15, 0, 0.4]
+  const homeRy = mobile ? MOBILE_CONSOLE.ry : -0.4
+  const homeScale = mobile ? MOBILE_CONSOLE.s : 1.25
   const tmp = useMemo(() => new THREE.Vector3(), [])
   const screen = useRef<THREE.Mesh>(null!)
   const k = useMemo(() => ({
@@ -209,7 +210,7 @@ export function Console3D({ phase, mobile, grab, hovered, game, logo, plasticRou
     const away = !mobile && phase !== 'closed' && phase !== 'returning' && phase !== 'list'
     const restful = phase === 'closed' || phase === 'list'
     let tx = away ? 6.5 : home[0], ty = 0, tz = away ? 0.8 : home[2]
-    let rx = 0, ry = homeRy, sc = mobile ? 1.1 : 1.25
+    let rx = 0, ry = homeRy, sc = homeScale
     if (grab) {
       // presa in mano: la console viene davanti alla camera, con lo schermo dritto verso chi guarda,
       // grande quanto basta perche' lo schermo occupi piu' di meta' dell'altezza
@@ -289,7 +290,7 @@ export function Console3D({ phase, mobile, grab, hovered, game, logo, plasticRou
   const top = BH
 
   return (
-    <group ref={group} position={home as [number, number, number]} rotation={[0, homeRy, 0]} scale={mobile ? 1.1 : 1.25}>
+    <group ref={group} position={home as [number, number, number]} rotation={[0, homeRy, 0]} scale={homeScale}>
       {/* per il mouse: la base e il coperchio alzato, in una scatola sola */}
       <mesh position={[0, 0.45, 0]} material={HIT_MAT} onPointerOver={over} onPointerOut={out} onClick={click}>
         <boxGeometry args={[CW + 0.06, 0.9, CD + 0.06]} />

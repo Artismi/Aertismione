@@ -25,7 +25,7 @@ import { ToneMappingMode, type EffectComposer as Composer } from 'postprocessing
 import * as THREE from 'three'
 import { loadImage } from './textures'
 import { Bench } from './Bench'
-import { Folder3D, FW, FD, BW, BD, BOARD_Y, MOBILE_Z } from './Folder3D'
+import { Folder3D, FW, FD, BW, BD, BOARD_Y, MOBILE_Z, MOBILE_COLUMN } from './Folder3D'
 import { Console3D } from './Console3D'
 import { Marble3D } from './Marble3D'
 import { marble } from './marble'
@@ -100,6 +100,8 @@ type Images = { logo: HTMLImageElement | null; paper: HTMLImageElement | null; m
 /* ── Camera: il mondo scorre con la pagina ── */
 
 const V = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z)
+/** da telefono la camera guarda il banco da qui: alta e un po' davanti */
+const MOBILE_DIR = V(0, 7.6, 4.25).normalize()
 
 /** dove sta il logo nella prima schermata, in frazione dell'altezza dello schermo */
 const LOGO_AT = 0.45
@@ -151,9 +153,14 @@ function Rig({ phase, mobile, stage, look, logo }: {
 
     // l'inquadratura di lavoro, in prospettiva e dritta, a misura del riquadro
     if (mobile) {
-      // un po' piu' larga: fascicolo e Game Boy interi, con aria intorno
-      const k = Math.max(1, 0.62 / stageAspect) * (aspect < stageAspect ? stageAspect / aspect : 1) * 1.14
-      t.pos.set(0, 7.6 * k, 4.6 * k); t.lk.set(0, 0, 0.35)
+      // in colonna (fascicolo sopra, Game Boy sotto): la camera si avvicina finche' la
+      // colonna riempie il riquadro, in larghezza o in altezza, su ogni telefono.
+      // perPx = quanto mondo sta in un pixel, alla distanza del punto guardato
+      const rw = r && r.width > 0 ? r.width : vw, rh = r && r.height > 0 ? r.height : vh
+      const perPx = Math.max(MOBILE_COLUMN.w / rw, MOBILE_COLUMN.h / rh)
+      const dist = perPx * vh / (2 * Math.tan(THREE.MathUtils.degToRad(cam.fov / 2)))
+      t.lk.set(0, 0, MOBILE_COLUMN.z)
+      t.pos.copy(MOBILE_DIR).multiplyScalar(dist).add(t.lk)
     } else {
       // stretta sugli oggetti: fascicolo e Game Boy protagonisti, il banco li incornicia
       const k = Math.max(1, 2.15 / stageAspect) * (r ? vh / r.height : 1) * 0.8
@@ -550,7 +557,7 @@ function World(props: Props & { images: Images | null }) {
           si carica subito, e' la prima cosa che si vede */}
       <group ref={logo}>
         <Suspense fallback={null}>
-          <LogoModel inWorld scale={mobile ? 0.75 : 1} />
+          <LogoModel inWorld scale={mobile ? 0.82 : 1} />
         </Suspense>
         <GlassSync />
       </group>

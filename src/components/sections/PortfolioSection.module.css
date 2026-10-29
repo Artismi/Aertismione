@@ -325,8 +325,9 @@
    e la fionda al tocco e' pressoche' ingiocabile. */
 @media (max-width: 899px), (pointer: coarse) {
 
-  .hitFolder  { left: 15%; top: 4%; width: 70%; height: 52%; }
-  .hitConsole { left: 25%; right: auto; top: 62%; width: 50%; height: 34%; }
+  /* la colonna da telefono: fascicolo sopra, Game Boy sotto (vedi MOBILE_CONSOLE in Folder3D) */
+  .hitFolder  { left: 14%; top: 9%; width: 72%; height: 42%; }
+  .hitConsole { left: 22%; right: auto; top: 55%; width: 56%; height: 41%; }
 
   .mobileGrid { padding-top: 32px; }
   .mobileGrid[data-show='true'] { display: flex; }

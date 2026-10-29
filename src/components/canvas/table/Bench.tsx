@@ -65,8 +65,9 @@ export function Bench({ mobile, metal, metalRough }: { mobile: boolean; metal: H
     Object.values(mats).forEach((m) => m.dispose())
   }, [tex, mats])
 
-  const pencil = mobile ? { p: [1.25, 0, 0.75], r: 0.9 } : { p: [0.55, 0, 1.15], r: 0.35 }
-  const ruler = mobile ? { p: [-0.9, 0, 2.05], r: 0.2 } : { p: [0.3, 0, -1.05], r: -1.38 }
+  // da telefono ai lati del Game Boy, che sta sotto il fascicolo: righello a sinistra, matita a destra
+  const pencil = mobile ? { p: [1.2, 0, 2.0], r: -0.75 } : { p: [0.55, 0, 1.15], r: 0.35 }
+  const ruler = mobile ? { p: [-1.45, 0, 3.0], r: 1.2 } : { p: [0.3, 0, -1.05], r: -1.38 }
   const mat = mobile ? { p: [0, 0, -1.0], r: 0 } : { p: [-1.5, 0, 0.1], r: 0.03 }
 
   return (
