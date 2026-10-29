@@ -85,6 +85,7 @@ export function GameBoy({ from, onClose, page = false, warm = false }: {
   // i comandi sulla plastica: 'attesa' finche' il gioco non risponde, 'no' se non sa farli
   const [pad, setPad] = useState<'attesa' | 'si' | 'no'>('attesa')
   const [tasti, setTasti] = useState<Tasti | null>(null)
+  const [versione, setVersione] = useState(0)   // la versione dei comandi che il gioco capisce (dalla 3: la levetta della visuale)
   const [stato, setStato] = useState<Stato | null>(null)
   const [off, setOff] = useState(false)   // l'interruttore spinto su OFF: un attimo, poi la console si chiude
   const [inside, setInside] = useState<string | null>(null)
@@ -114,7 +115,7 @@ export function GameBoy({ from, onClose, page = false, warm = false }: {
     function onMsg(e: MessageEvent) {
       if (e.source !== frameRef.current?.contentWindow || !e.data || typeof e.data.pv !== 'string') return
       talks.current = true
-      if (e.data.pv === 'console') { hello.current = true; setPad('si'); return }
+      if (e.data.pv === 'console') { hello.current = true; setPad('si'); setVersione(Number(e.data.v) || 0); return }
       // le scritte dei tasti e lo stato vanno anche al Game Boy del banco (display e lucine)
       if (e.data.pv === 'tasti') { setTasti(e.data as Tasti); gameInfo.tasti = e.data as Tasti; gameLoad.onChange?.(); return }
       if (e.data.pv === 'stato') { setStato(e.data as Stato); gameInfo.stato = e.data as Stato; gameLoad.onChange?.(); return }
@@ -339,7 +340,7 @@ export function GameBoy({ from, onClose, page = false, warm = false }: {
         {pad !== 'no' && (
           <>
             <div className={styles.brand} aria-hidden="true">{game.title}<small>{game.pad.brand}</small></div>
-            <GameBoyPad send={send} tasti={tasti} />
+            <GameBoyPad send={send} tasti={tasti} versione={versione} />
           </>
         )}
       </div>

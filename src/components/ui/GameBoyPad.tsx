@@ -6,7 +6,8 @@
  * Gli stessi materiali del Game Boy 3D sul banco (Console3D): croce nera
  * nell'incavo, A e B corallo laccati, gomma scura. Compatta, sotto lo schermo
  * (di traverso: negli angoli in basso, ai lati): la levetta per camminare e
- * guidare, la croce (la visuale; in BMX i trick: la scritta sotto dice cosa fa), A e B, e tre tasti
+ * guidare, la seconda levetta per la visuale (di lato gira attorno al personaggio, in su e in giu' lo zoom; in BMX e nella
+ * tavoletta il gioco la legge come la croce di prima: trick, colore, spessore; con un gioco piu' vecchio, v < 3, resta la croce), A e B, e tre tasti
  * veri in rilievo con la loro icona e una lucina: la bomboletta (i graffiti), la
  * bici, lo zaino (il menu, dove sta tutto il resto). Nella tesa la rotella
  * dell'audio e il display con giorno, ora e soldi (Rotella, Display).
@@ -83,8 +84,8 @@ function Tasto({ k, send, className, name, label, lit, children }: {
   )
 }
 
-/** La levetta: il cappuccio segue il dito dentro l'incavo e torna al centro quando lo lasci */
-function Levetta({ send }: { send: Send }) {
+/** La levetta: il cappuccio segue il dito dentro l'incavo e torna al centro quando lo lasci (msg: 'levetta' cammina, 'levetta2' la visuale) */
+function Levetta({ send, msg = 'levetta', small }: { send: Send; msg?: string; small?: boolean }) {
   const base = useRef<HTMLDivElement>(null)
   const cap = useRef<HTMLSpanElement>(null)
   const id = useRef<number | null>(null)
@@ -100,7 +101,7 @@ function Levetta({ send }: { send: Send }) {
     const w = want.current
     if (w.x === sent.current.x && w.y === sent.current.y) return
     sent.current = w
-    send({ pvc: 'levetta', x: w.x, y: w.y })
+    send({ pvc: msg, x: w.x, y: w.y })
   }
   function show(x: number, y: number) {
     cap.current?.style.setProperty('--x', String(x))
@@ -139,7 +140,7 @@ function Levetta({ send }: { send: Send }) {
   return (
     <div
       ref={base}
-      className={styles.stick}
+      className={small ? `${styles.stick} ${styles.stickSm}` : styles.stick}
       data-held={held || undefined}
       role="presentation"
       onPointerDown={down}
@@ -298,7 +299,7 @@ export function Display({ stato }: { stato: Stato | null }) {
 }
 
 /** La pulsantiera: la levetta, i tre tasti, la croce, A e B (in verticale sotto lo schermo, di traverso agli angoli) */
-export function GameBoyPad({ send, tasti }: { send: Send; tasti: Tasti | null }) {
+export function GameBoyPad({ send, tasti, versione = 0 }: { send: Send; tasti: Tasti | null; versione?: number }) {
   const t = tasti?.t ?? {}, on = tasti?.on ?? {}
   return (
     <>
@@ -312,7 +313,7 @@ export function GameBoyPad({ send, tasti }: { send: Send; tasti: Tasti | null })
         <Funzione k="zaino" send={send} name={pad.bag} label={t.zaino} lit={!!on.zaino} badge={tasti?.n} />
       </div>
       <div className={styles.padX} role="group" aria-label={pad.label} onContextMenu={hush}>
-        <Croce send={send} />
+        {versione >= 3 ? <Levetta send={send} msg="levetta2" small /> : <Croce send={send} />}
         <span className={`${styles.print} ${styles.crossHint}`}>
           {(t.croce === undefined ? pad.cross : t.croce ?? '').split(' · ').map((r) => <span key={r}>{r}</span>)}
         </span>

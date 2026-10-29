@@ -572,6 +572,19 @@
 
 .stick[data-held] { cursor: grabbing; }
 
+/* la seconda levetta, quella della visuale, al posto della croce: un poco piu' piccola, per stare accanto ad A e B */
+.stickSm {
+  width: calc(var(--u) * 21);
+  height: calc(var(--u) * 21);
+}
+
+.stickSm .stickCap {
+  width: calc(var(--u) * 12);
+  height: calc(var(--u) * 12);
+  margin: calc(var(--u) * -6) 0 0 calc(var(--u) * -6);
+  transform: translate(calc(var(--x, 0) * var(--u) * 4.5), calc(var(--y, 0) * var(--u) * 4.5 - var(--u) * 0.8));
+}
+
 .stickCap {
   position: absolute;
   left: 50%;
