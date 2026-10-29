@@ -1,7 +1,13 @@
 /* ============================================
    GameBoy — Porto Vecchio dentro la console
-   La plastica rosa trasparente del Game Boy fa da cornice; sopra tutto
-   (anche alla grana 9998 e al cursore 9997).
+   Lo stesso Game Boy del banco (Console3D), visto di fronte e a tutto schermo:
+   plastica rosa lucida e trasparente con l'elettronica che si vede sotto (la
+   stessa scheda, consolePaint), la cornice rosa dello schermo con le due righe e
+   la lucina, la croce nera, A e B corallo laccati, la gomma scura, l'interruttore
+   rosso, la rotella in metallo. Sopra tutto (anche alla grana 9998 e al cursore
+   9997). Sotto lo schermo la pulsantiera (GameBoyPad); di traverso, negli angoli.
+   Solo CSS e un'immagine disegnata una volta (la scheda): niente filtri sul
+   grande, niente animazioni fuori dai tasti. Le misure dei tasti sono in --u.
    ============================================ */
 
 .root {
@@ -9,6 +15,7 @@
   inset: 0;
   z-index: 10000;
   cursor: auto;
+  background: linear-gradient(180deg, #edbccc, #d495ab);   /* il fianco: la luce passa dai bordi della plastica */
   transition: clip-path 0.7s var(--ease-expo);
   will-change: clip-path;
 }
@@ -24,116 +31,365 @@
 
 .root[data-page='true'] { position: fixed; transition: none; }
 
-/* ── la plastica: rosa trasparente satinata, come il Game Boy del banco ── */
+/* ── la base: plastica rosa trasparente e lucida, la scheda sotto, la giuntura, lo spigolo tondo in basso a destra ── */
 .shell {
+  --u: min(5px, 0.95vh, 1.25vw);
+  --ink: rgba(70, 30, 48, 0.82);            /* la serigrafia del Game Boy 3D */
+  --ink-soft: rgba(70, 30, 48, 0.62);
+  --deboss: 0 1px 0 rgba(255, 255, 255, 0.5);
+  --recess: rgba(217, 142, 164, 0.42);      /* gli incavi, come nel 3D */
+  --hole: #24161c;
+  --rubber: #3a353f;
+  --mono: var(--font-mono);
   position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  padding: 0 clamp(8px, 1.4vw, 18px) clamp(8px, 1.4vw, 18px);
-  background:
-    radial-gradient(120% 80% at 20% 0%, rgba(255, 255, 255, 0.35), transparent 55%),
-    linear-gradient(165deg, #f6d3df 0%, #eeb6c8 55%, #e6a2b9 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.7),
-    inset 0 -2px 0 rgba(160, 80, 110, 0.25);
-}
-
-/* ── la tesa in alto ── */
-.top {
-  flex: none;
-  height: 46px;
+  inset: 3px;
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  grid-template-areas: 'top top top' 'brand scr sp' 'pc scr px' 'pl scr pr';
+  column-gap: calc(var(--u) * 2.8);
+  padding: 0 calc(var(--u) * 2.6) calc(var(--u) * 2.4);
+  overflow: hidden;
+  border-radius: 16px 16px calc(var(--u) * 9) 16px;
+  background:
+    linear-gradient(116deg, rgba(255, 255, 255, 0.46) 0%, rgba(255, 255, 255, 0.16) 15%, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0) 64%, rgba(255, 255, 255, 0.14) 72%, rgba(255, 255, 255, 0) 80%),
+    linear-gradient(180deg, rgba(249, 221, 229, 0.76) 0%, rgba(242, 196, 211, 0.72) 55%, rgba(236, 159, 181, 0.7) 100%),
+    var(--inside, none) 50% 100% / max(720px, 110%) auto,
+    #cf98ad;
+  box-shadow:
+    inset 0 2px 1px rgba(255, 255, 255, 0.95),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.3),
+    inset 0 -3px 6px rgba(150, 60, 95, 0.22),
+    0 0 0 1px rgba(176, 124, 140, 0.9),
+    0 4px 10px rgba(90, 20, 50, 0.22);
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@supports (height: 1dvh) {
+  .shell { --u: min(5px, 0.95dvh, 1.25vw); }
+}
+
+/* un gioco che non sa dei tasti: niente pulsantiera, lo schermo prende tutto */
+.root[data-pad='no'] .shell {
+  grid-template-areas: 'top top top' 'scr scr scr' 'scr scr scr' 'scr scr scr';
+  column-gap: 0;
+  padding: 0 clamp(8px, 1.4vw, 18px) clamp(8px, 1.4vw, 18px);
+}
+
+/* ── la tesa: rotella, display, schermo intero, interruttore ── */
+.top {
+  grid-area: top;
+  height: 42px;
+  display: grid;
+  grid-template-columns: minmax(max-content, 1fr) minmax(0, auto) minmax(max-content, 1fr);   /* il display in mezzo si stringe, i lati no */
   align-items: center;
-  gap: 12px;
-  padding: 0 6px;
+  gap: 10px;
+  padding: 0 2px;
 }
 
-.power {
-  display: inline-flex;
+.topL {
+  display: flex;
   align-items: center;
-  gap: 8px;
-  font-family: var(--font-mono);
-  font-size: 0.6rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: rgba(120, 50, 75, 0.75);
+  min-width: 0;
 }
 
-.led {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #8a3a48;
-  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.35);
-  transition: background 0.3s, box-shadow 0.3s;
-}
-
-.led[data-on='true'] {
-  background: #ff4d5e;
-  box-shadow: 0 0 8px 2px rgba(255, 77, 94, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.4);
-}
-
-/* la serigrafia del nome, incisa nella plastica */
+/* il nome (finche' il gioco non risponde, al posto del display) */
 .name {
   font-family: var(--font-display);
+  font-style: italic;
   font-weight: 800;
   font-size: 0.95rem;
-  letter-spacing: 0.02em;
-  color: rgba(130, 55, 85, 0.85);
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+  color: var(--ink);
+  text-shadow: var(--deboss);
   white-space: nowrap;
 }
 
 .keys {
   justify-self: end;
   display: flex;
+  align-items: center;
   gap: 14px;
 }
 
-/* tasti di gomma come SELECT e START: pillola scura, scritta sotto */
+/* schermo intero: una pillola di gomma, la scritta accanto */
 .key {
   display: inline-flex;
-  flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 6px;
   background: none;
   border: 0;
-  padding: 2px;
+  padding: 4px 2px;
   cursor: pointer;
-  font-family: var(--font-mono);
-  font-size: 0.55rem;
-  letter-spacing: 0.16em;
+  font-family: var(--mono);
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(120, 50, 75, 0.8);
+  color: var(--ink-soft);
+  text-shadow: var(--deboss);
 }
 
 .pill {
-  width: 34px;
-  height: 11px;
-  border-radius: 6px;
-  background: linear-gradient(180deg, #4a4350, #2c2731);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.18);
-  transition: transform 0.1s, filter 0.15s;
+  width: 22px;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #57505d, var(--rubber));
+  box-shadow: 0 0 0 1.5px var(--hole), 0 1px 0 2px rgba(255, 255, 255, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: transform 0.08s, filter 0.15s;
 }
 
-.key:hover .pill { filter: brightness(1.35); }
+.key:hover .pill { filter: brightness(1.25); }
 .key:active .pill { transform: translateY(1px); }
-.key:focus-visible { outline: 2px solid #8a3a48; outline-offset: 2px; }
+.key:focus-visible, .power:focus-visible { outline: 2px solid rgba(70, 30, 48, 0.6); outline-offset: 3px; border-radius: 4px; }
 
-/* ── lo schermo: vetro scuro con la cornice nera, come la finestra del Game Boy ── */
+/* l'interruttore rosso, come sul fianco del Game Boy 3D: spinto su OFF si esce */
+.power {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: 0;
+  padding: 4px 2px;
+  cursor: pointer;
+}
+
+.powerPrint {
+  font-family: var(--mono);
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  text-shadow: var(--deboss);
+}
+
+.powerTrack {
+  position: relative;
+  width: 28px;
+  height: 11px;
+  border-radius: 5.5px;
+  background: var(--recess);
+  box-shadow: inset 0 1px 2px rgba(70, 20, 40, 0.55), 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.powerKnob {
+  position: absolute;
+  top: 1.5px;
+  left: 15px;
+  width: 11.5px;
+  height: 8px;
+  border-radius: 3px;
+  background:
+    repeating-linear-gradient(90deg, rgba(90, 10, 20, 0.35) 0 1px, rgba(90, 10, 20, 0) 1px 2.5px),
+    linear-gradient(180deg, #f0606f, #D93A4A 55%, #b02636);
+  box-shadow: 0 1px 1.5px rgba(60, 10, 20, 0.55), inset 0 1px 0 rgba(255, 210, 215, 0.7);
+  transition: left 0.16s var(--ease-in-out);
+}
+
+.power:hover .powerKnob { left: 13.5px; }
+.power[data-off] .powerKnob { left: 1.5px; }
+
+/* la rotella in metallo dell'audio, che esce dalla sua feritoia: la tacca rossa da una parte o dall'altra */
+.wheelKey {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.wheel {
+  position: relative;
+  width: 34px;
+  height: 12px;
+  border: 0;
+  padding: 0;
+  border-radius: 3px;
+  overflow: hidden;
+  cursor: pointer;
+  touch-action: none;
+  background: linear-gradient(180deg, #5a2a3c, #8a4a62);   /* la feritoia */
+  box-shadow: inset 0 1px 2px rgba(40, 5, 20, 0.7), 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.wheel::after { content: ''; position: absolute; inset: -10px -6px; }   /* piu' facile da prendere col dito */
+.wheel[data-down] .wheelRidges { filter: brightness(0.92); }
+
+/* il cilindro zigrinato, metallo spazzolato: righe sottili, ombra sopra e sotto */
+.wheelRidges {
+  position: absolute;
+  inset: 2px 3px;
+  border-radius: 2px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 40%, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 0.38)),
+    repeating-linear-gradient(90deg, #8e8880 0 1px, #ece8e2 1px 2px, #c9c4bb 2px 3.5px);
+  transition: background-position 0.3s var(--ease-expo);
+}
+
+.wheelRidges::after {
+  content: '';
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+  left: 3px;
+  width: 2px;
+  border-radius: 1px;
+  background: #7d766e;
+  transition: left 0.3s var(--ease-expo), background 0.3s;
+}
+
+.wheelRidges[data-on] { background-position: 0 0, 7px 0; }
+.wheelRidges[data-on]::after { left: calc(100% - 5px); background: #D93A4A; }
+
+.wheelPrint {
+  font-family: var(--mono);
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  text-shadow: var(--deboss);
+}
+
+/* ── il display: un piccolo LCD, chiaro come lo schermo del Game Boy 3D acceso, nella sua cornice scura ── */
+.lcd {
+  justify-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  padding: 3px 9px;
+  border-radius: 3px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0) 45%),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.04) 0 1px, rgba(0, 0, 0, 0) 1px 3px),
+    #f4eaee;
+  box-shadow:
+    inset 0 1px 3px rgba(40, 20, 30, 0.45),
+    0 0 0 2.5px #2b2430,
+    0 1px 0 3px rgba(255, 255, 255, 0.55);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #1a1a1a;
+  text-shadow: 1px 1px 0 rgba(26, 26, 26, 0.14);   /* l'ombra dei segmenti sul fondo */
+}
+
+.lcdRow { display: inline-flex; align-items: baseline; gap: 5px; }
+.lcd b { font-weight: 800; }
+.lcd b[data-urg] { animation: lcdBlink 1s steps(2) infinite; color: #c42438; }
+.lcdStar { color: #c42438; letter-spacing: 0; }
+
+@keyframes lcdBlink { 50% { opacity: 0.25; } }
+
+/* ── la cornice dello schermo: plastica rosa piu' spessa, le due righe, la lucina, la finestra scura, la scritta ── */
 .window {
+  grid-area: scr;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 0 max(8px, calc(var(--u) * 2.4));
+  border-radius: 12px 12px calc(var(--u) * 7) 12px;
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0) 32%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, #edb3c5, #E7A6B8 50%, #df9cb1);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -2px 2px rgba(150, 60, 95, 0.22),
+    0 0 0 1px rgba(176, 124, 140, 0.85),
+    0 2px 6px rgba(90, 20, 50, 0.22);
+}
+
+.lensTop,
+.lensBottom {
+  flex: none;
+  height: max(16px, calc(var(--u) * 4));
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.led {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #8a4a54, #4a2028);
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.45), 0 1px 0 rgba(255, 255, 255, 0.55);
+  transition: background 0.3s, box-shadow 0.3s;
+}
+
+.led[data-on='true'] {
+  background: radial-gradient(circle at 35% 30%, #ffd9dd, #ff4d5e 45%, #c42438);
+  box-shadow: 0 0 6px 1px rgba(255, 77, 94, 0.65);
+}
+
+.lensPrint {
+  flex: none;
+  font-family: var(--mono);
+  font-size: max(6.5px, calc(var(--u) * 1.5));
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--ink);
+}
+
+/* le due righe sottili sulla cornice */
+.lensLines {
+  flex: 1;
+  min-width: 6px;
+  height: 5px;
+  background: linear-gradient(180deg, rgba(70, 30, 48, 0.7) 0 2px, rgba(70, 30, 48, 0) 2px 4px, rgba(70, 30, 48, 0.7) 4px 5px);
+}
+
+.lensBottom {
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: max(7px, calc(var(--u) * 1.7));
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--ink);
+}
+
+/* la finestra scura e, dentro, lo schermo */
+.screen {
   position: relative;
   flex: 1;
   min-height: 0;
-  border-radius: 10px;
+  border: max(4px, calc(var(--u) * 1.3)) solid #241e2a;
+  border-top-color: #2b2430;
+  border-bottom-color: #1d1822;
+  border-radius: 7px;
   overflow: hidden;
   background: #0d0b1a;
-  box-shadow:
-    0 0 0 5px #231c26,
-    0 0 0 6px rgba(255, 255, 255, 0.35),
-    inset 0 0 18px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4), 0 -1px 0 rgba(120, 40, 70, 0.25);
+}
+
+/* il vetro sullo schermo: un riflesso appena, sopra il gioco ma senza prendere i tocchi */
+.screen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.025) 24%, rgba(255, 255, 255, 0) 36%);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.6), inset 0 4px 10px rgba(0, 0, 0, 0.35);
 }
 
 .frame {
@@ -153,7 +409,7 @@
 :global(.lenis) .frame { pointer-events: auto; }
 
 /* il caricamento della home del sito, dentro lo schermo */
-.window .loading {
+.screen .loading {
   position: absolute;
   inset: 0;
   z-index: 1;
@@ -161,7 +417,7 @@
   transition: opacity 0.45s ease;
 }
 
-.window .loading[data-hidden='true'] { opacity: 0; }
+.screen .loading[data-hidden='true'] { opacity: 0; }
 
 .logo {
   width: min(56vw, 520px);
@@ -180,12 +436,483 @@
 
 @keyframes blink { 50% { opacity: 0.35; } }
 
-/* da telefono la plastica si stringe: piu' spazio al gioco */
+/* ── il nome sulla base, come sul Game Boy 3D: il titolo in corsivo, ARTISMI spaziato ── */
+.brand {
+  grid-area: brand;
+  align-self: start;
+  display: flex;
+  flex-direction: column;   /* di traverso il nome sta nell'angolo, in due righe; in verticale in una */
+  align-items: center;
+  gap: 3px;
+  padding-top: calc(var(--u) * 2.2);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 800;
+  font-size: max(12px, calc(var(--u) * 3.2));
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--ink);
+  text-shadow: var(--deboss);
+}
+
+.brand small {
+  font-family: var(--mono);
+  font-style: normal;
+  font-weight: 700;
+  font-size: max(7px, calc(var(--u) * 1.5));
+  letter-spacing: 0.45em;
+  text-transform: uppercase;
+}
+
+/* ── la pulsantiera ── */
+.padL,
+.padC,
+.padX,
+.padR {
+  position: relative;
+  min-width: 0;
+  touch-action: none;
+  -webkit-touch-callout: none;
+}
+
+.padL,
+.padX {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 1);
+}
+
+.padL { grid-area: pl; align-self: end; }
+.padX { grid-area: px; align-self: end; margin-bottom: calc(var(--u) * 2); }
+
+.padC {
+  grid-area: pc;
+  align-self: end;
+  justify-self: center;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: calc(var(--u) * 2.4);
+  margin-bottom: calc(var(--u) * 3);
+}
+
+.padR { grid-area: pr; align-self: end; }
+
+/* la serigrafia: maiuscola, spaziata, come sul Game Boy 3D */
+.print {
+  font-family: var(--mono);
+  font-size: clamp(6.5px, calc(var(--u) * 1.6), 9px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--ink-soft);
+  text-shadow: var(--deboss);
+}
+
+/* quello che A e B fanno adesso: lo dice il gioco */
+.fn {
+  min-height: 1em;
+  font-family: var(--mono);
+  font-size: clamp(7.5px, calc(var(--u) * 1.85), 10px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--ink);
+  text-shadow: var(--deboss);
+}
+
+/* sotto la croce, cosa fanno le frecce adesso: una riga per coppia («◄► gira» / «▲▼ zoom») */
+.crossHint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-height: 2em;
+}
+
+/* sotto B: quello che hai in mano, che B usa */
+.hand {
+  max-width: calc(var(--u) * 16);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--mono);
+  font-size: clamp(6.5px, calc(var(--u) * 1.5), 8.5px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--ink-soft);
+  text-shadow: var(--deboss);
+}
+
+.hand::before { content: '◆ '; }
+
+/* ── gli incavi tondi della levetta e della croce: plastica piu' scura, il bordo che prende la luce ── */
+.stick,
+.cross {
+  position: relative;
+  border-radius: 50%;
+  touch-action: none;
+  background: radial-gradient(circle, var(--recess) 0 64%, rgba(255, 255, 255, 0.55) 67% 70%, rgba(255, 255, 255, 0) 72%);
+  box-shadow: inset 0 calc(var(--u) * 0.8) calc(var(--u) * 2) rgba(95, 30, 60, 0.32);
+}
+
+/* la levetta: il cappuccio di gomma scura, concavo */
+.stick {
+  width: calc(var(--u) * 26);
+  height: calc(var(--u) * 26);
+  cursor: grab;
+}
+
+.stick[data-held] { cursor: grabbing; }
+
+.stickCap {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: calc(var(--u) * 15);
+  height: calc(var(--u) * 15);
+  margin: calc(var(--u) * -7.5) 0 0 calc(var(--u) * -7.5);
+  border-radius: 50%;
+  pointer-events: none;
+  background:
+    repeating-radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.035) 0 1px, rgba(255, 255, 255, 0) 1px 3px),
+    radial-gradient(circle at 40% 28%, #5f5865, #423c48 50%, #2a2630);
+  box-shadow:
+    0 calc(var(--u) * 1) 0 #1f1b24,
+    0 calc(var(--u) * 1.6) calc(var(--u) * 1.6) rgba(40, 10, 25, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  transform: translate(calc(var(--x, 0) * var(--u) * 5.5), calc(var(--y, 0) * var(--u) * 5.5 - var(--u) * 0.8));
+  transition: transform 0.24s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+
+/* il piano concavo dove poggia il pollice */
+.stickCap::after {
+  content: '';
+  position: absolute;
+  inset: 14%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 70%, #45404b, #2e2a33 70%, #3a353f);
+  box-shadow: inset 0 calc(var(--u) * 0.6) calc(var(--u) * 1) rgba(0, 0, 0, 0.35), 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.stick[data-held] .stickCap { transition: none; }
+
+/* la croce nera laccata, per la visuale */
+.cross {
+  width: calc(var(--u) * 16);
+  height: calc(var(--u) * 16);
+  cursor: pointer;
+}
+
+.crossArms {
+  position: absolute;
+  inset: 12%;
+  pointer-events: none;
+  filter: drop-shadow(0 calc(var(--u) * 0.7) calc(var(--u) * 0.4) rgba(40, 10, 25, 0.5));
+  transform: perspective(calc(var(--u) * 60)) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform 0.07s;
+}
+
+.crossArms::before,
+.crossArms::after {
+  content: '';
+  position: absolute;
+  border-radius: calc(var(--u) * 1);
+  background: linear-gradient(160deg, #3a3640, #16141a 55%, #0d0c10);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 -1px 1px rgba(0, 0, 0, 0.6);
+}
+
+.crossArms::before { left: 34%; right: 34%; top: 0; bottom: 0; }
+.crossArms::after { top: 34%; bottom: 34%; left: 0; right: 0; }
+
+/* la fossetta al centro */
+.crossArms i {
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  top: 50%;
+  width: 20%;
+  height: 20%;
+  margin: -10% 0 0 -10%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 65%, #2a2630, #0b0a0d);
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.7), 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* premuta: si inclina dalla parte del dito */
+.cross[data-dir~='su'] { --rx: 12deg; }
+.cross[data-dir~='giu'] { --rx: -12deg; }
+.cross[data-dir~='sx'] { --ry: -12deg; }
+.cross[data-dir~='dx'] { --ry: 12deg; }
+
+/* ── i tre tasti veri: dischi di gomma scura in rilievo, l'icona stampata chiara, la lucina sopra ── */
+.fnKey {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 1.1);
+  min-width: calc(var(--u) * 9.5);
+}
+
+.lamp {
+  width: max(4px, calc(var(--u) * 1.1));
+  height: max(4px, calc(var(--u) * 1.1));
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #8a5560, #4a2830);
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.45), 0 1px 0 rgba(255, 255, 255, 0.55);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.lamp[data-on] {
+  background: radial-gradient(circle at 35% 30%, #e6ffe3, #5be38a 45%, #1d9a4c);
+  box-shadow: 0 0 calc(var(--u) * 1.3) rgba(91, 227, 138, 0.8), inset 0 1px 1px rgba(255, 255, 255, 0.6);
+}
+
+.fnBtn {
+  position: relative;
+  width: calc(var(--u) * 9.5);
+  height: calc(var(--u) * 9.5);
+  display: grid;
+  place-items: center;
+  border: 0;
+  padding: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  touch-action: none;
+  color: #ece6ee;
+  background:
+    radial-gradient(70% 55% at 40% 22%, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0) 70%),
+    linear-gradient(180deg, #4e4855, var(--rubber) 55%, #2c2831);
+  box-shadow:
+    0 calc(var(--u) * 0.9) 0 #1f1b24,                                  /* il fianco del tasto */
+    0 calc(var(--u) * 1.4) calc(var(--u) * 1.4) rgba(50, 10, 30, 0.42), /* l'ombra sulla plastica */
+    0 0 0 calc(var(--u) * 0.5) rgba(36, 22, 28, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transform: translateY(calc(var(--u) * -0.8));
+  transition: transform 0.06s, box-shadow 0.06s, color 0.2s;
+}
+
+.fnBtn::after { content: ''; position: absolute; inset: calc(var(--u) * -1.4); border-radius: 50%; }   /* piu' facile da prendere */
+
+.fnBtn svg {
+  width: 50%;
+  height: 50%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.9;
+}
+
+.fnBtn:hover { color: #fff; }
+
+.fnBtn[data-down] {
+  transform: translateY(0);
+  box-shadow:
+    0 calc(var(--u) * 0.15) 0 #1f1b24,
+    0 calc(var(--u) * 0.4) calc(var(--u) * 0.6) rgba(50, 10, 30, 0.38),
+    0 0 0 calc(var(--u) * 0.5) rgba(36, 22, 28, 0.25),
+    inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.fnBtn[data-off] svg { opacity: 0.3; }
+
+/* il numero delle cose da fare qui, sullo zaino */
+.badge {
+  position: absolute;
+  top: calc(var(--u) * 0.6);
+  right: calc(var(--u) * -1.8);
+  min-width: max(13px, calc(var(--u) * 3.6));
+  height: max(13px, calc(var(--u) * 3.6));
+  padding: 0 3px;
+  border-radius: 99px;
+  pointer-events: none;
+  background: linear-gradient(180deg, #ff6b7a, #ff4d5e 50%, #d22e44);
+  color: #fff;
+  font-family: var(--mono);
+  font-size: max(8px, calc(var(--u) * 2));
+  font-weight: 700;
+  line-height: max(13px, calc(var(--u) * 3.6));
+  text-align: center;
+  box-shadow: 0 0 0 1.5px rgba(249, 221, 229, 0.9), 0 1px 2px rgba(80, 10, 25, 0.45);
+}
+
+/* ── A e B: calotte corallo laccate, nella piastra inclinata ── */
+.ab {
+  position: relative;
+  width: calc(var(--u) * 30);
+  height: calc(var(--u) * 31);   /* sotto B c'e' spazio per quello che hai in mano */
+}
+
+.abPlate {
+  position: absolute;
+  left: 0;
+  top: calc(var(--u) * 5.5);
+  width: calc(var(--u) * 30);
+  height: calc(var(--u) * 13);
+  border-radius: calc(var(--u) * 6.5);
+  transform: rotate(-28deg);
+  background: var(--recess);
+  box-shadow:
+    inset 0 calc(var(--u) * 0.5) calc(var(--u) * 1.2) rgba(95, 30, 60, 0.28),
+    0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.abKey {
+  position: absolute;
+  width: calc(var(--u) * 14);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 1.3);
+}
+
+.abKey[data-k='b'] { left: calc(var(--u) * 0.8); top: calc(var(--u) * 9.8); }
+.abKey[data-k='a'] { right: calc(var(--u) * 0.8); top: calc(var(--u) * 2.1); }
+
+/* il foro scuro attorno alla calotta: fermo quando il tasto scende */
+.abKey::before {
+  content: '';
+  position: absolute;
+  top: calc(var(--u) * -0.5);
+  left: 50%;
+  width: calc(var(--u) * 13);
+  height: calc(var(--u) * 13);
+  margin-left: calc(var(--u) * -6.5);
+  border-radius: 50%;
+  background: var(--hole);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.abBtn {
+  position: relative;
+  width: calc(var(--u) * 12);
+  height: calc(var(--u) * 12);
+  border: 0;
+  padding: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  touch-action: none;
+  background:
+    radial-gradient(22% 16% at 34% 24%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0) 100%),
+    radial-gradient(70% 55% at 40% 28%, rgba(255, 220, 226, 0.55), rgba(255, 220, 226, 0) 70%),
+    radial-gradient(circle at 50% 60%, #E2475E, #cf3a51 62%, #a8263f);
+  box-shadow:
+    0 calc(var(--u) * 0.9) 0 #a3253e,
+    0 calc(var(--u) * 1.5) calc(var(--u) * 1.5) rgba(60, 10, 30, 0.42),
+    inset 0 calc(var(--u) * -0.6) calc(var(--u) * 1) rgba(90, 10, 30, 0.32);
+  transform: translateY(calc(var(--u) * -0.9));
+  transition: transform 0.06s, box-shadow 0.06s, filter 0.1s;
+}
+
+.abBtn::after { content: ''; position: absolute; inset: calc(var(--u) * -1.2); border-radius: 50%; }   /* piu' facile da prendere */
+
+.abBtn:hover { filter: brightness(1.04); }
+
+.abBtn[data-down] {
+  transform: translateY(0);
+  filter: brightness(0.94);
+  box-shadow:
+    0 calc(var(--u) * 0.1) 0 #a3253e,
+    0 calc(var(--u) * 0.3) calc(var(--u) * 0.5) rgba(60, 10, 30, 0.38),
+    inset 0 calc(var(--u) * -0.5) calc(var(--u) * 0.9) rgba(90, 10, 30, 0.32);
+}
+
+.abPrint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 0.6);
+  line-height: 1;
+}
+
+.abPrint b {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: max(10px, calc(var(--u) * 2.8));
+  color: var(--ink);
+  text-shadow: var(--deboss);
+}
+
+/* ── l'altoparlante: la griglia di forellini (di traverso, sopra la croce) ── */
+.speaker {
+  grid-area: sp;
+  align-self: start;
+  justify-self: center;
+  display: grid;
+  grid-template-columns: repeat(4, calc(var(--u) * 1.6));
+  gap: calc(var(--u) * 1.5);
+  margin-top: calc(var(--u) * 3);
+}
+
+.speaker i {
+  width: calc(var(--u) * 1.6);
+  height: calc(var(--u) * 1.6);
+  border-radius: 50%;
+  background: #1b1820;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.7), 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+/* ── in verticale, come il primo Game Boy: lo schermo, il nome, la pulsantiera sotto ── */
+@media (orientation: portrait) {
+  .shell {
+    --u: min(4.4px, 0.94vw, 0.48vh);
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto minmax(0, 1fr) auto auto auto;
+    grid-template-areas: 'top top top' 'scr scr scr' 'brand brand brand' 'pl pc pr' 'pl px pr';
+    column-gap: calc(var(--u) * 1.6);
+    padding: 0 calc(var(--u) * 2.4) calc(var(--u) * 3);
+    border-radius: 16px 16px calc(var(--u) * 14) 16px;
+  }
+
+  .window { border-radius: 12px 12px calc(var(--u) * 7) 12px; }
+  .brand { flex-direction: row; align-items: baseline; justify-content: center; gap: calc(var(--u) * 2); padding: calc(var(--u) * 2.4) 0 calc(var(--u) * 1.4); }
+  .padL, .padR { align-self: center; }
+  .padC { align-self: end; margin-bottom: calc(var(--u) * 1.2); }
+  .padX { align-self: start; margin-bottom: 0; }
+  .speaker { display: none; }
+}
+
+@supports (height: 1dvh) {
+  @media (orientation: portrait) {
+    .shell { --u: min(4.4px, 0.94vw, 0.48dvh); }
+  }
+}
+
+/* telefoni stretti: la tesa si stringe */
 @media (max-width: 640px) {
-  .shell { padding: 0 6px 6px; }
-  .top { height: 40px; grid-template-columns: auto 1fr auto; }
-  .power { font-size: 0; gap: 0; }
-  .name { font-size: 0.85rem; text-align: center; }
+  .top { height: 38px; gap: 8px; }
   .keys { gap: 10px; }
-  .window { border-radius: 6px; box-shadow: 0 0 0 3px #231c26, inset 0 0 12px rgba(0, 0, 0, 0.6); }
+}
+
+@media (max-width: 420px) {
+  .wheelPrint, .lcdDay { display: none; }   /* la rotella si riconosce; il giorno sta nel menu */
+  .key { font-size: 0; gap: 0; }            /* schermo intero: basta la pillola */
+}
+
+@media (max-width: 345px) {
+  .padC .print { display: none; }
+  .lcd { gap: 6px; padding: 3px 6px; font-size: 10px; }
+}
+
+/* telefono di traverso: la tesa e la cornice si abbassano, lo schermo prende tutta l'altezza */
+@media (orientation: landscape) and (max-height: 500px) {
+  .top { height: 30px; }
+  .lensTop, .lensBottom { height: 12px; }
+  .brand { font-size: max(11px, calc(var(--u) * 2.8)); padding-top: calc(var(--u) * 1); }
+  .speaker { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stickCap, .wheelRidges, .wheelRidges::after, .lamp, .powerKnob, .crossArms { transition: none; }
+  .lcd b[data-urg] { animation: none; }
 }
