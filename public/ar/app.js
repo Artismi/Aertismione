@@ -141,6 +141,21 @@ async function startAR() {
       renderer, camera, scene, holo,
       fadeSource: (v) => { const video = stage.querySelector('video'); if (video) video.style.opacity = String(v); },
       stopSource: () => mindar.stop(),
+      // L'ultimo fotogramma della fotocamera come si vede sullo schermo: MindAR fa il video piu'
+      // grande del contenitore e lo centra (left/top negativi), qui se ne prende la parte visibile.
+      roomPhoto: () => {
+        const video = stage.querySelector('video');
+        if (!video?.videoWidth) return null;
+        const W = stage.clientWidth, H = stage.clientHeight;
+        const vw = parseFloat(video.style.width) || W, vh = parseFloat(video.style.height) || H;
+        const left = -(parseFloat(video.style.left) || 0), top = -(parseFloat(video.style.top) || 0);
+        const kx = video.videoWidth / vw, ky = video.videoHeight / vh;
+        const c = document.createElement('canvas');
+        const dpr = Math.min(devicePixelRatio, 2);
+        c.width = Math.round(W * dpr); c.height = Math.round(H * dpr);
+        c.getContext('2d').drawImage(video, left * kx, top * ky, W * kx, H * ky, 0, 0, c.width, c.height);
+        return c;
+      },
     };
 
     const syncSize = () => holo.setViewportHeight(renderer.domElement.height);

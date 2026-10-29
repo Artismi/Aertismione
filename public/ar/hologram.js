@@ -18,6 +18,7 @@ const CONE_R1 = 1.25;
 const LOGO_W = 1.5;
 const LOGO_DEPTH = 0.45;
 const LOGO_Y = 1.25;
+const LOGO_LEAN = THREE.MathUtils.degToRad(-20); // inclinato all'indietro, verso chi legge il biglietto
 
 const X_AXIS = new THREE.Vector3(1, 0, 0);
 const Y_AXIS = new THREE.Vector3(0, 1, 0);
@@ -358,7 +359,6 @@ function addLogoLights(root) {
   }
 }
 
-const wrapAngle = (a) => Math.atan2(Math.sin(a), Math.cos(a));
 
 // Rotazione del logo attorno al suo asse, rispetto alla direzione del telefono: il dondolio
 // della home (LogoModel nel mondo: ±10°, lento). Il giro completo di prima, ogni 9 secondi,
@@ -393,13 +393,10 @@ export async function createHologram({ logoUrl }) {
   let introStart = 0;
   let lostAt = -Infinity;
   let departing = false;
-  // Il logo guarda sempre verso il telefono (si legge da ogni lato) e si inclina un po'
-  // verso di lui se lo si guarda dall'alto.
-  logo.pivot.rotation.order = 'YXZ';
-  let faceYaw = 0;
-  let facePitch = 0;
-  const camLocal = new THREE.Vector3();
-  const qYaw = new THREE.Quaternion(), qPitch = new THREE.Quaternion(), qSpin = new THREE.Quaternion();
+  // Il logo sta fermo sul biglietto, come un oggetto vero: rivolto verso il lato da cui si legge
+  // il biglietto, inclinato all'indietro di LOGO_LEAN (col telefono sopra il tavolo si legge di
+  // fronte). Girandoci intorno lo si vede di lato e di dietro. Gli resta solo il dondolio.
+  const qLean = new THREE.Quaternion().setFromAxisAngle(X_AXIS, LOGO_LEAN), qSpin = new THREE.Quaternion();
 
   return {
     root,
@@ -414,7 +411,7 @@ export async function createHologram({ logoUrl }) {
     },
 
     // Come si sta girando il logo (per #debug).
-    pose: () => ({ faceYaw, facePitch, turn: logoTurn(time) }),
+    pose: () => ({ lean: LOGO_LEAN, turn: logoTurn(time) }),
 
     // Moneta, cono e particelle si spengono; il logo resta e continua a girare.
     depart() {
@@ -447,6 +444,8 @@ export async function createHologram({ logoUrl }) {
       shared.uBoost.value = Math.max(0, shared.uBoost.value - dt * 2.2);
       if (departing) {
         shared.uFade.value = Math.max(0, shared.uFade.value - dt / 0.45);
+        // la moneta e' metallo pieno, non sfuma: si ritira insieme alla luce
+        coin.scale.setScalar(Math.max(0.001, easeOut(shared.uFade.value)));
         return;
       }
       shared.uFade.value = phase(t, 0, 0.35);
@@ -459,27 +458,9 @@ export async function createHologram({ logoUrl }) {
 
       logo.reveal.value = easeInOut(phase(t, 0.9, 2.1));
 
-      if (camera) {
-        root.updateWorldMatrix(true, false);
-        camLocal.setFromMatrixPosition(camera.matrixWorld);
-        root.worldToLocal(camLocal);
-        const ground = Math.hypot(camLocal.x, camLocal.z);
-        const k = 1 - Math.exp(-dt * 4);
-        // Girarsi verso il telefono solo se il telefono sta davvero di lato. Visto da sopra (o
-        // di fronte, il biglietto su uno schermo) la sua posizione di lato e' quasi zero e
-        // l'angolo, con il minimo tremolio della stima, saltava di decine di gradi: il logo
-        // ruotava a caso. Li' resta rivolto verso il lato da cui si legge il biglietto.
-        const side = THREE.MathUtils.smoothstep(ground / Math.max(1e-6, camLocal.length()), 0.25, 0.6);
-        faceYaw += wrapAngle(Math.atan2(camLocal.x, camLocal.z) * side - faceYaw) * k * (0.25 + 0.75 * side);
-        facePitch += (-Math.atan2(camLocal.y - LOGO_Y, ground) * 0.75 - facePitch) * k;
-      }
-      // Prima si gira verso il telefono (intorno alla normale del biglietto), poi si inclina verso
-      // di lui, e il dondolio e il giro su se stesso vanno intorno all'asse del logo: inclinato,
-      // il logo gira come su un piatto, non nel piano dello schermo.
-      qYaw.setFromAxisAngle(Y_AXIS, faceYaw);
-      qPitch.setFromAxisAngle(X_AXIS, facePitch);
+      // il dondolio intorno all'asse del logo inclinato (come un piatto), non intorno al biglietto
       qSpin.setFromAxisAngle(Y_AXIS, logoTurn(time));
-      logo.pivot.quaternion.copy(qYaw).multiply(qPitch).multiply(qSpin);
+      logo.pivot.quaternion.copy(qLean).multiply(qSpin);
       logo.pivot.position.y = LOGO_Y + Math.sin(time * 1.4) * 0.02;
     },
   };

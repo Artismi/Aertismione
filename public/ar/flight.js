@@ -5,8 +5,7 @@
 import * as THREE from 'three';
 
 const HOME_URL = '/';
-const DURATION = 1.8;
-const SPIN = 0; // rad/s: sul biglietto il logo non gira piu' su se stesso (dondola come in home), e nel volo nemmeno
+const DURATION = 2.4; // il movimento di camera, dal biglietto alla home
 
 let frame = null;
 
@@ -67,58 +66,68 @@ function fallbackPose(toGltf) {
 }
 
 /**
+ * Il volo verso la home, da regista: il logo resta dov'e' sul biglietto e si muove la camera.
+ * A ogni fotogramma si calcola dove dovrebbe stare la camera perche' il logo AR si veda
+ * esattamente come quello della home (stessa posizione sullo schermo, grandezza, rotazione:
+ * window.__artismiLogo, vedi LogoModel.tsx) e la si porta li', con un movimento morbido. Con il
+ * logo si muove tutto: biglietto, moneta, cono e la stanza, congelata su un piano alla distanza
+ * del biglietto (roomPhoto), che si allontana in prospettiva. Intanto dietro si accende la home;
+ * arrivati, il logo AR si dissolve in quello della home.
+ *
  * @param {object} o
  * @param {THREE.WebGLRenderer} o.renderer   renderer che sta disegnando l'ologramma
- * @param {THREE.Camera} o.camera            la sua camera
- * @param {THREE.Scene} o.scene              la scena di partenza (continua a essere disegnata mentre si spegne)
+ * @param {THREE.PerspectiveCamera} o.camera la sua camera (quella della fotocamera o dell'anteprima)
+ * @param {THREE.Scene} o.scene              la scena di partenza: resta tutta in scena e si allontana
  * @param {object} o.holo                    ologramma (createHologram)
  * @param {(v:number)=>void} o.fadeSource    sfuma ciò che c'è dietro (video della fotocamera o anteprima)
  * @param {()=>void} o.stopSource            spegne fotocamera/anteprima a volo finito
+ * @param {(()=>HTMLCanvasElement|null)} [o.roomPhoto] l'ultimo fotogramma della fotocamera, come si vede sullo schermo
  */
-export function flyToHome({ renderer, camera, scene, holo, fadeSource, stopSource }) {
+export function flyToHome({ renderer, camera, scene, holo, fadeSource, stopSource, roomPhoto }) {
   preloadHome();
   const pivot = holo.logo.pivot;
   scene.updateMatrixWorld(true);
   camera.updateMatrixWorld(true);
-
-  // Il logo passa in una scena sua, in coordinate camera.
-  const start = decompose(new THREE.Matrix4().multiplyMatrices(camera.matrixWorldInverse, pivot.matrixWorld));
-  const flyScene = new THREE.Scene();
-  flyScene.environment = scene.environment;
-  const flyCam = new THREE.PerspectiveCamera(camera.fov ?? 35, camera.aspect ?? innerWidth / innerHeight, 0.01, 1000);
-  pivot.removeFromParent();
-  pivot.matrixAutoUpdate = false;
-  flyScene.add(pivot, holo.logo.composite);
   holo.depart();
   holo.pulse();
 
-  const target = new THREE.Matrix4();
-  const readTarget = () => {
-    const b = homeLogo();
-    if (b) {
-      target.fromArray(b.cameraSpace).multiply(holo.logo.toGltf);
-      return { fov: b.fov, ready: true };
-    }
-    const f = fallbackPose(holo.logo.toGltf);
-    target.copy(f.matrix);
-    return { fov: f.fov, ready: false };
-  };
-
-  // Stessa proiezione, unità diverse: in AR le distanze sono in pixel. Si riscala la partenza
-  // (posizione e scala insieme non cambiano l'immagine) per interpolare tra grandezze simili.
-  readTarget();
-  const k = start.pos.length() / Math.max(1e-6, decompose(target).pos.length());
-  start.pos.divideScalar(k);
-  start.scale.divideScalar(k);
+  const flyCam = new THREE.PerspectiveCamera(camera.fov ?? 35, camera.aspect ?? innerWidth / innerHeight, camera.near * 0.05, camera.far);
+  const start = decompose(camera.matrixWorld);
   const fov0 = flyCam.fov;
 
-  const spinQ = new THREE.Quaternion();
-  const q = new THREE.Quaternion();
-  const pos = new THREE.Vector3();
-  const scl = new THREE.Vector3();
-  const logScale0 = new THREE.Vector3(Math.log(start.scale.x), Math.log(start.scale.y), Math.log(start.scale.z));
-  const yAxis = new THREE.Vector3(0, 1, 0);
+  // La stanza: l'ultimo fotogramma su un piano che copre esattamente l'inquadratura, alla distanza
+  // del logo. Al primo istante e' identico al video, che si spegne; poi si allontana con il resto.
+  let room = null;
+  const photo = roomPhoto?.();
+  if (photo) {
+    const logoPos = new THREE.Vector3().setFromMatrixPosition(pivot.matrixWorld).applyMatrix4(camera.matrixWorldInverse);
+    const d = Math.max(1e-3, -logoPos.z);
+    const h = 2 * d * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
+    const tex = new THREE.CanvasTexture(photo);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    room = new THREE.Mesh(new THREE.PlaneGeometry(h * camera.aspect, h), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, toneMapped: false }));
+    room.position.set(0, 0, -d).applyMatrix4(camera.matrixWorld);
+    room.quaternion.copy(start.quat);
+    room.renderOrder = -100;
+    scene.add(room);
+    fadeSource(0);
+  }
 
+  // Dove deve stare la camera perche' il logo si veda come in home: camera = logo · (logo in camera)⁻¹.
+  // La scala si lascia: una camera scalata insieme al mondo vede la stessa immagine.
+  const target = new THREE.Matrix4();
+  const camEnd = new THREE.Matrix4();
+  const readTarget = () => {
+    const b = homeLogo();
+    if (b) target.fromArray(b.cameraSpace).multiply(holo.logo.toGltf);
+    else target.copy(fallbackPose(holo.logo.toGltf).matrix);
+    pivot.updateWorldMatrix(true, false);
+    camEnd.multiplyMatrices(pivot.matrixWorld, target.clone().invert());
+    return { fov: b ? b.fov : 35, end: decompose(camEnd) };
+  };
+
+  const pos = new THREE.Vector3();
+  const q = new THREE.Quaternion();
   frame.classList.add('arriving');
   document.body.dataset.state = 'flying';
   holdHomeLogo(true);
@@ -131,41 +140,31 @@ export function flyToHome({ renderer, camera, scene, holo, fadeSource, stopSourc
       t += dt;
       const u = clamp01(t / DURATION);
       const e = easeInOut(u);
-      const { fov } = readTarget();
-      const end = decompose(target);
+      holo.update(dt);
+      const { fov, end } = readTarget();
 
-      // Continua a girare alla stessa velocità e intanto converge sulla posa della home.
-      spinQ.setFromAxisAngle(yAxis, SPIN * t);
-      q.copy(start.quat).multiply(spinQ).slerp(end.quat, e);
       pos.lerpVectors(start.pos, end.pos, e);
-      scl.set(
-        Math.exp(THREE.MathUtils.lerp(logScale0.x, Math.log(end.scale.x), e)),
-        Math.exp(THREE.MathUtils.lerp(logScale0.y, Math.log(end.scale.y), e)),
-        Math.exp(THREE.MathUtils.lerp(logScale0.z, Math.log(end.scale.z), e)),
-      );
-      pivot.matrix.compose(pos, q, scl);
-      pivot.matrixWorldNeedsUpdate = true;
+      q.copy(start.quat).slerp(end.quat, e);
+      flyCam.position.copy(pos);
+      flyCam.quaternion.copy(q);
       flyCam.fov = THREE.MathUtils.lerp(fov0, fov, e);
       flyCam.aspect = innerWidth / innerHeight;
       flyCam.updateProjectionMatrix();
+      flyCam.updateMatrixWorld(true);
 
-      fadeSource(1 - phase(u, 0.08, 0.6));
-      frame.style.opacity = String(phase(u, 0.15, 0.7));
+      if (!room) fadeSource(1 - phase(u, 0.08, 0.6));
+      else room.material.opacity = 1 - phase(u, 0.3, 0.8);
+      frame.style.opacity = String(phase(u, 0.25, 0.8));
       // Arrivato in posizione, il nostro logo si dissolve in quello della home.
       if (u > 0.8) holdHomeLogo(false);
       holo.setLogoFade(1 - phase(u, 0.84, 1));
-      holo.update(dt);
 
-      holo.renderLogo(renderer, flyCam, flyScene.environment);
-      renderer.render(scene, camera);
-      const autoClear = renderer.autoClear;
-      renderer.autoClear = false;
-      renderer.clearDepth();
-      renderer.render(flyScene, flyCam);
-      renderer.autoClear = autoClear;
+      holo.renderLogo(renderer, flyCam, scene.environment);
+      renderer.render(scene, flyCam);
 
       if (u >= 1) {
         renderer.setAnimationLoop(null);
+        if (room) { room.removeFromParent(); room.material.map.dispose(); room.material.dispose(); room.geometry.dispose(); }
         takeOver(stopSource);
         resolve();
       }
