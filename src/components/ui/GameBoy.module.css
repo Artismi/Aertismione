@@ -46,7 +46,7 @@
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   grid-template-rows: auto minmax(0, 1fr) auto auto;
-  grid-template-areas: 'top top top' 'brand scr sp' 'pc scr px' 'pl scr pr';
+  grid-template-areas: 'top top top' 'brand scr sp' 'pc scr pr' 'pl scr px';   /* come un controller: a sinistra i tre tasti e sotto la levetta del movimento, a destra A e B e sotto la levetta della visuale */
   column-gap: calc(var(--u) * 2.8);
   padding: 0 calc(var(--u) * 2.6) calc(var(--u) * 2.4);
   overflow: hidden;
@@ -484,7 +484,7 @@
 }
 
 .padL { grid-area: pl; align-self: end; }
-.padX { grid-area: px; align-self: end; margin-bottom: calc(var(--u) * 2); }
+.padX { grid-area: px; align-self: end; }   /* alla stessa altezza della levetta del movimento */
 
 .padC {
   grid-area: pc;
@@ -881,7 +881,7 @@
     --u: min(4.4px, 0.94vw, 0.48vh);
     grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-rows: auto minmax(0, 1fr) auto auto auto;
-    grid-template-areas: 'top top top' 'scr scr scr' 'brand brand brand' 'pl pc pr' 'pl px pr';
+    grid-template-areas: 'top top top' 'scr scr scr' 'brand brand brand' 'pc pc pr' 'pl . px';   /* le due levette in basso, una per lato, alla stessa altezza */
     column-gap: calc(var(--u) * 1.6);
     padding: 0 calc(var(--u) * 2.4) calc(var(--u) * 3);
     border-radius: 16px 16px calc(var(--u) * 14) 16px;
@@ -889,9 +889,9 @@
 
   .window { border-radius: 12px 12px calc(var(--u) * 7) 12px; }
   .brand { flex-direction: row; align-items: baseline; justify-content: center; gap: calc(var(--u) * 2); padding: calc(var(--u) * 2.4) 0 calc(var(--u) * 1.4); }
-  .padL, .padR { align-self: center; }
-  .padC { align-self: end; margin-bottom: calc(var(--u) * 1.2); }
-  .padX { align-self: start; margin-bottom: 0; }
+  .padR { align-self: end; }
+  .padC { align-self: end; justify-self: start; margin-bottom: calc(var(--u) * 1.2); }
+  .padL, .padX { align-self: start; margin-bottom: 0; }
   .speaker { display: none; }
 }
 

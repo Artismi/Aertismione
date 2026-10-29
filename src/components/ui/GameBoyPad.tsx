@@ -6,7 +6,7 @@
  * Gli stessi materiali del Game Boy 3D sul banco (Console3D): croce nera
  * nell'incavo, A e B corallo laccati, gomma scura. Compatta, sotto lo schermo
  * (di traverso: negli angoli in basso, ai lati): la levetta per camminare e
- * guidare, la seconda levetta per la visuale (di lato gira attorno al personaggio, in su e in giu' lo zoom; in BMX e nella
+ * guidare (a sinistra, sotto i tre tasti), la seconda levetta per la visuale (a destra, sotto A e B, uguale alla prima: come un controller) (di lato gira attorno al personaggio, in su e in giu' lo zoom; in BMX e nella
  * tavoletta il gioco la legge come la croce di prima: trick, colore, spessore; con un gioco piu' vecchio, v < 3, resta la croce), A e B, e tre tasti
  * veri in rilievo con la loro icona e una lucina: la bomboletta (i graffiti), la
  * bici, lo zaino (il menu, dove sta tutto il resto). Nella tesa la rotella
@@ -313,7 +313,7 @@ export function GameBoyPad({ send, tasti, versione = 0 }: { send: Send; tasti: T
         <Funzione k="zaino" send={send} name={pad.bag} label={t.zaino} lit={!!on.zaino} badge={tasti?.n} />
       </div>
       <div className={styles.padX} role="group" aria-label={pad.label} onContextMenu={hush}>
-        {versione >= 3 ? <Levetta send={send} msg="levetta2" small /> : <Croce send={send} />}
+        {versione >= 3 ? <Levetta send={send} msg="levetta2" /> : <Croce send={send} />}
         <span className={`${styles.print} ${styles.crossHint}`}>
           {(t.croce === undefined ? pad.cross : t.croce ?? '').split(' · ').map((r) => <span key={r}>{r}</span>)}
         </span>
