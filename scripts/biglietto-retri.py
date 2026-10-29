@@ -188,10 +188,14 @@ scrivi('retro-bc', NOTTE, ROSA, f'''
   .det {{ position: absolute; left: 0; top: 0; width: 1020px; height: {FONDO}px; overflow: hidden; }}  /* la figura scende fra i servizi */
   .det path {{ fill: none; stroke: {ROSA}; stroke-width: {2.2 / SC:.3f}; stroke-linejoin: round; stroke-linecap: round; }}
   .det path.alone {{ stroke: {NOTTE}; stroke-width: {16 / SC:.3f}; }}  /* dove la figura attraversa il filetto di sopra, il filetto si interrompe */
-  /* il claim: tre righe composte sull'inchiostro vero (blocco.js qui sotto), larghe uguali, senza toccarsi, che riempiono il riquadro */
-  .claim {{ position: absolute; left: 48px; top: {TOP}px; width: {CW}px; height: {H}px; }}
-  .claim span {{ position: absolute; left: 0; top: 0; white-space: nowrap; line-height: 1; letter-spacing: 0; }}
-  .claim .v {{ font-family: "Fraunces", serif; font-style: italic; font-weight: 330; font-variation-settings: "SOFT" 100, "WONK" 1, "opsz" 144; }}
+  /* il claim come la proposta B: volto enorme che esce dal bordo sinistro, la frase piccola intorno; il resto
+     della frase si stringe a destra, in due righe, fra la fine di volto e l'omino */
+  .claim {{ position: absolute; left: 0; top: 0; width: 600px; height: {RIGA}px; }}
+  .claim span {{ position: absolute; white-space: nowrap; }}
+  .claim .prima {{ left: 50px; top: 46px; font-size: 40px; line-height: .74; }}
+  .claim .v {{ left: -34px; top: 92px; font-size: 262px; line-height: 1; letter-spacing: -.03em;
+               font-family: "Fraunces", serif; font-style: italic; font-weight: 300; font-variation-settings: "SOFT" 100, "WONK" 1, "opsz" 144; }}
+  .claim .dopo {{ right: 34px; bottom: 50px; font-size: 40px; line-height: .86; text-align: right; }}
   .linea {{ position: absolute; left: 48px; right: 48px; height: 0; border-top: 1px solid {ROSA}; }}
   .indice {{ position: absolute; left: 48px; right: 48px; top: {RIGA + 20}px; list-style: none; display: grid; grid-template-columns: 162px 175px 162px 190px 1fr; gap: 16px; }}
   .indice li:nth-child(3) > .m {{ max-width: 110px; }}
@@ -204,7 +208,7 @@ scrivi('retro-bc', NOTTE, ROSA, f'''
   <svg class="det" viewBox="0 0 1020 {FONDO}"><defs><clipPath id="riga"><rect x="0" y="{RIGA - 10}" width="1020" height="20"/></clipPath></defs>
     <g clip-path="url(#riga)"><g transform="translate({FTX:.2f} {FTY:.2f}) scale({SC:.4f})"><path class="alone" d="{FIG}"/></g></g>
     <g transform="translate({FTX:.2f} {FTY:.2f}) scale({SC:.4f})"><path d="{FIG}"/><path d="{TESTA}"/></g></svg>
-  <h1 class="claim" data-blocco><span class="a">Diamo insieme un</span><span class="v">volto</span><span class="a">alla tua attività.</span></h1>
+  <h1 class="claim"><span class="a prima">Diamo insieme un</span><span class="v">volto</span><span class="a dopo">alla tua<br>attività.</span></h1>
   <ol class="indice">{"".join(f'<li><span class="a">{i+1:02d}</span><span class="c">{t}</span><span class="m">{x}</span></li>' for i, (t, x) in enumerate(zip(SERVIZI, DETTAGLI)))}</ol>
   <div class="linea" style="bottom:86px"></div>
   <div class="piede m"><p>WhatsApp +39 393 195 9752</p><p>artismidesignstudio.com</p><p>apizzoglio@gmail.com</p></div>''')
