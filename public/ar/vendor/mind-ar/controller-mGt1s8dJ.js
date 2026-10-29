@@ -55186,7 +55186,12 @@ class QQ {
     filterBeta: c = null
   }) {
     this.inputWidth = t, this.inputHeight = e, this.maxTrack = r, this.filterMinCF = l === null ? VY : l, this.filterBeta = c === null ? zY : c, this.warmupTolerance = i === null ? PY : i, this.missTolerance = a === null ? AY : a, this.cropDetector = new V4(this.inputWidth, this.inputHeight, o), this.inputLoader = new FY(this.inputWidth, this.inputHeight), this.markerDimensions = null, this.onUpdate = s, this.debugMode = o, this.processingVideo = !1, this.interestedTargetIndex = -1, this.trackingStates = [];
-    const u = 10, d = 1e5, h = 45 * Math.PI / 180, p = this.inputHeight / 2 / Math.tan(h / 2);
+    const u = 10, d = 1e5, h = 45 * Math.PI / 180, p = globalThis.MINDAR_LONG_SIDE_FOV
+      // Artismi: la focale dal lato lungo dell'immagine, con l'angolo vero della fotocamera.
+      // L'originale suppone 45° sul lato verticale: giusto in orizzontale, ma col telefono in
+      // verticale il lato verticale e' quello lungo e la focale usciva una volta e mezza troppo lunga.
+      ? Math.max(this.inputWidth, this.inputHeight) / 2 / Math.tan(globalThis.MINDAR_LONG_SIDE_FOV * Math.PI / 360)
+      : this.inputHeight / 2 / Math.tan(h / 2);
     this.projectionTransform = [
       [p, 0, this.inputWidth / 2],
       [0, p, this.inputHeight / 2],

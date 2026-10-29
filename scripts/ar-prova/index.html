@@ -1,0 +1,55 @@
+<!doctype html><html><head><meta charset="utf-8">
+<script type="importmap">{"imports":{"three":"/ar/vendor/three/build/three.module.min.js","three/addons/":"/ar/vendor/three/examples/jsm/"}}</script>
+</head><body><canvas id="c"></canvas>
+<script type="module">
+import * as THREE from 'three';
+import { Controller } from '/ar/vendor/mind-ar/mindar-image.prod.js';
+const P = new URLSearchParams(location.search);
+const scen = P.get('s'), mode = P.get('m') || 'old';   // old: com'e' su main · new: le correzioni
+const stabMod = P.get('stab') || '';                    // modulo stabilizzatore da provare
+if (mode !== 'old') globalThis.MINDAR_LONG_SIDE_FOV = Number(P.get('fov') || 69.4);
+const truth = await (await fetch(`/h/frames/${scen}/truth.json`)).json();
+const { W, H, K } = truth;
+const cv = document.getElementById('c'); cv.width = W; cv.height = H;
+const ctx = cv.getContext('2d', { willReadFrequently: true });
+const imgs = await Promise.all(truth.frames.map((_, i) => new Promise((res) => { const im = new Image(); im.onload = () => res(im); im.src = `/h/frames/${scen}/${String(i).padStart(3, '0')}.jpg`; })));
+const filt = mode === 'old' ? { filterMinCF: 0.001, filterBeta: 50 } : { filterMinCF: Number(P.get('mincf') || 1000), filterBeta: 0 };
+let resolveDone = null, lastMatrix = null;
+const ctrl = new Controller({ inputWidth: W, inputHeight: H, maxTrack: 1, warmupTolerance: 3, missTolerance: 20, ...filt,
+  onUpdate: (d) => { if (d.type === 'updateMatrix') lastMatrix = d.worldMatrix; if (d.type === 'processDone' && resolveDone) { const r = resolveDone; resolveDone = null; r(); } } });
+const { dimensions } = await ctrl.addImageTargets('/ar/assets/target.mind');
+const [tw, th] = dimensions[0];
+// come MindARThree: il centro del biglietto, 1 = la sua larghezza
+const post = new THREE.Matrix4().compose(new THREE.Vector3(tw / 2, th / 2, 0), new THREE.Quaternion(), new THREE.Vector3(tw, tw, tw));
+const proj = new THREE.Matrix4().fromArray(ctrl.getProjectionMatrix());
+const CARD_W = 85, TOP = 125;   // mm: la cima dell'ologramma sopra il centro
+const anchor = { visible: false, matrix: new THREE.Matrix4() };
+let stab = null;
+if (stabMod) { const m = await import(stabMod); stab = m.createStabilizer(anchor); }
+const toPx = (m, p) => { const v = new THREE.Vector4(p[0], p[1], p[2], 1).applyMatrix4(m).applyMatrix4(proj); return [(v.x / v.w + 1) / 2 * W, (1 - v.y / v.w) / 2 * H]; };
+const truePx = (f, p) => { const R = f.R, t = f.t; const c = [0, 1, 2].map((k) => R[k][0] * p[0] + R[k][1] * p[1] + R[k][2] * p[2] + t[k]); return [K[0][0] * c[0] / c[2] + K[0][2], K[1][1] * c[1] / c[2] + K[1][2]]; };
+const rows = [];
+ctx.drawImage(imgs[0], 0, 0);
+ctrl.processVideo(cv);
+for (let i = 0; i < imgs.length; i++) {
+  ctx.drawImage(imgs[i], 0, 0);
+  // due giri del ciclo: il primo potrebbe aver letto il fotogramma prima
+  for (let k = 0; k < 2; k++) await new Promise((r) => { resolveDone = r; });
+  const f = truth.frames[i];
+  const row = { i, seen: !!lastMatrix };
+  if (lastMatrix) {
+    anchor.visible = true;
+    anchor.matrix.fromArray(lastMatrix).multiply(post);
+    const use = (m) => ({ top: toPx(m, [0, 0, TOP / CARD_W]), ctr: toPx(m, [0, 0, 0]) });
+    const raw = use(anchor.matrix);
+    row.raw = raw;
+    row.m = anchor.matrix.toArray();
+    if (stab) { stab.update(i * 1000 / 30); row.stab = use(stab.group.matrix); }
+  } else { anchor.visible = false; if (stab) stab.update(i * 1000 / 30); }
+  // il vero: cima = verso la camera (z del biglietto negativo)
+  row.true = { top: truePx(f, [0, 0, -TOP]), ctr: truePx(f, [0, 0, 0]) };
+  rows.push(row);
+}
+ctrl.stopProcessVideo();
+window.__result = { W, H, rows, proj: proj.toArray(), K, truth: truth.frames };
+</script></body></html>

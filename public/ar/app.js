@@ -24,6 +24,12 @@ const setState = (s) => { document.body.dataset.state = s; };
 const hasCamera = !!navigator.mediaDevices?.getUserMedia;
 const isTouch = matchMedia('(pointer: coarse)').matches;
 
+// La fotocamera di un telefono vede circa 69° sul lato lungo dell'immagine (26 mm equivalenti).
+// MindAR suppone 45° sul lato verticale: giusto in orizzontale, ma in verticale la focale veniva
+// una volta e mezza troppo lunga e l'ologramma, molto piu' alto del biglietto, pendeva e si
+// storceva muovendosi. Lo legge il controller di MindAR (vendor/mind-ar, riga patchata).
+globalThis.MINDAR_LONG_SIDE_FOV = 69.4;
+
 let leaving = false;
 let stopIntroBackground = () => {};
 // Ciò che serve per far volare il logo dalla scena attiva (AR o anteprima) alla home.
@@ -87,6 +93,10 @@ async function startAR() {
   const stage = $('stage');
   let mindar;
   try {
+    // Il permesso lo si chiede qui: MindAR, se la fotocamera viene rifiutata, si ferma senza
+    // dire perche'. Cosi' un rifiuto si riconosce (e si va al sito) da un browser senza fotocamera.
+    const probe = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+    probe.getTracks().forEach((t) => t.stop());
     const { MindARThree } = await import('mindar-image-three');
     mindar = new MindARThree({
       container: stage,
@@ -95,11 +105,11 @@ async function startAR() {
       uiLoading: 'no',
       uiScanning: 'no',
       uiError: 'no',
-      // Filtro One Euro: smorza il tremolio fine da fermi ma segue subito i movimenti.
-      // Valori più aggressivi (minCF 0.0001, beta 0.001) facevano restare l'ologramma
-      // indietro di secondi quando il telefono si sposta.
-      filterMinCF: 0.001,
-      filterBeta: 50,
+      // Il filtro di MindAR spento (taglio altissimo): leviga i sedici numeri della matrice uno
+      // per uno e nei movimenti la deformava (l'ologramma si storceva). Leviga stabile.js, sulla
+      // posa rigida.
+      filterMinCF: 1000,
+      filterBeta: 0,
       warmupTolerance: 3,
       // L'ologramma è grande e si guarda da lontano: brevi perdite del biglietto non lo spengono.
       missTolerance: 20,
@@ -133,6 +143,23 @@ async function startAR() {
     syncSize();
     addEventListener('resize', syncSize);
 
+    // Girando il telefono il video cambia verso: MindAR ruoterebbe la matrice ma terrebbe la
+    // proiezione di prima, e l'ologramma si storcerebbe. Si riparte con la camera nuova (senza
+    // ricaricare la pagina: su iPhone chiederebbe di nuovo il permesso).
+    let landscape = innerWidth > innerHeight;
+    let restarting = null;
+    addEventListener('resize', () => {
+      const now = innerWidth > innerHeight;
+      if (now === landscape || leaving) return;
+      landscape = now;
+      restarting = (restarting ?? Promise.resolve()).then(async () => {
+        mindar.stop();
+        stable.reset();
+        await mindar.start();
+        syncSize();
+      }).catch((err) => console.warn('riavvio della fotocamera non riuscito', err));
+    });
+
     stopIntroBackground();
     const clock = new THREE.Clock();
     renderer.setAnimationLoop(() => {
@@ -150,6 +177,8 @@ async function startAR() {
     console.warn('AR non disponibile', err);
     try { mindar?.stop(); } catch { /* niente da fermare */ }
     stage.replaceChildren();
+    // fotocamera rifiutata: si va al sito, senza altri passaggi
+    if (err?.name === 'NotAllowedError' || err?.name === 'SecurityError') { goHome({ fly: false }); return; }
     startPreview('denied');
   }
 }
@@ -288,8 +317,9 @@ addEventListener('pageshow', (e) => { if (e.persisted) location.reload(); });
 if (!hasCamera) startPreview('nocamera');
 else if (!isTouch) startPreview('desktop');
 else {
+  // dal telefono la richiesta della fotocamera parte da sola: niente schermata da toccare prima
   stopIntroBackground = mountCausticsBackground($('bg'));
-  setState('intro');
+  startAR();
 }
 
 // Da desktop si può comunque provare con la webcam.
