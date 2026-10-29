@@ -207,7 +207,7 @@ scrivi('retro-bc', NOTTE, ROSA, f'''
 ''', f'''  {FILETTO}
   <svg class="det" viewBox="0 0 1020 {FONDO}"><defs><clipPath id="riga"><rect x="0" y="{RIGA - 10}" width="1020" height="20"/></clipPath></defs>
     <g clip-path="url(#riga)"><g transform="translate({FTX:.2f} {FTY:.2f}) scale({SC:.4f})"><path class="alone" d="{FIG}"/></g></g>
-    <g transform="translate({FTX:.2f} {FTY:.2f}) scale({SC:.4f})"><path d="{FIG}"/><path d="{TESTA}" style="stroke:{AMBRA}"/></g></svg>
+    <g transform="translate({FTX:.2f} {FTY:.2f}) scale({SC:.4f})"><path d="{FIG}"/><path d="{TESTA}"/></g></svg>
   <h1 class="claim"><span class="a prima">Diamo insieme un</span><span class="v">volto</span><span class="a dopo">alla tua<br>attività.</span></h1>
   <ol class="indice">{"".join(f'<li><span class="a">{i+1:02d}</span><span class="c">{t}</span><span class="m">{x}</span></li>' for i, (t, x) in enumerate(zip(SERVIZI, DETTAGLI)))}</ol>
   <div class="linea" style="bottom:86px"></div>

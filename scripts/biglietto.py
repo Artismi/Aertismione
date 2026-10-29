@@ -90,7 +90,7 @@ def sigillo(ink=PRUGNA, carta=ROSA, disco=False, bordo=None, frase='  Inquadra i
         x, y = c0 + R3 * math.cos(ar), c0 + R3 * math.sin(ar)
         dx, dy = math.cos(ar), math.sin(ar)
         croci.append(f'<line x1="{f(x-dx*1.2)}" y1="{f(y-dy*1.2)}" x2="{f(x+dx*1.2)}" y2="{f(y+dy*1.2)}"/>')
-    bilia = f'<circle cx="{f(c0)}" cy="{f(c0-R2)}" r="1.15" fill="{AMBRA}" stroke="{ink}" stroke-width="{f(FILO)}"/>'   # la bilia d'ambra'
+    bilia = f'<circle cx="{f(c0)}" cy="{f(c0-R2)}" r="1" fill="{carta}" stroke="{ink}" stroke-width="{f(FILO)}"/>'
     ext = R3 + 2.6
     return (f'<svg class="sigillo" xmlns="http://www.w3.org/2000/svg" viewBox="{f(c0-ext)} {f(c0-ext)} {f(2*ext)} {f(2*ext)}" role="img" aria-label="QR: {URL.lower()}">'
             + (f'<circle cx="{f(c0)}" cy="{f(c0)}" r="{f(R3+1.4)}" fill="{carta}"' + (f' stroke="{bordo}" stroke-width="1.6"' if bordo else '') + '/>' if disco else '') +
@@ -152,15 +152,15 @@ forma = open(os.path.join(os.path.dirname(__file__), 'logo-forma.svg'), encoding
 d = forma.split(' d="', 1)[1].split('"', 1)[0]
 
 # ─── fronte ─────────────────────────────────────────────────────────────────────────────────
-# il logo intero, mai coperto ne' tagliato: a sinistra, alto quanto il biglietto lascia; a destra della i, nella
-# colonna libera, la firma in alto e il sigillo col QR in basso
+# il logo grande, al vivo solo a sinistra, mai coperto: a destra della i, nella colonna libera, la firma in alto e
+# il sigillo col QR in basso
 pagina('biglietto-fronte.html', 'Biglietto Artismi · fronte', NOTTE, ROSA, f'''
-  .logo {{ position: absolute; left: 22px; top: 70px; width: 790px; }}
+  .logo {{ position: absolute; left: -142px; top: 52px; width: 950px; }}   /* grande e al vivo a sinistra (via solo il ricciolo della a), la i finisce a 723 px */
   .logo path {{ fill: none; stroke: {ROSA}; stroke-width: 3.6; stroke-linejoin: round; }}
   .piede {{ position: absolute; right: 40px; top: 46px; text-align: right; }}
-  .piede .t {{ font-size: 50px; line-height: .86; }}
-  .piede .p {{ margin-top: 14px; font-size: 13px; letter-spacing: .06em; color: {AMBRA}; }}
-  .sigillo {{ position: absolute; right: 24px; bottom: 22px; width: 236px; height: 236px; }}
+  .piede .t {{ font-size: 56px; line-height: .86; }}
+  .piede .p {{ margin-top: 14px; font-size: 13px; letter-spacing: .06em; color: {AMBRA}; }}   /* l'unico accento d'ambra */
+  .sigillo {{ position: absolute; right: 22px; bottom: 20px; width: 252px; height: 252px; }}
 ''', f'''  <svg class="logo" viewBox="0 0 1000 603"><path d="{d}"/></svg>
   <div class="piede"><p class="t ti">Design<br>Studio</p><p class="p">artismidesignstudio.com</p></div>
   {sigillo(disco=True, bordo=NOTTE)}''')
