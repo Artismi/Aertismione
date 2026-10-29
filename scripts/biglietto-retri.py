@@ -6,7 +6,7 @@
 import os
 
 QUI = os.path.dirname(os.path.abspath(__file__))
-NOTTE = '#14121C'; ROSA = '#F5C7D6'; PRUGNA = '#2B1622'
+NOTTE = '#35144E'; ROSA = '#F5C7D6'; PRUGNA = '#2B1622'; AMBRA = '#C8860A'   # l'ambra solo per gli accenti
 SERVIZI = ['Identità completa', 'Illustrazioni, stampe e gadget', 'Web, app e realtà aumentata', 'Progettazione partecipata', 'Gestione social']
 forma = open(os.path.join(QUI, 'logo-forma.svg'), encoding='utf-8').read()
 D = forma.split(' d="', 1)[1].split('"', 1)[0]
@@ -207,7 +207,7 @@ scrivi('retro-bc', NOTTE, ROSA, f'''
 ''', f'''  {FILETTO}
   <svg class="det" viewBox="0 0 1020 {FONDO}"><defs><clipPath id="riga"><rect x="0" y="{RIGA - 10}" width="1020" height="20"/></clipPath></defs>
     <g clip-path="url(#riga)"><g transform="translate({FTX:.2f} {FTY:.2f}) scale({SC:.4f})"><path class="alone" d="{FIG}"/></g></g>
-    <g transform="translate({FTX:.2f} {FTY:.2f}) scale({SC:.4f})"><path d="{FIG}"/><path d="{TESTA}"/></g></svg>
+    <g transform="translate({FTX:.2f} {FTY:.2f}) scale({SC:.4f})"><path d="{FIG}"/><path d="{TESTA}" style="stroke:{AMBRA}"/></g></svg>
   <h1 class="claim"><span class="a prima">Diamo insieme un</span><span class="v">volto</span><span class="a dopo">alla tua<br>attività.</span></h1>
   <ol class="indice">{"".join(f'<li><span class="a">{i+1:02d}</span><span class="c">{t}</span><span class="m">{x}</span></li>' for i, (t, x) in enumerate(zip(SERVIZI, DETTAGLI)))}</ol>
   <div class="linea" style="bottom:86px"></div>
