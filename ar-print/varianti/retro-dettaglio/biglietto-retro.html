@@ -5,6 +5,7 @@
   @font-face { font-family: "Archivo"; src: url("../../fonts/archivo-latin-wdth-normal.woff2") format("woff2"); font-weight: 100 900; font-stretch: 62% 125%; }
   @font-face { font-family: "Cormorant Garamond"; src: url("../../fonts/cormorant-garamond-latin-300-normal.woff2") format("woff2"); font-weight: 300; }
   @font-face { font-family: "Cormorant Garamond"; src: url("../../fonts/cormorant-garamond-latin-300-italic.woff2") format("woff2"); font-weight: 300; font-style: italic; }
+  @font-face { font-family: "Fraunces"; src: url("../../fonts/fraunces-latin-full-italic.woff2") format("woff2"); font-weight: 100 900; font-style: italic; }
   @font-face { font-family: "IBM Plex Mono"; src: url("../../fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2"); font-weight: 400; }
   @page { size: 85mm 55mm; margin: 0; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -45,6 +46,34 @@ document.fonts.ready.then(() => {
     else { let fs = parseFloat(cs.fontSize); for (let i = 0; i < 4; i++) { fs *= W / larg(el); el.style.fontSize = fs + 'px'; } }
   });
   window.__fit = true;
+});
+</script>
+<script>
+// [lettering] il blocco del claim: ogni riga larga uguale, misurata sull'inchiostro (non sulla scatola del carattere),
+// e le righe distribuite in altezza con lo stesso spazio fra l'una e l'altra; se non ci stanno, il blocco si stringe.
+document.fonts.ready.then(() => {
+  document.querySelectorAll('[data-blocco]').forEach(box => {
+    const righe = [...box.children], W0 = box.clientWidth, H = box.clientHeight, GAP = 18;
+    const cv = document.createElement('canvas').getContext('2d');
+    const misura = (el, fs) => { el.style.fontSize = fs + 'px'; const cs = getComputedStyle(el);
+      cv.font = cs.fontStyle + ' ' + cs.fontWeight + ' ' + fs + 'px ' + cs.fontFamily;
+      const st = parseFloat(cs.fontStretch); cv.fontStretch = st <= 65 ? 'extra-condensed' : st <= 80 ? 'condensed' : 'normal';   // il canvas vuole la parola, non la percentuale
+      const t = cs.textTransform === 'uppercase' ? el.textContent.toUpperCase() : el.textContent, m = cv.measureText(t);
+      return { w: m.actualBoundingBoxLeft + m.actualBoundingBoxRight, l: m.actualBoundingBoxLeft, a: m.actualBoundingBoxAscent, d: m.actualBoundingBoxDescent,
+               fa: m.fontBoundingBoxAscent, fd: m.fontBoundingBoxDescent, fs: fs }; };
+    let W = W0, M = [];
+    for (let k = 0; k < 6; k++) {
+      M = righe.map(el => { const m = misura(el, 100); return misura(el, 100 * W / m.w); });
+      const h = M.reduce((s, m) => s + m.a + m.d, 0);
+      if (h + GAP * (righe.length - 1) <= H) break;
+      W *= (H - GAP * (righe.length - 1)) / h;
+    }
+    const h = M.reduce((s, m) => s + m.a + m.d, 0), gap = (H - h) / (righe.length - 1);
+    let y = 0;
+    righe.forEach((el, i) => { const m = M[i], base = (m.fs - (m.fa + m.fd)) / 2 + m.fa;   // la linea di base dentro la riga (line-height 1)
+      el.style.left = m.l + 'px'; el.style.top = (y + m.a - base) + 'px'; y += m.a + m.d + gap; });
+  });
+  window.__blocco = true;
 });
 </script>
 </body></html>
