@@ -3,9 +3,14 @@
 /**
  * GameBoy — Porto Vecchio dentro il Game Boy del banco.
  *
- * Il gioco gira in un riquadro incorniciato dalla plastica rosa della console:
- * in alto la tesa del Game Boy, con la lucina, il nome e due tasti di gomma
- * (schermo intero, esci). Niente barra del sito: si e' dentro la console.
+ * Il gioco gira in uno schermo incassato direttamente nella plastica rosa della
+ * console, con una cornice scura sottile: niente cornici una dentro l'altra, niente
+ * tesa in alto, niente che non serva (niente display, lucina, altoparlante: ora e soldi
+ * stanno nel menu del gioco). Solo comandi: le levette, A e B, tre tasti. Schermo
+ * intero, audio ed esci stanno nel menu del gioco (lo zaino), che li chiede alla console
+ * con un messaggio (vedi sotto). In verticale la pulsantiera e' una fascia bassa sotto lo
+ * schermo; di traverso sta nelle due colonne ai lati, e lo schermo corre per tutta
+ * l'altezza. Niente barra del sito: si e' dentro la console.
  *
  * Caricamento: da computer il gioco parte gia' in sottofondo, quando il banco e'
  * vicino e la pagina e' ferma, nascosto fuori schermo. Mentre la pagina scorre gli
@@ -20,13 +25,16 @@
  * il menu non e' disegnato si vede un caricamento solo, quello del sito.
  *
  * Lo stesso Game Boy del banco (Console3D), visto di fronte: plastica rosa
- * trasparente con la scheda sotto (consolePaint), la cornice rosa dello schermo.
+ * trasparente con la scheda sotto (consolePaint), lo schermo nella sua cornice scura.
  * I comandi stanno nella pulsantiera, non sullo schermo (GameBoyPad): levetta,
- * croce per la visuale, A/B, bomboletta, bici, zaino; nella tesa la rotella
- * dell'audio, il display con l'ora e i soldi, l'interruttore per uscire. Il sito si presenta al gioco con {pvc:'ciao'}; il gioco
+ * levetta della visuale, A/B, bomboletta, bici, zaino. Il sito si presenta al gioco con {pvc:'ciao'}; il gioco
  * pulisce lo schermo (tutto il resto sta nel suo menu, lo zaino), risponde
- * {pv:'console'} e poi manda le scritte dei tasti ({pv:'tasti'}) e lo stato per
- * il display ({pv:'stato'}). Un gioco che non risponde (una versione vecchia)
+ * {pv:'console'} e poi manda le scritte dei tasti ({pv:'tasti'}) e lo stato
+ * ({pv:'stato'}, che qui serve solo al display del Game Boy sul banco). Dal suo menu
+ * il gioco chiede {pv:'schermo'} (a tutto schermo la console intera, pulsantiera compresa),
+ * {pv:'esci'} (la console si chiude) e dice {pv:'audio', on} quando accende o spegne la
+ * musica. Un gioco che non ha ancora questi tasti nel menu (v < 4) ha un piccolo «esci»
+ * nell'angolo, per non restare chiusi dentro. Un gioco che non risponde (una versione vecchia)
  * si gioca come prima, senza pulsantiera.
  *
  * `from`: il rettangolo dello schermo della console da cui nasce; null =
@@ -38,7 +46,7 @@ import { createPortal } from 'react-dom'
 import { useStore } from '@/stores/useStore'
 import { PROGETTI } from '@/config/content'
 import styles from './GameBoy.module.css'
-import { Display, GameBoyPad, Rotella, type Send, type Stato, type Tasti } from './GameBoyPad'
+import { GameBoyPad, type Send, type Stato, type Tasti } from './GameBoyPad'
 import pre from './Preloader.module.css'
 import { MatrixGrid } from './Preloader'
 import { gameLoad, gameInfo } from '@/components/canvas/table/gameLoad'
@@ -85,9 +93,11 @@ export function GameBoy({ from, onClose, page = false, warm = false }: {
   // i comandi sulla plastica: 'attesa' finche' il gioco non risponde, 'no' se non sa farli
   const [pad, setPad] = useState<'attesa' | 'si' | 'no'>('attesa')
   const [tasti, setTasti] = useState<Tasti | null>(null)
-  const [versione, setVersione] = useState(0)   // la versione dei comandi che il gioco capisce (dalla 3: la levetta della visuale)
-  const [stato, setStato] = useState<Stato | null>(null)
-  const [off, setOff] = useState(false)   // l'interruttore spinto su OFF: un attimo, poi la console si chiude
+  const [versione, setVersione] = useState(0)   // la versione dei comandi che il gioco capisce (dalla 3: la levetta della visuale; dalla 4: schermo intero, audio ed esci nel suo menu)
+  // quello che il menu del gioco chiede alla console: il listener dei messaggi nasce una volta, le funzioni cambiano a ogni giro
+  const sys = useRef<{ close: () => void; fullscreen: () => void }>({ close: () => {}, fullscreen: () => {} })
+  // schermo intero chiesto dal gioco: se il browser vuole un tocco sulla pagina (non nel gioco), si fa al primo tocco sulla console
+  const fsArmed = useRef(false)
   const [inside, setInside] = useState<string | null>(null)
 
   // l'elettronica sotto la plastica rosa trasparente: la stessa scheda del Game Boy 3D, disegnata una volta quando il browser e' libero
@@ -116,9 +126,17 @@ export function GameBoy({ from, onClose, page = false, warm = false }: {
       if (e.source !== frameRef.current?.contentWindow || !e.data || typeof e.data.pv !== 'string') return
       talks.current = true
       if (e.data.pv === 'console') { hello.current = true; setPad('si'); setVersione(Number(e.data.v) || 0); return }
+      // dal menu del gioco: schermo intero, esci, l'audio acceso o spento
+      if (e.data.pv === 'schermo') { sys.current.fullscreen(); return }
+      if (e.data.pv === 'esci') { sys.current.close(); return }
+      if (e.data.pv === 'audio') {
+        setTasti((t) => { const n = t ? { ...t, audio: !!e.data.on } : t; gameInfo.tasti = n; return n })
+        gameLoad.onChange?.(); return
+      }
       // le scritte dei tasti e lo stato vanno anche al Game Boy del banco (display e lucine)
       if (e.data.pv === 'tasti') { setTasti(e.data as Tasti); gameInfo.tasti = e.data as Tasti; gameLoad.onChange?.(); return }
-      if (e.data.pv === 'stato') { setStato(e.data as Stato); gameInfo.stato = e.data as Stato; gameLoad.onChange?.(); return }
+      // lo stato (ora, soldi) serve solo al display del Game Boy sul banco: qui sta nel menu del gioco, lo zaino
+      if (e.data.pv === 'stato') { gameInfo.stato = e.data as Stato; gameLoad.onChange?.(); return }
       if (!hello.current) send({ pvc: 'ciao' })   // il saluto, finche' il gioco non risponde
       if (typeof e.data.p === 'number') real.current = Math.max(real.current, e.data.p)
       if (e.data.pv === 'pronto') setReady(true)
@@ -254,19 +272,22 @@ export function GameBoy({ from, onClose, page = false, warm = false }: {
     return () => window.removeEventListener('keydown', onKey)
   })
 
-  // l'interruttore: scivola su OFF, poi si esce
-  function powerOff() {
-    if (off) return
-    setOff(true)
-    window.setTimeout(close, 180)
-  }
-
+  // a tutto schermo la console intera (pulsantiera compresa), o di nuovo in finestra. Chiesto dal gioco il tocco e' stato
+  // nel gioco: Chrome lo passa alla pagina, altri browser no. Allora si fa al primo tocco sulla console (armFs)
   function fullscreen() {
     const el = rootRef.current
     if (!el) return
-    if (document.fullscreenElement) document.exitFullscreen().catch(() => {})
-    else el.requestFullscreen?.().catch(() => {})
+    fsArmed.current = false
+    if (document.fullscreenElement) { document.exitFullscreen().catch(() => {}); return }
+    if (!el.requestFullscreen) return   // iPhone: niente schermo intero per una pagina
+    el.requestFullscreen().catch(() => { fsArmed.current = true })
   }
+  function armFs() {
+    if (!fsArmed.current) return
+    fsArmed.current = false
+    rootRef.current?.requestFullscreen?.().catch(() => {})
+  }
+  sys.current = { close, fullscreen }
 
   const body = (
     <div
@@ -279,64 +300,46 @@ export function GameBoy({ from, onClose, page = false, warm = false }: {
       aria-modal={open ? true : undefined}
       aria-hidden={open ? undefined : true}
       aria-label={game.title}
+      onPointerDownCapture={armFs}
     >
       <div className={styles.shell} style={inside ? ({ '--inside': `url(${inside})` } as CSSProperties) : undefined}>
-        {/* la tesa del Game Boy: la rotella dell'audio, il display (o il nome), schermo intero e l'interruttore */}
-        <div className={styles.top}>
-          <div className={styles.topL}>
-            {pad === 'si' && <Rotella send={send} on={tasti?.audio !== false} />}
-          </div>
-          {pad === 'si' ? <Display stato={stato} /> : <span className={styles.name}>{game.title}</span>}
-          <div className={styles.keys}>
-            <button type="button" className={styles.key} onClick={fullscreen} tabIndex={open ? 0 : -1}>
-              <span className={styles.pill} aria-hidden="true" />Schermo
-            </button>
-            <button type="button" className={styles.power} data-off={off || undefined} onClick={powerOff} tabIndex={open ? 0 : -1} aria-label={game.close}>
-              <span className={styles.powerPrint} aria-hidden="true">{game.pad.off}</span>
-              <span className={styles.powerTrack} aria-hidden="true"><span className={styles.powerKnob} /></span>
-              <span className={styles.powerPrint} aria-hidden="true">{game.pad.on}</span>
-            </button>
-          </div>
-        </div>
+        {/* un gioco che non ha ancora esci nel suo menu (o mentre carica): un piccolo esci nell'angolo, sopra la cornice */}
+        {(pad === 'no' || versione < 4) && (
+          <button type="button" className={styles.esci} onClick={close} tabIndex={open ? 0 : -1} aria-label={game.close} title={game.close}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17" /></svg>
+          </button>
+        )}
 
-        {/* la cornice rosa dello schermo, come sul Game Boy 3D: le due righe, la lucina, la finestra scura, la scritta */}
-        <div className={styles.window}>
-          <div className={styles.lensTop} aria-hidden="true">
-            <i className={styles.led} data-on={shown && !off ? 'true' : undefined} />
-            <span className={styles.lensPrint}>{game.pad.battery}</span>
-            <span className={styles.lensLines} />
-          </div>
-          <div className={styles.screen}>
-            {/* un caricamento solo, quello del sito */}
-            <div className={`${pre.overlay} ${styles.loading}`} data-hidden={shown ? 'true' : undefined} aria-hidden={shown}>
-              {open && <MatrixGrid />}
-              <div className={pre.hud}>
-                <img className={styles.logo} src="/artismi-logo.png" alt="" />
-                <span className={styles.loadingText}>{game.loading}</span>
-                <div className={pre.counter}>
-                  <span className={pre.counterNum}>{Math.floor(pct)}</span>
-                  <span className={pre.counterPct}>%</span>
-                </div>
+        {/* lo schermo, incassato direttamente nella plastica: una cornice scura sottile, il vetro, il gioco */}
+        <div className={styles.screen}>
+          {/* un caricamento solo, quello del sito */}
+          <div className={`${pre.overlay} ${styles.loading}`} data-hidden={shown ? 'true' : undefined} aria-hidden={shown}>
+            {open && <MatrixGrid />}
+            <div className={pre.hud}>
+              <img className={styles.logo} src="/artismi-logo.png" alt="" />
+              <span className={styles.loadingText}>{game.loading}</span>
+              <div className={pre.counter}>
+                <span className={pre.counterNum}>{Math.floor(pct)}</span>
+                <span className={pre.counterPct}>%</span>
               </div>
-              <div className={pre.progressFill} style={{ width: `${pct}%` }} />
             </div>
-
-            <iframe
-              ref={frameRef}
-              className={styles.frame}
-              data-shown={shown ? 'true' : undefined}
-              src={src}
-              title={game.title}
-              allow="fullscreen; gamepad; autoplay"
-              allowFullScreen
-              tabIndex={open ? 0 : -1}
-              onLoad={() => { setLoaded(true); send({ pvc: 'ciao' }) }}
-            />
+            <div className={pre.progressFill} style={{ width: `${pct}%` }} />
           </div>
-          <div className={styles.lensBottom} aria-hidden="true">{game.title} ✦ {game.pad.lens}</div>
+
+          <iframe
+            ref={frameRef}
+            className={styles.frame}
+            data-shown={shown ? 'true' : undefined}
+            src={src}
+            title={game.title}
+            allow="fullscreen; gamepad; autoplay"
+            allowFullScreen
+            tabIndex={open ? 0 : -1}
+            onLoad={() => { setLoaded(true); send({ pvc: 'ciao' }) }}
+          />
         </div>
 
-        {/* il nome serigrafato sotto lo schermo, come sul primo Game Boy; poi la pulsantiera */}
+        {/* il nome serigrafato, solo dove avanza posto (da computer, nella colonna di sinistra); poi la pulsantiera */}
         {pad !== 'no' && (
           <>
             <div className={styles.brand} aria-hidden="true">{game.title}<small>{game.pad.brand}</small></div>
