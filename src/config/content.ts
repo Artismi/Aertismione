@@ -157,22 +157,21 @@ export const PROGETTI = {
     close: 'Esci',
     loading: 'Porto Vecchio sta arrivando…',
     screen: '/progetti/porto-vecchio-lancio.webp', // la schermata di lancio del gioco, sullo schermo del Game Boy
-    // La pulsantiera del Game Boy (GameBoyPad): qui le scritte stampate sulla plastica.
+    // La pulsantiera del Game Boy (GameBoyPad): qui le scritte stampate sulla plastica e i nomi dei tasti.
     // Quelle sotto A e B le manda il gioco, secondo cosa stai facendo (Salta, Freno, Scendi…)
     pad: {
       label: 'Comandi del Game Boy',
-      stick: 'Muoviti',
       spray: 'Graffiti',
       bike: 'Bici',
       bag: 'Zaino',
       cross: 'Visuale',
-      audio: 'Vol',
+      screen: 'Schermo',             // la pillola di schermo intero
+      fullscreen: 'Schermo intero',
+      audio: 'Audio',                // la pillola dell'audio: com'e' adesso
+      mute: 'Muto',
       audioOn: 'Audio acceso',
       audioOff: 'Audio spento',
       brand: 'Artismi',
-      off: 'Off',
-      on: 'On',
-      wanted: 'Ricercato',
     },
     // Quello che il gioco scarica partendo (~18 MB): il sito lo prende in sottofondo,
     // finito di caricare se stesso, cosi' aprendo il gioco arriva dalla cache.

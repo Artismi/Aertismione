@@ -3,14 +3,16 @@
 /**
  * GameBoyPad — la pulsantiera del Game Boy di Porto Vecchio.
  *
- * Gli stessi materiali del Game Boy 3D sul banco (Console3D): croce nera
- * nell'incavo, A e B corallo laccati, gomma scura. Compatta, sotto lo schermo
- * (di traverso: negli angoli in basso, ai lati): la levetta per camminare e
- * guidare (a sinistra, sotto i tre tasti), la seconda levetta per la visuale (a destra, sotto A e B, uguale alla prima: come un controller) (di lato gira attorno al personaggio, in su e in giu' lo zoom; in BMX e nella
- * tavoletta il gioco la legge come la croce di prima: trick, colore, spessore; con un gioco piu' vecchio, v < 3, resta la croce), A e B, e tre tasti
- * veri in rilievo con la loro icona e una lucina: la bomboletta (i graffiti), la
- * bici, lo zaino (il menu, dove sta tutto il resto). Nella tesa la rotella
- * dell'audio e il display con giorno, ora e soldi (Rotella, Display).
+ * Solo comandi che fanno qualcosa, con gli stessi materiali del Game Boy 3D sul banco
+ * (Console3D): la levetta per camminare e guidare, la seconda levetta per la visuale
+ * (di lato gira attorno al personaggio, in su e in giu' lo zoom; in BMX e nella tavoletta
+ * il gioco la legge come la croce di prima: trick, colore, spessore; con un gioco piu'
+ * vecchio, v < 3, resta la croce), A e B (la lettera stampata sulla calotta, sotto quello
+ * che fanno adesso), e tre tasti veri con la loro icona: la bomboletta (i graffiti), la
+ * bici, lo zaino (il menu del gioco, dove stanno anche ora, soldi e debito: per questo la
+ * console non ha piu' un display). Acceso, un tasto si illumina. Il tasto dell'audio
+ * (Audio) sta con schermo intero ed esci, nel GameBoy: da telefono e' l'unico modo di
+ * spegnere la musica.
  *
  * Ogni tocco e' un messaggio al gioco nel riquadro ({pvc:'levetta'|'tasto'}, vedi
  * GameBoy); il gioco risponde con la scritta di A e B adesso (Salta, Freno,
@@ -67,6 +69,7 @@ function Tasto({ k, send, className, name, label, lit, children }: {
     <button
       type="button"
       tabIndex={-1}
+      title={label ? `${name}: ${label}` : name}
       className={className}
       data-down={down || undefined}
       data-off={label === null || undefined}
@@ -242,32 +245,31 @@ const ICONS: Record<'bomboletta' | 'bici' | 'zaino', ReactNode> = {
   ),
 }
 
-/** Un tasto vero: la gomma con l'icona in rilievo, la lucina sopra, la serigrafia sotto */
+/** Un tasto vero: la gomma con l'icona in rilievo nel suo foro; acceso si illumina, il numero delle cose da fare sullo zaino */
 function Funzione({ k, send, name, label, lit, badge }: {
   k: 'bomboletta' | 'bici' | 'zaino'; send: Send; name: string; label?: string | null; lit?: boolean; badge?: number
 }) {
   return (
     <div className={styles.fnKey} data-k={k}>
-      <i className={styles.lamp} data-on={lit || undefined} aria-hidden="true" />
       <span className={styles.socket}>
         <Tasto k={k} send={send} className={styles.fnBtn} name={name} label={label} lit={lit}>
           {ICONS[k]}
         </Tasto>
       </span>
-      <span className={styles.print}>{name}</span>
       {!!badge && <span className={styles.badge} aria-hidden="true">{badge > 9 ? '9+' : badge}</span>}
     </div>
   )
 }
 
-/** A e B: le calotte corallo, la lettera e la scritta di adesso; sotto B anche quello che hai in mano */
+/** A e B: le calotte corallo con la lettera stampata, sotto la scritta di adesso; sotto B anche quello che hai in mano */
 function Bottone({ k, send, label, hand }: { k: 'a' | 'b'; send: Send; label?: string | null; hand?: string | null }) {
   const name = k.toUpperCase()
   return (
     <div className={styles.abKey} data-k={k}>
-      <Tasto k={k} send={send} className={styles.abBtn} name={hand && label ? `${name} (${hand})` : name} label={label} />
+      <Tasto k={k} send={send} className={styles.abBtn} name={hand && label ? `${name} (${hand})` : name} label={label}>
+        <span className={styles.abLetter} aria-hidden="true">{name}</span>
+      </Tasto>
       <span className={styles.abPrint}>
-        <b>{name}</b>
         <span className={styles.fn}>{label ?? ''}</span>
         {hand && <span className={styles.hand}>{hand}</span>}
       </span>
@@ -275,45 +277,23 @@ function Bottone({ k, send, label, hand }: { k: 'a' | 'b'; send: Send; label?: s
   )
 }
 
-/** La rotella in metallo dell'audio, nella tesa: la tacca rossa da una parte o dall'altra */
-export function Rotella({ send, on }: { send: Send; on: boolean }) {
+/** L'audio: una pillola di gomma come schermo intero ed esci; la scritta dice com'e' adesso */
+export function Audio({ send, on }: { send: Send; on: boolean }) {
   return (
-    <span className={styles.wheelKey}>
-      <Tasto k="audio" send={send} className={styles.wheel} name={on ? pad.audioOn : pad.audioOff}>
-        <span className={styles.wheelRidges} data-on={on || undefined} />
-      </Tasto>
-      <span className={styles.wheelPrint}>{pad.audio}</span>
-    </span>
+    <Tasto k="audio" send={send} className={styles.key} name={on ? pad.audioOn : pad.audioOff}>
+      <span className={styles.pill} data-off={on ? undefined : true} aria-hidden="true" />
+      <span className={styles.keyPrint} aria-hidden="true">{on ? pad.audio : pad.mute}</span>
+    </Tasto>
   )
 }
 
-/** Il display nella tesa: giorno e ora, soldi e debito, le stelle quando ti cercano */
-export function Display({ stato }: { stato: Stato | null }) {
-  if (!stato) return <span className={styles.lcd} aria-hidden="true"><span className={styles.lcdRow}>--:--</span></span>
-  const urg = stato.scade !== null && stato.scade <= 6
-  const label = `${stato.giorno} ${stato.ora}, ${stato.soldi} su ${stato.debito} lire${stato.ricercato ? `, ${pad.wanted} ${stato.ricercato}` : ''}`
-  return (
-    <span className={styles.lcd} role="status" aria-label={label}>
-      <span className={styles.lcdRow}>
-        <span className={styles.lcdDay}>{stato.giorno.slice(0, 3)}</span>
-        <b data-urg={urg || undefined}>{stato.ora}</b>
-      </span>
-      <span className={styles.lcdRow}>
-        <span>₤{stato.soldi.replace(/\.000$/, 'k')}</span>
-        {stato.ricercato > 0 && <b className={styles.lcdStar}>★{stato.ricercato}</b>}
-      </span>
-    </span>
-  )
-}
-
-/** La pulsantiera: la levetta, i tre tasti, la croce, A e B (in verticale sotto lo schermo, di traverso agli angoli) */
+/** La pulsantiera: le due levette, i tre tasti, A e B, la scritta della levetta della visuale (in verticale sotto lo schermo, di traverso ai lati) */
 export function GameBoyPad({ send, tasti, versione = 0 }: { send: Send; tasti: Tasti | null; versione?: number }) {
   const t = tasti?.t ?? {}, on = tasti?.on ?? {}
   return (
     <>
       <div className={styles.padL} role="group" aria-label={pad.label} onContextMenu={hush}>
         <Levetta send={send} />
-        <span className={styles.print}>{pad.stick}</span>
       </div>
       <div className={styles.padC} role="group" aria-label={pad.label} onContextMenu={hush}>
         <Funzione k="bomboletta" send={send} name={pad.spray} label={t.bomboletta} lit={!!on.bomboletta} />
@@ -322,10 +302,11 @@ export function GameBoyPad({ send, tasti, versione = 0 }: { send: Send; tasti: T
       </div>
       <div className={styles.padX} role="group" aria-label={pad.label} onContextMenu={hush}>
         {versione >= 3 ? <Levetta send={send} msg="levetta2" /> : <Croce send={send} />}
-        <span className={`${styles.print} ${styles.crossHint}`}>
-          {(t.croce === undefined ? pad.cross : t.croce ?? '').split(' · ').map((r) => <span key={r}>{r}</span>)}
-        </span>
       </div>
+      {/* cosa fa adesso la levetta della visuale: lo dice il gioco (in BMX i trick) */}
+      <span className={`${styles.print} ${styles.crossHint}`} aria-hidden="true">
+        {(t.croce === undefined ? pad.cross : t.croce ?? '').split(' · ').map((r) => <span key={r}>{r}</span>)}
+      </span>
       <div className={styles.padR} role="group" aria-label={pad.label} onContextMenu={hush}>
         <div className={styles.ab}>
           <span className={styles.abPlate} aria-hidden="true" />
@@ -333,7 +314,6 @@ export function GameBoyPad({ send, tasti, versione = 0 }: { send: Send; tasti: T
           <Bottone k="a" send={send} label={t.a} />
         </div>
       </div>
-      <span className={styles.speaker} aria-hidden="true">{Array.from({ length: 6 }, (_, i) => <i key={i} />)}</span>
     </>
   )
 }
