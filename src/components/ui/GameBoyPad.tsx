@@ -89,7 +89,8 @@ function Tasto({ k, send, className, name, label, lit, children }: {
 /**
  * La levetta: un incavo nella plastica, lo stelo, il cappuccio di gomma concavo con la corona zigrinata.
  * Il cappuccio segue il dito e si inclina verso dove lo spingi (in prospettiva, solo CSS), poi torna al centro
- * con un piccolo rimbalzo quando lo lasci (msg: 'levetta' cammina, 'levetta2' la visuale)
+ * con un piccolo rimbalzo quando lo lasci (msg: 'levetta' cammina, 'levetta2' la visuale;
+ * un tocco breve su 'levetta2' cambia vista: alta, media, vicina)
  */
 function Levetta({ send, msg = 'levetta', small }: { send: Send; msg?: string; small?: boolean }) {
   const base = useRef<HTMLDivElement>(null)
@@ -98,6 +99,8 @@ function Levetta({ send, msg = 'levetta', small }: { send: Send; msg?: string; s
   const sent = useRef({ x: 0, y: 0 })
   const raf = useRef(0)
   const [held, setHeld] = useState(false)
+  // un tocco breve sulla levetta della visuale cambia vista (alta, media, vicina)
+  const tap = useRef({ t: 0, x: 0, y: 0, far: false })
   useEffect(() => () => cancelAnimationFrame(raf.current), [])
 
   // al gioco una volta per fotogramma, solo se e' cambiata
@@ -121,6 +124,8 @@ function Levetta({ send, msg = 'levetta', small }: { send: Send; msg?: string; s
     x = Math.round(x * 100) / 100
     y = Math.round(y * 100) / 100
     want.current = { x, y }
+    const t = tap.current
+    if (Math.hypot(x - t.x, y - t.y) >= 0.25) t.far = true
     show(x, y)
     if (!raf.current) raf.current = requestAnimationFrame(flush)
   }
@@ -131,7 +136,11 @@ function Levetta({ send, msg = 'levetta', small }: { send: Send; msg?: string; s
     try { e.currentTarget.setPointerCapture(e.pointerId) } catch { /* dito gia' staccato */ }
     setHeld(true)
     buzz()
+    tap.current = { t: performance.now(), x: 0, y: 0, far: false }
     at(e)
+    tap.current.x = want.current.x
+    tap.current.y = want.current.y
+    tap.current.far = false
   }
   function move(e: RPointerEvent<HTMLDivElement>) { if (e.pointerId === id.current) at(e) }
   function up(e: RPointerEvent<HTMLDivElement>) {
@@ -142,6 +151,11 @@ function Levetta({ send, msg = 'levetta', small }: { send: Send; msg?: string; s
     show(0, 0)
     cancelAnimationFrame(raf.current)
     flush()
+    const t = tap.current
+    if (msg === 'levetta2' && !t.far && performance.now() - t.t < 250) {
+      send({ pvc: 'tasto', k: 'vista', giu: true })
+      send({ pvc: 'tasto', k: 'vista', giu: false })
+    }
   }
   return (
     <div
