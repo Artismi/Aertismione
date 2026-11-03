@@ -60,17 +60,20 @@
   row-gap: calc(var(--u) * 1.6);
   padding: max(6px, calc(var(--u) * 2.2));
   overflow: hidden;
-  border-radius: 16px 16px calc(var(--u) * 9) 16px;
+  --rr: calc(var(--u) * 9);   /* lo spigolo tondo in basso a destra */
+  border-radius: 16px 16px var(--rr) 16px;
+  /* plastica stampata: un velo lucido di traverso, la luce che scende dall'alto, la scheda appena intuita sotto */
   background:
-    linear-gradient(116deg, rgba(255, 255, 255, 0.46) 0%, rgba(255, 255, 255, 0.16) 15%, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0) 64%, rgba(255, 255, 255, 0.14) 72%, rgba(255, 255, 255, 0) 80%),
-    linear-gradient(180deg, rgba(249, 221, 229, 0.76) 0%, rgba(242, 196, 211, 0.72) 55%, rgba(236, 159, 181, 0.7) 100%),
+    linear-gradient(116deg, rgba(255, 255, 255, 0.34) 0%, rgba(255, 255, 255, 0.1) 16%, rgba(255, 255, 255, 0) 32%, rgba(255, 255, 255, 0) 66%, rgba(255, 255, 255, 0.08) 74%, rgba(255, 255, 255, 0) 82%),
+    linear-gradient(180deg, rgba(248, 218, 227, 0.95) 0%, rgba(240, 192, 207, 0.94) 50%, rgba(228, 164, 184, 0.94) 100%),
     var(--inside, none) 50% 100% / max(720px, 110%) auto,
     #cf98ad;
   box-shadow:
-    inset 0 2px 1px rgba(255, 255, 255, 0.95),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.3),
-    inset 0 -3px 6px rgba(150, 60, 95, 0.22),
-    0 0 0 1px rgba(176, 124, 140, 0.9),
+    inset 2px 2px 1px -1px rgba(255, 255, 255, 0.95),    /* lo smusso del bordo: luce in alto a sinistra */
+    inset 0 3px 3px -1px rgba(255, 255, 255, 0.6),
+    inset -2px -3px 5px -1px rgba(150, 60, 95, 0.32),    /* in ombra in basso a destra */
+    inset 0 0 0 1px rgba(255, 255, 255, 0.25),
+    0 0 0 1px rgba(170, 112, 132, 0.9),
     0 4px 10px rgba(90, 20, 50, 0.22);
   -webkit-user-select: none;
   user-select: none;
@@ -79,6 +82,17 @@
 
 @supports (height: 1dvh) {
   .shell { --u: min(4.4px, 0.95dvh, 1.15vw); }
+}
+
+/* la giuntura dello stampo, poco dentro il bordo: una riga incisa, il labbro sotto che prende la luce */
+.shell::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 12px 12px calc(var(--rr) - 4px) 12px;
+  pointer-events: none;
+  border: 1px solid rgba(150, 78, 104, 0.26);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
 /* ── i comandi della console: lucina e rotella, display, schermo intero, interruttore ──
@@ -341,10 +355,12 @@
   border-radius: var(--r) var(--r) max(14px, calc(var(--u) * 4.4)) var(--r);
   overflow: hidden;
   background: #0d0b1a;
+  /* la finestra incassata: la plastica scende verso il vetro, in ombra in alto e chiara sul labbro di sotto */
   box-shadow:
-    0 0 0 1px rgba(150, 80, 108, 0.5),           /* l'incasso nella plastica */
-    0 1px 0 1.5px rgba(255, 255, 255, 0.55),     /* il bordo sotto che prende la luce */
-    0 -1px 3px 1px rgba(120, 40, 70, 0.16);
+    0 0 0 1px rgba(130, 58, 86, 0.6),
+    0 -1px 0 1.5px rgba(150, 70, 100, 0.3),
+    0 1.5px 0 1.5px rgba(255, 255, 255, 0.7),
+    0 -2px 5px 2px rgba(110, 35, 65, 0.18);
 }
 
 /* il vetro sullo schermo: un riflesso appena, sopra il gioco ma senza prendere i tocchi */
@@ -354,8 +370,10 @@
   inset: 0;
   z-index: 3;
   pointer-events: none;
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.025) 24%, rgba(255, 255, 255, 0) 36%);
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.6), inset 0 4px 10px rgba(0, 0, 0, 0.35);
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.03) 22%, rgba(255, 255, 255, 0) 34%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0) 58%, rgba(255, 255, 255, 0.035) 64%, rgba(255, 255, 255, 0) 70%);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.6), inset 0 5px 12px rgba(0, 0, 0, 0.4), inset 0 -1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .frame {
@@ -520,8 +538,7 @@
 
 .hand::before { content: '◆ '; }
 
-/* ── gli incavi tondi della levetta e della croce: plastica piu' scura, il bordo che prende la luce ── */
-.stick,
+/* ── la croce: il suo incavo tondo, plastica piu' scura, il bordo che prende la luce ── */
 .cross {
   position: relative;
   border-radius: 50%;
@@ -530,59 +547,139 @@
   box-shadow: inset 0 calc(var(--u) * 0.8) calc(var(--u) * 2) rgba(95, 30, 60, 0.32);
 }
 
-/* la levetta: il cappuccio di gomma scura, concavo */
+/* ── la levetta, come un vero thumbstick. La luce viene da in alto a sinistra.
+   L'incavo: una corona smussata (chiara in alto a sinistra, in ombra in basso a destra), poi la parete che
+   scende nella plastica, in ombra sotto il bordo di sopra. Dentro: l'ombra del cappuccio sul fondo, lo stelo
+   scuro, il cappuccio di gomma con la corona zigrinata e il piano concavo. --x e --y (da -1 a 1) li scrive
+   la levetta sull'incavo mentre la tieni: il cappuccio si sposta e si inclina, l'ombra e il riflesso lo seguono. ── */
 .stick {
+  --x: 0;
+  --y: 0;
+  --cap: calc(var(--u) * 15);   /* il cappuccio */
+  --reach: calc(var(--u) * 5.2);   /* quanto si sposta al massimo */
+  --tilt: 28deg;                /* quanto si inclina al massimo */
+  position: relative;
   width: calc(var(--u) * 26);
   height: calc(var(--u) * 26);
+  border-radius: 50%;
+  touch-action: none;
   cursor: grab;
+  perspective: calc(var(--u) * 70);
+  background:
+    radial-gradient(circle at 50% 50%, rgba(110, 35, 65, 0) 0 58%, rgba(110, 35, 65, 0.16) 70%, rgba(110, 35, 65, 0) 74%),
+    radial-gradient(circle at 50% 58%, #c27990, #cd889f 45%, #dc9db1 80%);   /* il fondo, piu' scuro in mezzo */
+  box-shadow:
+    inset 0 calc(var(--u) * 1.8) calc(var(--u) * 2.6) rgba(85, 20, 50, 0.5),     /* il bordo di sopra fa ombra dentro */
+    inset 0 calc(var(--u) * -0.7) calc(var(--u) * 1.2) rgba(255, 228, 236, 0.5), /* la parete di sotto prende luce */
+    calc(var(--u) * -0.3) calc(var(--u) * -0.35) 0 calc(var(--u) * 0.7) rgba(255, 244, 247, 0.72),   /* la corona: luce in alto a sinistra */
+    calc(var(--u) * 0.3) calc(var(--u) * 0.45) 0 calc(var(--u) * 0.7) rgba(160, 75, 105, 0.42),      /* ombra in basso a destra */
+    0 0 0 calc(var(--u) * 1.05) rgba(150, 70, 100, 0.22);
 }
 
 .stick[data-held] { cursor: grabbing; }
 
-/* la seconda levetta, quella della visuale, al posto della croce: un poco piu' piccola, per stare accanto ad A e B */
-.stickSm {
-  width: calc(var(--u) * 21);
-  height: calc(var(--u) * 21);
-}
-
-.stickSm .stickCap {
-  width: calc(var(--u) * 12);
-  height: calc(var(--u) * 12);
-  margin: calc(var(--u) * -6) 0 0 calc(var(--u) * -6);
-  transform: translate(calc(var(--x, 0) * var(--u) * 4.5), calc(var(--y, 0) * var(--u) * 4.5 - var(--u) * 0.8));
-}
-
+.stickShadow,
+.stickStem,
 .stickCap {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: calc(var(--u) * 15);
-  height: calc(var(--u) * 15);
-  margin: calc(var(--u) * -7.5) 0 0 calc(var(--u) * -7.5);
   border-radius: 50%;
   pointer-events: none;
-  background:
-    repeating-radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.035) 0 1px, rgba(255, 255, 255, 0) 1px 3px),
-    radial-gradient(circle at 40% 28%, #5f5865, #423c48 50%, #2a2630);
-  box-shadow:
-    0 calc(var(--u) * 1) 0 #1f1b24,
-    0 calc(var(--u) * 1.6) calc(var(--u) * 1.6) rgba(40, 10, 25, 0.42),
-    inset 0 1px 0 rgba(255, 255, 255, 0.22);
-  transform: translate(calc(var(--x, 0) * var(--u) * 5.5), calc(var(--y, 0) * var(--u) * 5.5 - var(--u) * 0.8));
-  transition: transform 0.24s cubic-bezier(0.3, 1.5, 0.5, 1);
+  transition: transform 0.34s cubic-bezier(0.34, 1.56, 0.5, 1), opacity 0.2s, box-shadow 0.34s cubic-bezier(0.34, 1.56, 0.5, 1);   /* torna al centro con un piccolo rimbalzo */
 }
 
-/* il piano concavo dove poggia il pollice */
+/* l'ombra morbida del cappuccio sul fondo dell'incavo: in basso a destra, segue il cappuccio un poco di piu' */
+.stickShadow {
+  width: var(--cap);
+  height: var(--cap);
+  margin: calc(var(--cap) / -2) 0 0 calc(var(--cap) / -2);
+  background: radial-gradient(circle, rgba(55, 6, 30, 0.62) 0 40%, rgba(55, 6, 30, 0.26) 58%, rgba(55, 6, 30, 0) 72%);
+  transform:
+    translate(calc(var(--u) * 1.9 + var(--x) * var(--reach) * 1.1), calc(var(--u) * 2.7 + var(--y) * var(--reach) * 1.1))
+    scale(1.15);
+}
+
+/* lo stelo nel suo soffietto di gomma: si vede quando il cappuccio si sposta */
+.stickStem {
+  width: calc(var(--u) * 8.4);
+  height: calc(var(--u) * 8.4);
+  margin: calc(var(--u) * -4.2) 0 0 calc(var(--u) * -4.2);
+  background:
+    repeating-radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.35) 0 1px, rgba(0, 0, 0, 0) 1px 3px),
+    radial-gradient(circle at calc(50% + var(--x) * 22%) calc(50% + var(--y) * 22%), #4c4552 0 30%, #2a2530 55%, #141117);
+  box-shadow: 0 0 0 calc(var(--u) * 0.8) rgba(50, 12, 32, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  transform: translate(calc(var(--x) * var(--reach) * 0.15), calc(var(--y) * var(--reach) * 0.15));
+}
+
+/* il cappuccio: corona zigrinata di gomma, lucida dove prende la luce, il fianco scuro sotto */
+.stickCap {
+  --p: 1;   /* premuto: scende un poco */
+  width: var(--cap);
+  height: var(--cap);
+  margin: calc(var(--cap) / -2) 0 0 calc(var(--cap) / -2);
+  background:
+    radial-gradient(circle at calc(36% - var(--x) * 12%) calc(28% - var(--y) * 12%), rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0) 52%),
+    repeating-conic-gradient(rgba(0, 0, 0, 0.2) 0 3.75deg, rgba(255, 255, 255, 0.045) 3.75deg 7.5deg),
+    radial-gradient(circle at 44% 34%, #625b69, #3d3843 52%, #24202a);
+  /* il fianco del cappuccio: inclinato si vede di piu' dalla parte opposta a dove va */
+  --side: 1.15;
+  box-shadow:
+    calc(var(--x) * var(--u) * -1.3) calc((var(--side) - var(--y) * 1.3) * var(--u)) 0 #16131a,
+    calc(var(--x) * var(--u) * -1.3) calc((var(--side) + 0.5 - var(--y) * 1.3) * var(--u)) calc(var(--u) * 1.2) rgba(40, 6, 24, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.38),
+    inset 0 calc(var(--u) * -0.5) calc(var(--u) * 0.8) rgba(0, 0, 0, 0.45);
+  transform:
+    translate(calc(var(--x) * var(--reach)), calc(var(--y) * var(--reach) - var(--u) * 1.1))
+    rotateX(calc(var(--y) * var(--tilt) * -1))
+    rotateY(calc(var(--x) * var(--tilt)))
+    scale(var(--p));
+  will-change: transform;
+}
+
+/* il riflesso sul bordo, in alto a sinistra: si spegne quando il cappuccio si gira via dalla luce */
+.stickCap::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: inset calc(var(--u) * 0.55) calc(var(--u) * 0.7) calc(var(--u) * 0.7) calc(var(--u) * -0.25) rgba(255, 255, 255, 0.5);
+  opacity: calc(0.85 - (var(--x) + var(--y)) * 0.4);
+  transition: opacity 0.2s;
+}
+
+/* il piano concavo dove poggia il pollice: in ombra sotto il bordo di sopra, chiaro in basso, la gomma a cerchi fini */
 .stickCap::after {
   content: '';
   position: absolute;
-  inset: 14%;
+  inset: 17%;
   border-radius: 50%;
-  background: radial-gradient(circle at 50% 70%, #45404b, #2e2a33 70%, #3a353f);
-  box-shadow: inset 0 calc(var(--u) * 0.6) calc(var(--u) * 1) rgba(0, 0, 0, 0.35), 0 1px 0 rgba(255, 255, 255, 0.12);
+  background:
+    repeating-radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.04) 0 1px, rgba(255, 255, 255, 0) 1px 3px),
+    radial-gradient(circle at calc(50% + var(--x) * 8%) calc(74% + var(--y) * 8%), #4f4956, #322d37 58%, #3d3843);
+  box-shadow:
+    inset 0 calc(var(--u) * 0.9) calc(var(--u) * 1.3) rgba(0, 0, 0, 0.55),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.14),
+    0 -1px 0 rgba(0, 0, 0, 0.35),
+    0 1px 0 rgba(255, 255, 255, 0.16);
 }
 
-.stick[data-held] .stickCap { transition: none; }
+/* tenuta: segue il dito senza ritardo, scende un poco, il fianco e l'ombra si accorciano */
+.stick[data-held] .stickShadow,
+.stick[data-held] .stickStem,
+.stick[data-held] .stickCap { transition: opacity 0.2s; }
+
+.stick[data-held] .stickCap { --p: 0.965; --side: 0.6; }
+
+.stick[data-held] .stickShadow { opacity: 0.85; }
+
+/* la seconda levetta piu' piccola (per stare accanto ad A e B, quando serve) */
+.stickSm {
+  --cap: calc(var(--u) * 12);
+  --reach: calc(var(--u) * 4.2);
+  width: calc(var(--u) * 21);
+  height: calc(var(--u) * 21);
+}
 
 /* la croce nera laccata, per la visuale */
 .cross {
@@ -656,10 +753,23 @@
   box-shadow: 0 0 calc(var(--u) * 1.3) rgba(91, 227, 138, 0.8), inset 0 1px 1px rgba(255, 255, 255, 0.6);
 }
 
+/* il foro nella plastica dove sta il tasto: scuro, l'ombra dentro, il bordo di sotto che prende la luce */
+.socket {
+  display: grid;
+  place-items: center;
+  padding: calc(var(--u) * 0.65);
+  border-radius: 50%;
+  background: var(--hole);
+  box-shadow:
+    inset 0 calc(var(--u) * 0.5) calc(var(--u) * 0.8) rgba(0, 0, 0, 0.7),
+    0 1px 0 rgba(255, 255, 255, 0.65),
+    0 -1px 0 rgba(130, 50, 80, 0.3);
+}
+
 .fnBtn {
   position: relative;
-  width: calc(var(--u) * 9.5);
-  height: calc(var(--u) * 9.5);
+  width: calc(var(--u) * 8.2);   /* col suo foro attorno, 9.5 */
+  height: calc(var(--u) * 8.2);
   display: grid;
   place-items: center;
   border: 0;
@@ -669,8 +779,8 @@
   touch-action: none;
   color: #ece6ee;
   background:
-    radial-gradient(70% 55% at 40% 22%, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0) 70%),
-    linear-gradient(180deg, #4e4855, var(--rubber) 55%, #2c2831);
+    radial-gradient(circle at 50% 120%, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0) 45%),   /* la luce che rimbalza sotto */
+    radial-gradient(circle at 46% 38%, #57505e, var(--rubber) 58%, #262229);
   box-shadow:
     0 calc(var(--u) * 0.9) 0 #1f1b24,                                  /* il fianco del tasto */
     0 calc(var(--u) * 1.4) calc(var(--u) * 1.4) rgba(50, 10, 30, 0.42), /* l'ombra sulla plastica */
@@ -680,7 +790,23 @@
   transition: transform 0.06s, box-shadow 0.06s, color 0.2s;
 }
 
-.fnBtn::after { content: ''; position: absolute; inset: calc(var(--u) * -1.8); border-radius: 50%; }   /* piu' facile da prendere */
+.fnBtn::after { content: ''; position: absolute; inset: calc(var(--u) * -2.2); border-radius: 50%; }
+
+/* la cupola: il riflesso in alto a sinistra; premuto si abbassa e si spegne un poco */
+.fnBtn::before,
+.abBtn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(42% 30% at 36% 24%, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0) 100%);
+  box-shadow: inset calc(var(--u) * 0.35) calc(var(--u) * 0.45) calc(var(--u) * 0.5) calc(var(--u) * -0.15) rgba(255, 255, 255, 0.28);
+  transition: opacity 0.08s;
+}
+
+.fnBtn[data-down]::before,
+.abBtn[data-down]::before { opacity: 0.45; }   /* piu' facile da prendere */
 
 .fnBtn svg {
   width: 50%;
@@ -770,7 +896,10 @@
   margin-left: calc(var(--u) * -6.5);
   border-radius: 50%;
   background: var(--hole);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+  box-shadow:
+    inset 0 calc(var(--u) * 0.6) calc(var(--u) * 0.9) rgba(0, 0, 0, 0.75),
+    0 1px 0 rgba(255, 255, 255, 0.6),
+    0 -1px 0 rgba(130, 50, 80, 0.3);
 }
 
 .abBtn {
@@ -783,9 +912,10 @@
   cursor: pointer;
   touch-action: none;
   background:
-    radial-gradient(22% 16% at 34% 24%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0) 100%),
-    radial-gradient(70% 55% at 40% 28%, rgba(255, 220, 226, 0.55), rgba(255, 220, 226, 0) 70%),
-    radial-gradient(circle at 50% 60%, #E2475E, #cf3a51 62%, #a8263f);
+    radial-gradient(22% 16% at 34% 24%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 100%),
+    radial-gradient(circle at 50% 118%, rgba(255, 170, 185, 0.45), rgba(255, 170, 185, 0) 42%),   /* la luce che rimbalza sotto la cupola */
+    radial-gradient(70% 55% at 40% 28%, rgba(255, 220, 226, 0.5), rgba(255, 220, 226, 0) 70%),
+    radial-gradient(circle at 48% 42%, #E6506A, #cf3a51 58%, #9e2139);
   box-shadow:
     0 calc(var(--u) * 0.9) 0 #a3253e,
     0 calc(var(--u) * 1.5) calc(var(--u) * 1.5) rgba(60, 10, 30, 0.42),
@@ -823,23 +953,26 @@
   text-shadow: var(--deboss);
 }
 
-/* ── l'altoparlante: la griglia di forellini (di traverso, sopra la croce) ── */
+/* ── l'altoparlante: sei fessure di traverso, come sul Game Boy, forate davvero (ombra dentro, bordo di sotto chiaro) ── */
 .speaker {
   grid-area: sp;
-  align-self: start;
+  align-self: center;
   justify-self: center;
   display: grid;
-  grid-template-columns: repeat(4, calc(var(--u) * 1.6));
-  gap: calc(var(--u) * 1.5);
-  align-self: center;
+  grid-template-columns: repeat(6, calc(var(--u) * 1.15));
+  gap: calc(var(--u) * 1.6);
+  transform: rotate(-28deg);
 }
 
 .speaker i {
-  width: calc(var(--u) * 1.6);
-  height: calc(var(--u) * 1.6);
-  border-radius: 50%;
-  background: #1b1820;
-  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.7), 0 1px 0 rgba(255, 255, 255, 0.55);
+  width: calc(var(--u) * 1.15);
+  height: calc(var(--u) * 7.5);
+  border-radius: 99px;
+  background: linear-gradient(180deg, #24161d, #4a2c3a);
+  box-shadow:
+    inset 0 calc(var(--u) * 0.35) calc(var(--u) * 0.45) rgba(0, 0, 0, 0.8),
+    0 1px 0 rgba(255, 255, 255, 0.6),
+    0 -1px 0 rgba(130, 50, 80, 0.3);
 }
 
 /* ── in verticale, come il primo Game Boy: lo schermo in alto, la pulsantiera sotto; tra le due levette il nome
@@ -853,7 +986,7 @@
     column-gap: calc(var(--u) * 1.6);
     row-gap: calc(var(--u) * 1.4);
     padding: max(6px, calc(var(--u) * 2)) max(6px, calc(var(--u) * 2.2)) calc(var(--u) * 3);
-    border-radius: 16px 16px calc(var(--u) * 14) 16px;
+    --rr: calc(var(--u) * 14);
   }
 
   .bar {
@@ -932,6 +1065,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .stickCap, .wheelRidges, .wheelRidges::after, .lamp, .powerKnob, .crossArms { transition: none; }
+  .stickCap, .stickStem, .stickShadow, .wheelRidges, .wheelRidges::after, .lamp, .powerKnob, .crossArms { transition: none; }
   .lcd b[data-urg] { animation: none; }
 }

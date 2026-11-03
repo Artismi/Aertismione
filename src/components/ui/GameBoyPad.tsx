@@ -84,10 +84,13 @@ function Tasto({ k, send, className, name, label, lit, children }: {
   )
 }
 
-/** La levetta: il cappuccio segue il dito dentro l'incavo e torna al centro quando lo lasci (msg: 'levetta' cammina, 'levetta2' la visuale) */
+/**
+ * La levetta: un incavo nella plastica, lo stelo, il cappuccio di gomma concavo con la corona zigrinata.
+ * Il cappuccio segue il dito e si inclina verso dove lo spingi (in prospettiva, solo CSS), poi torna al centro
+ * con un piccolo rimbalzo quando lo lasci (msg: 'levetta' cammina, 'levetta2' la visuale)
+ */
 function Levetta({ send, msg = 'levetta', small }: { send: Send; msg?: string; small?: boolean }) {
   const base = useRef<HTMLDivElement>(null)
-  const cap = useRef<HTMLSpanElement>(null)
   const id = useRef<number | null>(null)
   const want = useRef({ x: 0, y: 0 })
   const sent = useRef({ x: 0, y: 0 })
@@ -103,9 +106,10 @@ function Levetta({ send, msg = 'levetta', small }: { send: Send; msg?: string; s
     sent.current = w
     send({ pvc: msg, x: w.x, y: w.y })
   }
+  // sull'incavo: il cappuccio (spostato e inclinato), lo stelo, l'ombra e il riflesso lo leggono tutti da qui
   function show(x: number, y: number) {
-    cap.current?.style.setProperty('--x', String(x))
-    cap.current?.style.setProperty('--y', String(y))
+    base.current?.style.setProperty('--x', String(x))
+    base.current?.style.setProperty('--y', String(y))
   }
   function at(e: RPointerEvent<HTMLDivElement>) {
     const r = base.current!.getBoundingClientRect(), R = r.width * 0.34
@@ -150,7 +154,9 @@ function Levetta({ send, msg = 'levetta', small }: { send: Send; msg?: string; s
       onLostPointerCapture={up}
       onContextMenu={hush}
     >
-      <span ref={cap} className={styles.stickCap} />
+      <span className={styles.stickShadow} aria-hidden="true" />
+      <span className={styles.stickStem} aria-hidden="true" />
+      <span className={styles.stickCap} />
     </div>
   )
 }
@@ -243,9 +249,11 @@ function Funzione({ k, send, name, label, lit, badge }: {
   return (
     <div className={styles.fnKey} data-k={k}>
       <i className={styles.lamp} data-on={lit || undefined} aria-hidden="true" />
-      <Tasto k={k} send={send} className={styles.fnBtn} name={name} label={label} lit={lit}>
-        {ICONS[k]}
-      </Tasto>
+      <span className={styles.socket}>
+        <Tasto k={k} send={send} className={styles.fnBtn} name={name} label={label} lit={lit}>
+          {ICONS[k]}
+        </Tasto>
+      </span>
       <span className={styles.print}>{name}</span>
       {!!badge && <span className={styles.badge} aria-hidden="true">{badge > 9 ? '9+' : badge}</span>}
     </div>
@@ -325,7 +333,7 @@ export function GameBoyPad({ send, tasti, versione = 0 }: { send: Send; tasti: T
           <Bottone k="a" send={send} label={t.a} />
         </div>
       </div>
-      <span className={styles.speaker} aria-hidden="true">{Array.from({ length: 12 }, (_, i) => <i key={i} />)}</span>
+      <span className={styles.speaker} aria-hidden="true">{Array.from({ length: 6 }, (_, i) => <i key={i} />)}</span>
     </>
   )
 }
