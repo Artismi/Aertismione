@@ -10,9 +10,8 @@
  * vecchio, v < 3, resta la croce), A e B (la lettera stampata sulla calotta, sotto quello
  * che fanno adesso), e tre tasti veri con la loro icona: la bomboletta (i graffiti), la
  * bici, lo zaino (il menu del gioco, dove stanno anche ora, soldi e debito: per questo la
- * console non ha piu' un display). Acceso, un tasto si illumina. Il tasto dell'audio
- * (Audio) sta con schermo intero ed esci, nel GameBoy: da telefono e' l'unico modo di
- * spegnere la musica.
+ * console non ha piu' un display). Acceso, un tasto si illumina. Schermo intero, audio
+ * ed esci stanno nel menu del gioco, non sulla console.
  *
  * Ogni tocco e' un messaggio al gioco nel riquadro ({pvc:'levetta'|'tasto'}, vedi
  * GameBoy); il gioco risponde con la scritta di A e B adesso (Salta, Freno,
@@ -261,29 +260,24 @@ function Funzione({ k, send, name, label, lit, badge }: {
   )
 }
 
-/** A e B: le calotte corallo con la lettera stampata, sotto la scritta di adesso; sotto B anche quello che hai in mano */
+/**
+ * A e B: le calotte corallo con la lettera stampata, nel loro foro. La scritta di adesso sta fuori dalla piastra inclinata,
+ * oltre la sua estremita': sopra A, sotto B (in verticale a sinistra di B); sotto B anche quello che hai in mano
+ */
 function Bottone({ k, send, label, hand }: { k: 'a' | 'b'; send: Send; label?: string | null; hand?: string | null }) {
   const name = k.toUpperCase()
   return (
     <div className={styles.abKey} data-k={k}>
-      <Tasto k={k} send={send} className={styles.abBtn} name={hand && label ? `${name} (${hand})` : name} label={label}>
-        <span className={styles.abLetter} aria-hidden="true">{name}</span>
-      </Tasto>
+      <span className={styles.abSocket}>
+        <Tasto k={k} send={send} className={styles.abBtn} name={hand && label ? `${name} (${hand})` : name} label={label}>
+          <span className={styles.abLetter} aria-hidden="true">{name}</span>
+        </Tasto>
+      </span>
       <span className={styles.abPrint}>
         <span className={styles.fn}>{label ?? ''}</span>
         {hand && <span className={styles.hand}>{hand}</span>}
       </span>
     </div>
-  )
-}
-
-/** L'audio: una pillola di gomma come schermo intero ed esci; la scritta dice com'e' adesso */
-export function Audio({ send, on }: { send: Send; on: boolean }) {
-  return (
-    <Tasto k="audio" send={send} className={styles.key} name={on ? pad.audioOn : pad.audioOff}>
-      <span className={styles.pill} data-off={on ? undefined : true} aria-hidden="true" />
-      <span className={styles.keyPrint} aria-hidden="true">{on ? pad.audio : pad.mute}</span>
-    </Tasto>
   )
 }
 

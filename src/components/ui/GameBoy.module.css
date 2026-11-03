@@ -51,9 +51,9 @@
   grid-template-columns: auto minmax(0, 1fr) auto;
   grid-template-rows: auto minmax(0, 1fr) auto auto auto;
   /* lo schermo per tutta l'altezza. Ai lati, come un controller: a sinistra (il nome, se avanza posto) i tre tasti in
-     colonna e sotto la levetta del movimento; a destra le pillole di sistema, A e B e sotto la levetta della visuale */
+     colonna e sotto la levetta del movimento; a destra A e B e sotto la levetta della visuale */
   grid-template-areas:
-    'brand scr util'
+    'brand scr .'
     '.     scr .'
     'pc    scr pr'
     'pl    scr px'
@@ -97,75 +97,29 @@
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
-/* ── le pillole di sistema: schermo intero, audio, esci. Di traverso in cima alla colonna di destra (due e una), in
-   verticale in mezzo alla riga dei tasti ── */
-.util {
-  grid-area: util;
-  justify-self: center;
-  align-self: start;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: flex-start;
-  gap: calc(var(--u) * 1.6) 6px;
-  max-width: calc(var(--u) * 30);
-}
-
-/* una pillola di gomma inclinata, la scritta sotto (come Start e Select) */
-.key {
-  position: relative;
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  min-width: 40px;   /* con lo spazio tra le pillole, i 44px per il dito non si sovrappongono */
-  background: none;
-  border: 0;
-  padding: 2px;
-  cursor: pointer;
-}
-
-.keyPrint {
-  font-family: var(--mono);
-  font-size: 0.5rem;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-  text-shadow: var(--deboss);
-}
-
-/* i comandi piccoli si prendono col dito: almeno 44px attorno */
-.key::after {
-  content: '';
+/* ── esci, nell'angolo: solo con un gioco che non ha ancora esci nel suo menu (v < 4) o mentre carica ── */
+.esci {
   position: absolute;
-  left: 50%;
-  top: 50%;
-  width: max(100%, 44px);
-  height: max(100%, 44px);
-  transform: translate(-50%, -50%);
+  top: max(8px, calc(var(--u) * 2.4));
+  right: max(8px, calc(var(--u) * 2.4));
+  z-index: 4;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  color: rgba(255, 236, 242, 0.85);
+  background: rgba(20, 14, 24, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-.pill {
-  width: 22px;
-  height: 8px;
-  border-radius: 4px;
-  background: linear-gradient(180deg, #5b5461, var(--rubber) 60%, #2c2831);
-  box-shadow:
-    0 1px 0 #1f1b24,                                   /* il fianco */
-    0 0 0 1.5px var(--hole),                           /* il foro */
-    0 1px 0 2.5px rgba(255, 255, 255, 0.5),            /* il labbro sotto che prende la luce */
-    inset 0 1px 0 rgba(255, 255, 255, 0.25);
-  transform: rotate(-24deg) translateY(-0.5px);
-  transition: transform 0.08s, filter 0.15s, opacity 0.2s;
-}
-
-.pill[data-off] { opacity: 0.55; }   /* l'audio spento */
-.key:hover .pill { filter: brightness(1.25); }
-.key:active .pill, .key[data-down] .pill { transform: rotate(-24deg) translateY(0.5px); filter: brightness(0.9); }
-.key:focus-visible { outline: 2px solid rgba(70, 30, 48, 0.6); outline-offset: 3px; border-radius: 4px; }
-
+.esci::after { content: ''; position: absolute; inset: -7px; border-radius: 50%; }   /* 44px per il dito */
+.esci svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; }
+.esci:hover { background: rgba(20, 14, 24, 0.75); }
+.esci:focus-visible { outline: 2px solid rgba(255, 236, 242, 0.8); outline-offset: 2px; }
 
 /* ── lo schermo: incassato nella plastica, una cornice scura sottile, lo spigolo tondo in basso a destra come la console ── */
 .screen {
@@ -672,8 +626,11 @@
   box-shadow: 0 0 0 1.5px rgba(249, 221, 229, 0.9), 0 1px 2px rgba(80, 10, 25, 0.45);
 }
 
-/* ── A e B: calotte corallo laccate, nella piastra inclinata ── */
+/* ── A e B: calotte corallo laccate, nella piastra inclinata. Ogni tasto e' il suo foro, messo dal suo centro; le scritte
+   stanno fuori dalla piastra, oltre le sue estremita': sopra A, sotto B ──
+   Di traverso: A in (23, 10), B in (7, 18.5), in --u: la piastra lunga 30 e inclinata di 28 gradi passa per i due centri. */
 .ab {
+  --ax: 23; --ay: 10; --bx: 7; --by: 18.5;
   position: relative;
   width: calc(var(--u) * 30);
   height: calc(var(--u) * 31);   /* sotto B c'e' spazio per quello che hai in mano */
@@ -682,7 +639,7 @@
 .abPlate {
   position: absolute;
   left: 0;
-  top: calc(var(--u) * 5.5);
+  top: calc(var(--u) * 7.75);
   width: calc(var(--u) * 30);
   height: calc(var(--u) * 13);
   border-radius: calc(var(--u) * 6.5);
@@ -695,25 +652,19 @@
 
 .abKey {
   position: absolute;
-  width: calc(var(--u) * 14);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: calc(var(--u) * 1.3);
-}
-
-.abKey[data-k='b'] { left: calc(var(--u) * 0.8); top: calc(var(--u) * 9.8); }
-.abKey[data-k='a'] { right: calc(var(--u) * 0.8); top: calc(var(--u) * 2.1); }
-
-/* il foro scuro attorno alla calotta: fermo quando il tasto scende */
-.abKey::before {
-  content: '';
-  position: absolute;
-  top: calc(var(--u) * -0.5);
-  left: 50%;
   width: calc(var(--u) * 13);
   height: calc(var(--u) * 13);
-  margin-left: calc(var(--u) * -6.5);
+}
+
+.abKey[data-k='a'] { left: calc(var(--u) * (var(--ax) - 6.5)); top: calc(var(--u) * (var(--ay) - 6.5)); }
+.abKey[data-k='b'] { left: calc(var(--u) * (var(--bx) - 6.5)); top: calc(var(--u) * (var(--by) - 6.5)); }
+
+/* il foro scuro attorno alla calotta: fermo quando il tasto scende */
+.abSocket {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
   border-radius: 50%;
   background: var(--hole);
   box-shadow:
@@ -760,12 +711,19 @@
 }
 
 .abPrint {
+  position: absolute;
+  left: 50%;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: calc(var(--u) * 0.6);
   line-height: 1;
+  transform: translateX(-50%);
+  pointer-events: none;
 }
+
+.abKey[data-k='a'] .abPrint { bottom: calc(100% + var(--u) * 1); }   /* sopra A */
+.abKey[data-k='b'] .abPrint { top: calc(100% + var(--u) * 1.2); }    /* sotto B */
 
 /* la lettera stampata sulla calotta, un poco incisa */
 .abLetter {
@@ -786,30 +744,28 @@
   .shell {
     --u: min(4.4px, 0.94vw, 0.48vh);
     --rr: calc(var(--u) * 11);
-    grid-template-columns: auto minmax(0, 1fr) auto auto;
-    grid-template-rows: minmax(0, 1fr) auto auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: minmax(0, 1fr) auto auto auto;
     grid-template-areas:
-      'scr scr  scr  scr'
-      'pc  util util hint'
-      'pl  .    pr   px';
+      'scr scr scr'
+      'pl  pc  hint'
+      'pl  pc  px'
+      'pl  pr  px';
     column-gap: calc(var(--u) * 1.6);
     row-gap: calc(var(--u) * 0.8);
     padding: max(6px, calc(var(--u) * 2)) max(6px, calc(var(--u) * 2.2)) calc(var(--u) * 2.4);
   }
 
-  .key { min-height: 44px; justify-content: center; }   /* la riga dei tasti e' bassa: i 44px dentro il tasto */
-
-  .padC { flex-direction: row; align-self: center; justify-self: start; gap: calc(var(--u) * 2.2); margin: 0; }
-  .util { align-self: center; justify-self: end; max-width: none; flex-wrap: nowrap; }   /* lontano dai tre tasti: i 44px non si toccano */
-  .crossHint { align-self: center; min-height: 0; }
+  .padC { flex-direction: row; align-self: start; justify-self: center; gap: calc(var(--u) * 2.2); margin: calc(var(--u) * 0.6) 0 0; }
+  .crossHint { align-self: end; min-height: 0; }
   .padL, .padX { align-self: end; }
-  .padR { align-self: center; }
+  .padR { align-self: end; justify-self: end; }
 
-  /* A e B piu' bassi: la piastra meno inclinata, le scritte sotto */
-  .ab { width: calc(var(--u) * 26); height: calc(var(--u) * 26.5); }
-  .abPlate { width: calc(var(--u) * 26); height: calc(var(--u) * 12.5); top: calc(var(--u) * 6.1); transform: rotate(-22deg); }
-  .abKey[data-k='b'] { left: calc(var(--u) * -1); top: calc(var(--u) * 8.3); }
-  .abKey[data-k='a'] { right: calc(var(--u) * -1); top: calc(var(--u) * 1.9); }
+  /* A e B piu' bassi: A in (20, 9.5), B in (6, 15.2), la piastra meno inclinata; la scritta di B a sinistra di B */
+  .ab { --ax: 20; --ay: 9.5; --bx: 6; --by: 15.2; width: calc(var(--u) * 26); height: calc(var(--u) * 22); }
+  .abPlate { width: calc(var(--u) * 26); height: calc(var(--u) * 12.5); top: calc(var(--u) * 6.1); transform: rotate(-22.2deg); }
+  .abKey[data-k='b'] .abPrint { top: 50%; left: auto; right: calc(100% + var(--u) * 1.2); align-items: flex-end; transform: translateY(-50%); }
+  .abKey[data-k='b'] .fn, .abKey[data-k='b'] .hand { max-width: calc(var(--u) * 15); overflow: hidden; text-overflow: ellipsis; }
 }
 
 @supports (height: 1dvh) {
@@ -818,17 +774,13 @@
   }
 }
 
-/* un gioco che non sa dei tasti: niente pulsantiera, lo schermo prende tutto e sotto le pillole di sistema */
+/* un gioco che non sa dei tasti: niente pulsantiera, lo schermo prende tutto */
 .root[data-pad='no'] .shell {
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr) auto;
-  grid-template-areas: 'scr' 'util';
-  row-gap: max(4px, calc(var(--u) * 1));
-  padding: max(6px, calc(var(--u) * 2)) max(6px, calc(var(--u) * 2)) max(5px, calc(var(--u) * 1.2));
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-areas: 'scr';
+  padding: max(6px, calc(var(--u) * 2));
 }
-
-.root[data-pad='no'] .util { justify-self: end; max-width: none; flex-wrap: nowrap; }
-.root[data-pad='no'] .key { min-height: 44px; justify-content: center; }   /* la striscia e' bassa: i 44px dentro il tasto */
 
 /* da computer avanza posto: il nome in cima alla colonna di sinistra */
 @media (orientation: landscape) and (min-height: 600px) {
@@ -841,5 +793,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .stickCap, .stickStem, .stickShadow, .pill, .crossArms { transition: none; }
+  .stickCap, .stickStem, .stickShadow, .crossArms { transition: none; }
 }

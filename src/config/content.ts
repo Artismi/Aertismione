@@ -165,12 +165,6 @@ export const PROGETTI = {
       bike: 'Bici',
       bag: 'Zaino',
       cross: 'Visuale',
-      screen: 'Schermo',             // la pillola di schermo intero
-      fullscreen: 'Schermo intero',
-      audio: 'Audio',                // la pillola dell'audio: com'e' adesso
-      mute: 'Muto',
-      audioOn: 'Audio acceso',
-      audioOff: 'Audio spento',
       brand: 'Artismi',
     },
     // Quello che il gioco scarica partendo (~18 MB): il sito lo prende in sottofondo,

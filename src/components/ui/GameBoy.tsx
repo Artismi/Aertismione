@@ -6,10 +6,11 @@
  * Il gioco gira in uno schermo incassato direttamente nella plastica rosa della
  * console, con una cornice scura sottile: niente cornici una dentro l'altra, niente
  * tesa in alto, niente che non serva (niente display, lucina, altoparlante: ora e soldi
- * stanno nel menu del gioco). Solo comandi: le levette, A e B, tre tasti, e tre pillole
- * di sistema (schermo intero, audio, esci). In verticale la pulsantiera e' una fascia
- * bassa sotto lo schermo; di traverso sta nelle due colonne ai lati, e lo schermo corre
- * per tutta l'altezza. Niente barra del sito: si e' dentro la console.
+ * stanno nel menu del gioco). Solo comandi: le levette, A e B, tre tasti. Schermo
+ * intero, audio ed esci stanno nel menu del gioco (lo zaino), che li chiede alla console
+ * con un messaggio (vedi sotto). In verticale la pulsantiera e' una fascia bassa sotto lo
+ * schermo; di traverso sta nelle due colonne ai lati, e lo schermo corre per tutta
+ * l'altezza. Niente barra del sito: si e' dentro la console.
  *
  * Caricamento: da computer il gioco parte gia' in sottofondo, quando il banco e'
  * vicino e la pagina e' ferma, nascosto fuori schermo. Mentre la pagina scorre gli
@@ -26,11 +27,14 @@
  * Lo stesso Game Boy del banco (Console3D), visto di fronte: plastica rosa
  * trasparente con la scheda sotto (consolePaint), lo schermo nella sua cornice scura.
  * I comandi stanno nella pulsantiera, non sullo schermo (GameBoyPad): levetta,
- * levetta della visuale, A/B, bomboletta, bici, zaino; con schermo intero ed esci
- * la pillola dell'audio. Il sito si presenta al gioco con {pvc:'ciao'}; il gioco
+ * levetta della visuale, A/B, bomboletta, bici, zaino. Il sito si presenta al gioco con {pvc:'ciao'}; il gioco
  * pulisce lo schermo (tutto il resto sta nel suo menu, lo zaino), risponde
  * {pv:'console'} e poi manda le scritte dei tasti ({pv:'tasti'}) e lo stato
- * ({pv:'stato'}, che qui serve solo al display del Game Boy sul banco). Un gioco che non risponde (una versione vecchia)
+ * ({pv:'stato'}, che qui serve solo al display del Game Boy sul banco). Dal suo menu
+ * il gioco chiede {pv:'schermo'} (a tutto schermo la console intera, pulsantiera compresa),
+ * {pv:'esci'} (la console si chiude) e dice {pv:'audio', on} quando accende o spegne la
+ * musica. Un gioco che non ha ancora questi tasti nel menu (v < 4) ha un piccolo «esci»
+ * nell'angolo, per non restare chiusi dentro. Un gioco che non risponde (una versione vecchia)
  * si gioca come prima, senza pulsantiera.
  *
  * `from`: il rettangolo dello schermo della console da cui nasce; null =
@@ -42,7 +46,7 @@ import { createPortal } from 'react-dom'
 import { useStore } from '@/stores/useStore'
 import { PROGETTI } from '@/config/content'
 import styles from './GameBoy.module.css'
-import { Audio, GameBoyPad, type Send, type Stato, type Tasti } from './GameBoyPad'
+import { GameBoyPad, type Send, type Stato, type Tasti } from './GameBoyPad'
 import pre from './Preloader.module.css'
 import { MatrixGrid } from './Preloader'
 import { gameLoad, gameInfo } from '@/components/canvas/table/gameLoad'
@@ -89,7 +93,11 @@ export function GameBoy({ from, onClose, page = false, warm = false }: {
   // i comandi sulla plastica: 'attesa' finche' il gioco non risponde, 'no' se non sa farli
   const [pad, setPad] = useState<'attesa' | 'si' | 'no'>('attesa')
   const [tasti, setTasti] = useState<Tasti | null>(null)
-  const [versione, setVersione] = useState(0)   // la versione dei comandi che il gioco capisce (dalla 3: la levetta della visuale)
+  const [versione, setVersione] = useState(0)   // la versione dei comandi che il gioco capisce (dalla 3: la levetta della visuale; dalla 4: schermo intero, audio ed esci nel suo menu)
+  // quello che il menu del gioco chiede alla console: il listener dei messaggi nasce una volta, le funzioni cambiano a ogni giro
+  const sys = useRef<{ close: () => void; fullscreen: () => void }>({ close: () => {}, fullscreen: () => {} })
+  // schermo intero chiesto dal gioco: se il browser vuole un tocco sulla pagina (non nel gioco), si fa al primo tocco sulla console
+  const fsArmed = useRef(false)
   const [inside, setInside] = useState<string | null>(null)
 
   // l'elettronica sotto la plastica rosa trasparente: la stessa scheda del Game Boy 3D, disegnata una volta quando il browser e' libero
@@ -118,6 +126,13 @@ export function GameBoy({ from, onClose, page = false, warm = false }: {
       if (e.source !== frameRef.current?.contentWindow || !e.data || typeof e.data.pv !== 'string') return
       talks.current = true
       if (e.data.pv === 'console') { hello.current = true; setPad('si'); setVersione(Number(e.data.v) || 0); return }
+      // dal menu del gioco: schermo intero, esci, l'audio acceso o spento
+      if (e.data.pv === 'schermo') { sys.current.fullscreen(); return }
+      if (e.data.pv === 'esci') { sys.current.close(); return }
+      if (e.data.pv === 'audio') {
+        setTasti((t) => { const n = t ? { ...t, audio: !!e.data.on } : t; gameInfo.tasti = n; return n })
+        gameLoad.onChange?.(); return
+      }
       // le scritte dei tasti e lo stato vanno anche al Game Boy del banco (display e lucine)
       if (e.data.pv === 'tasti') { setTasti(e.data as Tasti); gameInfo.tasti = e.data as Tasti; gameLoad.onChange?.(); return }
       // lo stato (ora, soldi) serve solo al display del Game Boy sul banco: qui sta nel menu del gioco, lo zaino
@@ -257,12 +272,22 @@ export function GameBoy({ from, onClose, page = false, warm = false }: {
     return () => window.removeEventListener('keydown', onKey)
   })
 
+  // a tutto schermo la console intera (pulsantiera compresa), o di nuovo in finestra. Chiesto dal gioco il tocco e' stato
+  // nel gioco: Chrome lo passa alla pagina, altri browser no. Allora si fa al primo tocco sulla console (armFs)
   function fullscreen() {
     const el = rootRef.current
     if (!el) return
-    if (document.fullscreenElement) document.exitFullscreen().catch(() => {})
-    else el.requestFullscreen?.().catch(() => {})
+    fsArmed.current = false
+    if (document.fullscreenElement) { document.exitFullscreen().catch(() => {}); return }
+    if (!el.requestFullscreen) return   // iPhone: niente schermo intero per una pagina
+    el.requestFullscreen().catch(() => { fsArmed.current = true })
   }
+  function armFs() {
+    if (!fsArmed.current) return
+    fsArmed.current = false
+    rootRef.current?.requestFullscreen?.().catch(() => {})
+  }
+  sys.current = { close, fullscreen }
 
   const body = (
     <div
@@ -275,19 +300,15 @@ export function GameBoy({ from, onClose, page = false, warm = false }: {
       aria-modal={open ? true : undefined}
       aria-hidden={open ? undefined : true}
       aria-label={game.title}
+      onPointerDownCapture={armFs}
     >
       <div className={styles.shell} style={inside ? ({ '--inside': `url(${inside})` } as CSSProperties) : undefined}>
-        {/* i tasti di sistema, pillole di gomma come Start e Select: schermo intero, l'audio (da telefono l'unico modo di
-            spegnerlo: il gioco nel Game Boy toglie il suo), esci (da telefono l'unico modo di uscire) */}
-        <div className={styles.util}>
-          <button type="button" className={styles.key} onClick={fullscreen} tabIndex={open ? 0 : -1} aria-label={game.pad.fullscreen} title={game.pad.fullscreen}>
-            <span className={styles.pill} aria-hidden="true" /><span className={styles.keyPrint} aria-hidden="true">{game.pad.screen}</span>
+        {/* un gioco che non ha ancora esci nel suo menu (o mentre carica): un piccolo esci nell'angolo, sopra la cornice */}
+        {(pad === 'no' || versione < 4) && (
+          <button type="button" className={styles.esci} onClick={close} tabIndex={open ? 0 : -1} aria-label={game.close} title={game.close}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17" /></svg>
           </button>
-          {pad === 'si' && <Audio send={send} on={tasti?.audio !== false} />}
-          <button type="button" className={styles.key} data-k="esci" onClick={close} tabIndex={open ? 0 : -1} aria-label={game.close} title={game.close}>
-            <span className={styles.pill} aria-hidden="true" /><span className={styles.keyPrint} aria-hidden="true">{game.close}</span>
-          </button>
-        </div>
+        )}
 
         {/* lo schermo, incassato direttamente nella plastica: una cornice scura sottile, il vetro, il gioco */}
         <div className={styles.screen}>
