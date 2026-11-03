@@ -170,8 +170,6 @@ export const PROGETTI = {
       audioOn: 'Audio acceso',
       audioOff: 'Audio spento',
       brand: 'Artismi',
-      battery: 'Battery',
-      lens: 'Stereo sound',
       off: 'Off',
       on: 'On',
       wanted: 'Ricercato',

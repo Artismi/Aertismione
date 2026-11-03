@@ -2,10 +2,12 @@
    GameBoy — Porto Vecchio dentro la console
    Lo stesso Game Boy del banco (Console3D), visto di fronte e a tutto schermo:
    plastica rosa lucida e trasparente con l'elettronica che si vede sotto (la
-   stessa scheda, consolePaint), la cornice rosa dello schermo con le due righe e
-   la lucina, la croce nera, A e B corallo laccati, la gomma scura, l'interruttore
+   stessa scheda, consolePaint), lo schermo incassato con una cornice scura sottile
+   (una sola: niente seconda cornice, niente tesa), la croce nera, A e B corallo laccati, la gomma scura, l'interruttore
    rosso, la rotella in metallo. Sopra tutto (anche alla grana 9998 e al cursore
-   9997). Sotto lo schermo la pulsantiera (GameBoyPad); di traverso, negli angoli.
+   9997). Lo schermo prende quasi tutto: di traverso corre per tutta l'altezza, con
+   la pulsantiera (GameBoyPad) e i comandi della console nelle due colonne ai lati;
+   in verticale la pulsantiera sta sotto, i comandi tra le due levette.
    Solo CSS e un'immagine disegnata una volta (la scheda): niente filtri sul
    grande, niente animazioni fuori dai tasti. Le misure dei tasti sono in --u.
    ============================================ */
@@ -33,7 +35,7 @@
 
 /* ── la base: plastica rosa trasparente e lucida, la scheda sotto, la giuntura, lo spigolo tondo in basso a destra ── */
 .shell {
-  --u: min(5px, 0.95vh, 1.25vw);
+  --u: min(4.4px, 0.95vh, 1.15vw);
   --ink: rgba(70, 30, 48, 0.82);            /* la serigrafia del Game Boy 3D */
   --ink-soft: rgba(70, 30, 48, 0.62);
   --deboss: 0 1px 0 rgba(255, 255, 255, 0.5);
@@ -45,10 +47,18 @@
   inset: 3px;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
-  grid-template-rows: auto minmax(0, 1fr) auto auto;
-  grid-template-areas: 'top top top' 'brand scr sp' 'pc scr pr' 'pl scr px';   /* come un controller: a sinistra i tre tasti e sotto la levetta del movimento, a destra A e B e sotto la levetta della visuale */
-  column-gap: calc(var(--u) * 2.8);
-  padding: 0 calc(var(--u) * 2.6) calc(var(--u) * 2.4);
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+  /* lo schermo per tutta l'altezza. Ai lati, come un controller: a sinistra il nome, la lucina e la rotella, i tre tasti e
+     sotto la levetta del movimento; a destra il display, schermo intero e l'interruttore, A e B e sotto la levetta della visuale */
+  grid-template-areas:
+    'brand scr lcd'
+    'ctl   scr keys'
+    '.     scr sp'
+    'pc    scr pr'
+    'pl    scr px';
+  column-gap: calc(var(--u) * 2.6);
+  row-gap: calc(var(--u) * 1.6);
+  padding: max(6px, calc(var(--u) * 2.2));
   overflow: hidden;
   border-radius: 16px 16px calc(var(--u) * 9) 16px;
   background:
@@ -68,35 +78,26 @@
 }
 
 @supports (height: 1dvh) {
-  .shell { --u: min(5px, 0.95dvh, 1.25vw); }
+  .shell { --u: min(4.4px, 0.95dvh, 1.15vw); }
 }
 
-/* un gioco che non sa dei tasti: niente pulsantiera, lo schermo prende tutto */
-.root[data-pad='no'] .shell {
-  grid-template-areas: 'top top top' 'scr scr scr' 'scr scr scr' 'scr scr scr';
-  column-gap: 0;
-  padding: 0 clamp(8px, 1.4vw, 18px) clamp(8px, 1.4vw, 18px);
-}
+/* ── i comandi della console: lucina e rotella, display, schermo intero, interruttore ──
+   Di traverso la striscia non c'e': i suoi pezzi vanno nelle colonne ai lati dello schermo. */
+.bar { display: contents; }
 
-/* ── la tesa: rotella, display, schermo intero, interruttore ── */
-.top {
-  grid-area: top;
-  height: 42px;
-  display: grid;
-  grid-template-columns: minmax(max-content, 1fr) minmax(0, auto) minmax(max-content, 1fr);   /* il display in mezzo si stringe, i lati no */
-  align-items: center;
-  gap: 10px;
-  padding: 0 2px;
-}
-
-.topL {
+.barL {
+  grid-area: ctl;
+  justify-self: center;
   display: flex;
   align-items: center;
+  gap: 10px;
   min-width: 0;
 }
 
-/* il nome (finche' il gioco non risponde, al posto del display) */
+/* il nome (un gioco che non sa dei tasti, al posto del display) */
 .name {
+  grid-area: lcd;
+  justify-self: center;
   font-family: var(--font-display);
   font-style: italic;
   font-weight: 800;
@@ -107,28 +108,48 @@
 }
 
 .keys {
-  justify-self: end;
+  grid-area: keys;
+  justify-self: center;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
 }
 
-/* schermo intero: una pillola di gomma, la scritta accanto */
+/* schermo intero: una pillola di gomma, la scritta sotto (come Start e Select) */
 .key {
+  position: relative;
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   background: none;
   border: 0;
-  padding: 4px 2px;
+  padding: 2px;
   cursor: pointer;
+}
+
+.keyPrint {
   font-family: var(--mono);
-  font-size: 0.56rem;
+  font-size: 0.5rem;
   font-weight: 700;
+  line-height: 1;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ink-soft);
   text-shadow: var(--deboss);
+}
+
+/* i comandi piccoli si prendono col dito: almeno 44px attorno */
+.key::after,
+.power::after,
+.wheel::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(100%, 44px);
+  height: max(100%, 44px);
+  transform: translate(-50%, -50%);
 }
 
 .pill {
@@ -146,6 +167,7 @@
 
 /* l'interruttore rosso, come sul fianco del Game Boy 3D: spinto su OFF si esce */
 .power {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -205,14 +227,12 @@
   border: 0;
   padding: 0;
   border-radius: 3px;
-  overflow: hidden;
   cursor: pointer;
   touch-action: none;
   background: linear-gradient(180deg, #5a2a3c, #8a4a62);   /* la feritoia */
   box-shadow: inset 0 1px 2px rgba(40, 5, 20, 0.7), 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
-.wheel::after { content: ''; position: absolute; inset: -10px -6px; }   /* piu' facile da prendere col dito */
 .wheel[data-down] .wheelRidges { filter: brightness(0.92); }
 
 /* il cilindro zigrinato, metallo spazzolato: righe sottili, ombra sopra e sotto */
@@ -253,10 +273,13 @@
 
 /* ── il display: un piccolo LCD, chiaro come lo schermo del Game Boy 3D acceso, nella sua cornice scura ── */
 .lcd {
+  grid-area: lcd;
   justify-self: center;
+  align-self: center;
   display: inline-flex;
+  flex-direction: column;   /* di traverso, nella colonna: l'ora sopra, i soldi sotto */
   align-items: center;
-  gap: 10px;
+  gap: 2px;
   min-width: 0;
   max-width: 100%;
   overflow: hidden;
@@ -289,38 +312,7 @@
 
 @keyframes lcdBlink { 50% { opacity: 0.25; } }
 
-/* ── la cornice dello schermo: plastica rosa piu' spessa, le due righe, la lucina, la finestra scura, la scritta ── */
-.window {
-  grid-area: scr;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
-  padding: 0 max(8px, calc(var(--u) * 2.4));
-  border-radius: 12px 12px calc(var(--u) * 7) 12px;
-  background:
-    linear-gradient(160deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0) 32%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
-    linear-gradient(180deg, #edb3c5, #E7A6B8 50%, #df9cb1);
-  box-shadow:
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.85),
-    inset 0 -2px 2px rgba(150, 60, 95, 0.22),
-    0 0 0 1px rgba(176, 124, 140, 0.85),
-    0 2px 6px rgba(90, 20, 50, 0.22);
-}
-
-.lensTop,
-.lensBottom {
-  flex: none;
-  height: max(16px, calc(var(--u) * 4));
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  overflow: hidden;
-}
-
+/* la lucina della batteria, nella striscia dei comandi */
 .led {
   flex: none;
   width: 6px;
@@ -336,49 +328,23 @@
   box-shadow: 0 0 6px 1px rgba(255, 77, 94, 0.65);
 }
 
-.lensPrint {
-  flex: none;
-  font-family: var(--mono);
-  font-size: max(6.5px, calc(var(--u) * 1.5));
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  color: var(--ink);
-}
-
-/* le due righe sottili sulla cornice */
-.lensLines {
-  flex: 1;
-  min-width: 6px;
-  height: 5px;
-  background: linear-gradient(180deg, rgba(70, 30, 48, 0.7) 0 2px, rgba(70, 30, 48, 0) 2px 4px, rgba(70, 30, 48, 0.7) 4px 5px);
-}
-
-.lensBottom {
-  justify-content: center;
-  font-family: var(--font-display);
-  font-size: max(7px, calc(var(--u) * 1.7));
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  color: var(--ink);
-}
-
-/* la finestra scura e, dentro, lo schermo */
+/* ── lo schermo: incassato nella plastica, una cornice scura sottile, lo spigolo tondo in basso a destra come la console ── */
 .screen {
+  --r: max(6px, calc(var(--u) * 1.6));
+  grid-area: scr;
   position: relative;
-  flex: 1;
+  min-width: 0;
   min-height: 0;
-  border: max(4px, calc(var(--u) * 1.3)) solid #241e2a;
-  border-top-color: #2b2430;
-  border-bottom-color: #1d1822;
-  border-radius: 7px;
+  border: max(3px, calc(var(--u) * 0.8)) solid #29222f;
+  border-top-color: #322a38;
+  border-bottom-color: #1e1923;
+  border-radius: var(--r) var(--r) max(14px, calc(var(--u) * 4.4)) var(--r);
   overflow: hidden;
   background: #0d0b1a;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4), 0 -1px 0 rgba(120, 40, 70, 0.25);
+  box-shadow:
+    0 0 0 1px rgba(150, 80, 108, 0.5),           /* l'incasso nella plastica */
+    0 1px 0 1.5px rgba(255, 255, 255, 0.55),     /* il bordo sotto che prende la luce */
+    0 -1px 3px 1px rgba(120, 40, 70, 0.16);
 }
 
 /* il vetro sullo schermo: un riflesso appena, sopra il gioco ma senza prendere i tocchi */
@@ -443,8 +409,9 @@
   display: flex;
   flex-direction: column;   /* di traverso il nome sta nell'angolo, in due righe; in verticale in una */
   align-items: center;
+  justify-self: center;
   gap: 3px;
-  padding-top: calc(var(--u) * 2.2);
+  padding-top: calc(var(--u) * 0.6);
   font-family: var(--font-display);
   font-style: italic;
   font-weight: 800;
@@ -713,7 +680,7 @@
   transition: transform 0.06s, box-shadow 0.06s, color 0.2s;
 }
 
-.fnBtn::after { content: ''; position: absolute; inset: calc(var(--u) * -1.4); border-radius: 50%; }   /* piu' facile da prendere */
+.fnBtn::after { content: ''; position: absolute; inset: calc(var(--u) * -1.8); border-radius: 50%; }   /* piu' facile da prendere */
 
 .fnBtn svg {
   width: 50%;
@@ -864,7 +831,7 @@
   display: grid;
   grid-template-columns: repeat(4, calc(var(--u) * 1.6));
   gap: calc(var(--u) * 1.5);
-  margin-top: calc(var(--u) * 3);
+  align-self: center;
 }
 
 .speaker i {
@@ -875,20 +842,35 @@
   box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.7), 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 
-/* ── in verticale, come il primo Game Boy: lo schermo, il nome, la pulsantiera sotto ── */
+/* ── in verticale, come il primo Game Boy: lo schermo in alto, la pulsantiera sotto; tra le due levette il nome
+   e i comandi della console, dove sul Game Boy stanno Start e Select ── */
 @media (orientation: portrait) {
   .shell {
     --u: min(4.4px, 0.94vw, 0.48vh);
     grid-template-columns: auto minmax(0, 1fr) auto;
-    grid-template-rows: auto minmax(0, 1fr) auto auto auto;
-    grid-template-areas: 'top top top' 'scr scr scr' 'brand brand brand' 'pc pc pr' 'pl . px';   /* le due levette in basso, una per lato, alla stessa altezza */
+    grid-template-rows: minmax(0, 1fr) auto auto auto;
+    grid-template-areas: 'scr scr scr' 'pc pc pr' 'pl brand px' 'pl bar px';   /* le due levette in basso, una per lato, alla stessa altezza */
     column-gap: calc(var(--u) * 1.6);
-    padding: 0 calc(var(--u) * 2.4) calc(var(--u) * 3);
+    row-gap: calc(var(--u) * 1.4);
+    padding: max(6px, calc(var(--u) * 2)) max(6px, calc(var(--u) * 2.2)) calc(var(--u) * 3);
     border-radius: 16px 16px calc(var(--u) * 14) 16px;
   }
 
-  .window { border-radius: 12px 12px calc(var(--u) * 7) 12px; }
-  .brand { flex-direction: row; align-items: baseline; justify-content: center; gap: calc(var(--u) * 2); padding: calc(var(--u) * 2.4) 0 calc(var(--u) * 1.4); }
+  .bar {
+    grid-area: bar;
+    align-self: start;
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-template-areas: 'lcd lcd' 'ctl keys';
+    justify-content: center;
+    align-items: center;
+    gap: calc(var(--u) * 2) calc(var(--u) * 3.6);
+  }
+
+  .barL { justify-self: end; }
+  .keys { justify-self: start; }
+  .lcd { flex-direction: row; gap: 10px; }
+  .brand { align-self: end; padding-top: 0; }
   .padR { align-self: end; }
   .padC { align-self: end; justify-self: start; margin-bottom: calc(var(--u) * 1.2); }
   .padL, .padX { align-self: start; margin-bottom: 0; }
@@ -901,15 +883,39 @@
   }
 }
 
-/* telefoni stretti: la tesa si stringe */
+/* un gioco che non sa dei tasti: niente pulsantiera, lo schermo prende tutto e sotto una striscia sottile con i comandi */
+.root[data-pad='no'] .shell {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-areas: 'scr' 'bar';
+  row-gap: max(5px, calc(var(--u) * 1.4));
+  padding: max(6px, calc(var(--u) * 2)) max(6px, calc(var(--u) * 2)) max(5px, calc(var(--u) * 1.4));
+}
+
+.root[data-pad='no'] .bar {
+  grid-area: bar;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  grid-template-areas: 'ctl lcd keys';
+  align-items: center;
+  gap: 12px;
+  padding: 0 4px;
+}
+
+.root[data-pad='no'] .barL { justify-self: start; }
+.root[data-pad='no'] .keys { justify-self: end; }
+.root[data-pad='no'] .key { flex-direction: row; gap: 6px; }
+
+/* telefoni stretti */
 @media (max-width: 640px) {
-  .top { height: 38px; gap: 8px; }
   .keys { gap: 10px; }
 }
 
 @media (max-width: 420px) {
-  .wheelPrint, .lcdDay { display: none; }   /* la rotella si riconosce; il giorno sta nel menu */
-  .key { font-size: 0; gap: 0; }            /* schermo intero: basta la pillola */
+  .wheelPrint, .lcdDay, .keyPrint { display: none; }   /* la rotella e la pillola si riconoscono; il giorno sta nel menu */
+  .barL { gap: 6px; }
+  .keys { gap: 8px; }
+  .bar { column-gap: calc(var(--u) * 2.4); }
 }
 
 @media (max-width: 345px) {
@@ -917,11 +923,11 @@
   .lcd { gap: 6px; padding: 3px 6px; font-size: 10px; }
 }
 
-/* telefono di traverso: la tesa e la cornice si abbassano, lo schermo prende tutta l'altezza */
+/* telefono di traverso: le colonne si stringono in altezza */
 @media (orientation: landscape) and (max-height: 500px) {
-  .top { height: 30px; }
-  .lensTop, .lensBottom { height: 12px; }
-  .brand { font-size: max(11px, calc(var(--u) * 2.8)); padding-top: calc(var(--u) * 1); }
+  .shell { row-gap: calc(var(--u) * 1.1); }
+  .brand { font-size: max(11px, calc(var(--u) * 2.8)); padding-top: 0; }
+  .lcd { font-size: 10px; padding: 2px 7px; }
   .speaker { display: none; }
 }
 
