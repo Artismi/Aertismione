@@ -113,7 +113,10 @@ export function GameBoy({ from, onClose, page = false, warm = false }: {
     }
   }, [])
   const hello = useRef(false)
-  const src = warm ? game.url : game.path
+  // sulla pagina del gioco i parametri dell'indirizzo passano al gioco (?stile=B, ?hd=0, ?nofixcamera7…): la pagina
+  // monta il Game Boy solo nel browser (mounted), quindi window qui c'e' e non cambia fra server e client
+  const qs = page && typeof window !== 'undefined' ? window.location.search : ''
+  const src = (warm ? game.url : game.path) + qs
 
   // al gioco, e solo a lui (il suo sito o questo, secondo da dove arriva)
   const send = useCallback<Send>((m) => {
